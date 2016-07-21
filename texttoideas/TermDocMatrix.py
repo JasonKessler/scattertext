@@ -103,6 +103,9 @@ class TermDocMatrix:
 		else:
 			self._unigram_frequency_path = unigram_frequency_path
 
+	def get_categories(self):
+		return [val for _, val in self._category_idx_store.items()]
+
 	def get_num_docs(self):
 		'''
 		:return: int number of documents
