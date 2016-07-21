@@ -1,19 +1,9 @@
 # text-to-ideas
 A tool for finding distinguishing terms in small-to-medium-sized corpora
 
-### Unusual Algorithms:
-#### Rudder algorithm.
-Adapted from Dataclysm. Rudder C (2014) Dataclysm: Who We Are (When We Think No One’s Looking) (Crown, New York).
-```math #
-\sqrt(Percentile(P(word|category)) + 1 - Percentile(P(word|~category)))
-```
-#### Kessler algorithm.
- Original.
+The documentation (including this readme) is a work in progress.
 
-#### Other: to do.
-
-
-
+There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
 
 Sources:
 * Political data: scraped from www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0
