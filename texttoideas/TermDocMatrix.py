@@ -174,18 +174,18 @@ class TermDocMatrix:
 		:return: array of harmonic means of scaled P(word|category) and scaled P(category|word)
 		'''
 		cat_word_counts, not_cat_word_counts = self._get_catetgory_and_non_category_word_counts(category)
-		score = self._get_kessler_scores_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo)
-		return score
+		scores = self._get_kessler_scores_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo)
+		return np.array(scores)
 
 	def _get_kessler_scores_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo):
 		scaler = self._get_scaler_function(scaler_algo)
 		p_word_given_category = cat_word_counts.astype(np.float64) / cat_word_counts.sum()
 		p_category_given_word = cat_word_counts.astype(np.float64) / (cat_word_counts + not_cat_word_counts)
-		score \
+		scores \
 			= self._computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(
 			cat_word_counts, p_category_given_word, p_word_given_category, scaler
 		)
-		return score
+		return scores
 
 	def _computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(self, cat_word_counts,
 	                                                                                  p_category_given_word,
