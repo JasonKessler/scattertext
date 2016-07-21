@@ -1,7 +1,7 @@
 # text-to-ideas
 A tool for finding distinguishing terms in small-to-medium-sized corpora
 
-The documentation (including this readme) is a work in progress.  Do look through the test suite for instructions on how to use this package.
+The documentation (including this readme) is a work in progress.  Do look through the Jupyter Notebook and the test suite for instructions on how to use this package.
 
 There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
 
