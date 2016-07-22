@@ -240,7 +240,6 @@ class TermDocMatrix:
 			# scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)
 			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
 		elif scaler_algo == 'none':
-			# scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)
 			scaler = lambda x: x
 		else:
 			raise InvalidScalerException("Invalid scaler_alog.  Must be either percentile or normcdf.")
