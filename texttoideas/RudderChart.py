@@ -104,6 +104,7 @@ class RudderChart:
 	         category,
 	         num_top_words_to_annotate=4,
 	         words_to_annotate=[],
+	         scores = None,
 	         transform=percentile_min):
 
 		font = {'family': 'sans-serif',
@@ -118,7 +119,7 @@ class RudderChart:
 		                    in self.term_doc_matrix._category_idx_store.items() \
 		                    if val != category]
 		all_categories = other_categories + [category + ' freq']
-		df['color_scores'] = np.array(self.term_doc_matrix.get_kessler_scores(category))
+		df['color_scores'] = scores if scores is not None else np.array(self.term_doc_matrix.get_scaled_f_scores(category))
 
 		df = filter_bigrams_by_pmis(
 			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
