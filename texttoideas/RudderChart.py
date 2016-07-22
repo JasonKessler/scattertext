@@ -66,10 +66,16 @@ def percentile_ordinal(vec):
 	return vec_ss
 
 
+def percentile_min(vec):
+	vec_ss = rankdata(vec, method='min') * (1. / len(vec))
+	vec_ss = (vec_ss - vec_ss.min()) / (vec_ss.max() - vec_ss.min())
+	return vec_ss
+
+
 class RudderChart:
 	def __init__(self,
 	             term_doc_matrix,
-	             minimum_term_frequency = 3,
+	             minimum_term_frequency=3,
 	             jitter=0,
 	             seed=0):
 		'''
@@ -96,8 +102,15 @@ class RudderChart:
 
 	def draw(self,
 	         category,
-	         num_words_to_annotate=4,
-	         transform=percentile_ordinal):
+	         num_top_words_to_annotate=4,
+	         words_to_annotate=[],
+	         transform=percentile_min):
+
+		font = {'family': 'sans-serif',
+		        'color': 'black',
+		        'weight': 'normal',
+		        'size': 'large'
+		        }
 		df = self.term_doc_matrix.get_term_freq_df()
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['not category score'] = np.sqrt(2) - np.array(self.term_doc_matrix.get_rudder_scores(category))
@@ -113,22 +126,24 @@ class RudderChart:
 
 		df['category score rank'] = rankdata(df['category score'], method='ordinal')
 		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
-
-		x_data = self.add_jitter(transform(df[other_categories].sum(axis=1)))
-		y_data = self.add_jitter(transform(df[category + ' freq']))
+		x_data_raw = transform(df[other_categories].sum(axis=1))
+		y_data_raw = transform(df[category + ' freq'])
+		x_data = self.add_jitter(x_data_raw)
+		y_data = self.add_jitter(y_data_raw)
 		df = df.reset_index()
-		df_to_annotate = df[(df['not category score rank'] <= num_words_to_annotate)
-		                      | (df['category score rank'] <= num_words_to_annotate)]
+		df_to_annotate = df[(df['not category score rank'] <= num_top_words_to_annotate)
+		                    | (df['category score rank'] <= num_top_words_to_annotate)
+		                    | df['term'].isin(words_to_annotate)]
 		words = list(df['term'])
 
 		fig, ax = plt.subplots()
 		plt.figure(figsize=(10, 10))
-		plt.gcf().subplots_adjust(bottom=0.15)
-		plt.gcf().subplots_adjust(right=0.15)
+		plt.gcf().subplots_adjust(bottom=0.2)
+		plt.gcf().subplots_adjust(right=0.2)
 
 		points = ax.scatter(x_data,
 		                    y_data,
-		                    c=df['color_scores'],
+		                    c=-df['color_scores'],
 		                    cmap='seismic',
 		                    s=10,
 		                    edgecolors='none',
@@ -137,24 +152,28 @@ class RudderChart:
 		                                   ['<span id=a>%s</span>' % w for w in words],
 		                                   css='#a {background-color: white;}')
 		plugins.connect(fig, tooltip)
-		ax.set_ylim([-.1, 1.2])
-		ax.set_xlim([-.1, 1.2])
+		ax.set_ylim([-.2, 1.2])
+		ax.set_xlim([-.2, 1.2])
+		ax.xaxis.set_ticks([0., 0.5, 1.])
+		ax.yaxis.set_ticks([0., 0.5, 1.])
+		ax.set_ylabel(category.title() + ' Frequency Percentile', fontdict=font, labelpad=20)
+		ax.set_xlabel('Not ' + category.title() + ' Frequency Percentile', fontdict=font, labelpad=20)
 
 		for i, row in df_to_annotate.iterrows():
-			#alignment_criteria = row['category score rank'] < row['not category score rank']
+			# alignment_criteria = row['category score rank'] < row['not category score rank']
 			alignment_criteria = i % 2 == 0
 			horizontalalignment = 'right' if alignment_criteria else 'left'
 			verticalalignment = 'bottom' if alignment_criteria else 'top'
 			term = row['term']
 			ax.annotate(term,
 			            (x_data[i], y_data[i]),
-			            size='large',
+			            size=15,
 			            horizontalalignment=horizontalalignment,
-			            verticalalignment=verticalalignment)
+			            verticalalignment=verticalalignment,
+			            )
 		# texts.append(
-			# ax.text(row['dem freq scaled'], row['rep freq scaled'], row['word'])
-			# )
-			# adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
-
+		# ax.text(row['dem freq scaled'], row['rep freq scaled'], row['word'])
+		# )
+		# adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
 		plt.show()
 		return df, fig_to_html(fig)

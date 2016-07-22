@@ -1,18 +1,15 @@
 import os
 from unittest import TestCase
 
-import pandas as pd
 import numpy as np
-from scipy.stats import rankdata, hmean, chi2_contingency
 
-from texttoideas import TermDocMatrix
-from texttoideas.TermDocMatrix import InvalidScalerException
+from texttoideas.TermDocMatrix import InvalidScalerException, build_from_category_whitespace_delimited_text
 
 
 class TestTermDocMat(TestCase):
 	@classmethod
 	def setUp(cls):
-		cls.tdm = TermDocMatrix.build_from_category_whitespace_delimited_text(
+		cls.tdm = build_from_category_whitespace_delimited_text(
 			[
 				['a', '''hello my name is joe.
 				i've got a wife and three kids and i'm working.
@@ -37,35 +34,33 @@ class TestTermDocMat(TestCase):
 	def test_term_scores(self):
 		df = self.tdm.get_term_freq_df()
 		df['posterior ratio'] = self.tdm.get_posterior_mean_ratio_scores('b')
-		scores = self.tdm.get_kessler_scores('b', scaler_algo='percentile')
-		df['kessler'] = np.array(scores)
+		scores = self.tdm.get_scaled_f_scores('b', scaler_algo='percentile')
+		df['scaled_f_score'] = np.array(scores)
 		with self.assertRaises(InvalidScalerException):
-			self.tdm.get_kessler_scores('a', scaler_algo='x')
-		self.tdm.get_kessler_scores('a', scaler_algo='percentile')
-		self.tdm.get_kessler_scores('a', scaler_algo='normcdf')
+			self.tdm.get_scaled_f_scores('a', scaler_algo='x')
+		self.tdm.get_scaled_f_scores('a', scaler_algo='percentile')
+		self.tdm.get_scaled_f_scores('a', scaler_algo='normcdf')
 		df['rudder'] = self.tdm.get_rudder_scores('b')
-		#df['fisher oddsratio'], df['fisher pval'] \
-		#	= self.tdm.get_fisher_scores('b')
+		df['fisher oddsratio'], df['fisher pval'] = self.tdm.get_fisher_scores('b')
 
 		self.assertEqual(list(df.sort_values(by='posterior ratio', ascending=False).index[:3]),
 		                 ['another', 'blah', 'blah blah'])
-		self.assertEqual(list(df.sort_values(by='kessler', ascending=False).index[:3]),
+		self.assertEqual(list(df.sort_values(by='scaled_f_score', ascending=False).index[:3]),
 		                 ['another', 'blah', 'blah blah'])
 
 		# to do: come up with faster way of testing fisher
-		#self.assertEqual(list(df.sort_values(by='fisher pval', ascending=True).index[:3]),
+		# self.assertEqual(list(df.sort_values(by='fisher pval', ascending=True).index[:3]),
 		#                 ['another', 'blah', 'blah blah'])
 
 		self.assertEqual(list(df.sort_values(by='rudder', ascending=True).index[:3]),
 		                 ['another', 'blah', 'blah blah'])
 
-
 	def test_term_scores_background(self):
 		hamlet = self.get_hamlet()
-		df = hamlet.get_kessler_scores_vs_background(
+		df = hamlet.get_scaled_f_score_scores_vs_background(
 			scaler_algo='normcdf'
 		)
-		self.assertEqual(list(df.sort_values(by='kessler', ascending=False).index[:3]),
+		self.assertEqual(list(df.sort_values(by='scaled_f_score', ascending=False).index[:3]),
 		                 ['hamlet', 'polonius', 'horatio'])
 
 		df = hamlet.get_rudder_scores_vs_background()
@@ -76,15 +71,16 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.sort_values(by='Log Posterior Mean Ratio', ascending=False).index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
-		# to do: come up with faster way of testing fisher
-		#df = hamlet.get_fisher_scores_vs_background()
-		#self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
-		#                 ['voltimand', 'knavish', 'mobled'])
+	# to do: come up with faster way of testing fisher
+	# df = hamlet.get_fisher_scores_vs_background()
+	# self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
+	#                 ['voltimand', 'knavish', 'mobled'])
 
 	def test_log_reg(self):
 		hamlet = self.get_hamlet()
 		df = hamlet.get_term_freq_df()
-		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs('hamlet')
+		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet')
+		l1scores, acc, baseline = hamlet.get_logistic_regression_coefs_l1('hamlet')
 		self.assertGreaterEqual(acc, 0)
 		self.assertGreaterEqual(baseline, 0)
 		self.assertGreaterEqual(1, acc)
@@ -95,7 +91,7 @@ class TestTermDocMat(TestCase):
 	def get_hamlet(self):
 		cwd = os.path.dirname(os.path.abspath(__file__))
 		path = os.path.join(cwd, '..', 'data', 'hamlet.txt')
-		hamlet = TermDocMatrix.build_from_category_whitespace_delimited_text(
+		hamlet = build_from_category_whitespace_delimited_text(
 			[('hamlet' if 'hamlet' in text.lower() else 'not hamlet', text) for i, text in
 			 enumerate(open(path).read().split('\n\n'))]
 		)

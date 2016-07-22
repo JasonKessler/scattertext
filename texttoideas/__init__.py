@@ -1,14 +1,12 @@
 import json
-import os
-import re
 
-import numpy as np
 from spacy.en import English
 
 from texttoideas import IndexStore
 from texttoideas.CSRMatrixFactory import CSRMatrixFactory
 from texttoideas.IndexStore import IndexStore
 from texttoideas.TermDocMatrix import *
+
 
 def convention_speech_iter():
 	cwd = os.path.dirname(os.path.abspath(__file__))

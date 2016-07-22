@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(name='text-to-ideas',
-      version='0.0.1',
-      description='The funniest joke in the world',
-      url='https://github.com/JasonKessler/text-sto-ideas',
+      version='0.0.1.1',
+      description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
+      url='https://github.com/JasonKessler/text-to-ideas',
       author='Jason Kessler',
       author_email='jason.kessler@gmail.com',
       license='MIT',
@@ -19,5 +19,11 @@ setup(name='text-to-ideas',
 	      'matplotlib',
 	      #'seaborn',
 	      'jupyter',
+
       ],
+      package_data={
+	      'texttoideas': ['texttoideas/data/*']
+      },
+			test_suite="test",
+			setup_requires=['nose>=1.0'],
       zip_safe=False)

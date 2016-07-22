@@ -5,15 +5,18 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
+from pandas.core.common import SettingWithCopyWarning
 from scipy.stats import hmean, fisher_exact, rankdata, norm, gmean
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import RidgeClassifierCV, LassoCV, Lasso, ElasticNetCV
 from sklearn.model_selection import cross_val_predict
 from spacy.tokens.doc import Doc
 
 from texttoideas import CSRMatrixFactory
 from texttoideas.IndexStore import IndexStore
 
+import warnings
+warnings.simplefilter(action = "ignore", category=SettingWithCopyWarning)
 
 def build_from_category_spacy_doc_iter(category_doc_iter, use_lemmas=True):
 	'''
@@ -156,7 +159,7 @@ class TermDocMatrix:
 		posterior_mean = (1. + a) / (1. + a + b + beta)
 		return posterior_mean
 
-	def get_logistic_regression_coefs(self, category):
+	def get_logistic_regression_coefs_l2(self, category):
 		'''
 		:param category: str category name
 		:return: tuple (coefficient array, accuracy, majority class baseline accuracy)
@@ -170,17 +173,32 @@ class TermDocMatrix:
 		baseline = max([sum(y), len(y) - sum(y)]) * 1. / len(y)
 		return clf.coef_[0], acc, baseline
 
-	def get_kessler_scores(self, category, scaler_algo='normcdf'):
+	def get_logistic_regression_coefs_l1(self, category):
+		'''
+		:param category: str category name
+		:return: tuple (coefficient array, accuracy, majority class baseline accuracy)
+		'''
+		y_bool = self._get_mask_from_category(category)
+		y = 1000 * (y_bool * 2. - 1)
+		X = TfidfTransformer().fit_transform(self._X)
+		clf = LassoCV(alphas=[0.1, 0.5, 1, 5])
+		clf.fit(X, y)
+		y_hat = (cross_val_predict(clf, X, y) > 0)
+		acc = sum(y_hat == y_bool)*1./len(y)
+		baseline = max([sum(y_bool), len(y_bool) - sum(y_bool)]) * 1. / len(y)
+		return clf.coef_, acc, baseline
+
+	def get_scaled_f_scores(self, category, scaler_algo='normcdf'):
 		'''
 		:param category: str category name
 		:param scaler_algo: function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'
 		:return: array of harmonic means of scaled P(word|category) and scaled P(category|word)
 		'''
 		cat_word_counts, not_cat_word_counts = self._get_catetgory_and_non_category_word_counts(category)
-		scores = self._get_kessler_scores_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo)
+		scores = self._get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo)
 		return np.array(scores)
 
-	def _get_kessler_scores_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo):
+	def _get_scaled_f_score_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo):
 		scaler = self._get_scaler_function(scaler_algo)
 		p_word_given_category = cat_word_counts.astype(np.float64) / cat_word_counts.sum()
 		p_category_given_word = cat_word_counts.astype(np.float64) / (cat_word_counts + not_cat_word_counts)
@@ -221,23 +239,26 @@ class TermDocMatrix:
 		elif scaler_algo == 'normcdf':
 			# scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)
 			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
+		elif scaler_algo == 'none':
+			# scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)
+			scaler = lambda x: x
 		else:
 			raise InvalidScalerException("Invalid scaler_alog.  Must be either percentile or normcdf.")
 		return scaler
 
-	def get_fisher_scores(self, category, test_func=fisher_exact):
+	def get_fisher_scores(self, category):
 		cat_word_counts, not_cat_word_counts = self._get_catetgory_and_non_category_word_counts(category)
-		return self._get_fisher_scores_from_counts(cat_word_counts, not_cat_word_counts, test_func)
+		return self._get_fisher_scores_from_counts(cat_word_counts, not_cat_word_counts)
 
-	def get_fisher_scores_vs_background(self, test_func=fisher_exact):
+	def get_fisher_scores_vs_background(self):
 		'''
 		:return: pd.DataFrame of fisher scores vs background
 		'''
 		df = self._get_corpus_joined_to_background()
 		odds_ratio, p_values = self._get_fisher_scores_from_counts(
-			df['corpus'], df['background'], test_func=test_func)
+			df['corpus'], df['background'])
 		df['Odds ratio'] = odds_ratio
-		df['Bonferroni-corrected p-values'] = p_values * len(df.dropna())
+		df['Bonferroni-corrected p-values'] = p_values * len(df)
 		return df
 
 	def get_posterior_mean_ratio_scores_vs_background(self):
@@ -254,12 +275,12 @@ class TermDocMatrix:
 		not_cat_word_counts = self._X[self._y != self._category_idx_store.getidx(category)].sum(axis=0).A1
 		return cat_word_counts, not_cat_word_counts
 
-	def _get_fisher_scores_from_counts(self, cat_word_counts, not_cat_word_counts, test_func):
+	def _get_fisher_scores_from_counts(self, cat_word_counts, not_cat_word_counts):
 		cat_not_word_counts = cat_word_counts.sum() - cat_word_counts
 		not_cat_not_word_counts = not_cat_word_counts.sum() - not_cat_word_counts
 
 		def do_fisher_exact(x):
-			return test_func([[x[0], x[1]], [x[2], x[3]]], alternative='greater')
+			return fisher_exact([[x[0], x[1]], [x[2], x[3]]], alternative='greater')
 
 		odds_ratio, p_values = np.apply_along_axis(
 			do_fisher_exact,
@@ -297,16 +318,16 @@ class TermDocMatrix:
 		                      names=['word', 'background'])
 		        .set_index('word'))
 
-	def get_kessler_scores_vs_background(self, scaler_algo='percentile'):
+	def get_scaled_f_score_scores_vs_background(self, scaler_algo='percentile'):
 		'''
-		:param scaler_algo: see get_kessler_scores
-		:return: returns dataframe of kessler scores compared to background corpus
+		:param scaler_algo: see get_scaled_f_score_scores
+		:return: returns dataframe of scaled_f_score scores compared to background corpus
 		'''
 		df = self._get_corpus_joined_to_background()
-		df['kessler'] = self._get_kessler_scores_from_counts(
+		df['scaled_f_score'] = self._get_scaled_f_score_from_counts(
 			df['corpus'], df['background'], scaler_algo
 		)
-		return df.sort_values(by='kessler', ascending=False)
+		return df.sort_values(by='scaled_f_score', ascending=False)
 
 	def _get_rudder_scores_for_percentile_pair(self, category_percentiles, not_category_percentiles):
 		return np.linalg.norm(np.array([1, 0]) - zip(category_percentiles, not_category_percentiles),
