@@ -9,7 +9,7 @@ from pandas.core.common import SettingWithCopyWarning
 from scipy.stats import hmean, fisher_exact, rankdata, norm, gmean
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import RidgeClassifierCV, LassoCV, Lasso, ElasticNetCV
-from sklearn.model_selection import cross_val_predict
+from sklearn.cross_validation import cross_val_predict
 from spacy.tokens.doc import Doc
 
 from texttoideas import CSRMatrixFactory
