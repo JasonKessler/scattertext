@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='text-to-ideas',
-      version='0.0.1.1',
+      version='0.0.1.2',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
       url='https://github.com/JasonKessler/text-to-ideas',
       author='Jason Kessler',
