@@ -5,7 +5,7 @@ The documentation (including this readme) is a work in progress.  Do look throug
 
 There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
 
-In the mean time, here's an example of on of the things the tool can do-- a chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click [here](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/fig.html) for an interactive version.
+In the mean time, here's an example of on of the things the tool can do-- a chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click [here](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/fig.html) for an interactive version.
 
 
 ![Differences in 2012 American Political Convention Speeches](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/screen_shot.png)
