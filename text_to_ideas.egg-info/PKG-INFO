@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: text-to-ideas
+Version: 0.0.1.3
+Summary: An NLP libarary to help find interesting terms in small to medium-sized corpora.
+Home-page: https://github.com/JasonKessler/text-to-ideas
+Author: Jason Kessler
+Author-email: jason.kessler@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

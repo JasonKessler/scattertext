@@ -1,0 +1,9 @@
+nose
+numpy
+scipy
+sklearn
+pandas
+spacy
+mpld3
+matplotlib
+jupyter
