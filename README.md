@@ -20,7 +20,11 @@ Please see the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%
 
 ![Differences in 2012 American Political Convention Speeches](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/screen_shot.png)
 
-Sources:
+## understand
+
+Please see this [deck](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
+
+## sources
 * Political data: scraped from www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0
 * count_1w: Peter Norvig assembled this file (downloaded at http://norvig.com/ngrams/count_1w.txt). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
 * hamlet.txt: William Shakespeare. From http://shakespeare.mit.edu/hamlet/full.html
