@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640">
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen">
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>Scattertext by JasonKessler</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/JasonKessler/scattertext">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>Scattertext</h1>
+            <h2>An NLP tool for finding and visualizing characteristic terms in small-to-medium-sized corpora.</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/JasonKessler/scattertext/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/JasonKessler/scattertext/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>installation</h2>
+
+<p>$ pip install scattertext</p>
+
+<p>(a python 3 version is coming soon)</p>
+
+<h2>
+<a id="about" class="anchor" href="#about" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>about</h2>
+
+<p>The documentation (including this readme) is a work in progress.  Do look through the Jupyter <a href="https://jasonkessler.github.io/20%20Newsgroup%20Demo.html">notebook</a> and the test suite for instructions on how to use this package.</p>
+
+<p>There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.</p>
+
+<p>In the meantime, here's an example of on of the things the tool can do-- a scatter chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click <a href="https://jasonkessler.github.io/fig.html">here</a> for an interactive version.</p>
+
+<p>Please see the Jupyter <a href="https://jasonkessler.github.io/20%20Newsgroup%20Demo.html">notebook</a> for a tutorial, using the traditional 20 Newsgroup dataset.</p>
+
+<p><img src="https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/screen_shot.png" alt="Differences in 2012 American Political Convention Speeches"></p>
+
+<h2>
+<a id="understand" class="anchor" href="#understand" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>understand</h2>
+
+<p>Please see this <a href="https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas">deck</a> for an introduction to the metrics and algorithms used.</p>
+
+<h2>
+<a id="sources" class="anchor" href="#sources" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>sources</h2>
+
+<ul>
+<li>Political data: scraped from <a href="http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0">www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0</a>
+</li>
+<li>count_1w: Peter Norvig assembled this file (downloaded at <a href="http://norvig.com/ngrams/count_1w.txt">http://norvig.com/ngrams/count_1w.txt</a>). See <a href="http://norvig.com/ngrams/">http://norvig.com/ngrams/</a> for an explanation of how it was gathered from a very large corpus.</li>
+<li>hamlet.txt: William Shakespeare. From <a href="http://shakespeare.mit.edu/hamlet/full.html">http://shakespeare.mit.edu/hamlet/full.html</a>
+</li>
+<li>Inspiration for text scatter plots: Rudder, C. (2014). Dataclysm: Who we are when we think no one's looking.</li>
+</ul>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/JasonKessler">JasonKessler</a> can be found on <a href="https://github.com/JasonKessler/scattertext">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="https://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
