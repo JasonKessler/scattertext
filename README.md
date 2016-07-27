@@ -1,13 +1,13 @@
 # scattertext
 A tool for finding distinguishing terms in small-to-medium-sized corpora
 
-The documentation (including this readme) is a work in progress.  Do look through the Jupyter ![notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.
+The documentation (including this readme) is a work in progress.  Do look through the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.
 
 There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
 
 In the mean time, here's an example of on of the things the tool can do-- a scatter chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click [here](https://jasonkessler.github.io/fig.html) for an interactive version.
 
-Please see the Jupyter ![notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) for a tutorial, using the traditional 20 Newsgroup dataset.
+Please see the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) for a tutorial, using the traditional 20 Newsgroup dataset.
 
 
 ![Differences in 2012 American Political Convention Speeches](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/screen_shot.png)
