@@ -1,13 +1,13 @@
 from setuptools import setup
 
-setup(name='text-to-ideas',
-      version='0.0.1.3',
+setup(name='scattertext',
+      version='0.0.1.4',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
-      url='https://github.com/JasonKessler/text-to-ideas',
+      url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
       author_email='jason.kessler@gmail.com',
       license='MIT',
-      packages=['texttoideas'],
+      packages=['scattertext'],
       install_requires=[
 	      'nose',
 	      'numpy',
@@ -19,10 +19,9 @@ setup(name='text-to-ideas',
 	      'matplotlib',
 	      #'seaborn',
 	      'jupyter',
-
       ],
       package_data={
-	      'texttoideas': ['texttoideas/data/*']
+	      'scattertext': ['data/*']
       },
 			test_suite="test",
 			setup_requires=['nose>=1.0'],
