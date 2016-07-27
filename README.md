@@ -1,6 +1,14 @@
 # scattertext
 A tool for finding distinguishing terms in small-to-medium-sized corpora
 
+## installation
+
+$ pip install scattertext
+
+(a python 3 version is coming soon)
+
+## about 
+
 The documentation (including this readme) is a work in progress.  Do look through the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.
 
 There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
