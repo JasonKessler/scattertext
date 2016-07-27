@@ -1,13 +1,13 @@
-# scattertext
+# Scattertext
 A tool for finding distinguishing terms in small-to-medium-sized corpora
 
-## installation
+## Installation
 
-$ pip install scattertext
+`$ pip install scattertext`
 
 (a python 3 version is coming soon)
 
-## about 
+## About 
 
 The documentation (including this readme) is a work in progress.  Do look through the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.
 
@@ -20,12 +20,12 @@ Please see the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%
 
 ![Differences in 2012 American Political Convention Speeches](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/screen_shot.png)
 
-## understand
+## Understand
 
 Please see this [deck](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
-## sources
-* Political data: scraped from www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0
-* count_1w: Peter Norvig assembled this file (downloaded at http://norvig.com/ngrams/count_1w.txt). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
-* hamlet.txt: William Shakespeare. From http://shakespeare.mit.edu/hamlet/full.html
+## Sources
+* Political data: scraped from [here](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
+* count_1w: Peter Norvig assembled this file (downloaded from [norvig.com](http://norvig.com/ngrams/count_1w.txt)). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
+* hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
 * Inspiration for text scatter plots: Rudder, C. (2014). Dataclysm: Who we are when we think no one's looking.
