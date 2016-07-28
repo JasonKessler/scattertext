@@ -3,7 +3,8 @@ from unittest import TestCase
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from scattertext import CSRMatrixFactory
+import scattertext
+from scattertext.CSRMatrixTools import CSRMatrixFactory
 
 
 class TestCSRMatrixFactory(TestCase):
@@ -21,4 +22,10 @@ class TestCSRMatrixFactory(TestCase):
 		a = csr_matrix(np.array([[0, 1, 3, 0, 1, 0],
 		                         [0, 0, 1, 0, 1, 1],
 		                         [0, 5, 1, 0, 5, 5]]))
-
+		b = scattertext.CSRMatrixTools.delete_columns(a, [0, 3])
+		desired_array = np.array([[1, 3, 1, 0],
+		                          [0, 1, 1, 1],
+		                          [5, 1, 5, 5]])
+		self.assertEqual(type(b), csr_matrix)
+		np.testing.assert_array_almost_equal(b.todense(), desired_array)
+		self.assertEqual(a.shape, (3,6))

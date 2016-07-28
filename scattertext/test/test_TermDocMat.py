@@ -1,8 +1,8 @@
 import os
+import pkgutil
 from unittest import TestCase
 
 import numpy as np
-import pkgutil
 
 from scattertext.TermDocMatrix import InvalidScalerException
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
@@ -11,7 +11,11 @@ from scattertext.TermDocMatrixFactory import build_from_category_whitespace_deli
 class TestTermDocMat(TestCase):
 	@classmethod
 	def setUp(cls):
-		cls.tdm = build_from_category_whitespace_delimited_text(
+		cls.tdm = TestTermDocMat.make_a_test_term_doc_matrix()
+
+	@classmethod
+	def make_a_test_term_doc_matrix(cls):
+		return build_from_category_whitespace_delimited_text(
 			[
 				['a', '''hello my name is joe.
 				i've got a wife and three kids and i'm working.
@@ -32,6 +36,18 @@ class TestTermDocMat(TestCase):
 		                      .sort_values('a freq', ascending=False)
 		                      [:3]['a freq']),
 		                 [2, 2, 1])
+
+	def test_remove_terms(self):
+		tdm = self.make_a_test_term_doc_matrix()
+		with self.assertRaises(KeyError):
+			tdm.remove_terms(['elephant'])
+		tdm_removed = tdm.remove_terms(['hello', 'this', 'is'])
+		removed_df = tdm_removed.get_term_freq_df()
+		df = tdm.get_term_freq_df()
+		self.assertEqual(tdm_removed.get_num_docs(), tdm.get_num_docs())
+		self.assertEqual(len(removed_df), len(df) - 3)
+		self.assertNotIn('hello', removed_df.index)
+		self.assertIn('hello', df.index)
 
 	def test_term_scores(self):
 		df = self.tdm.get_term_freq_df()
@@ -79,10 +95,10 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
-		# to do: come up with faster way of testing fisher
-		# df = hamlet.get_fisher_scores_vs_background()
-		# self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
-		#                 ['voltimand', 'knavish', 'mobled'])
+	# to do: come up with faster way of testing fisher
+	# df = hamlet.get_fisher_scores_vs_background()
+	# self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
+	#                 ['voltimand', 'knavish', 'mobled'])
 
 	def test_log_reg(self):
 		hamlet = self.get_hamlet_term_doc_matrix()

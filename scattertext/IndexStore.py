@@ -34,19 +34,27 @@ class IndexStore:
 	def items(self):
 		return enumerate(self._i2val)
 
-	def batch_delete(self, values):
+	def batch_delete_vals(self, values):
 		idx_delete_list = []
 		for val in values:
 			if not self._hasval(val):
 				raise KeyError(str(val) + ' not found')
 			idx_delete_list.append(self.getidx(val))
+		return self.batch_delete_idx(idx_delete_list)
+
+	def batch_delete_idx(self, idx_list):
 		new_idxstore = IndexStore()
 		last_idx_to_delete = -1
-		for idx_to_delete in sorted(idx_delete_list):
+		number_of_values = self.getnumvals()
+		for idx_to_delete in sorted(idx_list):
+			if idx_to_delete >= number_of_values:
+				raise ValueError('index ' + str(idx_to_delete) + ' not found')
 			new_idxstore._i2val += self._i2val[last_idx_to_delete + 1:idx_to_delete]
 			last_idx_to_delete = idx_to_delete
+		new_idxstore._i2val += self._i2val[last_idx_to_delete + 1:]
 		new_idxstore._val2i = {val: i for i, val in enumerate(new_idxstore._i2val)}
 		new_idxstore._next_i = len(new_idxstore._val2i)
+
 		return new_idxstore
 
 	def _regenerate_val2i_and_next_i(self):

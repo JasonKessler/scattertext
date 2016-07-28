@@ -27,7 +27,6 @@ def mock_nlp(doc):
 	return Doc([toks])
 
 class TestTermDocMatrixFactory(TestCase):
-
 	def test_build(self):
 		documents = [u"What art thou that usurp'st this time of night,",
 		             u'Together with that fair and warlike form',

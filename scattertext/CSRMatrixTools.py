@@ -2,7 +2,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 
-
 class CSRMatrixFactory:
 	def __init__(self):
 		self.rows = []
@@ -31,3 +30,20 @@ class CSRMatrixFactory:
 		return csr_matrix((self.data, (self.rows, self.cols)),
 		                  shape=(self._max_row + 1, self._max_col + 1),
 		                  dtype=np.int32)
+
+
+def delete_columns(mat, columns_to_delete):
+	'''
+	:param mat: csr_matrix
+	:param columns_to_delete: list[int]
+	:return: csr_matrix that is stripped of columns indices columns_to_delete
+
+	>>> a = csr_matrix(np.array([[0, 1, 3, 0, 1, 0],
+		                           [0, 0, 1, 0, 1, 1]])
+	>>> delete_columns(a, [1,2]).todense()
+	matrix([[0, 0, 1, 0],
+          [0, 0, 1, 1]])
+	'''
+	column_mask = np.ones(mat.shape[1], dtype=bool)
+	column_mask[columns_to_delete] = 0
+	return mat.tocsc()[:, column_mask].tocsr()

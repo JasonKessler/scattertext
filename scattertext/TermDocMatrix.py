@@ -11,6 +11,8 @@ from sklearn.cross_validation import cross_val_predict
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
+from scattertext.CSRMatrixTools import delete_columns
+
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 
@@ -47,6 +49,26 @@ class TermDocMatrix:
 		for i, category in self._category_idx_store.items():
 			d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
 		return pd.DataFrame(d).set_index('term')
+
+	def remove_terms(self, terms):
+		'''
+		:param terms: list of terms to remove
+		:return: TermDocMatrix : new object with terms removed.
+
+		This procedure is non-desctructive.
+		'''
+		idx_to_delete_list = []
+		for term in terms:
+			if term not in self._term_idx_store:
+				raise KeyError('Term %s not found' % (term))
+			idx_to_delete_list.append(self._term_idx_store.getidx(term))
+		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
+		new_X = delete_columns(self._X, idx_to_delete_list)
+		return TermDocMatrix(X=new_X,
+		                     y=self._y,
+		                     term_idx_store=new_term_idx_store,
+		                     category_idx_store=self._category_idx_store,
+		                     unigram_frequency_path=self._unigram_frequency_path)
 
 	def get_posterior_mean_ratio_scores(self, category):
 		'''

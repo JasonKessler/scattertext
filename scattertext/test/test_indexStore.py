@@ -2,7 +2,6 @@ from unittest import TestCase
 
 from scattertext.IndexStore import IndexStore
 
-
 class TestIndexStore(TestCase):
 	def test_main(self):
 		index_store = IndexStore()
@@ -19,15 +18,15 @@ class TestIndexStore(TestCase):
 		self.assertEqual(index_store.getnumvals(), 2)
 		self.assertEqual(list(index_store.items()), [(0, 'a'), (1, 'b')])
 
-	def test_batch_delete_copy(self):
+	def test_batch_delete(self):
 		index_store = IndexStore()
 		self.assertEqual(index_store.getidx('a'), 0)
 		self.assertEqual(index_store.getidx('b'), 1)
 		self.assertEqual(index_store.getidx('c'), 2)
 		self.assertEqual(index_store.getidx('d'), 3)
 		with self.assertRaises(KeyError):
-			new_idx_store = index_store.batch_delete(['e', 'c'])
-		new_idx_store = index_store.batch_delete(['b','c'])
+			new_idx_store = index_store.batch_delete_vals(['e', 'c'])
+		new_idx_store = index_store.batch_delete_vals(['b','c'])
 		self.assertEqual(new_idx_store.getidx('a'), 0)
 		self.assertEqual(new_idx_store.getidx('c'), 1)
 		self.assertEqual(new_idx_store.getidx('e'), 2)
@@ -35,3 +34,23 @@ class TestIndexStore(TestCase):
 		self.assertEqual(index_store.getidx('c'), 2)
 		self.assertEqual(index_store.getidx('b'), 1)
 		self.assertEqual(index_store.getidx('a'), 0)
+		with self.assertRaises(ValueError):
+			new_idx_store = index_store.batch_delete_idx([5, 1])
+		new_idx_store = index_store.batch_delete_idx([2, 1])
+		self.assertEqual(new_idx_store.getidx('a'), 0)
+		self.assertEqual(new_idx_store.getidx('c'), 1)
+		self.assertEqual(new_idx_store.getidx('e'), 2)
+
+	def test_batch_delete_extra(self):
+		index_store = IndexStore()
+		self.assertEqual(index_store.getidx('a'), 0)
+		self.assertEqual(index_store.getidx('b'), 1)
+		self.assertEqual(index_store.getidx('c'), 2)
+		self.assertEqual(index_store.getidx('d'), 3)
+		self.assertEqual(index_store.getidx('e'), 4)
+		self.assertEqual(index_store.getidx('f'), 5)
+		del_idxstore = index_store.batch_delete_vals(['b', 'e'])
+		self.assertEqual(list(del_idxstore.items()), [(0, 'a'), (1, 'c'), (2, 'd'), (3, 'f')])
+
+		del_idxstore2 = del_idxstore.batch_delete_vals([])
+		self.assertEqual(list(del_idxstore.items()), list(del_idxstore2.items()))
