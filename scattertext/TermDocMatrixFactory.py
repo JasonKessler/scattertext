@@ -5,15 +5,14 @@ import numpy as np
 import spacy
 from spacy.tokens.doc import Doc
 
-from scattertext.CSRMatrixFactory import CSRMatrixFactory
+from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class TermDocMatrixFactory:
 	def __init__(self,
-	             category_iter,
-	             text_iter,
+	             category_text_iter,
 	             clean_function=lambda x: x,
 	             nlp = None,
 	             use_lemmas = False
@@ -26,13 +25,9 @@ class TermDocMatrixFactory:
 
 		   Parameters
 		   ----------
-		   text_iter : iter<unicode>
-		       An iterator that iterates through the unicode text of each
-		        document
-		   category_iter : iter<str>
-		       An iterator the same size as text iter that gives a string or
-		       unicode name of each document catgory.  Defaults to the
-		       identity function
+		   category_text_iter : iter<str: category, unicode: document)>
+		       An iterator of pairs. The first element is a string category
+		       name, the second the text of a document.
 		   clean_function : function (default lambda x: x)
 		       A function that takes a unicode document and returns
 		       a cleaned version of that document
@@ -56,7 +51,7 @@ class TermDocMatrixFactory:
 		       unicode name of each document catgory
 		   Examples
 		   --------
-		   >>> import scattertext as TI
+		   >>> import scattertext as ST
 		   >>> documents = [u"What art thou that usurp'st this time of night,",
 		    u'Together with that fair and warlike form',
 		    u'In which the majesty of buried Denmark',
@@ -69,15 +64,13 @@ class TermDocMatrixFactory:
 		    ]
 		   >>> categories = ['hamlet'] * 4 + ['jay-z/r. kelly'] * 5
 		   >>> clean_function = lambda text: '' if text.startswith('[') else text
-		   >>> term_doc_mat = TI.TermDocMatrixFactory(
-		    category_iter = categories,
-		    iter_text = documents,
+		   >>> term_doc_mat = ST.TermDocMatrixFactory(
+		    category_text_iter = zip(categories, documents),
 		    clean_function = clean_function
 		   ).build()
 
 		"""
-		self._category_iter = category_iter
-		self._text_iter = text_iter
+		self._category_text_iter = category_text_iter
 		self._clean_function = clean_function
 		self._nlp = nlp
 		self._use_lemmas = use_lemmas
@@ -97,7 +90,7 @@ class TermDocMatrixFactory:
 		category_document_iter = (
 			(category, self._clean_function(raw_text))
 			for category, raw_text
-			in zip(self._category_iter, self._text_iter)
+			in self._category_text_iter
 		)
 		term_doc_matrix = self._build_from_category_spacy_doc_iter(
 			(
@@ -111,8 +104,13 @@ class TermDocMatrixFactory:
 
 	def _build_from_category_spacy_doc_iter(self, category_doc_iter):
 		'''
-		:param category_doc_iter: iterator of (string category name, spacy.tokens.doc.Doc) pairs
-		:return: TermDocMatrix
+		Parameters
+		----------
+		category_doc_iter : iterator of (string category name, spacy.tokens.doc.Doc) pairs
+
+		Returns
+		----------
+		t : TermDocMatrix
 		'''
 		y = []
 		X_factory = CSRMatrixFactory()
@@ -141,7 +139,6 @@ class TermDocMatrixFactory:
 		                     y=np.array(y),
 		                     term_idx_store=term_idx_store,
 		                     category_idx_store=category_idx_store)
-
 
 
 def build_from_category_whitespace_delimited_text(category_text_iter):

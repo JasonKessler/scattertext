@@ -42,10 +42,11 @@ class TestTermDocMatrixFactory(TestCase):
 		categories = ['hamlet'] * 4 + ['jay-z/r. kelly'] * 5
 		clean_function = lambda text: '' if text.startswith('[') else text
 		term_doc_mat = TermDocMatrixFactory(
-			category_iter=categories,
-			text_iter=documents,
+			category_text_iter=zip(categories, documents),
 			clean_function=clean_function,
 			nlp=mock_nlp
 		).build()
 		self.assertEqual(term_doc_mat.get_num_docs(), 8)
 		self.assertEqual(term_doc_mat.get_categories(), ['hamlet', 'jay-z/r. kelly'])
+
+

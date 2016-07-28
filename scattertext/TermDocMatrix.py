@@ -1,7 +1,7 @@
 import pkgutil
 import re
 import warnings
-from StringIO import StringIO
+from io import StringIO
 
 import numpy as np
 import pandas as pd
@@ -93,24 +93,30 @@ class TermDocMatrix:
 		clf = RidgeClassifierCV()
 		clf.fit(X, y)
 		y_hat = cross_val_predict(clf, X, y)
+		acc, baseline = self._get_accuracy_and_baseline_accuracy(y, y_hat)
+		return clf.coef_[0], acc, baseline
+
+	def _get_accuracy_and_baseline_accuracy(self, y, y_hat):
 		acc = sum(y_hat == y) * 1. / len(y)
 		baseline = max([sum(y), len(y) - sum(y)]) * 1. / len(y)
-		return clf.coef_[0], acc, baseline
+		return acc, baseline
 
 	def get_logistic_regression_coefs_l1(self, category):
 		'''
 		:param category: str category name
 		:return: tuple (coefficient array, accuracy, majority class baseline accuracy)
 		'''
-		y_bool = self._get_mask_from_category(category)
-		y = 1000 * (y_bool * 2. - 1)
+		y = self._get_mask_from_category(category)
+		y_continuous = self._get_continuous_version_boolean_y(y)
 		X = TfidfTransformer().fit_transform(self._X)
 		clf = LassoCV(alphas=[0.1, 0.5, 1, 5])
-		clf.fit(X, y)
-		y_hat = (cross_val_predict(clf, X, y) > 0)
-		acc = sum(y_hat == y_bool) * 1. / len(y)
-		baseline = max([sum(y_bool), len(y_bool) - sum(y_bool)]) * 1. / len(y)
+		clf.fit(X, y_continuous)
+		y_hat = (cross_val_predict(clf, X, y_continuous) > 0)
+		acc, baseline = self._get_accuracy_and_baseline_accuracy(y, y_hat)
 		return clf.coef_, acc, baseline
+
+	def _get_continuous_version_boolean_y(self, y_bool):
+		return 1000 * (y_bool * 2. - 1)
 
 	def get_scaled_f_scores(self,
 	                        category,
@@ -247,7 +253,8 @@ class TermDocMatrix:
 		if self._unigram_frequency_path:
 			unigram_freq_table_buf = open(self._unigram_frequency_path)
 		else:
-			unigram_freq_table_buf = StringIO(pkgutil.get_data('scattertext', 'data/count_1w.txt'))
+			unigram_freq_table_buf = StringIO(pkgutil.get_data('scattertext', 'data/count_1w.txt')
+			                                  .decode('utf-8'))
 		return (pd.read_table(unigram_freq_table_buf,
 		                      names=['word', 'background'])
 		        .set_index('word'))

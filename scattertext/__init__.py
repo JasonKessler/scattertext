@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import json
 import os
 import pkgutil
@@ -5,11 +7,10 @@ import re
 
 from spacy.en import English
 
-from scattertext import IndexStore, CSRMatrixFactory, TermDocMatrix
-from scattertext.CSRMatrixFactory import CSRMatrixFactory
+from scattertext import Scalers
+from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.ScatterChart import ScatterChart
-from scattertext import Scalers
 from scattertext.TermDocMatrix import TermDocMatrix, InvalidScalerException
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
 
@@ -44,11 +45,9 @@ def iter_party_convention_speech(nlp=None):
 
 	for category_struct in convention_speech_iter():
 		category_name = category_struct['name']
-		print 'category', category_struct['name']
-		print '# speeches', len(category_struct['speeches'])
+		print('category', category_struct['name'])
+		print('# speeches', len(category_struct['speeches']))
 		for speech_raw in category_struct['speeches']:
 			clean_speech = only_speaker_text_re.sub('', speech_raw)
 			parsed_speech = nlp(clean_speech)
 			yield category_name, parsed_speech
-
-
