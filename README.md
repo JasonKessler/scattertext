@@ -5,8 +5,6 @@ A tool for finding distinguishing terms in small-to-medium-sized corpora
 
 `$ pip install scattertext`
 
-(a python 3 version is coming soon)
-
 ## About 
 
 The documentation (including this readme) is a work in progress.  Do look through the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.
