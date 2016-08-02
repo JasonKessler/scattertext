@@ -31,6 +31,8 @@ class TermDocMatrixFactory:
 		   clean_function : function (default lambda x: x)
 		       A function that takes a unicode document and returns
 		       a cleaned version of that document
+		   post_nlp_clean_function : function (default lambda x: x)
+		       A function that takes a spaCy Doc
 		   nlp : spacy.en.English (default None)
 		       The spaCy parser used to parse documents.  If it's None,
 		       the class will go through the expensive operation of
@@ -74,6 +76,7 @@ class TermDocMatrixFactory:
 		self._clean_function = clean_function
 		self._nlp = nlp
 		self._use_lemmas = use_lemmas
+		self._entity_types_to_censor = set()
 
 	def build(self):
 		"""Generate a TermDocMatrix from data in parameters.
@@ -102,6 +105,26 @@ class TermDocMatrixFactory:
 		)
 		return term_doc_matrix
 
+	def censor_entity_types(self, entity_types):
+		'''
+		Entity types to exclude from feature construction. Terms matching
+		specificed entities, instead of labeled by their lower case orthographic
+		form or lemma, will be labeled by their entity type.
+
+		Parameters
+		----------
+		entity_types : set of entity types outputted by spaCy
+		  'TIME', 'WORK_OF_ART', 'PERSON', 'MONEY', 'ORG', 'ORDINAL', 'DATE',
+		  'CARDINAL', 'LAW', 'QUANTITY', 'GPE', 'PERCENT'
+
+		Returns
+		---------
+		self
+		'''
+		assert type(entity_types) == set
+		self._entity_types_to_censor = entity_types
+		return self
+
 	def _build_from_category_spacy_doc_iter(self, category_doc_iter):
 		'''
 		Parameters
@@ -123,13 +146,16 @@ class TermDocMatrixFactory:
 				unigrams = []
 				for tok in sent:
 					if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
-						if self._use_lemmas:
-							if tok.lemma_.strip():
-								unigrams.append(tok.lemma_.strip())
+						if tok.ent_type_ in self._entity_types_to_censor:
+							unigrams.append(tok.ent_type_)
 						else:
-							if tok.lower_.strip():
-								unigrams.append(tok.lower_.strip())
-				bigrams = map(' '.join, zip(unigrams[:-1], unigrams[1:]))
+							if self._use_lemmas:
+								if tok.lemma_.strip():
+									unigrams.append(tok.lemma_.strip())
+							else:
+								if tok.lower_.strip():
+									unigrams.append(tok.lower_.strip())
+				bigrams = list(map(' '.join, zip(unigrams[:-1], unigrams[1:])))
 				for term in unigrams + bigrams:
 					term_freq[term_idx_store.getidx(term)] += 1
 			for word_idx, freq in term_freq.items():
@@ -151,15 +177,13 @@ def build_from_category_whitespace_delimited_text(category_text_iter):
 	term_idx_store = IndexStore()
 	category_idx_store = IndexStore()
 	for doci, (category, text) in enumerate(category_text_iter):
-		assert type(category) in [str, unicode]
-		assert type(text) in [str, unicode]
 		y.append(category_idx_store.getidx(category))
 		term_freq = Counter()
 		for sent in text.strip(string.punctuation).lower().split('\n'):
 			unigrams = []
 			for tok in sent.strip().split():
 				unigrams.append(tok)
-			bigrams = map(' '.join, zip(unigrams[:-1], unigrams[1:]))
+			bigrams = list(map(' '.join, zip(unigrams[:-1], unigrams[1:])))
 			for term in unigrams + bigrams:
 				term_freq[term_idx_store.getidx(term)] += 1
 		for word_idx, freq in term_freq.items():

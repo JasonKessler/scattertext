@@ -41,6 +41,11 @@ class TermDocMatrix:
 		'''
 		return len(self._y)
 
+	def get_total_unigram_count(self):
+		return self._get_corpus_unigram_freq(
+			self.get_term_freq_df().sum(axis=1)
+		).sum()
+
 	def get_term_freq_df(self):
 		'''
 		:return: pd.DataFrame indexed on terms, with columns giving frequencies for each
@@ -264,12 +269,16 @@ class TermDocMatrix:
 		background_df = self._get_background_unigram_frequencies()
 		term_freq_df = self.get_term_freq_df()
 		corpus_freq_df = pd.DataFrame({'corpus': term_freq_df.sum(axis=1)})
+		corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
+		df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
+		return df
+
+	def _get_corpus_unigram_freq(self, corpus_freq_df):
 		unigram_validator = re.compile('^[A-Za-z]+$')
 		corpus_unigram_freq = corpus_freq_df.ix[[term for term
 		                                         in corpus_freq_df.index
 		                                         if unigram_validator.match(term) is not None]]
-		df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
-		return df
+		return corpus_unigram_freq
 
 	def _get_background_unigram_frequencies(self):
 		if self._unigram_frequency_path:
@@ -294,7 +303,8 @@ class TermDocMatrix:
 		return df.sort_values(by='Scaled f-score', ascending=False)
 
 	def _get_rudder_scores_for_percentile_pair(self, category_percentiles, not_category_percentiles):
-		return np.linalg.norm(np.array([1, 0]) - zip(category_percentiles, not_category_percentiles),
+		return np.linalg.norm(np.array([1, 0])
+		                      - np.array(list(zip(category_percentiles, not_category_percentiles))),
 		                      axis=1)
 
 	def _get_term_percentiles_in_category(self, category):

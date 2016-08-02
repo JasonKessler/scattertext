@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-# from adjustText import adjust_text
 from mpld3 import plugins, fig_to_html
 from scipy.stats import rankdata
 
@@ -8,7 +7,11 @@ from scattertext.Scalers import percentile_min
 
 
 def filter_bigrams_by_pmis(word_freq_df, threshold_coef=2):
+	if len(word_freq_df.index) == 0:
+		return word_freq_df
+
 	is_bigram = np.array([' ' in word for word in word_freq_df.index])
+
 	unigram_freq = word_freq_df[~is_bigram].sum(axis=1)
 	bigram_freq = word_freq_df[is_bigram].sum(axis=1)
 	bigram_prob = bigram_freq / bigram_freq.sum()
@@ -21,6 +24,10 @@ def filter_bigrams_by_pmis(word_freq_df, threshold_coef=2):
 
 	low_pmi_bigrams = bigram_prob[bigram_prob.index.map(get_pmi) < threshold_coef * 2]
 	return word_freq_df.drop(low_pmi_bigrams.index)
+
+
+class NoWordMeetsTermFrequencyRequirementsError(Exception):
+	pass
 
 
 class ScatterChart:
@@ -40,57 +47,45 @@ class ScatterChart:
 		self.seed = seed
 		np.random.seed(seed)
 
-	def add_jitter(self, vec):
-		'''
-		:param vec: array to jitter
-		:return:
-		'''
-		if self.jitter == 0:
-			return vec
-		else:
-			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
-			return to_ret
+	def to_dict(self,
+	            category,
+	            scores=None,
+	            transform=percentile_min):
+		all_categories, other_categories = self._get_category_names(category)
+		df = self._build_dataframe_for_drawing(all_categories, category, scores)
+		df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
+			(category, df, other_categories, transform)
+		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
+		json_df = df[['x', 'y', 'term']]
+		json_df['cat25k'] = ((df[category + ' freq'] * 1. / df[category + ' freq'].sum()) * 25000)
+		json_df['ncat25k'] = ((df['not cat freq'] * 1. / df['not cat freq'].sum()) * 25000)
+		json_df['cat25k']=json_df['cat25k'].apply(np.round).astype(np.int)
+		json_df['ncat25k']=json_df['ncat25k'].apply(np.round).astype(np.int)
+		json_df['s'] = percentile_min(df['color_scores'])
+		j = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+		return j
 
 	def draw(self,
 	         category,
-
 	         num_top_words_to_annotate=4,
 	         words_to_annotate=[],
-	         scores = None,
+	         scores=None,
 	         transform=percentile_min):
+
+		all_categories, other_categories = self._get_category_names(category)
+		df = self._build_dataframe_for_drawing(all_categories, category, scores)
+		x_data, y_data = self._get_coordinates_from_transform_and_jitter_frequencies \
+			(category, df, other_categories, transform)
+		df_to_annotate = df[(df['not category score rank'] <= num_top_words_to_annotate)
+		                    | (df['category score rank'] <= num_top_words_to_annotate)
+		                    | df['term'].isin(words_to_annotate)]
+		words = list(df['term'])
 
 		font = {'family': 'sans-serif',
 		        'color': 'black',
 		        'weight': 'normal',
 		        'size': 'large'
 		        }
-		df = self.term_doc_matrix.get_term_freq_df()
-		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
-		df['not category score'] = np.sqrt(2) - np.array(self.term_doc_matrix.get_rudder_scores(category))
-		other_categories = [val + ' freq' for _, val \
-		                    in self.term_doc_matrix._category_idx_store.items() \
-		                    if val != category]
-		all_categories = other_categories + [category + ' freq']
-		df['color_scores'] = scores \
-			if scores is not None \
-			else np.array(self.term_doc_matrix.get_scaled_f_scores(category))
-
-		df = filter_bigrams_by_pmis(
-			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
-			threshold_coef=3)
-
-		df['category score rank'] = rankdata(df['category score'], method='ordinal')
-		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
-		x_data_raw = transform(df[other_categories].sum(axis=1))
-		y_data_raw = transform(df[category + ' freq'])
-		x_data = self.add_jitter(x_data_raw)
-		y_data = self.add_jitter(y_data_raw)
-		df = df.reset_index()
-		df_to_annotate = df[(df['not category score rank'] <= num_top_words_to_annotate)
-		                    | (df['category score rank'] <= num_top_words_to_annotate)
-		                    | df['term'].isin(words_to_annotate)]
-		words = list(df['term'])
-
 		fig, ax = plt.subplots()
 		plt.figure(figsize=(10, 10))
 		plt.gcf().subplots_adjust(bottom=0.2)
@@ -132,3 +127,44 @@ class ScatterChart:
 		# adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
 		plt.show()
 		return df, fig_to_html(fig)
+
+	def _get_coordinates_from_transform_and_jitter_frequencies(self, category, df, other_categories, transform):
+		x_data_raw = transform(df[other_categories].sum(axis=1))
+		y_data_raw = transform(df[category + ' freq'])
+		x_data = self._add_jitter(x_data_raw)
+		y_data = self._add_jitter(y_data_raw)
+		return x_data, y_data
+
+	def _add_jitter(self, vec):
+		'''
+		:param vec: array to jitter
+		:return:
+		'''
+		if self.jitter == 0:
+			return vec
+		else:
+			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
+			return to_ret
+
+	def _build_dataframe_for_drawing(self, all_categories, category, scores):
+		df = self.term_doc_matrix.get_term_freq_df()
+		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		df['not category score'] = np.sqrt(2) - np.array(self.term_doc_matrix.get_rudder_scores(category))
+		df['color_scores'] = scores \
+			if scores is not None \
+			else np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+		df = filter_bigrams_by_pmis(
+			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
+			threshold_coef=3)
+		if len(df) == 0: raise NoWordMeetsTermFrequencyRequirementsError()
+		df['category score rank'] = rankdata(df['category score'], method='ordinal')
+		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
+		df = df.reset_index()
+		return df
+
+	def _get_category_names(self, category):
+		other_categories = [val + ' freq' for _, val \
+		                    in self.term_doc_matrix._category_idx_store.items() \
+		                    if val != category]
+		all_categories = other_categories + [category + ' freq']
+		return all_categories, other_categories

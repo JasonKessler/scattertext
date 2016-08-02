@@ -37,6 +37,9 @@ class TestTermDocMat(TestCase):
 		                      [:3]['a freq']),
 		                 [2, 2, 1])
 
+	def test_total_unigram_count(self):
+		self.assertEqual(self.tdm.get_total_unigram_count(), 36)
+
 	def test_remove_terms(self):
 		tdm = self.make_a_test_term_doc_matrix()
 		with self.assertRaises(KeyError):

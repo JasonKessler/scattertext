@@ -28,8 +28,8 @@ class TestIndexStore(TestCase):
 			new_idx_store = index_store.batch_delete_vals(['e', 'c'])
 		new_idx_store = index_store.batch_delete_vals(['b','c'])
 		self.assertEqual(new_idx_store.getidx('a'), 0)
-		self.assertEqual(new_idx_store.getidx('c'), 1)
-		self.assertEqual(new_idx_store.getidx('e'), 2)
+		self.assertEqual(new_idx_store.getidx('c'), 2)
+		self.assertEqual(new_idx_store.getidx('e'), 3)
 		self.assertEqual(index_store.getidx('d'), 3)
 		self.assertEqual(index_store.getidx('c'), 2)
 		self.assertEqual(index_store.getidx('b'), 1)
@@ -38,8 +38,8 @@ class TestIndexStore(TestCase):
 			new_idx_store = index_store.batch_delete_idx([5, 1])
 		new_idx_store = index_store.batch_delete_idx([2, 1])
 		self.assertEqual(new_idx_store.getidx('a'), 0)
-		self.assertEqual(new_idx_store.getidx('c'), 1)
-		self.assertEqual(new_idx_store.getidx('e'), 2)
+		self.assertEqual(new_idx_store.getidx('c'), 2)
+		self.assertEqual(new_idx_store.getidx('e'), 3)
 
 	def test_batch_delete_extra(self):
 		index_store = IndexStore()

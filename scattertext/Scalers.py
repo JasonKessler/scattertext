@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import rankdata
-from statsmodels.distributions import ECDF
 
 
 def scale(vec):
@@ -28,12 +27,13 @@ def sqrt_scale_standardize(vec):
 	vec_ss = (vec_ss - vec_ss.min()) / (vec_ss.max() - vec_ss.min())
 	return vec_ss
 
-
+'''
+from statsmodels.distributions import ECDF
 def ecdf_scale_standardize(vec):
 	vec_ss = ECDF(vec)(vec)
 	vec_ss = (vec_ss - vec_ss.min()) / (vec_ss.max() - vec_ss.min())
 	return vec_ss
-
+'''
 
 def percentile(vec):
 	vec_ss = rankdata(vec, method='average') * (1. / len(vec))

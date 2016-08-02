@@ -1,11 +1,14 @@
+from __future__ import print_function
 import json
 import os
 import pkgutil
 import re
 
+from scattertext.Scalers import percentile_ordinal
+
+from scattertext import ScatterChart
 from scattertext import TermDocMatrixFactory
-
-
+from scattertext.FastButCrapNLP import fast_but_crap_nlp
 
 def clean_function_factory():
 	only_speaker_text_re = re.compile(
@@ -21,27 +24,37 @@ def clean_function_factory():
 		       ('',
 		        'ANNOUNCER: (Chanting.) USA! USA! USA! USA!\nTOM SMITH: (Chanting.) ONLY INCLUDE THIS! ONLY KEEP THIS! \nAUDIENCE MEMBER: (Chanting.) USA! USA! USA! USA!').strip() \
 	       == 'ONLY INCLUDE THIS! ONLY KEEP THIS!'
+
 	def clean_document(text):
 		return only_speaker_text_re.sub('', text)
+	return clean_document
 
 def convention_speech_iter():
-		relative_path = os.path.join('data', 'political_data.json')
+		relative_path = os.path.join('scattertext/data', 'political_data.json')
 		try:
 			cwd = os.path.dirname(os.path.abspath(__file__))
 			path = os.path.join(cwd, relative_path)
-			return json.load(path)
+			return json.load(open(path))
 		except:
-			return json.loads(pkgutil.get_data('scattertext', relative_path))
+			return json.loads(pkgutil.get_data('scattertext', relative_path).decode('utf-8'))
+
+
+def make_category_text_iter():
+	for speaker_obj in convention_speech_iter():
+		political_party = speaker_obj['name']
+		for speech in speaker_obj['speeches']:
+			yield political_party, speech
 
 def main():
-	def make_category_text_iter():
-		for speaker_obj in convention_speech_iter():
-			political_party = speaker_obj['name']
-			for speech in speaker_obj['speeches']:
-				yield political_party, speech
-
-	TermDocMatrixFactory(
+	tdm = TermDocMatrixFactory(
 		category_text_iter=make_category_text_iter(),
-		clean_function=clean_function_factory()
+		clean_function=clean_function_factory(),
+		nlp=fast_but_crap_nlp
 	).build()
+	json.dump((ScatterChart(tdm)
+	           .to_dict('democrat',
+	                    transform=percentile_ordinal)),
+	          open('demo/words.json','w'))
+	print('Take a look at demo/scattertext.html in a browser.')
+main()
 
