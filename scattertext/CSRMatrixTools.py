@@ -26,6 +26,14 @@ class CSRMatrixFactory:
 		if row > self._max_row: self._max_row = row
 		if col > self._max_col: self._max_col = col
 
+	def set_last_col_idx(self, last_col_idx):
+		'''
+		:param last_col_idx: int in number of columns
+		:return: None
+		'''
+		assert last_col_idx >= self._max_col
+		self._max_col = last_col_idx
+
 	def get_csr_matrix(self):
 		return csr_matrix((self.data, (self.rows, self.cols)),
 		                  shape=(self._max_row + 1, self._max_col + 1),

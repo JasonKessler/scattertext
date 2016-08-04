@@ -1,8 +1,12 @@
 import re
 from unittest import TestCase
 
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.linear_model import PassiveAggressiveClassifier
+
 from scattertext import TermDocMatrixFactory
 from scattertext.FastButCrapNLP import fast_but_crap_nlp, Doc, Tok
+from scattertext.TermDocMatrixFactory import FeatsFromDoc
 
 
 def build_hamlet_jz_term_doc_mat():
@@ -31,7 +35,7 @@ def get_docs_categories():
 	return categories, documents
 
 
-def testing_nlp(doc):
+def _testing_nlp(doc):
 	toks = []
 	for tok in re.split(r"(\W)", doc):
 		pos = 'WORD'
@@ -61,10 +65,34 @@ class TestTermDocMatrixFactory(TestCase):
 			TermDocMatrixFactory(
 				category_text_iter=zip(categories, documents),
 				clean_function=clean_function,
-				nlp=testing_nlp
+				nlp=_testing_nlp
 			)
 				.censor_entity_types(set(['GPE']))
 				.build()
 		)
 		self.assertIn('GPE', set(term_doc_mat.get_term_freq_df().index))
 		self.assertNotIn('brooklyn', set(term_doc_mat.get_term_freq_df().index))
+
+class TestFeatsFromDoc(TestCase):
+	def test_main(self):
+		categories, documents = get_docs_categories()
+		clean_function = lambda text: '' if text.startswith('[') else text
+		entity_types = set(['GPE'])
+		term_doc_mat = (
+			TermDocMatrixFactory(
+				category_text_iter=zip(categories, documents),
+				clean_function=clean_function,
+				nlp=_testing_nlp
+			)
+				.censor_entity_types(entity_types)
+				.build()
+		)
+		clf = PassiveAggressiveClassifier(n_iter=5, C=0.5, n_jobs=-1, random_state=0)
+		fdc = FeatsFromDoc(term_doc_mat._term_idx_store, clean_function=clean_function, entity_types=entity_types).set_nlp(_testing_nlp)
+		tfidf = TfidfTransformer(norm='l1')
+		X = tfidf.fit_transform(term_doc_mat._X)
+		clf.fit(X, term_doc_mat._y)
+		X_to_predict = fdc.feats_from_doc('Did sometimes march UNKNOWNWORD')
+		pred = clf.predict(X_to_predict)
+		dec = clf.decision_function(X_to_predict)
+

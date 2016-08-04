@@ -2,20 +2,23 @@ import string
 from collections import Counter
 
 import numpy as np
-import spacy
-from spacy.tokens.doc import Doc
+#import spacy
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 
 
+class CategoryTextIterNotSetError(Exception):
+	pass
+
+
 class TermDocMatrixFactory:
 	def __init__(self,
-	             category_text_iter,
+	             category_text_iter=None,
 	             clean_function=lambda x: x,
-	             nlp = None,
-	             use_lemmas = False
+	             nlp=None,
+	             use_lemmas=False
 	             ):
 		"""Class for easy construction of a term document matrix.
 		   This class let's you define an iterator for each document (text_iter),
@@ -27,7 +30,8 @@ class TermDocMatrixFactory:
 		   ----------
 		   category_text_iter : iter<str: category, unicode: document)>
 		       An iterator of pairs. The first element is a string category
-		       name, the second the text of a document.
+		       name, the second the text of a document.  You can also set this
+		       using the function set_category_text_iter.
 		   clean_function : function (default lambda x: x)
 		       A function that takes a unicode document and returns
 		       a cleaned version of that document
@@ -78,6 +82,38 @@ class TermDocMatrixFactory:
 		self._use_lemmas = use_lemmas
 		self._entity_types_to_censor = set()
 
+	def set_category_text_iter(self, category_text_iter):
+		"""Initializes the category_text_iter
+
+	   Paramters
+	   ----------
+	   category_text_iter : iter<str: category, unicode: document)>
+		       An iterator of pairs. The first element is a string category
+		       name, the second the text of a document.
+
+		 Returns
+		 ----------
+		 self: TermDocMatrixFactory
+		"""
+
+		self._category_text_iter = category_text_iter
+		return self
+
+	def set_nlp(self, nlp):
+		"""Adds a spaCy-compatible nlp function
+
+	   Paramters
+	   ----------
+	   nlp : spacy.en.English
+
+		 Returns
+		 ----------
+		 self: TermDocMatrixFactory
+		"""
+
+		self._nlp = nlp
+		return self
+
 	def build(self):
 		"""Generate a TermDocMatrix from data in parameters.
 
@@ -86,8 +122,11 @@ class TermDocMatrixFactory:
 		 term_doc_matrix : TermDocMatrix
 		    The object that this factory class builds.
 		"""
+		if self._category_text_iter is None:
+			raise CategoryTextIterNotSetError()
 		nlp = self._nlp
 		if nlp is None:
+			import spacy.en
 			nlp = spacy.en.English()
 
 		category_document_iter = (
@@ -135,36 +174,94 @@ class TermDocMatrixFactory:
 		----------
 		t : TermDocMatrix
 		'''
-		y = []
-		X_factory = CSRMatrixFactory()
 		term_idx_store = IndexStore()
 		category_idx_store = IndexStore()
-		for doci, (category, parsed_text) in enumerate(category_doc_iter):
-			y.append(category_idx_store.getidx(category))
-			term_freq = Counter()
-			for sent in parsed_text.sents:
-				unigrams = []
-				for tok in sent:
-					if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
-						if tok.ent_type_ in self._entity_types_to_censor:
-							unigrams.append(tok.ent_type_)
-						else:
-							if self._use_lemmas:
-								if tok.lemma_.strip():
-									unigrams.append(tok.lemma_.strip())
-							else:
-								if tok.lower_.strip():
-									unigrams.append(tok.lower_.strip())
-				bigrams = list(map(' '.join, zip(unigrams[:-1], unigrams[1:])))
-				for term in unigrams + bigrams:
-					term_freq[term_idx_store.getidx(term)] += 1
-			for word_idx, freq in term_freq.items():
-				X_factory[doci, word_idx] = freq
-
-		return TermDocMatrix(X=X_factory.get_csr_matrix(),
-		                     y=np.array(y),
+		X, y = self._get_features_and_labels_from_documents_and_indexes(category_doc_iter,
+		                                                                category_idx_store,
+		                                                                term_idx_store)
+		return TermDocMatrix(X,
+		                     y,
 		                     term_idx_store=term_idx_store,
 		                     category_idx_store=category_idx_store)
+
+	def _get_features_and_labels_from_documents_and_indexes(self,
+	                                                        category_doc_iter,
+	                                                        category_idx_store,
+	                                                        term_idx_store):
+		y = []
+		X_factory = CSRMatrixFactory()
+		for document_index, (category, parsed_text) in enumerate(category_doc_iter):
+			y.append(category_idx_store.getidx(category))
+			document_features = self._get_features_from_parsed_text(parsed_text, term_idx_store)
+			self._register_document_features_with_X_factory(X_factory, document_index, document_features)
+		X = X_factory.get_csr_matrix()
+		y = np.array(y)
+		return X, y
+
+	def _register_document_features_with_X_factory(self, X_factory, doci, term_freq):
+		for word_idx, freq in term_freq.items():
+			X_factory[doci, word_idx] = freq
+
+	def _get_features_from_parsed_text(self, parsed_text, term_idx_store):
+		term_freq = Counter()
+		for sent in parsed_text.sents:
+			unigrams = []
+			for tok in sent:
+				if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
+					if tok.ent_type_ in self._entity_types_to_censor:
+						unigrams.append(tok.ent_type_)
+					else:
+						if self._use_lemmas:
+							if tok.lemma_.strip():
+								unigrams.append(tok.lemma_.strip())
+						else:
+							if tok.lower_.strip():
+								unigrams.append(tok.lower_.strip())
+			bigrams = list(map(' '.join, zip(unigrams[:-1], unigrams[1:])))
+			self._augment_term_freq_with_unigrams_and_bigrams(bigrams, term_freq, term_idx_store, unigrams)
+		return term_freq
+
+	def _augment_term_freq_with_unigrams_and_bigrams(self, bigrams, term_freq, term_idx_store, unigrams):
+		for term in unigrams + bigrams:
+			term_freq[term_idx_store.getidx(term)] += 1
+
+
+class FeatsFromDoc(TermDocMatrixFactory):
+	def __init__(self, term_idx_store, clean_function=lambda x: x, nlp=None, use_lemmas=False, entity_types=set()):
+		"""Class for extracting features from a new document.
+
+	   Parameters
+	   ----------
+	   term_idx_store : IndexStore (index -> term)
+	   clean_function : function (default lambda x: x)
+	       A function that takes a unicode document and returns
+	       a cleaned version of that document
+	   post_nlp_clean_function : function (default lambda x: x)
+	       A function that takes a spaCy Doc
+	   nlp : spacy.en.English (default None)
+	       The spaCy parser used to parse documents.  If it's None,
+	       the class will go through the expensive operation of
+	       creating one to parse the text
+	   use_lemmas : bool (default False)
+	       Do we use the lower-cased strings or lemmas from
+	        the spaCy tokenization?
+	   """
+		TermDocMatrixFactory.__init__(self, clean_function=clean_function, nlp=nlp, use_lemmas=use_lemmas)
+		self._term_idx_store = term_idx_store
+		self._entity_types_to_censor = entity_types
+
+	def feats_from_doc(self, raw_text):
+		parsed_text = self._nlp(self._clean_function(raw_text))
+		X_factory = CSRMatrixFactory()
+		X_factory.set_last_col_idx(self._term_idx_store.getnumvals() - 1)
+		term_freq = self._get_features_from_parsed_text(parsed_text, self._term_idx_store)
+		self._register_document_features_with_X_factory(X_factory, 0, term_freq)
+		return X_factory.get_csr_matrix()
+
+	def _augment_term_freq_with_unigrams_and_bigrams(self, bigrams, term_freq, term_idx_store, unigrams):
+		for term in unigrams + bigrams:
+			if term in term_idx_store:
+				term_freq[term_idx_store.getidx(term)] += 1
 
 
 def build_from_category_whitespace_delimited_text(category_text_iter):

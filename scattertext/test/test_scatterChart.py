@@ -15,8 +15,11 @@ class TestScatterChart(TestCase):
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0)
 		     .to_dict('hamlet'))
-		expected = {"x": 0.0, "y": 0.4081632653, "term": "and", "cat25k": 758, "ncat25k": 0, 's': 0.5}
+		self.assertEqual(set(j.keys()), set(['info', 'data']))
+		self.assertEqual(set(j['info'].keys()), set(['not_category_name', 'category_name']))
+		expected = {"x": 0.0, "y": 0.42, "term": "art", "cat25k": 758, "ncat25k": 0, 's': 0.5}
+		datum = j['data'][0]
 		for var in ['x','y','cat25k','ncat25k', 's']:
-			np.testing.assert_almost_equal(expected[var], j[0][var])
-		self.assertEqual(expected.keys(), j[0].keys())
-		self.assertEqual(expected['term'], j[0]['term'])
+			np.testing.assert_almost_equal(expected[var], datum[var])
+		self.assertEqual(expected.keys(), datum.keys())
+		self.assertEqual(expected['term'], datum['term'])

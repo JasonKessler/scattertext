@@ -3,7 +3,7 @@
  */
 
 // Get the data
-d3.json('words.json', processData);
+//d3.json('words.json', processData);
 
 // Set the dimensions of the canvas / graph
 var margin = {top: 30, right: 20, bottom: 30, left: 50},
@@ -52,7 +52,10 @@ var svg = d3.select("body")
         "translate(" + margin.left + "," + margin.top + ")");
 
 
-function processData(error, data) {
+function processData(jsonObject) {
+    var modelInfo = jsonObject['info'];
+    var data = jsonObject['data'];
+    console.log(data);
     // Scale the range of the data
     x.domain([-.1, d3.max(data, function (d) {
         return d.x;
@@ -82,7 +85,8 @@ function processData(error, data) {
         .on("mouseover", function (d) {
             tooltip.transition()
                 .duration(0)
-                .style("opacity", .9);
+                .style("opacity", 1)
+                .style("z-index", 1000000);
             tooltip.html(d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
@@ -97,8 +101,6 @@ function processData(error, data) {
         var term = data[i].term;
         var curLabel = d3.select("body").append("div")
             .attr("class", "label").html(term)
-            //.style("left", (margin.left + x(data[i].x)) + 'px')
-            //.style("top", (margin.top + y(data[i].y)) + 'px');
             .style("left", x(data[i].x) + margin.left + 10 + 'px')
             .style("top", y(data[i].y) + margin.top + 8 + 'px');
         var curDiv = curLabel._groups[0][0];
@@ -119,11 +121,14 @@ function processData(error, data) {
         }
 
     }
+
+    // prevent intersections with points.. not quite working
+    /*
     for (var i = 0; i < data.length; i++) {
         var x1 = x(data[i].x) + margin.left+10;
         var y1 = y(data[i].y) + margin.top+8;
-        rangeTree = insertRangeTree(rangeTree, x1, y1, x1 - 4, y1 - 4, i);
-    }
+        rangeTree = insertRangeTree(rangeTree, x1+1, y1+1, x1 - 1, y1 - 1, i);
+    }*/
 
     //var nodes = Array.prototype.slice.call(svg.selectAll('circle')._groups[0],0);
     //console.log("NODES");console.log(nodes);
@@ -160,7 +165,7 @@ function processData(error, data) {
         .attr("text-anchor", "end")
         .attr("x", width)
         .attr("y", height - 6)
-        .text("Not Category Frequency");
+        .text(modelInfo['not_category_name'] + " Frequency");
 
     // Add the Y Axis
     svg.append("g")
@@ -178,5 +183,8 @@ function processData(error, data) {
         .attr("y", 6)
         .attr("dy", ".75em")
         .attr("transform", "rotate(-90)")
-        .text("Category Frequency");
+        .text(modelInfo['category_name'] + " Frequency");
 };
+
+// from words.js
+processData(getDataAndInfo());

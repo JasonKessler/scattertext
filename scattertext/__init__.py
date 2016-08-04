@@ -5,14 +5,12 @@ import os
 import pkgutil
 import re
 
-from spacy.en import English
-
 from scattertext import Scalers
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.ScatterChart import ScatterChart
 from scattertext.TermDocMatrix import TermDocMatrix, InvalidScalerException
-from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
+from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 
 
 def convention_speech_iter():
@@ -27,6 +25,7 @@ def convention_speech_iter():
 
 def iter_party_convention_speech(nlp=None):
 	if nlp is None:
+		from spacy.en import English
 		nlp = English()
 	only_speaker_text_re = re.compile(
 		r'((^|\n)((ANNOUNCER|AUDIENCE MEMBERS?): .+)($|\n)|(\n|^)((([A-Z\.()\- ]+): ))|\(.+\) *)',

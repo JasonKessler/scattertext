@@ -3,7 +3,7 @@ import numpy as np
 from mpld3 import plugins, fig_to_html
 from scipy.stats import rankdata
 
-from scattertext.Scalers import percentile_min
+from scattertext.Scalers import percentile_min, percentile_ordinal
 
 
 def filter_bigrams_by_pmis(word_freq_df, threshold_coef=2):
@@ -40,6 +40,7 @@ class ScatterChart:
 		:param term_doc_matrix: TermDocMatrix
 		:param jitter: float
 		:param seed: float
+		:return dataframe, html
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
@@ -49,8 +50,27 @@ class ScatterChart:
 
 	def to_dict(self,
 	            category,
+	            category_name = None,
+	            not_category_name = None,
 	            scores=None,
-	            transform=percentile_min):
+	            transform=percentile_ordinal):
+		'''
+		Returns a dictionary that encodes the scatter chart
+		information. The dictionary can be dumped as a json document, and
+		used in scattertext.html
+
+		:param category: Category to annotate
+		:param category_name: Name of category which will appear on web site.
+		:param not_category_name: Name of non-category axis which will appear on web site.
+		:param scores: Scores to use.  Default to Scaled F-Score.
+		:param transform: Defaults to percentile_ordinal
+		:return: dictionary {info: {category_name: ..., not_category_name},
+		                     data: {term:, x:frequency [0-1], y:frequency [0-1],
+		                            s: score,
+		                            cat25k: freq per 25k in category,
+		                            ncat25k: freq per 25k in non-category}}
+
+		'''
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._build_dataframe_for_drawing(all_categories, category, scores)
 		df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
@@ -62,7 +82,13 @@ class ScatterChart:
 		json_df['cat25k']=json_df['cat25k'].apply(np.round).astype(np.int)
 		json_df['ncat25k']=json_df['ncat25k'].apply(np.round).astype(np.int)
 		json_df['s'] = percentile_min(df['color_scores'])
-		j = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+		if category_name is None:
+			category_name = category
+		if not_category_name is None:
+			not_category_name = 'Not ' + category_name
+		j = {'info': {'category_name': category_name.title(),
+		              'not_category_name': not_category_name.title()}}
+		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
 	def draw(self,
@@ -70,7 +96,7 @@ class ScatterChart:
 	         num_top_words_to_annotate=4,
 	         words_to_annotate=[],
 	         scores=None,
-	         transform=percentile_min):
+	         transform=percentile_ordinal):
 
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._build_dataframe_for_drawing(all_categories, category, scores)

@@ -277,7 +277,7 @@ class TermDocMatrix:
 		unigram_validator = re.compile('^[A-Za-z]+$')
 		corpus_unigram_freq = corpus_freq_df.ix[[term for term
 		                                         in corpus_freq_df.index
-		                                         if unigram_validator.match(term) is not None]]
+		                                       if unigram_validator.match(term) is not None]]
 		return corpus_unigram_freq
 
 	def _get_background_unigram_frequencies(self):
