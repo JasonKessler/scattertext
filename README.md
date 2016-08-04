@@ -7,6 +7,8 @@ A tool for finding distinguishing terms in small-to-medium-sized corpora
 
 Installing spacy is not required, but strongly recommended.
 
+In order to use `ScatterChart.draw`, matplotlib and mpld3 need to be installed.
+
 ## About 
 
 The documentation (including this readme) is a work in progress.  Do look through the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) and the test suite for instructions on how to use this package.

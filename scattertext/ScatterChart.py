@@ -1,6 +1,4 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from mpld3 import plugins, fig_to_html
 from scipy.stats import rankdata
 
 from scattertext.Scalers import percentile_min, percentile_ordinal
@@ -97,7 +95,14 @@ class ScatterChart:
 	         words_to_annotate=[],
 	         scores=None,
 	         transform=percentile_ordinal):
-
+		try:
+			import matplotlib.pyplot as plt
+		except:
+			raise Exception("matplotlib and mpld3 need to be installed to use this function.")
+		try:
+			from mpld3 import plugins, fig_to_html
+		except:
+			raise Exception("mpld3 need to be installed to use this function.")
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._build_dataframe_for_drawing(all_categories, category, scores)
 		x_data, y_data = self._get_coordinates_from_transform_and_jitter_frequencies \

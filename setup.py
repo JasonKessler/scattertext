@@ -15,7 +15,6 @@ setup(name='scattertext',
 	      'sklearn',
 	      'pandas',
 	      #'spacy',
-
 	      #'mpld3',
 	      #'matplotlib',
 	      #'seaborn',
