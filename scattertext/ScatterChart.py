@@ -1,27 +1,8 @@
 import numpy as np
 from scipy.stats import rankdata
 
+from scattertext.PMIFiltering import filter_bigrams_by_pmis
 from scattertext.Scalers import percentile_min, percentile_ordinal
-
-
-def filter_bigrams_by_pmis(word_freq_df, threshold_coef=2):
-	if len(word_freq_df.index) == 0:
-		return word_freq_df
-
-	is_bigram = np.array([' ' in word for word in word_freq_df.index])
-
-	unigram_freq = word_freq_df[~is_bigram].sum(axis=1)
-	bigram_freq = word_freq_df[is_bigram].sum(axis=1)
-	bigram_prob = bigram_freq / bigram_freq.sum()
-	unigram_prob = unigram_freq / unigram_freq.sum()
-
-	def get_pmi(bigram):
-		return np.log(
-			bigram_prob[bigram] / np.product([unigram_prob[word] for word in bigram.split(' ')])
-		) / np.log(2)
-
-	low_pmi_bigrams = bigram_prob[bigram_prob.index.map(get_pmi) < threshold_coef * 2]
-	return word_freq_df.drop(low_pmi_bigrams.index)
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):

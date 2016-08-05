@@ -77,7 +77,7 @@ class TestTermDocMat(TestCase):
 		                 ['another', 'blah', 'blah blah'])
 
 	def test_term_scores_background(self):
-		hamlet = self.get_hamlet_term_doc_matrix()
+		hamlet = get_hamlet_term_doc_matrix()
 		df = hamlet.get_scaled_f_score_scores_vs_background(
 			scaler_algo='none'
 		)
@@ -104,7 +104,7 @@ class TestTermDocMat(TestCase):
 	#                 ['voltimand', 'knavish', 'mobled'])
 
 	def test_log_reg(self):
-		hamlet = self.get_hamlet_term_doc_matrix()
+		hamlet = get_hamlet_term_doc_matrix()
 		df = hamlet.get_term_freq_df()
 		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet')
 		l1scores, acc, baseline = hamlet.get_logistic_regression_coefs_l1('hamlet')
@@ -115,18 +115,19 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
 		                 ['hamlet', 'hamlet,', 'the'])
 
-	def get_hamlet_term_doc_matrix(self):
-		try:
-			cwd = os.path.dirname(os.path.abspath(__file__))
-			path = os.path.join(cwd, '..', 'data', 'hamlet.txt')
-			buf = open(path).read()
-		except:
-			buf = pkgutil.get_data('scattertext', os.path.join('data', 'hamlet.txt'))
 
-		hamlet_term_doc_matrix = build_from_category_whitespace_delimited_text(
-			[('hamlet'
-			  if 'hamlet' in text.lower()
-			  else 'not hamlet', text)
-			 for i, text in enumerate(buf.split('\n\n'))]
-		)
-		return hamlet_term_doc_matrix
+def get_hamlet_term_doc_matrix():
+	try:
+		cwd = os.path.dirname(os.path.abspath(__file__))
+		path = os.path.join(cwd, '..', 'data', 'hamlet.txt')
+		buf = open(path).read()
+	except:
+		buf = pkgutil.get_data('scattertext', os.path.join('data', 'hamlet.txt'))
+
+	hamlet_term_doc_matrix = build_from_category_whitespace_delimited_text(
+		[('hamlet'
+		  if 'hamlet' in text.lower()
+		  else 'not hamlet', text)
+		 for i, text in enumerate(buf.split('\n\n'))]
+	)
+	return hamlet_term_doc_matrix

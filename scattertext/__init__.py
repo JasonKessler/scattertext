@@ -11,6 +11,7 @@ from scattertext.IndexStore import IndexStore
 from scattertext.ScatterChart import ScatterChart
 from scattertext.TermDocMatrix import TermDocMatrix, InvalidScalerException
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
+from scattertext.PMIFiltering import TermDocMatrixFilter, filter_bigrams_by_pmis
 
 
 def convention_speech_iter():

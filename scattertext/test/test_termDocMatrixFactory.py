@@ -93,6 +93,7 @@ class TestFeatsFromDoc(TestCase):
 		X = tfidf.fit_transform(term_doc_mat._X)
 		clf.fit(X, term_doc_mat._y)
 		X_to_predict = fdc.feats_from_doc('Did sometimes march UNKNOWNWORD')
-		pred = clf.predict(X_to_predict)
+		pred = clf.predict(tfidf.transform(X_to_predict))
 		dec = clf.decision_function(X_to_predict)
+
 

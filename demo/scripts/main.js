@@ -66,7 +66,6 @@ function processData(jsonObject) {
 
 
     var rangeTree = null; // keep boxes of all points and labels here
-
     // Add the scatterplot
     svg.selectAll("dot")
         .data(data)
@@ -97,6 +96,37 @@ function processData(jsonObject) {
                 .style("opacity", 0);
         });
 
+
+    console.log('dot');
+    console.log(svg.selectAll('circle'));
+
+    function censorPoints(i) {
+        var term = data[i].term;
+        var curLabel = d3.select("body").append("div")
+            .attr("class", "label").html('L')
+            .style("left", x(data[i].x) + margin.left + 5 + 'px')
+            .style("top", y(data[i].y) + margin.top + 4 + 'px');
+        var curDiv = curLabel._groups[0][0];
+
+        var x1 = curDiv.offsetLeft - 2 + 2;
+        var y1 = curDiv.offsetTop - 2 + 5;
+        var x2 = curDiv.offsetLeft + 2 + 2;
+        var y2 = curDiv.offsetTop + 2 + 5;
+        if (term == 'auto industry') {
+            console.log("auto industry " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
+        }
+        /*
+         var x1 = curDiv.offsetLeft - 2;
+         var y1 = curDiv.offsetTop - 2;
+         var x2 = curDiv.offsetLeft + 2;
+         var y2 = curDiv.offsetTop + 2;
+         */
+        curLabel.remove();
+        //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+        rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
+        //}
+    }
+
     function labelPointBottomLeft(i) {
         var term = data[i].term;
         var curLabel = d3.select("body").append("div")
@@ -104,15 +134,36 @@ function processData(jsonObject) {
             .style("left", x(data[i].x) + margin.left + 10 + 'px')
             .style("top", y(data[i].y) + margin.top + 8 + 'px');
         var curDiv = curLabel._groups[0][0];
+
         var x1 = curDiv.offsetLeft;
         var y1 = curDiv.offsetTop;
         var x2 = curDiv.offsetLeft + curDiv.offsetWidth;
         var y2 = curDiv.offsetTop + curDiv.offsetHeight;
+
+        //move it to top right
+        /*
+        var width = curDiv.offsetWidth;
+        var height = curDiv.offsetHeight;
+
+        curLabel.remove();
+        var curLabel = d3.select("body").append("div")
+            .attr("class", "label").html(term)
+            .style("left", x(data[i].x) + margin.left  + 10 - width + 'px')
+            .style("top", y(data[i].y) + margin.top + 8  - height + 'px');
+        var curDiv = curLabel._groups[0][0];
+
+        var x2 = curDiv.offsetLeft;
+        var y2 = curDiv.offsetTop;
+        var x1 = curDiv.offsetLeft - curDiv.offsetWidth;
+        var y1 = curDiv.offsetTop - curDiv.offsetHeight;
+        */
         //console.log('x' + x(data[i].x) + margin.left + ' vs ' + curDiv.offsetLeft);
         //console.log(curDiv.offsetLeft - (10 + x(data[i].x) + margin.left));
         //console.log('y' + y(data[i].y) +  margin.top);
         //console.log(curDiv.offsetTop - (8 + y(data[i].y) +  margin.top));
-        if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+
+        var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+        if (!matchedElement) {
             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
             return true;
         } else {
@@ -122,13 +173,15 @@ function processData(jsonObject) {
 
     }
 
+    var radius = 2;
+    console.log('Data length ' + data.length);
     // prevent intersections with points.. not quite working
-    /*
     for (var i = 0; i < data.length; i++) {
-        var x1 = x(data[i].x) + margin.left+10;
-        var y1 = y(data[i].y) + margin.top+8;
-        rangeTree = insertRangeTree(rangeTree, x1+1, y1+1, x1 - 1, y1 - 1, i);
-    }*/
+
+        //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+        //    rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, i);
+        //}
+    }
 
     //var nodes = Array.prototype.slice.call(svg.selectAll('circle')._groups[0],0);
     //console.log("NODES");console.log(nodes);
@@ -152,6 +205,9 @@ function processData(jsonObject) {
     });
 
     console.log(data[0])
+    console.log("censoring");
+    for (i = 0; i < data.length; censorPoints(i++));
+    console.log("censoring")
     for (i = 0; i < data.length; labelPointBottomLeft(i++));
 
     // Add the X Axis

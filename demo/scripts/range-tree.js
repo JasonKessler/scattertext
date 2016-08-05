@@ -91,13 +91,14 @@ function insertRangeTree(root, topLeftX, topLeftY, bottomRightX, bottomRightY, l
     ]
 }
 
-// from http://stackoverflow.com/questions/1885557/simplest-code-for-array-intersection-in-javascript
+// adapted from http://stackoverflow.com/questions/1885557/simplest-code-for-array-intersection-in-javascript
 function doSortedArraysIntersect(a, b) {
     var ai = 0, bi = 0;
     while (ai < a.length && bi < b.length) {
         if (a[ai] < b[bi]) ai++;
         else if (a[ai] > b[bi]) bi++;
-        else if (a[ai] == b[bi]) return true;
+        else if (a[ai] == b[bi]) //return true;
+            return a[ai];
     }
     return false;
 }

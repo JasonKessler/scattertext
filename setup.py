@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='scattertext',
-      version='0.0.1.7.3',
+      version='0.0.1.8.1',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
