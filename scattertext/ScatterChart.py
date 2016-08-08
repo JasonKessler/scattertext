@@ -29,8 +29,8 @@ class ScatterChart:
 
 	def to_dict(self,
 	            category,
-	            category_name = None,
-	            not_category_name = None,
+	            category_name=None,
+	            not_category_name=None,
 	            scores=None,
 	            transform=percentile_ordinal):
 		'''
@@ -58,8 +58,8 @@ class ScatterChart:
 		json_df = df[['x', 'y', 'term']]
 		json_df['cat25k'] = ((df[category + ' freq'] * 1. / df[category + ' freq'].sum()) * 25000)
 		json_df['ncat25k'] = ((df['not cat freq'] * 1. / df['not cat freq'].sum()) * 25000)
-		json_df['cat25k']=json_df['cat25k'].apply(np.round).astype(np.int)
-		json_df['ncat25k']=json_df['ncat25k'].apply(np.round).astype(np.int)
+		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
+		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
 		json_df['s'] = percentile_min(df['color_scores'])
 		if category_name is None:
 			category_name = category
@@ -96,8 +96,8 @@ class ScatterChart:
 		font = {'family': 'sans-serif',
 		        'color': 'black',
 		        'weight': 'normal',
-		        'size': 'large'
-		        }
+		        'size': 'large'}
+
 		fig, ax = plt.subplots()
 		plt.figure(figsize=(10, 10))
 		plt.gcf().subplots_adjust(bottom=0.2)

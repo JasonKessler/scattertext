@@ -1,14 +1,17 @@
 from __future__ import print_function
 
-import json
 import os
 import pkgutil
 import re
+
+import json
 
 from scattertext import ScatterChart
 from scattertext import TermDocMatrixFactory
 from scattertext.FastButCrapNLP import fast_but_crap_nlp
 from scattertext.Scalers import percentile_ordinal
+from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
+from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 
 def clean_function_factory():
@@ -50,19 +53,20 @@ def make_category_text_iter():
 
 
 def main():
-	tdm = TermDocMatrixFactory(
+	term_doc_matrix = TermDocMatrixFactory(
 		category_text_iter=make_category_text_iter(),
 		clean_function=clean_function_factory(),
 		nlp=fast_but_crap_nlp
 	).build()
-	j = 'function getDataAndInfo() { return ' + \
-	    json.dumps((ScatterChart(tdm)
-	                .to_dict('democrat',
-	                         category_name='Democratic',
-	                         not_category_name='Republican',
-	                         transform=percentile_ordinal))) + ';}'
-	open('demo/scripts/words.js', 'w').write(j)
-	print('Open demo/scattertext.html in Chrome or Firefox.')
+	scatter_chart = ScatterChart(term_doc_matrix=term_doc_matrix)
+	scatter_chart_data = scatter_chart.to_dict(category='democrat',
+	                               category_name='Democratic',
+	                               not_category_name='Republican',
+	                               transform=percentile_ordinal)
+	viz_data_adapter = VizDataAdapter(scatter_chart_data)
+	html_maker = HTMLVisualizationAssembly(viz_data_adapter).to_html()
+	open('./demo.html', 'w').write(html_maker)
+	print('Open ./demo.html in Chrome or Firefox.')
 
-
-main()
+if __name__ == '__main__':
+	main()
