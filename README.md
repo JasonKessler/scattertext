@@ -15,7 +15,7 @@ The documentation (including this readme) is a work in progress.  Do look throug
 
 There are term importance algorithms that have been implemented in this library that are not available anywhere else.  Feel free to poke around, make suggestions, and ask any questions while I figure out the docs.
 
-In the mean time, here's an example of on of the things the tool can do-- a scatter chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click [here](https://jasonkessler.github.io/fig.html) for an interactive version.
+In the mean time, here's an example of on of the things the tool can do-- a scatter chart showing language differences between Democratic and Republican speakers in the 2012 American Political Conventions.  Click [here](https://jasonkessler.github.io/fig.html) for an interactive version, and check out a pure-D3 version with fancy non-overlapping word annotations (https://jasonkessler.github.io/demo.html).
 
 Please see the Jupyter [notebook](https://jasonkessler.github.io/20%20Newsgroup%20Demo.html) for a tutorial, using the traditional 20 Newsgroup dataset.
 
