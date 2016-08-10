@@ -100,21 +100,19 @@ function processData(jsonObject) {
     console.log('dot');
     console.log(svg.selectAll('circle'));
 
-    function censorPoints(i) {
-        var term = data[i].term;
+    coords = Object();
+    function censorPoints(datum) {
+        var term = datum.term;
         var curLabel = d3.select("body").append("div")
             .attr("class", "label").html('L')
-            .style("left", x(data[i].x) + margin.left + 5 + 'px')
-            .style("top", y(data[i].y) + margin.top + 4 + 'px');
+            .style("left", x(datum.x) + margin.left + 5 + 'px')
+            .style("top", y(datum.y) + margin.top + 4 + 'px');
         var curDiv = curLabel._groups[0][0];
 
         var x1 = curDiv.offsetLeft - 2 + 2;
         var y1 = curDiv.offsetTop - 2 + 5;
         var x2 = curDiv.offsetLeft + 2 + 2;
         var y2 = curDiv.offsetTop + 2 + 5;
-        if (term == 'auto industry') {
-            console.log("auto industry " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
-        }
         /*
          var x1 = curDiv.offsetLeft - 2;
          var y1 = curDiv.offsetTop - 2;
@@ -125,6 +123,11 @@ function processData(jsonObject) {
         //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
         rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
         //}
+
+        if (term == 'an economy') {
+            console.log("~~an economy " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
+        }
+        coords['~~' + term] = [x1, y1, x2, y2];
     }
 
     function labelPointBottomLeft(i) {
@@ -140,30 +143,65 @@ function processData(jsonObject) {
         var x2 = curDiv.offsetLeft + curDiv.offsetWidth;
         var y2 = curDiv.offsetTop + curDiv.offsetHeight;
 
+
+
         //move it to top right
         /*
-        var width = curDiv.offsetWidth;
-        var height = curDiv.offsetHeight;
+         var width = curDiv.offsetWidth;
+         var height = curDiv.offsetHeight;
 
-        curLabel.remove();
-        var curLabel = d3.select("body").append("div")
-            .attr("class", "label").html(term)
-            .style("left", x(data[i].x) + margin.left  + 10 - width + 'px')
-            .style("top", y(data[i].y) + margin.top + 8  - height + 'px');
-        var curDiv = curLabel._groups[0][0];
+         curLabel.remove();
+         var curLabel = d3.select("body").append("div")
+         .attr("class", "label").html(term)
+         .style("left", x(data[i].x) + margin.left  + 10 - width + 'px')
+         .style("top", y(data[i].y) + margin.top + 8  - height + 'px');
+         var curDiv = curLabel._groups[0][0];
 
-        var x2 = curDiv.offsetLeft;
-        var y2 = curDiv.offsetTop;
-        var x1 = curDiv.offsetLeft - curDiv.offsetWidth;
-        var y1 = curDiv.offsetTop - curDiv.offsetHeight;
-        */
+         var x2 = curDiv.offsetLeft;
+         var y2 = curDiv.offsetTop;
+         var x1 = curDiv.offsetLeft - curDiv.offsetWidth;
+         var y1 = curDiv.offsetTop - curDiv.offsetHeight;
+         */
         //console.log('x' + x(data[i].x) + margin.left + ' vs ' + curDiv.offsetLeft);
         //console.log(curDiv.offsetLeft - (10 + x(data[i].x) + margin.left));
         //console.log('y' + y(data[i].y) +  margin.top);
         //console.log(curDiv.offsetTop - (8 + y(data[i].y) +  margin.top));
-
         var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
-        if (!matchedElement) {
+        if (term == 'affordable') {
+            console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
+            var matchedCoord = coords[matchedElement];
+            var mx1 = matchedElement[0];
+            var my1 = matchedElement[1];
+            var mx2 = matchedElement[2];
+            var my2 = matchedElement[3];
+            var x_diff = 0;
+            var y_diff = 0;
+            if(x1 >= mx1 && x1 < mx2) {
+               x_diff = mx2 - x1;
+            }
+            if(x2 > mx1 && x2 <= mx2) {
+               x_diff = mx1 - x2;
+            }
+            x1 += x_diff;
+            x2 += x_diff;
+            if(y1 >= my1 && y1 < my2) {
+               y_diff = my2 - y1;
+            }
+            if(y2 > my1 && y2 <= my2) {
+               y_diff = my1 - y2;
+            }
+            y1 += y_diff;
+            y2 += y_diff;
+            console.log(y_diff, x_diff)
+            var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+            console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
+            console.log('matchedElement ' + matchedElement)
+            console.log('matchedElement ' + matchedCoord)
+
+        }
+
+        if (!matchedElement || term == 'affordable') {
+            coords[term] = [x1, y1, x2, y2];
             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
             return true;
         } else {
@@ -176,12 +214,13 @@ function processData(jsonObject) {
     var radius = 2;
     console.log('Data length ' + data.length);
     // prevent intersections with points.. not quite working
+    /*
     for (var i = 0; i < data.length; i++) {
 
         //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
         //    rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, i);
         //}
-    }
+    }*/
 
     //var nodes = Array.prototype.slice.call(svg.selectAll('circle')._groups[0],0);
     //console.log("NODES");console.log(nodes);
@@ -206,10 +245,12 @@ function processData(jsonObject) {
 
     console.log(data[0])
     console.log("censoring");
-    for (i = 0; i < data.length; censorPoints(i++));
-    console.log("censoring")
+    //for (i = 0; i < data.length; censorPoints(i++));
+    data.forEach(censorPoints)
+    console.log("writing")
     for (i = 0; i < data.length; labelPointBottomLeft(i++));
-
+    console.log("coords")
+    console.log(coords)
     // Add the X Axis
     svg.append("g")
         .attr("class", "x axis")

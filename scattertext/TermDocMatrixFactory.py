@@ -2,7 +2,6 @@ import string
 from collections import Counter
 
 import numpy as np
-#import spacy
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
@@ -124,10 +123,7 @@ class TermDocMatrixFactory:
 		"""
 		if self._category_text_iter is None:
 			raise CategoryTextIterNotSetError()
-		nlp = self._nlp
-		if nlp is None:
-			import spacy.en
-			nlp = spacy.en.English()
+		nlp = self.get_nlp()
 
 		category_document_iter = (
 			(category, self._clean_function(raw_text))
@@ -143,6 +139,13 @@ class TermDocMatrixFactory:
 			)
 		)
 		return term_doc_matrix
+
+	def get_nlp(self):
+		nlp = self._nlp
+		if nlp is None:
+			import spacy.en
+			nlp = spacy.en.English()
+		return nlp
 
 	def censor_entity_types(self, entity_types):
 		'''
@@ -191,12 +194,22 @@ class TermDocMatrixFactory:
 		y = []
 		X_factory = CSRMatrixFactory()
 		for document_index, (category, parsed_text) in enumerate(category_doc_iter):
-			y.append(category_idx_store.getidx(category))
-			document_features = self._get_features_from_parsed_text(parsed_text, term_idx_store)
-			self._register_document_features_with_X_factory(X_factory, document_index, document_features)
+			self._register_doc_and_category(X_factory,
+			                                category,
+			                                category_idx_store,
+			                                document_index,
+			                                parsed_text,
+			                                term_idx_store, y)
 		X = X_factory.get_csr_matrix()
 		y = np.array(y)
 		return X, y
+
+	def _register_doc_and_category(self, X_factory, category, category_idx_store,
+	                               document_index, parsed_text,
+	                               term_idx_store, y):
+		y.append(category_idx_store.getidx(category))
+		document_features = self._get_features_from_parsed_text(parsed_text, term_idx_store)
+		self._register_document_features_with_X_factory(X_factory, document_index, document_features)
 
 	def _register_document_features_with_X_factory(self, X_factory, doci, term_freq):
 		for word_idx, freq in term_freq.items():
@@ -290,3 +303,73 @@ def build_from_category_whitespace_delimited_text(category_text_iter):
 	                     y=np.array(y),
 	                     term_idx_store=term_idx_store,
 	                     category_idx_store=category_idx_store)
+
+
+class TermDocMatrixFromPandas(TermDocMatrixFactory):
+	def __init__(self,
+	             data_frame,
+	             category_col,
+	             text_col,
+	             clean_function=lambda x: x,
+	             nlp=None,
+	             use_lemmas=False):
+		'''Creates a TermDocMatrix from a pandas data frame.
+
+		Parameters
+		----------
+		data_frame : pd.DataFrame
+			The data frame that contains columns for the category of interest
+			and the document text.
+		text_col : str
+			The name of the column which contains the document text.
+		category_col : str
+			The name of the column which contains the category of interest.
+		clean_function : function, optional
+		nlp : function, optional
+		use_lemmas : boolean, optional
+
+		See Also
+		--------
+		TermDocMatrixFactory
+		'''
+		TermDocMatrixFactory.__init__(self, clean_function=clean_function, nlp=nlp, use_lemmas=use_lemmas)
+		self.data_frame = data_frame
+		self._text_col = text_col
+		self._category_col = category_col
+
+	def build(self):
+		'''Constructs the term doc matrix.
+
+		Returns
+		-------
+		TermDocMatrix
+		'''
+
+		def parse_pipeline_factory(nlp, X_factory, category_idx_store, term_idx_store, y):
+			def parse_pipeline(row):
+				parsed_text = nlp(self._clean_function(row[self._text_col]))
+				print("ROW NAME", row.name, self._category_col, self._text_col, row[self._category_col])
+				self._register_doc_and_category(X_factory=X_factory,
+				                                category=row[self._category_col],
+				                                category_idx_store=category_idx_store,
+				                                document_index=row.name,
+				                                parsed_text=parsed_text,
+				                                term_idx_store=term_idx_store,
+				                                y=y)
+
+			return parse_pipeline
+
+		y = []
+		X_factory = CSRMatrixFactory()
+		category_idx_store = IndexStore()
+		term_idx_store = IndexStore()
+		parse_pipeline = parse_pipeline_factory(self.get_nlp(),
+		                                        X_factory,
+		                                        category_idx_store,
+		                                        term_idx_store,
+		                                        y)
+		self.data_frame.apply(parse_pipeline, axis=1)
+		X = X_factory.get_csr_matrix()
+		y = np.array(y)
+		tdm = TermDocMatrix(X, y, term_idx_store, category_idx_store)
+		return tdm

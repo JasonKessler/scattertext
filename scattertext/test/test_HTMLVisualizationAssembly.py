@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
 from scattertext.viz.VizDataAdapter import VizDataAdapter
-
+import sys
 
 class TestHTMLVisualizationAssembly(TestCase):
 	def test_main(self):
@@ -14,7 +14,10 @@ class TestHTMLVisualizationAssembly(TestCase):
 		visualization_data = VizDataAdapter(words_dict)
 		assembler = HTMLVisualizationAssembly(visualization_data)
 		html = assembler.to_html()
-		self.assertTrue(type(html) == str)
+		if sys.version_info.major == 2:
+			self.assertEqual(type(html), unicode)
+		else:
+			self.assertEqual(type(html), str)
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 		self.assertTrue('Republican' in html)
 

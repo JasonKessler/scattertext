@@ -12,6 +12,7 @@ class TestIndexStore(TestCase):
 		self.assertEqual(index_store.getval(1), 'b')
 		self.assertTrue('a' in index_store)
 		self.assertFalse('c' in index_store)
+		self.assertEqual(set(index_store.values()), set(['a','b']))
 		self.assertFalse(0 in index_store)
 		self.assertTrue(index_store.hasidx(0))
 		self.assertFalse(index_store.hasidx(2))

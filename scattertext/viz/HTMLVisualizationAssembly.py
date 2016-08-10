@@ -13,7 +13,7 @@ class HTMLVisualizationAssembly:
 		scripts = '\n'.join([pkgutil.get_data('scattertext',
 		                                      'data/viz/scripts/' + script_name).decode('utf-8')
 		                     for script_name in ['range-tree.js', 'main.js']])
-		word_struct = self._visualization_data.to_javascript()
-		scripts += '\n' + word_struct
+		viz_data_in_javascript_command_form = self._visualization_data.to_javascript()
+		scripts += '\n' + viz_data_in_javascript_command_form
 		html_file = html_file.replace('<!-- INSERT SCRIPT -->', scripts, 1)
 		return html_file

@@ -60,3 +60,13 @@ class IndexStore:
 	def _regenerate_val2i_and_next_i(self):
 		self._val2i = {val: idx for idx, val in enumerate(self._i2val)}
 		self._next_i = len(self._i2val)
+
+	def values(self):
+		'''
+
+		Returns
+		-------
+		list
+			A list containing all values registered.
+		'''
+		return self._i2val
