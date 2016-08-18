@@ -3,6 +3,8 @@ from scipy.sparse import csr_matrix
 
 
 class CSRMatrixFactory:
+	''' Factory class to create a csr_matrix.
+	'''
 	def __init__(self):
 		self.rows = []
 		self.cols = []
@@ -11,13 +13,22 @@ class CSRMatrixFactory:
 		self._max_row = 0
 
 	def __setitem__(self, row_col, datum):
-		'''
-		:param row_col: (int, int)
-		:param datum: int
-		:return: None
+		'''Insert a value into the matrix
+
+		Parameters
+		----------
+		row_col : tuple
+			Row and column indices
+		datum : float or int
+			Numeric value to insert into the matrix
+
 
 		>>> mat_fact = CSRMatrixFactory()
 		>>> mat_fact[3,1] = 1
+
+		Returns
+		-------
+		None
 		'''
 		row, col = row_col
 		self.rows.append(row)

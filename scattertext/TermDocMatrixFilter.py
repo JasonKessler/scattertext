@@ -40,4 +40,4 @@ class TermDocMatrixFilter:
 			return term_doc_matrix
 		low_pmi_bigrams = get_low_pmi_bigrams(self._threshold_coef, df).index
 		infrequent_terms = df[df.sum(axis=1) < self._min_freq].index
-		return term_doc_matrix.remove_terms(set(low_pmi_bigrams + infrequent_terms))
+		return term_doc_matrix.remove_terms(set(low_pmi_bigrams | infrequent_terms))

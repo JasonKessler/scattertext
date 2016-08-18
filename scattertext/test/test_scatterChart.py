@@ -16,7 +16,9 @@ class TestScatterChart(TestCase):
 		                  minimum_term_frequency=0)
 		     .to_dict('hamlet'))
 		self.assertEqual(set(j.keys()), set(['info', 'data']))
-		self.assertEqual(set(j['info'].keys()), set(['not_category_name', 'category_name']))
+		self.assertEqual(set(j['info'].keys()),
+		                 set(['not_category_name', 'category_name',
+		                      'category_terms', 'not_category_terms']))
 		expected = {"x": 0.0, "y": 0.42, "term": "art", "cat25k": 758, "ncat25k": 0, 's': 0.5}
 		datum = j['data'][0]
 		for var in ['x','y','cat25k','ncat25k', 's']:

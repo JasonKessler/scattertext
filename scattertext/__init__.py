@@ -10,9 +10,10 @@ from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.ScatterChart import ScatterChart
 from scattertext.TermDocMatrix import TermDocMatrix, InvalidScalerException
-from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
-from scattertext.PMIFiltering import TermDocMatrixFilter, filter_bigrams_by_pmis
-
+from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc, TermDocMatrixFromPandas
+from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
+from scattertext.FastButCrapNLP import fast_but_crap_nlp
+import scattertext.viz
 
 def convention_speech_iter():
 	relative_path = os.path.join('data', 'political_data.json')

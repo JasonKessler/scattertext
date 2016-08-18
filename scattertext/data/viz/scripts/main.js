@@ -4,6 +4,7 @@
 
 // Get the data
 //d3.json('words.json', processData);
+var divName = 'd3-div-1';
 
 // Set the dimensions of the canvas / graph
 var margin = {top: 30, right: 20, bottom: 30, left: 50},
@@ -32,18 +33,21 @@ var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabler);
 var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabler);
 
 // Define the div for the tooltip
-var tooltip = d3.select("body").append("div")
+//var tooltip = d3.select("body").append("div")
+var tooltip = d3.select('#' + divName).append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
-var label = d3.select("body").append("div")
-    .attr("class", "label");
+//var label = d3.select("body").append("div")
+var label = d3.select('#' + divName).append("div")
+      .attr("class", "label");
 
 // setup fill color
 var color = d3.interpolateRdYlBu;
 
 // Adds the svg canvas
-var svg = d3.select("body")
+//var svg = d3.select("body")
+var svg = d3.select('#' + divName)
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -51,16 +55,26 @@ var svg = d3.select("body")
     .attr("transform",
         "translate(" + margin.left + "," + margin.top + ")");
 
+/*
+var categoryTermList = d3.select('#' + divName)
+    .append("ul");
+*/
 
 function processData(jsonObject) {
     var modelInfo = jsonObject['info'];
+    /*
+    categoryTermList.data(modelInfo['category_terms'])
+        .enter()
+        .append("li")
+        .text(function(d) {return d;});
+    */
     var data = jsonObject['data'];
     console.log(data);
-    // Scale the range of the data
-    x.domain([-.1, d3.max(data, function (d) {
+    // Scale the range of the data.  Add some space on either end.
+    x.domain([-0.1, d3.max(data, function (d) {
         return d.x;
     }) + 0.1]);
-    y.domain([-.1, d3.max(data, function (d) {
+    y.domain([-0.1, d3.max(data, function (d) {
         return d.y;
     }) + 0.1]);
 
@@ -103,7 +117,9 @@ function processData(jsonObject) {
     coords = Object();
     function censorPoints(datum) {
         var term = datum.term;
-        var curLabel = d3.select("body").append("div")
+        //var curLabel = d3.select("body").append("div")
+        var curLabel = d3.select('#' + divName).append("div")
+
             .attr("class", "label").html('L')
             .style("left", x(datum.x) + margin.left + 5 + 'px')
             .style("top", y(datum.y) + margin.top + 4 + 'px');
@@ -132,8 +148,9 @@ function processData(jsonObject) {
 
     function labelPointBottomLeft(i) {
         var term = data[i].term;
-        var curLabel = d3.select("body").append("div")
-            .attr("class", "label").html(term)
+        //var curLabel = d3.select("body").append("div")
+        var curLabel = d3.select("#" + divName).append("div")
+              .attr("class", "label").html(term)
             .style("left", x(data[i].x) + margin.left + 10 + 'px')
             .style("top", y(data[i].y) + margin.top + 8 + 'px');
         var curDiv = curLabel._groups[0][0];
@@ -252,17 +269,19 @@ function processData(jsonObject) {
     console.log("coords")
     console.log(coords)
     // Add the X Axis
-    svg.append("g")
+    var myXAxis = svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
-    svg.append("text")
+    var xLabel = svg.append("text")
         .attr("class", "x label")
         .attr("text-anchor", "end")
         .attr("x", width)
         .attr("y", height - 6)
         .text(modelInfo['not_category_name'] + " Frequency");
+    console.log('xLabel');
+    console.log(xLabel);
 
     // Add the Y Axis
     svg.append("g")

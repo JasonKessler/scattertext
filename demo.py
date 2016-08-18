@@ -64,8 +64,8 @@ def main():
 	                               not_category_name='Republican',
 	                               transform=percentile_ordinal)
 	viz_data_adapter = VizDataAdapter(scatter_chart_data)
-	html_maker = HTMLVisualizationAssembly(viz_data_adapter).to_html()
-	open('./demo.html', 'w').write(html_maker)
+	html = HTMLVisualizationAssembly(viz_data_adapter).to_html()
+	open('./demo.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo.html in Chrome or Firefox.')
 
 if __name__ == '__main__':

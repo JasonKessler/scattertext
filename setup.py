@@ -1,13 +1,13 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.1.8.2',
+      version='0.0.1.8.3',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
       author_email='jason.kessler@gmail.com',
-      license='MIT',
-      packages=['scattertext'],
+			license='MIT',
+			packages=find_packages(),
       install_requires=[
 	      'nose',
 	      'numpy',
@@ -21,7 +21,7 @@ setup(name='scattertext',
 	      #'jupyter',
       ],
       package_data={
-	      'scattertext': ['data/*']
+	      'scattertext': ['data/*', 'data/viz/*', 'data/viz/*/*']
       },
 			test_suite="nose.collector",
 			tests_require=['nose'],

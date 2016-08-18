@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import rankdata
 
-from scattertext.PMIFiltering import filter_bigrams_by_pmis
+from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis
 from scattertext.Scalers import percentile_min, percentile_ordinal
 
 
@@ -61,12 +61,16 @@ class ScatterChart:
 		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
 		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
 		json_df['s'] = percentile_min(df['color_scores'])
+		category_terms = list(json_df.sort_values('s')['term'][:10])
+		not_category_terms = list(json_df.sort_values('s')['term'][:10])
 		if category_name is None:
 			category_name = category
 		if not_category_name is None:
 			not_category_name = 'Not ' + category_name
 		j = {'info': {'category_name': category_name.title(),
-		              'not_category_name': not_category_name.title()}}
+		              'not_category_name': not_category_name.title(),
+		              'category_terms': category_terms,
+		              'not_category_terms': not_category_terms}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 

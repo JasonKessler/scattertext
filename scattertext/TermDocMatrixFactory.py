@@ -312,7 +312,8 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 	             text_col,
 	             clean_function=lambda x: x,
 	             nlp=None,
-	             use_lemmas=False):
+	             use_lemmas=False,
+	             verbose=False):
 		'''Creates a TermDocMatrix from a pandas data frame.
 
 		Parameters
@@ -327,6 +328,8 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		clean_function : function, optional
 		nlp : function, optional
 		use_lemmas : boolean, optional
+		verbose : boolean, optional
+			If true, prints a message every time a document index % 100 is 0.
 
 		See Also
 		--------
@@ -336,6 +339,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		self.data_frame = data_frame
 		self._text_col = text_col
 		self._category_col = category_col
+		self._verbose = verbose
 
 	def build(self):
 		'''Constructs the term doc matrix.
@@ -348,7 +352,8 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		def parse_pipeline_factory(nlp, X_factory, category_idx_store, term_idx_store, y):
 			def parse_pipeline(row):
 				parsed_text = nlp(self._clean_function(row[self._text_col]))
-				print("ROW NAME", row.name, self._category_col, self._text_col, row[self._category_col])
+				if self._verbose and row.name % 100:
+					print(row.name)
 				self._register_doc_and_category(X_factory=X_factory,
 				                                category=row[self._category_col],
 				                                category_idx_store=category_idx_store,
@@ -368,7 +373,9 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		                                        category_idx_store,
 		                                        term_idx_store,
 		                                        y)
-		self.data_frame.apply(parse_pipeline, axis=1)
+		df = self.data_frame[[self._category_col, self._text_col]].dropna()
+		df = df[(df[self._text_col] != '')].reset_index()
+		df.apply(parse_pipeline, axis=1)
 		X = X_factory.get_csr_matrix()
 		y = np.array(y)
 		tdm = TermDocMatrix(X, y, term_idx_store, category_idx_store)
