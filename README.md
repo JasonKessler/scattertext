@@ -21,7 +21,7 @@ installed.  Spacy is highly recommended for parsing.
  
 See the Jupyter [notebook](https://jasonkessler.github.io/Subjective%2Bvs.%2BObjective.html) for a tutorial on using Scattertext to find language that distinguishes subjective of and objective descriptions of movies. 
 
-## Introduction
+## Overview
  
 This is a tool that's intended for visualizing what words and phrases
  are more characteristic of a category than others. 
