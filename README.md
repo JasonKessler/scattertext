@@ -46,7 +46,7 @@ fancy non-overlapping word annotations
 
 Please see the Jupyter [notebook](https://jasonkessler.github.io/Subjective%2Bvs.%2BObjective.html) for a tutorial on using Scattertext to find language that distinguishes subjective of and objective descirptions of movies. 
 
-![Differences in 2012 American Political Convention Speeches](https://raw.githubusercontent.com/JasonKessler/text-to-ideas/master/2012_conventions.png)
+[![Differences in 2012 American Political Convention Speeches](https://jasonkessler.github.io/2012_conventions.png)](https://jasonkessler.github.io/demo.html)
 
 ## Technical Underpinnings
 
