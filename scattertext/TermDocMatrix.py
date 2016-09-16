@@ -325,3 +325,4 @@ class TermDocMatrix:
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
+

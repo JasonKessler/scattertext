@@ -4,7 +4,7 @@ import pandas as pd
 
 from scattertext.FastButCrapNLP import fast_but_crap_nlp
 from scattertext.TermDocMatrix import TermDocMatrix
-from scattertext.TermDocMatrixFactory import TermDocMatrixFromPandas
+from scattertext import TermDocMatrixFromPandas
 from scattertext.test.test_termDocMatrixFactory import get_docs_categories
 
 

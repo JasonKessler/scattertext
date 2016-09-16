@@ -22,6 +22,9 @@ class IndexStore:
 			self._next_i += 1
 			return self._next_i - 1
 
+	def getidxstrict(self, val):
+		return self._val2i[val]
+
 	def getnumvals(self):
 		return self._next_i
 

@@ -19,6 +19,14 @@ class TestIndexStore(TestCase):
 		self.assertEqual(index_store.getnumvals(), 2)
 		self.assertEqual(list(index_store.items()), [(0, 'a'), (1, 'b')])
 
+	def test_getidxstrict(self):
+		index_store = IndexStore()
+		self.assertEqual(index_store.getidx('a'), 0)
+		self.assertEqual(index_store.getidx('b'), 1)
+		self.assertEqual(index_store.getidx('a'), 0)
+		with self.assertRaises(KeyError):
+			index_store.getidxstrict('c')
+
 	def test_batch_delete(self):
 		index_store = IndexStore()
 		self.assertEqual(index_store.getidx('a'), 0)

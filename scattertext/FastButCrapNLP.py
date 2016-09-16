@@ -12,6 +12,8 @@ class Tok:
 class Doc:
 	def __init__(self, sents):
 		self.sents = sents
+	def __str__(self):
+		return '  '.join(self.sents)
 
 
 def fast_but_crap_nlp(doc):
