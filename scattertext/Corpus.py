@@ -22,9 +22,24 @@ class Corpus(TermDocMatrix):
 		self._raw_texts = raw_texts
 
 	def get_texts(self):
+		'''
+		Returns
+		-------
+		pd.Series, all raw documents
+		'''
 		return self._raw_texts
 
 	def search(self, ngram):
+		'''
+		Parameters
+		----------
+		ngram str or unicode, string to search for
+
+		Returns
+		-------
+		pd.DataFrame, {'texts': <matching texts>, 'categories': <corresponding categories>}
+
+		'''
 		mask = self._document_index_mask(ngram)
 		return pd.DataFrame({
 			'text': self._raw_texts[mask],
@@ -33,6 +48,15 @@ class Corpus(TermDocMatrix):
 		})
 
 	def search_index(self, ngram):
+		'''
+		Parameters
+		----------
+		ngram str or unicode, string to search for
+
+		Returns
+		-------
+		np.array, list of matching document indices
+		'''
 		return nonzero(self._document_index_mask(ngram))[0]
 
 	def _document_index_mask(self, ngram):
