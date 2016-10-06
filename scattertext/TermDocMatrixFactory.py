@@ -12,7 +12,7 @@ class CategoryTextIterNotSetError(Exception):
 	pass
 
 
-class TermDocMatrixFactory:
+class TermDocMatrixFactory(object):
 	def __init__(self,
 	             category_text_iter=None,
 	             clean_function=lambda x: x,

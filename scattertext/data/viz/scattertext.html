@@ -44,10 +44,49 @@ div.label {
   pointer-events: none;
 }
 
+
+div.label {
+  position: absolute;
+  text-align: left;
+  padding: 1px;
+  border-spacing: 1px;
+  font: 10px sans-serif;
+  border: 0;
+  pointer-events: none;
+}
+
+input {
+  border: 1px dotted #ccc;
+  background: white;
+  font-family: monospace;
+  padding: 10px 20px;
+  font-size: 14px;
+  margin: 20px 10px 30px 0;
+  color: darkred;
+}
+
+.alert {
+  font-family: monospace;
+  padding: 10px 20px;
+  font-size: 14px;
+  margin: 20px 10px 30px 0;
+  color: darkred;
+}
+
+input:focus {
+  background-color: lightyellow;
+  outline: none;
+}
+
 </style>
 <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/d3-scale-chromatic.v1.min.js" charset="utf-8"></script>
 <div id="d3-div-1"> </div>
+<form name="termForm" onSubmit="return handleClick()">
+  <input name="Submit" type="submit" value="Search for term">
+  <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
+  <span id="alertMessage" class="alert"></span>
+</form>
 <script>
   <!-- INSERT SCRIPT -->
 </script>

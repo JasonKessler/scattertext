@@ -1,9 +1,3 @@
-/**
- * Created by kesslej on 7/30/16.
- */
-
-// Get the data
-//d3.json('words.json', processData);
 var divName = 'd3-div-1';
 
 // Set the dimensions of the canvas / graph
@@ -11,42 +5,33 @@ var margin = {top: 30, right: 20, bottom: 30, left: 50},
     width = 800 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
-//width = 800 - margin.left - margin.right,
-//height = 600 - margin.top - margin.bottom;
-
 // Set the ranges
 var x = d3.scaleLinear().range([0, width]);
 var y = d3.scaleLinear().range([height, 0]);
 
-// Define the axes
-/*
- var xAxis = d3.axisBottom().scale(x)
- .orient("bottom").ticks(5);
- */
-
-function axisLabler(d, i) {
+function axisLabeler(d, i) {
     return ["Infrequent", "Average", "Frequent"][i]
 }
 
-var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabler);
+var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabeler);
 
-var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabler);
+var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabeler);
 
 // Define the div for the tooltip
-//var tooltip = d3.select("body").append("div")
+// var tooltip = d3.select("body").append("div")
 var tooltip = d3.select('#' + divName).append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
-//var label = d3.select("body").append("div")
+// var label = d3.select("body").append("div")
 var label = d3.select('#' + divName).append("div")
-      .attr("class", "label");
+    .attr("class", "label");
 
 // setup fill color
 var color = d3.interpolateRdYlBu;
 
 // Adds the svg canvas
-//var svg = d3.select("body")
+// var svg = d3.select("body")
 var svg = d3.select('#' + divName)
     .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -56,19 +41,71 @@ var svg = d3.select('#' + divName)
         "translate(" + margin.left + "," + margin.top + ")");
 
 /*
-var categoryTermList = d3.select('#' + divName)
-    .append("ul");
-*/
+ var categoryTermList = d3.select('#' + divName)
+ .append("ul");
+ */
+
+var lastCircleSelected = null;
+function deselectLastCircle() {
+    if (lastCircleSelected) {
+        lastCircleSelected.style["stroke"] = null;
+        lastCircleSelected = null;
+    }
+}
+function showTooltip(d, pageX, pageY) {
+    deselectLastCircle();
+    tooltip.transition()
+        .duration(0)
+        .style("opacity", 1)
+        .style("z-index", 1000000);
+
+    tooltip.html(d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words")
+        .style("left", (pageX) + "px")
+        .style("top", (pageY - 28) + "px");
+
+    tooltip.on('click', function () {
+        tooltip.transition()
+            .style('opacity', 0)
+    });
+}
+
+function handleClick(event) {
+    deselectLastCircle();
+    var searchTerm = document.getElementById("searchTerm").value.toLowerCase();
+    var searchTermInfo = termDict[searchTerm];
+    if(searchTermInfo === undefined) {
+        d3.select("#alertMessage")
+            .text(searchTerm + " din't make it into the visualization.");
+    } else {
+        d3.select("#alertMessage").text("");
+        var circle = mysvg._groups[0][searchTermInfo.i];
+        var mySVGMatrix = circle.getScreenCTM()
+            .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+        var pageX = mySVGMatrix.e;
+        var pageY = mySVGMatrix.f;
+        console.log(searchTermInfo);
+        circle.style["stroke"] = "black";
+        showTooltip(searchTermInfo, pageX, pageY);
+        lastCircleSelected = circle;
+    }
+    return false;
+}
 
 function processData(jsonObject) {
     var modelInfo = jsonObject['info'];
     /*
-    categoryTermList.data(modelInfo['category_terms'])
-        .enter()
-        .append("li")
-        .text(function(d) {return d;});
-    */
-    var data = jsonObject['data'];
+     categoryTermList.data(modelInfo['category_terms'])
+     .enter()
+     .append("li")
+     .text(function(d) {return d;});
+     */
+    data = jsonObject['data'];
+    termDict = Object();
+    data.forEach(function (x, i) {
+        termDict[x.term] = x;
+        termDict[x.term].i = i;
+    });
+
     console.log(data);
     // Scale the range of the data.  Add some space on either end.
     x.domain([-0.1, d3.max(data, function (d) {
@@ -81,7 +118,7 @@ function processData(jsonObject) {
 
     var rangeTree = null; // keep boxes of all points and labels here
     // Add the scatterplot
-    svg.selectAll("dot")
+    mysvg = svg.selectAll("dot")
         .data(data)
         .enter()
         .append("circle")
@@ -96,18 +133,14 @@ function processData(jsonObject) {
             return color(d.s);
         })
         .on("mouseover", function (d) {
-            tooltip.transition()
-                .duration(0)
-                .style("opacity", 1)
-                .style("z-index", 1000000);
-            tooltip.html(d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words")
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+            showTooltip(d, d3.event.pageX, d3.event.pageY);
+            d3.select(this).style("stroke", "black");
         })
         .on("mouseout", function (d) {
             tooltip.transition()
                 .duration(0)
                 .style("opacity", 0);
+            d3.select(this).style("stroke", null);
         });
 
 
@@ -150,7 +183,7 @@ function processData(jsonObject) {
         var term = data[i].term;
         //var curLabel = d3.select("body").append("div")
         var curLabel = d3.select("#" + divName).append("div")
-              .attr("class", "label").html(term)
+            .attr("class", "label").html(term)
             .style("left", x(data[i].x) + margin.left + 10 + 'px')
             .style("top", y(data[i].y) + margin.top + 8 + 'px');
         var curDiv = curLabel._groups[0][0];
@@ -159,7 +192,6 @@ function processData(jsonObject) {
         var y1 = curDiv.offsetTop;
         var x2 = curDiv.offsetLeft + curDiv.offsetWidth;
         var y2 = curDiv.offsetTop + curDiv.offsetHeight;
-
 
 
         //move it to top right
@@ -184,6 +216,7 @@ function processData(jsonObject) {
         //console.log('y' + y(data[i].y) +  margin.top);
         //console.log(curDiv.offsetTop - (8 + y(data[i].y) +  margin.top));
         var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+        /*
         if (term == 'affordable') {
             console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
             var matchedCoord = coords[matchedElement];
@@ -193,19 +226,19 @@ function processData(jsonObject) {
             var my2 = matchedElement[3];
             var x_diff = 0;
             var y_diff = 0;
-            if(x1 >= mx1 && x1 < mx2) {
-               x_diff = mx2 - x1;
+            if (x1 >= mx1 && x1 < mx2) {
+                x_diff = mx2 - x1;
             }
-            if(x2 > mx1 && x2 <= mx2) {
-               x_diff = mx1 - x2;
+            if (x2 > mx1 && x2 <= mx2) {
+                x_diff = mx1 - x2;
             }
             x1 += x_diff;
             x2 += x_diff;
-            if(y1 >= my1 && y1 < my2) {
-               y_diff = my2 - y1;
+            if (y1 >= my1 && y1 < my2) {
+                y_diff = my2 - y1;
             }
-            if(y2 > my1 && y2 <= my2) {
-               y_diff = my1 - y2;
+            if (y2 > my1 && y2 <= my2) {
+                y_diff = my1 - y2;
             }
             y1 += y_diff;
             y2 += y_diff;
@@ -215,7 +248,7 @@ function processData(jsonObject) {
             console.log('matchedElement ' + matchedElement)
             console.log('matchedElement ' + matchedCoord)
 
-        }
+        }*/
 
         if (!matchedElement || term == 'affordable') {
             coords[term] = [x1, y1, x2, y2];
@@ -232,12 +265,12 @@ function processData(jsonObject) {
     console.log('Data length ' + data.length);
     // prevent intersections with points.. not quite working
     /*
-    for (var i = 0; i < data.length; i++) {
+     for (var i = 0; i < data.length; i++) {
 
-        //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
-        //    rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, i);
-        //}
-    }*/
+     //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+     //    rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, i);
+     //}
+     }*/
 
     //var nodes = Array.prototype.slice.call(svg.selectAll('circle')._groups[0],0);
     //console.log("NODES");console.log(nodes);
@@ -260,11 +293,7 @@ function processData(jsonObject) {
         return (Math.min(aCatDist, aNotCatDist) > Math.min(bCatDist, bNotCatDist)) * 2 - 1
     });
 
-    console.log(data[0])
-    console.log("censoring");
-    //for (i = 0; i < data.length; censorPoints(i++));
     data.forEach(censorPoints)
-    console.log("writing")
     for (i = 0; i < data.length; labelPointBottomLeft(i++));
     console.log("coords")
     console.log(coords)
@@ -302,5 +331,4 @@ function processData(jsonObject) {
         .text(modelInfo['category_name'] + " Frequency");
 };
 
-// from words.js
 processData(getDataAndInfo());

@@ -1,6 +1,6 @@
 import numpy as np
 
-from scattertext import TermDocMatrixFromPandas
+from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.Corpus import Corpus
 
 

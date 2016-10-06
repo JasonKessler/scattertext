@@ -14,11 +14,15 @@ class ScatterChart:
 	             term_doc_matrix,
 	             minimum_term_frequency=3,
 	             jitter=0,
-	             seed=0):
+	             seed=0,
+	             pmi_threshold_coefficient=3
+	             ):
 		'''
 		:param term_doc_matrix: TermDocMatrix
+		:param minimum_term_frequency: int, minimum times an ngram has to be seen to be included
 		:param jitter: float
 		:param seed: float
+		:param pmi_threshold_coefficient: float, the minimum threshold
 		:return dataframe, html
 		'''
 		self.term_doc_matrix = term_doc_matrix

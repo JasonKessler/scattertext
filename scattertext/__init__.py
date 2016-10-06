@@ -3,6 +3,7 @@ from __future__ import print_function
 import scattertext.viz
 from scattertext import Scalers, ScatterChart
 from scattertext.CSRMatrixTools import CSRMatrixFactory
+#from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.FastButCrapNLP import fast_but_crap_nlp
 from scattertext.IndexStore import IndexStore
 from scattertext.Scalers import percentile_ordinal
