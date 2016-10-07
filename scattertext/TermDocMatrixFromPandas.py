@@ -1,7 +1,9 @@
 import numpy as np
 
-from scattertext import TermDocMatrixFactory, CSRMatrixFactory, IndexStore, TermDocMatrix
-
+from scattertext.CSRMatrixTools import CSRMatrixFactory
+from scattertext.IndexStore import IndexStore
+from scattertext.TermDocMatrix import TermDocMatrix
+from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
 
 class ParsePipelineFactory:
 	def __init__(self,
@@ -72,7 +74,10 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		--------
 		TermDocMatrixFactory
 		'''
-		TermDocMatrixFactory.__init__(self, clean_function=clean_function, nlp=nlp, use_lemmas=use_lemmas)
+		TermDocMatrixFactory.__init__(self,
+		                              clean_function=clean_function,
+		                              nlp=nlp,
+		                              use_lemmas=use_lemmas)
 		self.data_frame = data_frame
 		self._text_col = text_col
 		self._category_col = category_col
@@ -127,5 +132,3 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		df = self.data_frame[[self._category_col, self._text_col]].dropna()
 		df = df[(df[self._text_col] != '')].reset_index()
 		return df
-
-

@@ -27,6 +27,8 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 		--------
 		TermDocMatrixFromPandas
 		'''
+
+
 	def _apply_pipeline_and_get_build_instance(self,
 	                                           X_factory,
 	                                           category_idx_store,

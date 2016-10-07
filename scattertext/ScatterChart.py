@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.stats import rankdata
 
-from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis
 from scattertext.Scalers import percentile_min, percentile_ordinal
+from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
+	filter_out_unigrams_that_only_occur_in_one_bigram
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):
@@ -15,20 +16,23 @@ class ScatterChart:
 	             minimum_term_frequency=3,
 	             jitter=0,
 	             seed=0,
-	             pmi_threshold_coefficient=3
-	             ):
+	             pmi_threshold_coefficient=3,
+	             filter_unigrams=False):
 		'''
 		:param term_doc_matrix: TermDocMatrix
 		:param minimum_term_frequency: int, minimum times an ngram has to be seen to be included
 		:param jitter: float
 		:param seed: float
 		:param pmi_threshold_coefficient: float, the minimum threshold
+		:param filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
 		:return dataframe, html
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
 		self.minimum_term_frequency = minimum_term_frequency
 		self.seed = seed
+		self.pmi_threshold_coefficient = pmi_threshold_coefficient
+		self.filter_unigrams = filter_unigrams
 		np.random.seed(seed)
 
 	def to_dict(self,
@@ -77,6 +81,13 @@ class ScatterChart:
 		              'not_category_terms': not_category_terms}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
+
+	def _get_category_names(self, category):
+		other_categories = [val + ' freq' for _, val \
+		                    in self.term_doc_matrix._category_idx_store.items() \
+		                    if val != category]
+		all_categories = other_categories + [category + ' freq']
+		return all_categories, other_categories
 
 	def draw(self,
 	         category,
@@ -168,23 +179,22 @@ class ScatterChart:
 
 	def _build_dataframe_for_drawing(self, all_categories, category, scores):
 		df = self.term_doc_matrix.get_term_freq_df()
+		np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
-		df['not category score'] = np.sqrt(2) - np.array(self.term_doc_matrix.get_rudder_scores(category))
+		df['not category score'] = np.sqrt(2) - df['category score']
 		df['color_scores'] = scores \
 			if scores is not None \
 			else np.array(self.term_doc_matrix.get_scaled_f_scores(category))
 		df = filter_bigrams_by_pmis(
 			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
-			threshold_coef=3)
-		if len(df) == 0: raise NoWordMeetsTermFrequencyRequirementsError()
+			threshold_coef=self.pmi_threshold_coefficient
+		)
+		if self.filter_unigrams:
+			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
+
+		if len(df) == 0:
+			raise NoWordMeetsTermFrequencyRequirementsError()
 		df['category score rank'] = rankdata(df['category score'], method='ordinal')
 		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
 		df = df.reset_index()
 		return df
-
-	def _get_category_names(self, category):
-		other_categories = [val + ' freq' for _, val \
-		                    in self.term_doc_matrix._category_idx_store.items() \
-		                    if val != category]
-		all_categories = other_categories + [category + ' freq']
-		return all_categories, other_categories

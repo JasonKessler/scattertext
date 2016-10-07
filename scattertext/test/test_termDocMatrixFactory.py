@@ -10,6 +10,7 @@ from scattertext.TermDocMatrixFactory import FeatsFromDoc
 
 
 def build_hamlet_jz_term_doc_mat():
+	# type: () -> TermDocMatrix
 	categories, documents = get_docs_categories()
 	clean_function = lambda text: '' if text.startswith('[') else text
 	term_doc_mat = TermDocMatrixFactory(

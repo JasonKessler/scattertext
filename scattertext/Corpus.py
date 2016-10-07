@@ -1,7 +1,7 @@
 import pandas as pd
 from numpy import nonzero
 
-from scattertext import TermDocMatrix
+from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class Corpus(TermDocMatrix):

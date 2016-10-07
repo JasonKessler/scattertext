@@ -117,6 +117,7 @@ class TestTermDocMat(TestCase):
 
 
 def get_hamlet_term_doc_matrix():
+	# type: () -> TermDocMatrix
 	try:
 		cwd = os.path.dirname(os.path.abspath(__file__))
 		path = os.path.join(cwd, '..', 'data', 'hamlet.txt')

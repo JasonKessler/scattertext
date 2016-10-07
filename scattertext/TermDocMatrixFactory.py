@@ -266,6 +266,15 @@ class FeatsFromDoc(TermDocMatrixFactory):
 		self._entity_types_to_censor = entity_types
 
 	def feats_from_doc(self, raw_text):
+		'''
+		Parameters
+		----------
+		raw_text, uncleaned text for parsing out features
+
+		Returns
+		-------
+		csr_matrix, feature matrix
+		'''
 		parsed_text = self._nlp(self._clean_function(raw_text))
 		X_factory = CSRMatrixFactory()
 		X_factory.set_last_col_idx(self._term_idx_store.getnumvals() - 1)

@@ -71,11 +71,16 @@ function showTooltip(d, pageX, pageY) {
 
 function handleClick(event) {
     deselectLastCircle();
-    var searchTerm = document.getElementById("searchTerm").value.toLowerCase();
+    var searchTerm = document
+        .getElementById("searchTerm")
+        .value
+        .toLowerCase()
+        .replace("'"," '")
+        .trim();
     var searchTermInfo = termDict[searchTerm];
     if(searchTermInfo === undefined) {
         d3.select("#alertMessage")
-            .text(searchTerm + " din't make it into the visualization.");
+            .text(searchTerm + " didn't make it into the visualization.");
     } else {
         d3.select("#alertMessage").text("");
         var circle = mysvg._groups[0][searchTermInfo.i];
@@ -83,7 +88,6 @@ function handleClick(event) {
             .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
         var pageX = mySVGMatrix.e;
         var pageY = mySVGMatrix.f;
-        console.log(searchTermInfo);
         circle.style["stroke"] = "black";
         showTooltip(searchTermInfo, pageX, pageY);
         lastCircleSelected = circle;
@@ -106,7 +110,7 @@ function processData(jsonObject) {
         termDict[x.term].i = i;
     });
 
-    console.log(data);
+    //console.log(data);
     // Scale the range of the data.  Add some space on either end.
     x.domain([-0.1, d3.max(data, function (d) {
         return d.x;
@@ -144,9 +148,6 @@ function processData(jsonObject) {
         });
 
 
-    console.log('dot');
-    console.log(svg.selectAll('circle'));
-
     coords = Object();
     function censorPoints(datum) {
         var term = datum.term;
@@ -172,10 +173,10 @@ function processData(jsonObject) {
         //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
         rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
         //}
-
+        /*
         if (term == 'an economy') {
             console.log("~~an economy " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
-        }
+        }*/
         coords['~~' + term] = [x1, y1, x2, y2];
     }
 
@@ -250,7 +251,7 @@ function processData(jsonObject) {
 
         }*/
 
-        if (!matchedElement || term == 'affordable') {
+        if (!matchedElement) { // | term == 'affordable'
             coords[term] = [x1, y1, x2, y2];
             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
             return true;
@@ -262,7 +263,7 @@ function processData(jsonObject) {
     }
 
     var radius = 2;
-    console.log('Data length ' + data.length);
+    //console.log('Data length ' + data.length);
     // prevent intersections with points.. not quite working
     /*
      for (var i = 0; i < data.length; i++) {
@@ -295,8 +296,8 @@ function processData(jsonObject) {
 
     data.forEach(censorPoints)
     for (i = 0; i < data.length; labelPointBottomLeft(i++));
-    console.log("coords")
-    console.log(coords)
+    //console.log("coords")
+    //console.log(coords)
     // Add the X Axis
     var myXAxis = svg.append("g")
         .attr("class", "x axis")
@@ -309,8 +310,8 @@ function processData(jsonObject) {
         .attr("x", width)
         .attr("y", height - 6)
         .text(modelInfo['not_category_name'] + " Frequency");
-    console.log('xLabel');
-    console.log(xLabel);
+    //console.log('xLabel');
+    //console.log(xLabel);
 
     // Add the Y Axis
     svg.append("g")
