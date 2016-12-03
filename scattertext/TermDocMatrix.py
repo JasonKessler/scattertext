@@ -6,6 +6,7 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
+from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
 from sklearn.cross_validation import cross_val_predict
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -21,6 +22,9 @@ class InvalidScalerException(Exception):
 
 
 class TermDocMatrix:
+	'''
+	!!! to do: refactor score functions into classes
+	'''
 	def __init__(self, X, y, term_idx_store, category_idx_store, unigram_frequency_path=None):
 		'''
 		:param X: csr_matrix term document matrix
@@ -46,14 +50,59 @@ class TermDocMatrix:
 			self.get_term_freq_df().sum(axis=1)
 		).sum()
 
-	def get_term_freq_df(self):
-		'''
-		:return: pd.DataFrame indexed on terms, with columns giving frequencies for each
-		'''
+	def old_get_term_freq_df(self):
 		d = {'term': self._term_idx_store._i2val}
 		for i, category in self._category_idx_store.items():
 			d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
 		return pd.DataFrame(d).set_index('term')
+
+	def get_term_freq_df(self):
+		'''
+		:return: pd.DataFrame indexed on terms, with columns giving frequencies for each
+		'''
+		row = self._row_category_ids()
+		newX = csr_matrix((self._X.data, (row, self._X.indices)))
+		return self._term_freq_df_from_matrix(newX)
+
+	def term_doc_lists(self):
+		'''
+		Returns
+		-------
+		dict
+		'''
+		doc_ids = self._X.transpose().tolil().rows
+		terms = self._term_idx_store.values()
+		return dict(zip(terms, doc_ids))
+
+	def get_term_doc_count_df(self):
+		'''
+		:return: pd.DataFrame indexed on terms, with columns giving the number of docs containing each
+		'''
+		row = self._row_category_ids()
+		catX = self._change_document_type_in_matrix(self._X, row)
+		return self._term_freq_df_from_matrix(catX)
+
+	def _row_category_ids(self):
+		row = self._X.tocoo().row
+		for i, cat in enumerate(self._y):
+			row[row == i] = cat
+		return row
+
+	def _term_freq_df_from_matrix(self, catX):
+		d = {'term': self._term_idx_store._i2val}
+		for idx, cat in self._category_idx_store.items():
+			d[cat + ' freq'] = catX[idx, :].A[0]
+		return pd.DataFrame(d).set_index('term')
+
+	def _change_document_type_in_matrix(self, X, new_doc_ids):
+		new_data = self._make_all_positive_data_ones(X.data)
+		newX = csr_matrix((new_data, (new_doc_ids, X.indices)))
+		return newX
+
+	def _make_all_positive_data_ones(self, newX):
+		# type: (sparse_matrix) -> sparse_matrix
+		return (newX > 0).astype(np.int32)
+
 
 	def remove_terms(self, terms):
 		'''

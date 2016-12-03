@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
+
 
 class ParsePipelineFactory:
 	def __init__(self,
@@ -122,13 +124,21 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		return tdm
 
 	def _init_term_doc_matrix_variables(self):
+		return CorpusFactoryHelper.init_term_doc_matrix_variables()
+
+	def _clean_and_filter_nulls_and_empties_from_dataframe(self):
+		df = self.data_frame[[self._category_col, self._text_col]].dropna()
+		df = df[(df[self._text_col] != '')].reset_index()
+		return df
+
+
+class CorpusFactoryHelper(object):
+	@staticmethod
+	def init_term_doc_matrix_variables():
 		y = []
 		X_factory = CSRMatrixFactory()
 		category_idx_store = IndexStore()
 		term_idx_store = IndexStore()
 		return X_factory, category_idx_store, term_idx_store, y
 
-	def _clean_and_filter_nulls_and_empties_from_dataframe(self):
-		df = self.data_frame[[self._category_col, self._text_col]].dropna()
-		df = df[(df[self._text_col] != '')].reset_index()
-		return df
+

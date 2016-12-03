@@ -5,8 +5,13 @@ from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class Corpus(TermDocMatrix):
-	def __init__(self, X, y, term_idx_store, category_idx_store,
-	             raw_texts, unigram_frequency_path=None):
+	def __init__(self,
+	             X,
+	             y,
+	             term_idx_store,
+	             category_idx_store,
+	             raw_texts,
+	             unigram_frequency_path=None):
 		'''
 		Parameters
 		----------
@@ -42,13 +47,13 @@ class Corpus(TermDocMatrix):
 		'''
 		mask = self._document_index_mask(ngram)
 		return pd.DataFrame({
-			'text': self._raw_texts[mask],
+			'text': self.get_texts()[mask],
 			'category': [self._category_idx_store.getval(idx)
 			             for idx in self._y[mask]]
 		})
 
 	def search_index(self, ngram):
-		'''
+		"""
 		Parameters
 		----------
 		ngram str or unicode, string to search for
@@ -56,7 +61,7 @@ class Corpus(TermDocMatrix):
 		Returns
 		-------
 		np.array, list of matching document indices
-		'''
+		"""
 		return nonzero(self._document_index_mask(ngram))[0]
 
 	def _document_index_mask(self, ngram):

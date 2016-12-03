@@ -10,6 +10,8 @@ class NoWordMeetsTermFrequencyRequirementsError(Exception):
 	pass
 
 
+
+
 class ScatterChart:
 	def __init__(self,
 	             term_doc_matrix,
@@ -56,7 +58,6 @@ class ScatterChart:
 		                            s: score,
 		                            cat25k: freq per 25k in category,
 		                            ncat25k: freq per 25k in non-category}}
-
 		'''
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._build_dataframe_for_drawing(all_categories, category, scores)
@@ -81,6 +82,7 @@ class ScatterChart:
 		              'not_category_terms': not_category_terms}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
+
 
 	def _get_category_names(self, category):
 		other_categories = [val + ' freq' for _, val \
@@ -159,7 +161,11 @@ class ScatterChart:
 		plt.show()
 		return df, fig_to_html(fig)
 
-	def _get_coordinates_from_transform_and_jitter_frequencies(self, category, df, other_categories, transform):
+	def _get_coordinates_from_transform_and_jitter_frequencies(self,
+	                                                           category,
+	                                                           df,
+	                                                           other_categories,
+	                                                           transform):
 		x_data_raw = transform(df[other_categories].sum(axis=1))
 		y_data_raw = transform(df[category + ' freq'])
 		x_data = self._add_jitter(x_data_raw)
@@ -167,10 +173,10 @@ class ScatterChart:
 		return x_data, y_data
 
 	def _add_jitter(self, vec):
-		'''
+		"""
 		:param vec: array to jitter
-		:return:
-		'''
+		:return: array, jittered version of arrays
+		"""
 		if self.jitter == 0:
 			return vec
 		else:
@@ -198,3 +204,5 @@ class ScatterChart:
 		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
 		df = df.reset_index()
 		return df
+
+

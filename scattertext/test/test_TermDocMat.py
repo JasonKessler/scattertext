@@ -3,9 +3,13 @@ import pkgutil
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 
-from scattertext.TermDocMatrix import InvalidScalerException
+from scattertext import TermDocMatrixFromPandas
+from scattertext.FastButCrapNLP import fast_but_crap_nlp
+from scattertext.TermDocMatrix import InvalidScalerException, TermDocMatrix
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
+from scattertext.test.test_corpusFromPandas import get_docs_categories
 
 
 class TestTermDocMat(TestCase):
@@ -15,6 +19,7 @@ class TestTermDocMat(TestCase):
 
 	@classmethod
 	def make_a_test_term_doc_matrix(cls):
+		# type: () -> TermDocMatrix
 		return build_from_category_whitespace_delimited_text(
 			[
 				['a', '''hello my name is joe.
@@ -39,6 +44,29 @@ class TestTermDocMat(TestCase):
 
 	def test_total_unigram_count(self):
 		self.assertEqual(self.tdm.get_total_unigram_count(), 36)
+
+	def test_get_term_df(self):
+		categories, documents = get_docs_categories()
+		df = pd.DataFrame({'category': categories,
+		                   'text': documents})
+		tdm_factory = TermDocMatrixFromPandas(df,
+		                                      'category',
+		                                      'text',
+		                                      nlp=fast_but_crap_nlp)
+		term_doc_matrix = tdm_factory.build()
+
+		term_df = term_doc_matrix.get_term_freq_df()
+		self.assertEqual(dict(term_df.ix['speak up']),
+		                 {'??? freq': 2, 'hamlet freq': 0, 'jay-z/r. kelly freq': 1})
+		self.assertEqual(dict(term_df.ix['that']),
+		                 {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 0})
+
+	def test_term_doc_lists(self):
+		term_doc_lists = self.tdm.term_doc_lists()
+		self.assertEqual(type(term_doc_lists), dict)
+		self.assertEqual(term_doc_lists['this'], [1, 2])
+		self.assertEqual(term_doc_lists['another document'], [1])
+		self.assertEqual(term_doc_lists['is'], [0, 1, 2])
 
 	def test_remove_terms(self):
 		tdm = self.make_a_test_term_doc_matrix()
@@ -116,19 +144,29 @@ class TestTermDocMat(TestCase):
 		                 ['hamlet', 'hamlet,', 'the'])
 
 
+
+
 def get_hamlet_term_doc_matrix():
 	# type: () -> TermDocMatrix
+	hamlet_docs = get_hamlet_docs()
+
+	hamlet_term_doc_matrix = build_from_category_whitespace_delimited_text(
+		[(get_hamlet_snippet_binary_category(text), text)
+		 for i, text in enumerate(hamlet_docs)]
+	)
+	return hamlet_term_doc_matrix
+
+
+def get_hamlet_snippet_binary_category(text):
+	return 'hamlet' if 'hamlet' in text.lower() else 'not hamlet'
+
+
+def get_hamlet_docs():
 	try:
 		cwd = os.path.dirname(os.path.abspath(__file__))
 		path = os.path.join(cwd, '..', 'data', 'hamlet.txt')
 		buf = open(path).read()
 	except:
 		buf = pkgutil.get_data('scattertext', os.path.join('data', 'hamlet.txt'))
-
-	hamlet_term_doc_matrix = build_from_category_whitespace_delimited_text(
-		[('hamlet'
-		  if 'hamlet' in text.lower()
-		  else 'not hamlet', text)
-		 for i, text in enumerate(buf.split('\n\n'))]
-	)
-	return hamlet_term_doc_matrix
+	hamlet_docs = buf.split('\n\n')
+	return hamlet_docs

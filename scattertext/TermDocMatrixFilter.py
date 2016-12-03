@@ -63,7 +63,8 @@ class TermDocMatrixFilter:
 		low_pmi_bigrams = get_low_pmi_bigrams(self._threshold_coef, df).index
 		infrequent_terms = df[df.sum(axis=1) < self._min_freq].index
 		filtered_term_doc_mat = term_doc_matrix.remove_terms(set(low_pmi_bigrams | infrequent_terms))
-		if not all(filtered_term_doc_mat.get_term_freq_df().sum() > 0):
+		try:
+			filtered_term_doc_mat.get_term_freq_df()
+		except ValueError:
 			raise AtLeastOneCategoryHasNoTermsException()
-
 		return filtered_term_doc_mat

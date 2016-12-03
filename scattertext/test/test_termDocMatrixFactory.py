@@ -1,9 +1,11 @@
 import re
 from unittest import TestCase
 
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import PassiveAggressiveClassifier
 
+from scattertext import CorpusFromParsedDocuments
 from scattertext import TermDocMatrixFactory
 from scattertext.FastButCrapNLP import fast_but_crap_nlp, Doc, Tok
 from scattertext.TermDocMatrixFactory import FeatsFromDoc
@@ -19,6 +21,23 @@ def build_hamlet_jz_term_doc_mat():
 		nlp=fast_but_crap_nlp
 	).build()
 	return term_doc_mat
+
+
+def build_hamlet_jz_corpus():
+	# type: () -> TermDocMatrix
+	categories, documents = get_docs_categories()
+	clean_function = lambda text: '' if text.startswith('[') else text
+	df = pd.DataFrame({
+		'category': categories,
+		'parsed': [fast_but_crap_nlp(clean_function(doc)) for doc in documents]
+	})
+	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
+	print(df)
+	return CorpusFromParsedDocuments(
+		df=df,
+		category_col='category',
+		parsed_col='parsed'
+	).build()
 
 
 def get_docs_categories():
@@ -74,6 +93,7 @@ class TestTermDocMatrixFactory(TestCase):
 		self.assertIn('GPE', set(term_doc_mat.get_term_freq_df().index))
 		self.assertNotIn('brooklyn', set(term_doc_mat.get_term_freq_df().index))
 
+
 class TestFeatsFromDoc(TestCase):
 	def test_main(self):
 		categories, documents = get_docs_categories()
@@ -89,12 +109,11 @@ class TestFeatsFromDoc(TestCase):
 				.build()
 		)
 		clf = PassiveAggressiveClassifier(n_iter=5, C=0.5, n_jobs=-1, random_state=0)
-		fdc = FeatsFromDoc(term_doc_mat._term_idx_store, clean_function=clean_function, entity_types=entity_types).set_nlp(_testing_nlp)
+		fdc = FeatsFromDoc(term_doc_mat._term_idx_store, clean_function=clean_function, entity_types=entity_types).set_nlp(
+			_testing_nlp)
 		tfidf = TfidfTransformer(norm='l1')
 		X = tfidf.fit_transform(term_doc_mat._X)
 		clf.fit(X, term_doc_mat._y)
 		X_to_predict = fdc.feats_from_doc('Did sometimes march UNKNOWNWORD')
 		pred = clf.predict(tfidf.transform(X_to_predict))
 		dec = clf.decision_function(X_to_predict)
-
-

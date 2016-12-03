@@ -30,8 +30,8 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                 self.make_assembler().to_html(),)
 
 	def test_raise_invalid_protocol_exception(self):
-		with self.assertRaisesRegexp(InvalidProtocolException,
-		                             "Invalid protocol: 'ftp'.  Protocol must be either http or https."):
+		with self.assertRaisesRegexp(BaseException,
+		                             "Invalid protocol: ftp.  Protocol must be either http or https."):
 			self.make_assembler().to_html(protocol='ftp')
 
 	def make_assembler(self):

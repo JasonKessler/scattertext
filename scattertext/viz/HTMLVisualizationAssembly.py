@@ -14,7 +14,8 @@ class HTMLVisualizationAssembly:
 
 	def to_html(self, protocol='http'):
 		if protocol not in ('https', 'http'):
-			raise InvalidProtocolException("Invalid protocol: '" + protocol + "'.  Protocol must be either http or https.")
+			raise InvalidProtocolException("Invalid protocol: %s.  Protocol must be either http or https."
+			                               % (protocol))
 		html_file = pkgutil.get_data('scattertext',
 		                             'data/viz/scattertext.html').decode('utf-8')
 		scripts = '\n'.join([pkgutil.get_data('scattertext',

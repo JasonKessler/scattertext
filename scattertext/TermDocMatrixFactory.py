@@ -1,5 +1,6 @@
 import string
 from collections import Counter
+from itertools import chain
 
 import numpy as np
 
@@ -80,6 +81,10 @@ class TermDocMatrixFactory(object):
 		self._nlp = nlp
 		self._use_lemmas = use_lemmas
 		self._entity_types_to_censor = set()
+		self._feats_from_spacy_doc = FeatsFromSpacyDoc(
+			use_lemmas=use_lemmas,
+			entity_types_to_censor=self._entity_types_to_censor
+		)
 
 	def set_category_text_iter(self, category_text_iter):
 		"""Initializes the category_text_iter
@@ -148,6 +153,7 @@ class TermDocMatrixFactory(object):
 		return nlp
 
 	def censor_entity_types(self, entity_types):
+		# type: (set) -> TermDocMatrixFactory
 		'''
 		Entity types to exclude from feature construction. Terms matching
 		specificed entities, instead of labeled by their lower case orthographic
@@ -165,6 +171,10 @@ class TermDocMatrixFactory(object):
 		'''
 		assert type(entity_types) == set
 		self._entity_types_to_censor = entity_types
+		self._feats_from_spacy_doc = FeatsFromSpacyDoc(
+			use_lemmas=self._use_lemmas,
+			entity_types_to_censor=self._entity_types_to_censor
+		)
 		return self
 
 	def _build_from_category_spacy_doc_iter(self, category_doc_iter):
@@ -204,13 +214,30 @@ class TermDocMatrixFactory(object):
 		y = np.array(y)
 		return X, y
 
-	def _register_doc_and_category(self, X_factory, category, category_idx_store,
-	                               document_index, parsed_text,
-	                               term_idx_store, y):
+	def _old_register_doc_and_category(self,
+	                               X_factory,
+	                               category, category_idx_store,
+	                               document_index,
+	                               parsed_text,
+	                               term_idx_store,
+	                               y):
 		y.append(category_idx_store.getidx(category))
 		document_features = self._get_features_from_parsed_text(parsed_text, term_idx_store)
-		self._register_document_features_with_X_factory\
+		self._register_document_features_with_X_factory \
 			(X_factory, document_index, document_features)
+
+	def _register_doc_and_category(self,
+	                               X_factory,
+	                               category,
+	                               category_idx_store,
+	                               document_index,
+	                               parsed_text,
+	                               term_idx_store,
+	                               y):
+		y.append(category_idx_store.getidx(category))
+		for term, count in self._feats_from_spacy_doc.get_feats(parsed_text).items():
+			term_idx = term_idx_store.getidx(term)
+			X_factory[document_index, term_idx] = count
 
 
 	def _register_document_features_with_X_factory(self, X_factory, doci, term_freq):
@@ -241,8 +268,58 @@ class TermDocMatrixFactory(object):
 			term_freq[term_idx_store.getidx(term)] += 1
 
 
+
+class FeatsFromSpacyDoc(object):
+	def __init__(self,
+	             use_lemmas=False,
+	             entity_types_to_censor=set()):
+		'''
+		Parameters
+		----------
+		use_lemmas bool, False by default
+		entity_types_to_censor set, empty by default
+		'''
+		self._use_lemmas = use_lemmas
+		assert type(entity_types_to_censor) == set
+		self._entity_types_to_censor = entity_types_to_censor
+
+
+	def get_feats(self, doc):
+		'''
+		Parameters
+		----------
+		doc, Spacy Docs
+
+		Returns
+		-------
+		Counter (unigram, bigram) -> count
+		'''
+		ngram_counter = Counter()
+		for sent in doc.sents:
+			unigrams = []
+			for tok in sent:
+				if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
+					if tok.ent_type_ in self._entity_types_to_censor:
+						unigrams.append(tok.ent_type_)
+					elif self._use_lemmas:
+						if tok.lemma_.strip():
+							unigrams.append(tok.lemma_.strip())
+					elif tok.lower_.strip():
+						unigrams.append(tok.lower_.strip())
+			if len(unigrams) > 1:
+				bigrams = map(' '.join, zip(unigrams[:-1], unigrams[1:]))
+			else:
+				bigrams = []
+			ngram_counter += Counter(chain(unigrams, bigrams))
+		return ngram_counter
+
 class FeatsFromDoc(TermDocMatrixFactory):
-	def __init__(self, term_idx_store, clean_function=lambda x: x, nlp=None, use_lemmas=False, entity_types=set()):
+	def __init__(self,
+	             term_idx_store,
+	             clean_function=lambda x: x,
+	             nlp=None,
+	             use_lemmas=False,
+	             entity_types=set()):
 		"""Class for extracting features from a new document.
 
 	   Parameters

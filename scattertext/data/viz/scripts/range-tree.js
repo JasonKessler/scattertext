@@ -35,7 +35,6 @@ function overlaps(low1, high1, low2, high2) {
     return !(low1 >= high2 || low2 >= high1);
 }
 
-
 function searchIntervalTree(root, low, high) {
     if (root === null) return [];
     var rootLow = root[0][0];

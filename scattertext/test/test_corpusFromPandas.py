@@ -67,3 +67,5 @@ class TestCorpusFromPandas(TestCase):
 		                              'category',
 		                              'text',
 		                              nlp=fast_but_crap_nlp).build()
+
+
