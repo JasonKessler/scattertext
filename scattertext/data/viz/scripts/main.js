@@ -17,12 +17,6 @@ var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabeler);
 
 var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabeler);
 
-// Define the div for the tooltip
-// var tooltip = d3.select("body").append("div")
-var tooltip = d3.select('#' + divName).append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
-
 // var label = d3.select("body").append("div")
 var label = d3.select('#' + divName).append("div")
     .attr("class", "label");
@@ -57,7 +51,7 @@ function showTooltip(d, pageX, pageY) {
     tooltip.transition()
         .duration(0)
         .style("opacity", 1)
-        .style("z-index", 1000000);
+        .style("z-index", 10000000);
 
     tooltip.html(d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words")
         .style("left", (pageX) + "px")
@@ -331,5 +325,9 @@ function processData(jsonObject) {
         .attr("transform", "rotate(-90)")
         .text(modelInfo['category_name'] + " Frequency");
 };
-
 processData(getDataAndInfo());
+
+// The tool tip is down here in order to make sure it has the highest z-index
+var tooltip = d3.select('#' + divName).append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
