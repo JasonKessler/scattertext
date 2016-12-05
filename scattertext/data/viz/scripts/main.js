@@ -341,3 +341,5 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
         .attr("class", "tooltip")
         .style("opacity", 0);
 }
+
+//..
