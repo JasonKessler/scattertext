@@ -57,7 +57,8 @@ def main():
 	html = produce_scattertext_html(term_doc_matrix,
 	                                category='democrat',
 	                                category_name='Democratic',
-	                                not_category_name='Republican')
+	                                not_category_name='Republican',
+	                                width_in_pixels=1000)
 	open('./demo.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo.html in Chrome or Firefox.')
 
