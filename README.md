@@ -53,12 +53,12 @@ These, as of December 5, 2016, are much faster in Chrome than Firefox.
 ### Differences between objective narrative discriptions in movies and subjective evaluations
 
 Click for [interactive](https://jasonkessler.github.io/subj_obj_scatter.html) version.
-[![Language of movies](https://jasonkessler.github.io/subj_obj_scatter.png)](https://jasonkessler.github.io/subj_obj_scatter.html)
+[![Language of movies](https://jasonkessler.github.io/subj_obj_scatter .png)](https://jasonkessler.github.io/subj_obj_scatter.html)
 
 ### Differences in 2012 American Political Convention Speeches
 
 Click for [interactive](https://jasonkessler.github.io/demo.html) version.
-[![Differences in 2012 American Political Convention Speeches](https://jasonkessler.github.io/2012_conventions.png)](https://jasonkessler.github.io/demo.html)
+[![Differences in 2012 American Political Convention Speeches](https://jasonkessler.github.io/2012_conventions .png)](https://jasonkessler.github.io/demo.html)
 
 ## Technical Underpinnings
 
