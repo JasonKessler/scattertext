@@ -29,7 +29,7 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
     // var svg = d3.select("body")
     var svg = d3.select('#' + divName)
         .append("svg")
-        .attr("width", width + margin.left + margin.right)
+        .attr("width", width + margin.left + margin.right + 200)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform",
@@ -66,7 +66,7 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
         });
     }
 
-    function handleClick(event) {
+    handleClick = function (event) {
         deselectLastCircle();
         var searchTerm = document
             .getElementById("searchTerm")
@@ -74,6 +74,12 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             .toLowerCase()
             .replace("'", " '")
             .trim();
+        showToolTipForTerm(searchTerm);
+        return false;
+    };
+
+    function showToolTipForTerm(searchTerm) {
+        console.log("TERM" + searchTerm);
         var searchTermInfo = termDict[searchTerm];
         if (searchTermInfo === undefined) {
             d3.select("#alertMessage")
@@ -89,8 +95,7 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             showTooltip(searchTermInfo, pageX, pageY);
             lastCircleSelected = circle;
         }
-        return false;
-    }
+    };
 
     function processData(fullData) {
         var modelInfo = fullData['info'];
@@ -143,13 +148,6 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
                     .style("opacity", 0);
                 d3.select(this).style("stroke", null);
             });
-
-
-        catTerms = svg.data(modelInfo['category_terms']).enter()
-            .append("text")
-            .attr("cx", function(d) { return x(1.1); })
-            //.attr("cx", function(d) { return x(1.1); })
-            .text(function(d) {d});
 
         coords = Object();
         function censorPoints(datum) {
@@ -289,15 +287,30 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
          );*/
         //console.log("Range Tree");
         //console.log(rangeTree);
-        data = data.sort(function (a, b) { // sort by euclidean distance
+
+        function euclideanDistanceSort(a, b) {
             var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
             var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
             var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
             var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
-            return (Math.min(aCatDist, aNotCatDist) > Math.min(bCatDist, bNotCatDist)) * 2 - 1
-        });
+            return (Math.min(aCatDist, aNotCatDist) > Math.min(bCatDist, bNotCatDist)) * 2 - 1;
+        }
 
-        data.forEach(censorPoints)
+        function euclideanDistanceSortForCategory(a, b) {
+            var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
+            var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
+            return (aCatDist > bCatDist) * 2 - 1;
+        }
+
+        function euclideanDistanceSortForNotCategory(a, b) {
+            var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
+            var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
+            return (aNotCatDist > bNotCatDist) * 2 - 1;
+        }
+
+        data = data.sort(euclideanDistanceSort);
+
+        data.forEach(censorPoints);
         for (i = 0; i < data.length; labelPointBottomLeft(i++));
         //console.log("coords")
         //console.log(coords)
@@ -333,13 +346,57 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             .attr("dy", ".75em")
             .attr("transform", "rotate(-90)")
             .text(modelInfo['category_name'] + " Frequency");
+
+        word = svg.append("text")
+            .attr("class", "category_header")
+            .attr("text-anchor", "start")
+            .attr("x", width)
+            .attr("dy", "6px")
+            .text("Top " + fullData['info']['category_name'] + ' Terms');
+
+        function showWordList(word, termDataList) {
+            for (var i in termDataList) {
+                var curTerm = termDataList[i].term;
+                word = (function (word, curTerm) {
+                    return svg.append("text")
+                        .attr("text-anchor", "start")
+                        .attr("x", width + 10)
+                        .attr("y", word.node().getBBox().y + 2 * word.node().getBBox().height)
+                        .text(curTerm)
+                        .on("mouseover", function (d) {
+                            console.log("SHOW" + curTerm);
+                            showToolTipForTerm(curTerm);
+                            d3.select(this).style("stroke", "black");
+                        })
+                        .on("mouseout", function (d) {
+                            tooltip.transition()
+                                .duration(0)
+                                .style("opacity", 0);
+                            d3.select(this).style("stroke", null);
+                        });
+                })(word, curTerm);
+            }
+            return word;
+        }
+        word = showWordList(word, data.sort(euclideanDistanceSortForCategory).slice(0, 14));
+
+        word = svg.append("text")
+            .attr("class", "category_header")
+            .attr("text-anchor", "start")
+            .attr("x", width)
+            .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
+            .text("Top " + fullData['info']['not_category_name'] + ' Terms');
+
+        word = showWordList(word, data.sort(euclideanDistanceSortForNotCategory).slice(0, 14));
+
     };
-    processData(getDataAndInfo());
+
+    fullData = getDataAndInfo();
+    processData(fullData);
 
     // The tool tip is down here in order to make sure it has the highest z-index
-    var tooltip = d3.select('#' + divName).append("div")
+    var tooltip = d3.select('#' + divName)
+        .append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
 }
-
-//..
