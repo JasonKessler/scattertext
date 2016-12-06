@@ -48,6 +48,8 @@ Please see the Jupyter [notebook](https://jasonkessler.github.io/Subjective%2Bvs
 
 ## Examples
 
+These, as of December 5, 2016, are much faster in Chrome than Firefox.
+
 ### Differences between objective narrative discriptions in movies and subjective evaluations
 
 Click for [interactive](https://jasonkessler.github.io/subj_obj_scatter.html) version.
