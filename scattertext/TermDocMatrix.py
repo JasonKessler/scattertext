@@ -282,9 +282,14 @@ class TermDocMatrix:
 		return df.sort_values('Log Posterior Mean Ratio', ascending=False)
 
 	def _get_catetgory_and_non_category_word_counts(self, category):
+		self._validate_category(category)
 		cat_word_counts = self._X[self._get_mask_from_category(category)].sum(axis=0).A1
 		not_cat_word_counts = self._X[self._y != self._category_idx_store.getidx(category)].sum(axis=0).A1
 		return cat_word_counts, not_cat_word_counts
+
+	def _validate_category(self, category):
+		if category not in self.get_categories():
+			raise Exception("Invalid category: %s, valid: %s" % (category, self.get_categories()))
 
 	def _get_fisher_scores_from_counts(self, cat_word_counts, not_cat_word_counts):
 		cat_not_word_counts = cat_word_counts.sum() - cat_word_counts

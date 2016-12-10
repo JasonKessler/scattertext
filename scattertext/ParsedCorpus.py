@@ -1,11 +1,13 @@
 from scipy.sparse import csr_matrix
 import numpy as np
 import pandas as pd
+
+from scattertext.Corpus import Corpus
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 
 
-class ParsedCorpus(TermDocMatrix):
+class ParsedCorpus(Corpus):
 	def __init__(self,
 	             df,
 	             X,

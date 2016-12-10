@@ -41,19 +41,23 @@ def convention_speech_iter():
 		return json.loads(pkgutil.get_data('scattertext', relative_path).decode('utf-8'))
 
 
-def make_category_text_iter():
+def iter_party_speech_pairs():
 	for speaker_obj in convention_speech_iter():
 		political_party = speaker_obj['name']
 		for speech in speaker_obj['speeches']:
 			yield political_party, speech
 
-
-def main():
+def build_term_doc_matrix():
 	term_doc_matrix = TermDocMatrixFactory(
-		category_text_iter=make_category_text_iter(),
+		category_text_iter=iter_party_speech_pairs(),
 		clean_function=clean_function_factory(),
 		nlp=fast_but_crap_nlp
 	).build()
+	return term_doc_matrix
+
+
+def main():
+	term_doc_matrix = build_term_doc_matrix()
 	html = produce_scattertext_html(term_doc_matrix,
 	                                category='democrat',
 	                                category_name='Democratic',
@@ -61,6 +65,7 @@ def main():
 	                                width_in_pixels=1000)
 	open('./demo.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo.html in Chrome or Firefox.')
+
 
 
 if __name__ == '__main__':

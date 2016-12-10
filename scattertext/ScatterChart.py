@@ -188,9 +188,7 @@ class ScatterChart:
 		np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['not category score'] = np.sqrt(2) - df['category score']
-		df['color_scores'] = scores \
-			if scores is not None \
-			else np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+		df['color_scores'] = self._get_color_scores(category, scores)
 		df = filter_bigrams_by_pmis(
 			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
 			threshold_coef=self.pmi_threshold_coefficient
@@ -204,5 +202,12 @@ class ScatterChart:
 		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
 		df = df.reset_index()
 		return df
+
+	def _get_color_scores(self, category, scores):
+		# type: (str, np.array) -> np.array
+		if scores is None:
+			return np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+		return scores
+
 
 

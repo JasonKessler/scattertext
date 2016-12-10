@@ -2,7 +2,7 @@ from scattertext.IndexStore import IndexStore
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.TermDocMatrixFactory import FeatsFromSpacyDoc
-
+import numpy as np
 
 class CorpusFromParsedDocuments(object):
 	def __init__(self,
@@ -47,7 +47,7 @@ class CorpusFromParsedDocuments(object):
 		                    self._category_col)
 
 	def _get_y_and_populate_category_idx_store(self):
-		return self._df[self._category_col].apply(self._category_idx_store.getidx)
+		return np.array(self._df[self._category_col].apply(self._category_idx_store.getidx))
 
 	def _add_to_x_factory(self, row):
 		parsed_text = row[self._parsed_col]

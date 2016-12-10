@@ -1,5 +1,8 @@
 import re
 
+'''
+This is a fast buf awful partial implementation of Spacy.  It's useful for testing.
+'''
 
 class Tok:
 	def __init__(self, pos, lem, low, ent_type):

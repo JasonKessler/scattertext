@@ -1,11 +1,25 @@
-import numpy as np
-import pandas as pd
-
 from scattertext import ScatterChart, percentile_ordinal
-from scattertext.Scalers import percentile_min
+from scattertext.Corpus import Corpus
+from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus
 
 
 class ScatterChartExplorer(ScatterChart):
+	def __init__(self,
+	             term_doc_matrix,
+	             minimum_term_frequency=3,
+	             jitter=0,
+	             seed=0,
+	             pmi_threshold_coefficient=3,
+	             filter_unigrams=False):
+		assert isinstance(term_doc_matrix, Corpus)
+		ScatterChart.__init__(self,
+		                     term_doc_matrix,
+		                     minimum_term_frequency,
+		                     jitter,
+		                     seed,
+		                     pmi_threshold_coefficient,
+		                     filter_unigrams)
+
 	def to_dict(self,
 	            category,
 	            category_name=None,
@@ -34,34 +48,11 @@ class ScatterChartExplorer(ScatterChart):
 		                            ncat25k: freq per 25k in non-category}}
 		'''
 
-		all_categories, other_categories = self._get_category_names(category)
-		df = self._build_dataframe_for_drawing(all_categories, category, scores)
-		df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
-			(category, df, other_categories, transform)
-		doc_id_df = pd.DataFrame(pd.Series(self.term_doc_matrix.term_doc_lists()),
-		                         columns=['docids'])
-		#print(pd.Series(self.term_doc_matrix.term_doc_lists()))
-		df = pd.merge(df, doc_id_df, left_on='term', right_index=True)
-		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
-		json_df = df[['x', 'y', 'term', 'docids']]
-		json_df['cat25k'] = ((df[category + ' freq'] * 1. / df[category + ' freq'].sum()) * 25000)
-		json_df['ncat25k'] = ((df['not cat freq'] * 1. / df['not cat freq'].sum()) * 25000)
-		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
-		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
-		json_df['cat'] = df[category + ' freq']
-		json_df['ncat'] = df['not cat freq']
-		json_df['s'] = percentile_min(df['color_scores'])
-		category_terms = list(json_df.sort_values('s')['term'][:10])
-		not_category_terms = list(json_df.sort_values('s')['term'][:10])
-		if category_name is None:
-			category_name = category
-		if not_category_name is None:
-			not_category_name = 'Not ' + category_name
-		j = {'info': {'category_name': category_name.title(),
-		              'not_category_name': not_category_name.title(),
-		              'category_terms': category_terms,
-		              'not_category_terms': not_category_terms}}
-		j['docs'] = {'labels': self.term_doc_matrix._y,
-		             'texts': self.term_doc_matrix.get_texts()}
-		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+		j = ScatterChart.to_dict(self,
+		                        category,
+		                        category_name=category_name,
+		                        not_category_name=not_category_name,
+		                        scores=scores,
+		                        transform=percentile_ordinal)
+		j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix).get_labels_and_texts()
 		return j
