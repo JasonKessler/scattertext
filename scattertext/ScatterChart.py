@@ -60,15 +60,12 @@ class ScatterChart:
 		                            ncat25k: freq per 25k in non-category}}
 		'''
 		all_categories, other_categories = self._get_category_names(category)
-		df = self._build_dataframe_for_drawing(all_categories, category, scores)
+		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
 		df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
 			(category, df, other_categories, transform)
 		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
 		json_df = df[['x', 'y', 'term']]
-		json_df['cat25k'] = ((df[category + ' freq'] * 1. / df[category + ' freq'].sum()) * 25000)
-		json_df['ncat25k'] = ((df['not cat freq'] * 1. / df['not cat freq'].sum()) * 25000)
-		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
-		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
+		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])
@@ -83,6 +80,13 @@ class ScatterChart:
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
+	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
+		json_df['cat25k'] = ((term_freq_df[category + ' freq'] * 1.
+		                      / term_freq_df[category + ' freq'].sum()) * 25000)
+		json_df['ncat25k'] = ((term_freq_df['not cat freq'] * 1.
+		                       / term_freq_df['not cat freq'].sum()) * 25000)
+		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
+		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
 
 	def _get_category_names(self, category):
 		other_categories = [val + ' freq' for _, val \
@@ -106,7 +110,7 @@ class ScatterChart:
 		except:
 			raise Exception("mpld3 need to be installed to use this function.")
 		all_categories, other_categories = self._get_category_names(category)
-		df = self._build_dataframe_for_drawing(all_categories, category, scores)
+		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
 		x_data, y_data = self._get_coordinates_from_transform_and_jitter_frequencies \
 			(category, df, other_categories, transform)
 		df_to_annotate = df[(df['not category score rank'] <= num_top_words_to_annotate)
@@ -183,7 +187,7 @@ class ScatterChart:
 			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
 			return to_ret
 
-	def _build_dataframe_for_drawing(self, all_categories, category, scores):
+	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
 		df = self.term_doc_matrix.get_term_freq_df()
 		np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))

@@ -3,7 +3,6 @@ from numpy import nonzero
 
 from scattertext.TermDocMatrix import TermDocMatrix
 
-
 class Corpus(TermDocMatrix):
 	def __init__(self,
 	             X,

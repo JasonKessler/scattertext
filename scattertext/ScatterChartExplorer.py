@@ -1,6 +1,7 @@
 from scattertext import ScatterChart, percentile_ordinal
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus
+import numpy as np
 
 
 class ScatterChartExplorer(ScatterChart):
@@ -56,3 +57,8 @@ class ScatterChartExplorer(ScatterChart):
 		                        transform=percentile_ordinal)
 		j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix).get_labels_and_texts()
 		return j
+
+	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
+		ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)
+		json_df['cat'] = term_freq_df[category + ' freq'].astype(np.int)
+		json_df['ncat'] = term_freq_df['not cat freq'].astype(np.int)

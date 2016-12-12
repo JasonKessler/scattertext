@@ -33,11 +33,17 @@ class TestScatterChart(TestCase):
 		            "term": u"art",
 		            "cat25k": 758,
 		            "ncat25k": 0,
-		            's': 0.6511627906976744,
+		            's': 0.38095238095238093,
 		            'cat': 1,
 		            'ncat': 0,
-		            'docids': [0]}
+		            # not sure if i want to do it this way
+		            #'docids': [0]
+		            }
 		datum = j['data'][0]
+		print('data')
+		print(datum)
+		print('expected')
+		print(expected)
 		for var in expected.keys():
 			try:
 				np.testing.assert_almost_equal(datum[var], expected[var])
@@ -45,3 +51,5 @@ class TestScatterChart(TestCase):
 				self.assertEqual(datum[var], expected[var])
 		self.assertEqual(set(expected.keys()), set(datum.keys()))
 		self.assertEqual(expected['term'], datum['term'])
+
+
