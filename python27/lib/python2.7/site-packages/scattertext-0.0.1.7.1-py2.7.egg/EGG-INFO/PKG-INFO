@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: scattertext
+Version: 0.0.1.7.1
+Summary: An NLP libarary to help find interesting terms in small to medium-sized corpora.
+Home-page: https://github.com/JasonKessler/scattertext
+Author: Jason Kessler
+Author-email: jason.kessler@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

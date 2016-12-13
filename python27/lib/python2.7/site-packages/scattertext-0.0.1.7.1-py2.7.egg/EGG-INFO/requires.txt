@@ -1,0 +1,6 @@
+nose
+numpy
+scipy
+sklearn
+pandas
+spacy
