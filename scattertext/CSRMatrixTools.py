@@ -45,10 +45,10 @@ class CSRMatrixFactory:
 		assert last_col_idx >= self._max_col
 		self._max_col = last_col_idx
 
-	def get_csr_matrix(self):
+	def get_csr_matrix(self, dtype=np.int32):
 		return csr_matrix((self.data, (self.rows, self.cols)),
 		                  shape=(self._max_row + 1, self._max_col + 1),
-		                  dtype=np.int32)
+		                  dtype=dtype)
 
 
 def delete_columns(mat, columns_to_delete):
