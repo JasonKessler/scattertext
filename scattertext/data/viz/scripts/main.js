@@ -114,7 +114,9 @@ function buildViz(widthInPixels = 800,
     }
 
     function displayTermContexts(contexts) {
-        if (contexts[0].length == 0 && contexts[1].length == 1) return;
+        if (contexts[0].length == 0 && contexts[1].length == 0) {
+            return null;
+        }
         var categoryNames = [fullData.info.category_name, fullData.info.not_category_name];
         d3.select('#cathead').html(categoryNames[0]);
         d3.select('#notcathead').html(categoryNames[1]);
@@ -134,13 +136,11 @@ function buildViz(widthInPixels = 800,
                             return x.snippet;
                         });
                 });
-        if(window.location.hash == '#snippets') {
+        if (window.location.hash == '#snippets') {
             window.location.hash = '#snippetsalt';
         } else {
             window.location.hash = '#snippets';
         }
-
-
     }
 
     function showTooltip(d, pageX, pageY) {
@@ -462,7 +462,6 @@ function buildViz(widthInPixels = 800,
                         .attr("y", word.node().getBBox().y + 2 * word.node().getBBox().height)
                         .text(curTerm)
                         .on("mouseover", function (d) {
-                            console.log("SHOW" + curTerm);
                             showToolTipForTerm(curTerm);
                             d3.select(this).style("stroke", "black");
                         })
