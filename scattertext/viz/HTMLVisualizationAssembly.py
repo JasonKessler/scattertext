@@ -15,7 +15,7 @@ class HTMLVisualizationAssembly:
 		:param visualization_data: VisualizationData
 		:param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
 		:param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
-		:param max_snippets: int, max snippets to snow when temr is clicked, if None show all
+		:param max_snippets: int or None, max snippets to snow when temr is clicked, if None show all
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
