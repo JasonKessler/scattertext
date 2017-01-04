@@ -79,15 +79,56 @@ input:focus {
   outline: none;
 }
 
+.snippet {
+  padding-bottom: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+
+}
+
+.snippet_header {
+  font: 20px sans-serif;
+  font-weight: bolder;
+  text-decoration: underline;
+  text-align: center;
+  border-bottom-width: 10px;
+  border-bottom-color: #888888;
+  padding-bottom: 10px;
+}
+
+.left_contexts {
+  width: 45%;
+  float: left;
+}
+
+.right_contexts {
+  width: 45%;
+  float: left;
+}
+
+#cat {
+}
+
+#notcat {
+}
+
 </style>
 <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/d3-scale-chromatic.v1.min.js" charset="utf-8"></script>
 <div id="d3-div-1"> </div>
-<form name="termForm" onSubmit="return handleClick()">
+<form name="termForm" onSubmit="return handleSearch()">
   <input name="Submit" type="submit" value="Search for term">
   <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
   <span id="alertMessage" class="alert"></span>
 </form>
+<a name="snippets"></a>
+<a name="snippetsalt"></a>
+<div id="d3-div-2">
+ <div class="snippet_header left_contexts" id="cathead"></div>
+ <div class="snippet_header right_contexts" id="notcathead"></div>
+ <div class="snippet left_contexts" id="cat"></div>
+ <div class="snippet right_contexts" id="notcat"></div>
+</div>
 <script>
   <!-- INSERT SCRIPT -->
 </script>

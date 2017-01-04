@@ -38,7 +38,7 @@ def produce_scattertext_html(term_doc_matrix,
 	protocol, str, optional, used prototcol of , http or https
 	filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
 	param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
-	param height_in_pixels: height, width of viz in pixels, if None, default to JS's choice
+	param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
 
 	Returns
 	-------
@@ -68,7 +68,8 @@ def produce_scattertext_explorer(corpus,
                                  minimum_term_frequency=3,
                                  filter_unigrams=False,
                                  height_in_pixels=None,
-                                 width_in_pixels=None):
+                                 width_in_pixels=None,
+                                 max_snippets=None):
 	'''
 	Parameters
 	----------
@@ -79,7 +80,8 @@ def produce_scattertext_explorer(corpus,
 	protocol, str, optional, used prototcol of , http or https
 	filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
 	param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
-	param height_in_pixels: height, width of viz in pixels, if None, default to JS's choice
+	param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
+  param max_snippets: int or None, number of snippets to show when term is clicked.  If None, all are shown.
 
 	Returns
 	-------
@@ -96,5 +98,6 @@ def produce_scattertext_explorer(corpus,
 	viz_data_adapter = VizDataAdapter(scatter_chart_data)
 	html = HTMLVisualizationAssembly(viz_data_adapter,
 	                                 width_in_pixels,
-	                                 height_in_pixels).to_html(protocol=protocol)
+	                                 height_in_pixels,
+	                                 max_snippets).to_html(protocol=protocol)
 	return html

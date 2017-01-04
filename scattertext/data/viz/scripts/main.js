@@ -1,4 +1,6 @@
-function buildViz(widthInPixels = 800, heightInPixels = 600) {
+function buildViz(widthInPixels = 800,
+                  heightInPixels = 600,
+                  max_snippets = null) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -35,11 +37,6 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
         .attr("transform",
             "translate(" + margin.left + "," + margin.top + ")");
 
-    /*
-     var categoryTermList = d3.select('#' + divName)
-     .append("ul");
-     */
-
     var lastCircleSelected = null;
 
     function deselectLastCircle() {
@@ -47,6 +44,103 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             lastCircleSelected.style["stroke"] = null;
             lastCircleSelected = null;
         }
+    }
+
+    function getSentenceBoundaries(text) {
+        // !!! need to use spacy's spentence splitter
+        var sentenceRe = /\(?[^\.\?\!\n\b]+[\n\.!\?]\)?/g;
+        var offsets = [];
+        var match;
+        while ((match = sentenceRe.exec(text)) != null) {
+            offsets.push(match.index);
+        }
+        offsets.push(text.length);
+        return offsets;
+    }
+
+    function getMatchingSnippet(text, boundaries, start, end) {
+        var sentenceStart = null;
+        var sentenceEnd = null;
+        for (var i in boundaries) {
+            var position = boundaries[i];
+            if (position <= start && (sentenceStart == null || position > sentenceStart)) {
+                sentenceStart = position;
+            }
+            if (position >= end) {
+                sentenceEnd = position;
+                break;
+            }
+        }
+        var snippet = (text.slice(sentenceStart, start) + "<b>" + text.slice(start, end)
+        + "</b>" + text.slice(end, sentenceEnd)).trim();
+        return {'snippet': snippet, 'sentenceStart': sentenceStart};
+    }
+
+    function gatherTermContexts(d) {
+        var category_name = fullData['info']['category_name'];
+        var not_category_name = fullData['info']['not_category_name'];
+        var matches = [[], []];
+        if (fullData.docs === undefined) return matches;
+        for (var i in fullData.docs.texts) {
+            var text = fullData.docs.texts[i];
+            var pattern = new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b", "gim");
+            var match;
+            var sentenceOffsets = null;
+            var lastSentenceStart = null;
+            if (max_snippets != null
+                && matches[fullData.docs.labels[0]] >= max_snippets
+                && matches[fullData.docs.labels[1]] >= max_snippets) {
+                break;
+            }
+            while ((match = pattern.exec(text)) != null) {
+                if (sentenceOffsets == null) {
+                    sentenceOffsets = getSentenceBoundaries(text);
+                }
+                var foundSnippet = getMatchingSnippet(text, sentenceOffsets,
+                    match.index, pattern.lastIndex);
+                if (foundSnippet.sentenceStart == lastSentenceStart) continue;
+                lastSentenceStart = foundSnippet.sentenceStart;
+                var categoryMatches = matches[fullData.docs.labels[i]];
+                if (max_snippets != null && categoryMatches.length >= max_snippets) {
+                    break;
+                }
+                categoryMatches.push({
+                    'snippet': foundSnippet.snippet,
+                    'id': i
+                });
+            }
+        }
+        return matches;
+    }
+
+    function displayTermContexts(contexts) {
+        if (contexts[0].length == 0 && contexts[1].length == 1) return;
+        var categoryNames = [fullData.info.category_name, fullData.info.not_category_name];
+        d3.select('#cathead').html(categoryNames[0]);
+        d3.select('#notcathead').html(categoryNames[1]);
+        categoryNames
+            .map(
+                function (catName, catIndex) {
+                    var divId = catIndex == 0 ? '#cat' : '#notcat';
+                    var temp = d3.select(divId)
+                        .selectAll("div").remove();
+                    d3.select(divId)
+                        .selectAll("div")
+                        .data(contexts[catIndex])
+                        .enter()
+                        .append("div")
+                        .attr('class', 'snippet')
+                        .html(function (x) {
+                            return x.snippet;
+                        });
+                });
+        if(window.location.hash == '#snippets') {
+            window.location.hash = '#snippetsalt';
+        } else {
+            window.location.hash = '#snippets';
+        }
+
+
     }
 
     function showTooltip(d, pageX, pageY) {
@@ -66,7 +160,7 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
         });
     }
 
-    handleClick = function (event) {
+    handleSearch = function (event) {
         deselectLastCircle();
         var searchTerm = document
             .getElementById("searchTerm")
@@ -75,11 +169,11 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             .replace("'", " '")
             .trim();
         showToolTipForTerm(searchTerm);
+        displayTermContexts(gatherTermContexts(searchTermInfo));
         return false;
     };
 
     function showToolTipForTerm(searchTerm) {
-        console.log("TERM" + searchTerm);
         var searchTermInfo = termDict[searchTerm];
         if (searchTermInfo === undefined) {
             d3.select("#alertMessage")
@@ -94,6 +188,7 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             circle.style["stroke"] = "black";
             showTooltip(searchTermInfo, pageX, pageY);
             lastCircleSelected = circle;
+
         }
     };
 
@@ -141,6 +236,9 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
             .on("mouseover", function (d) {
                 showTooltip(d, d3.event.pageX, d3.event.pageY);
                 d3.select(this).style("stroke", "black");
+            })
+            .on("click", function (d) {
+                displayTermContexts(gatherTermContexts(d));
             })
             .on("mouseout", function (d) {
                 tooltip.transition()
@@ -373,11 +471,15 @@ function buildViz(widthInPixels = 800, heightInPixels = 600) {
                                 .duration(0)
                                 .style("opacity", 0);
                             d3.select(this).style("stroke", null);
+                        })
+                        .on("click", function (d) {
+                            displayTermContexts(gatherTermContexts(termDict[curTerm]));
                         });
                 })(word, curTerm);
             }
             return word;
         }
+
         word = showWordList(word, data.sort(euclideanDistanceSortForCategory).slice(0, 14));
 
         word = svg.append("text")

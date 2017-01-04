@@ -37,22 +37,22 @@ class TestHTMLVisualizationAssembly(TestCase):
 
 	def test_height_width_default(self):
 		assembler = self.make_assembler()
-		self.assertEqual(assembler._get_build_viz_call(), "buildViz(undefined,undefined);")
+		self.assertEqual(assembler._call_build_visualization_in_javascript(), "buildViz(undefined,undefined);")
 
 	def test_height_width_nondefault(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, width_in_pixels=1000)
-		                  ._get_build_viz_call()),
+		                  ._call_build_visualization_in_javascript()),
 		                 "buildViz(1000,undefined);")
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, height_in_pixels=60)
-		                  ._get_build_viz_call()),
+		                  ._call_build_visualization_in_javascript()),
 		                 "buildViz(undefined,60);")
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000)
-		                  ._get_build_viz_call()),
+		                  ._call_build_visualization_in_javascript()),
 		                 "buildViz(1000,60);")
 
 	def make_assembler(self):

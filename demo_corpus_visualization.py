@@ -28,9 +28,10 @@ def main():
 	                                    category='democrat',
 	                                    category_name='Democratic',
 	                                    not_category_name='Republican',
-	                                    width_in_pixels=1000)
+	                                    width_in_pixels=1000,
+	                                    max_snippets=100)
 	open('./demo_explorer.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_explorer.html in Chrome or Firefox.')
-	print("Note: in future version this will show you excerpts of documents that contain the term.")
+
 if __name__ == '__main__':
 	main()
