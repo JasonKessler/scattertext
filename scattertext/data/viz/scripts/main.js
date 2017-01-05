@@ -192,6 +192,23 @@ function buildViz(widthInPixels = 800,
         }
     };
 
+    function makeWordInteractive(domObj, term) {
+        return domObj
+            .on("mouseover", function (d) {
+                showToolTipForTerm(term);
+                d3.select(this).style("stroke", "black");
+            })
+            .on("mouseout", function (d) {
+                tooltip.transition()
+                    .duration(0)
+                    .style("opacity", 0);
+                d3.select(this).style("stroke", null);
+            })
+            .on("click", function (d) {
+                displayTermContexts(gatherTermContexts(termDict[term]));
+            });
+    }
+
     function processData(fullData) {
         var modelInfo = fullData['info'];
         /*
@@ -251,49 +268,86 @@ function buildViz(widthInPixels = 800,
         function censorPoints(datum) {
             var term = datum.term;
             //var curLabel = d3.select("body").append("div")
-            var curLabel = d3.select('#' + divName).append("div")
-
-                .attr("class", "label").html('L')
-                .style("left", x(datum.x) + margin.left + 5 + 'px')
-                .style("top", y(datum.y) + margin.top + 4 + 'px');
-            var curDiv = curLabel._groups[0][0];
-
-            var x1 = curDiv.offsetLeft - 2 + 2;
-            var y1 = curDiv.offsetTop - 2 + 5;
-            var x2 = curDiv.offsetLeft + 2 + 2;
-            var y2 = curDiv.offsetTop + 2 + 5;
             /*
-             var x1 = curDiv.offsetLeft - 2;
-             var y1 = curDiv.offsetTop - 2;
-             var x2 = curDiv.offsetLeft + 2;
-             var y2 = curDiv.offsetTop + 2;
+             var curLabel = d3.select('#' + divName).append("div")
+             .attr("class", "label").html('L')
+             .style("left", x(datum.x) + margin.left + 5 + 'px')
+             .style("top", y(datum.y) + margin.top + 4 + 'px');
+
+             var curDiv = curLabel._groups[0][0];
+
+             var x1 = curDiv.offsetLeft - 2 + 2;
+             var y1 = curDiv.offsetTop - 2 + 5;
+             var x2 = curDiv.offsetLeft + 2 + 2;
+             var y2 = curDiv.offsetTop + 2 + 5;
+
+             console.log(curLabel);
+             curLabel.remove();
+             //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
+             //}
+             coords['~~' + term] = [x1, y1, x2, y2];
              */
-            curLabel.remove();
-            //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
+            var curLabel = svg.append("text")
+                .attr("x", x(datum.x))
+                .attr("y", y(datum.y) + 3)
+                .attr("text-anchor", "middle")
+                .text("x");
+            var bbox = curLabel.node().getBBox();
+            var borderToRemove = .5;
+            var x1 = bbox.x + borderToRemove,
+                y1 = bbox.y + borderToRemove,
+                x2 = bbox.x + bbox.width - borderToRemove,
+                y2 = bbox.y + bbox.height - borderToRemove;
             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
-            //}
-            /*
-             if (term == 'an economy') {
-             console.log("~~an economy " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
-             }*/
-            coords['~~' + term] = [x1, y1, x2, y2];
+            curLabel.remove();
         }
 
         function labelPointBottomLeft(i) {
             var term = data[i].term;
-            //var curLabel = d3.select("body").append("div")
-            var curLabel = d3.select("#" + divName).append("div")
-                .attr("class", "label").html(term)
-                .style("left", x(data[i].x) + margin.left + 10 + 'px')
-                .style("top", y(data[i].y) + margin.top + 8 + 'px');
-            var curDiv = curLabel._groups[0][0];
+            /*
+             var curLabel = makeWordInteractive(
+             svg.append("text")
+             .attr("x", x(data[i].x) + 3)
+             .attr("y", y(data[i].y) + 10)
+             .attr('class', 'small_label')
+             .attr("text-anchor", "start")
+             .text(term)
+             ,
+             term);
+             */
 
-            var x1 = curDiv.offsetLeft;
-            var y1 = curDiv.offsetTop;
-            var x2 = curDiv.offsetLeft + curDiv.offsetWidth;
-            var y2 = curDiv.offsetTop + curDiv.offsetHeight;
-
-
+            var configs = [
+                {'anchor': 'end', 'xoff': -5, 'yoff': -3},
+                {'anchor': 'end', 'xoff': -5, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 3, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 3, 'yoff': -3}
+            ];
+            var matchedElement = null;
+            for (var configI in configs) {
+                var config = configs[configI];
+                var curLabel = makeWordInteractive(
+                    svg.append("text")
+                        .attr("x", x(data[i].x) + config['xoff'])
+                        .attr("y", y(data[i].y) + config['yoff'])
+                        .attr('class', 'small_label')
+                        .attr("text-anchor", config['anchor'])
+                        .text(term),
+                    term
+                );
+                var bbox = curLabel.node().getBBox();
+                var borderToRemove = .5;
+                var x1 = bbox.x + borderToRemove,
+                    y1 = bbox.y + borderToRemove,
+                    x2 = bbox.x + bbox.width - borderToRemove,
+                    y2 = bbox.y + bbox.height - borderToRemove;
+                matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+                if(matchedElement) {
+                    curLabel.remove();
+                } else {
+                    break;
+                }
+            }
             //move it to top right
             /*
              var width = curDiv.offsetWidth;
@@ -315,7 +369,6 @@ function buildViz(widthInPixels = 800,
             //console.log(curDiv.offsetLeft - (10 + x(data[i].x) + margin.left));
             //console.log('y' + y(data[i].y) +  margin.top);
             //console.log(curDiv.offsetTop - (8 + y(data[i].y) +  margin.top));
-            var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
             /*
              if (term == 'affordable') {
              console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
@@ -350,12 +403,13 @@ function buildViz(widthInPixels = 800,
 
              }*/
 
-            if (!matchedElement) { // | term == 'affordable'
+            if (!matchedElement || term == 'auto') {
                 coords[term] = [x1, y1, x2, y2];
                 rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
                 return true;
+
             } else {
-                curLabel.remove();
+                //curLabel.remove();
                 return false;
             }
 
@@ -409,7 +463,6 @@ function buildViz(widthInPixels = 800,
         data = data.sort(euclideanDistanceSort);
 
         data.forEach(censorPoints);
-        for (i = 0; i < data.length; labelPointBottomLeft(i++));
         //console.log("coords")
         //console.log(coords)
         // Add the X Axis
@@ -417,6 +470,19 @@ function buildViz(widthInPixels = 800,
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
+
+        function registerFigureBBox(curLabel) {
+            var bbox = curLabel.node().getBBox();
+            var borderToRemove = 1.5;
+            var x1 = bbox.x + borderToRemove,
+                y1 = bbox.y + borderToRemove,
+                x2 = bbox.x + bbox.width - borderToRemove,
+                y2 = bbox.y + bbox.height - borderToRemove;
+            return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
+        }
+
+        //rangeTree = registerFigureBBox(myXAxis);
+
 
         var xLabel = svg.append("text")
             .attr("class", "x label")
@@ -427,8 +493,9 @@ function buildViz(widthInPixels = 800,
         //console.log('xLabel');
         //console.log(xLabel);
 
+        //rangeTree = registerFigureBBox(xLabel);
         // Add the Y Axis
-        svg.append("g")
+        var myYAxis = svg.append("g")
             .attr("class", "y axis")
             .call(yAxis)
             .selectAll("text")
@@ -436,14 +503,16 @@ function buildViz(widthInPixels = 800,
             .attr("dx", "30px")
             .attr("dy", "-13px")
             .attr("transform", "rotate(-90)");
+        rangeTree = registerFigureBBox(myYAxis);
 
-        svg.append("text")
+        var yLabel = svg.append("text")
             .attr("class", "y label")
             .attr("text-anchor", "end")
             .attr("y", 6)
             .attr("dy", ".75em")
             .attr("transform", "rotate(-90)")
             .text(modelInfo['category_name'] + " Frequency");
+        //rangeTree = registerFigureBBox(yLabel);
 
         word = svg.append("text")
             .attr("class", "category_header")
@@ -451,30 +520,37 @@ function buildViz(widthInPixels = 800,
             .attr("x", width)
             .attr("dy", "6px")
             .text("Top " + fullData['info']['category_name'] + ' Terms');
+        //rangeTree = registerFigureBBox(word);
 
         function showWordList(word, termDataList) {
             for (var i in termDataList) {
                 var curTerm = termDataList[i].term;
                 word = (function (word, curTerm) {
-                    return svg.append("text")
-                        .attr("text-anchor", "start")
-                        .attr("x", width + 10)
-                        .attr("y", word.node().getBBox().y + 2 * word.node().getBBox().height)
-                        .text(curTerm)
-                        .on("mouseover", function (d) {
-                            showToolTipForTerm(curTerm);
-                            d3.select(this).style("stroke", "black");
-                        })
-                        .on("mouseout", function (d) {
-                            tooltip.transition()
-                                .duration(0)
-                                .style("opacity", 0);
-                            d3.select(this).style("stroke", null);
-                        })
-                        .on("click", function (d) {
-                            displayTermContexts(gatherTermContexts(termDict[curTerm]));
-                        });
+                    return makeWordInteractive(
+                        svg.append("text")
+                            .attr("text-anchor", "start")
+                            .attr("x", width + 10)
+                            .attr("y", word.node().getBBox().y
+                                + 2 * word.node().getBBox().height)
+                            .text(curTerm)
+                        ,
+                        curTerm);
+                    /*
+                     .on("mouseover", function (d) {
+                     showToolTipForTerm(curTerm);
+                     d3.select(this).style("stroke", "black");
+                     })
+                     .on("mouseout", function (d) {
+                     tooltip.transition()
+                     .duration(0)
+                     .style("opacity", 0);
+                     d3.select(this).style("stroke", null);
+                     })
+                     .on("click", function (d) {
+                     displayTermContexts(gatherTermContexts(termDict[curTerm]));
+                     });*/
                 })(word, curTerm);
+                rangeTree = registerFigureBBox(word);
             }
             return word;
         }
@@ -489,6 +565,9 @@ function buildViz(widthInPixels = 800,
             .text("Top " + fullData['info']['not_category_name'] + ' Terms');
 
         word = showWordList(word, data.sort(euclideanDistanceSortForNotCategory).slice(0, 14));
+
+        for (i = 0; i < data.length; labelPointBottomLeft(i++));
+
 
     };
 
