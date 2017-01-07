@@ -82,12 +82,17 @@ function buildViz(widthInPixels = 800,
         var matches = [[], []];
         if (fullData.docs === undefined) return matches;
         for (var i in fullData.docs.texts) {
-            if(fullData.docs.labels[i] > 1) continue;
+            if (fullData.docs.labels[i] > 1) continue;
             var text = fullData.docs.texts[i];
             var pattern = new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b", "gim");
             var match;
             var sentenceOffsets = null;
             var lastSentenceStart = null;
+            var matchFound = false;
+            var curMatch = {'id': i, 'snippets': []};
+            if (fullData.docs.meta) {
+                curMatch['meta'] = fullData.docs.meta[i];
+            }
             while ((match = pattern.exec(text)) != null) {
                 if (sentenceOffsets == null) {
                     sentenceOffsets = getSentenceBoundaries(text);
@@ -96,11 +101,16 @@ function buildViz(widthInPixels = 800,
                     match.index, pattern.lastIndex);
                 if (foundSnippet.sentenceStart == lastSentenceStart) continue;
                 lastSentenceStart = foundSnippet.sentenceStart;
-                var categoryMatches = matches[fullData.docs.labels[i]];
-                categoryMatches.push({
-                    'snippet': foundSnippet.snippet,
-                    'id': i
-                });
+                //var categoryMatches = matches[fullData.docs.labels[i]];
+                /*categoryMatches.push({
+                 'snippet': foundSnippet.snippet,
+                 'id': i
+                 });*/
+                curMatch.snippets.push(foundSnippet.snippet);
+                matchFound = true;
+            }
+            if (matchFound) {
+                matches[fullData.docs.labels[i]].push(curMatch);
             }
         }
         return {'contexts': matches, 'info': d};
@@ -125,15 +135,29 @@ function buildViz(widthInPixels = 800,
                     var divId = catIndex == 0 ? '#cat' : '#notcat';
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
-                    d3.select(divId)
-                        .selectAll("div")
-                        .data(contexts[catIndex])
-                        .enter()
-                        .append("div")
-                        .attr('class', 'snippet')
-                        .html(function (x) {
-                            return x.snippet;
-                        });
+                    contexts[catIndex].forEach(function (context) {
+                        var meta = context.meta ? context.meta : '&nbsp;';
+                        d3.select(divId)
+                            .append("div")
+                            .attr('class', 'snippet_meta')
+                            .html(meta);
+                        context.snippets.forEach(function (snippet) {
+                            d3.select(divId)
+                            .append("div")
+                            .attr('class', 'snippet')
+                            .html(snippet);
+                        })
+
+                    });
+                    /*d3.select(divId)
+                     .selectAll("div")
+                     .data(contexts[catIndex])
+                     .enter()
+                     .append("div")
+                     .attr('class', 'snippet')
+                     .html(function (x) {
+                     return x.snippet;
+                     });*/
                 });
         d3.select('#termstats')
             .selectAll("div")
