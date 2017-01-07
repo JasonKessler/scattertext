@@ -112,6 +112,11 @@ input:focus {
   color: #444444;
 }
 
+.snippet_meta {
+  border-top: 3px solid #4588ba;
+  font: 12px sans-serif;
+  color: darkblue;
+}
 
 .left_contexts {
   width: 45%;
@@ -137,7 +142,7 @@ input:focus {
 <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/d3-scale-chromatic.v1.min.js" charset="utf-8"></script>
 <div id="d3-div-1"> </div>
-<form name="termForm" onSubmit="return handleSearch()">
+<form name="termForm" onSubmit="handleSearch(); return false;">
   <input name="Submit" type="submit" value="Search for term">
   <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
   <span id="alertMessage" class="alert"></span>
