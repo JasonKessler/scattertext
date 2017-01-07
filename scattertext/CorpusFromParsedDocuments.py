@@ -22,7 +22,7 @@ class CorpusFromParsedDocuments(object):
 			name of spacy parsed column in df
 		feats_from_spacy_doc : FeatsFromSpacyDoc
 		'''
-		self._df = df
+		self._df = df.reset_index()
 		self._category_col = category_col
 		self._parsed_col = parsed_col
 

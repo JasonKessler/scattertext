@@ -80,7 +80,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		                              clean_function=clean_function,
 		                              nlp=nlp,
 		                              use_lemmas=use_lemmas)
-		self.data_frame = data_frame
+		self.data_frame = data_frame.reset_index()
 		self._text_col = text_col
 		self._category_col = category_col
 		self._verbose = verbose
