@@ -48,14 +48,31 @@ class AtLeastOneCategoryHasNoTermsException(Exception):
 
 
 class TermDocMatrixFilter:
+	'''
+	Filter out terms below a particular frequency or pmi threshold.
+	'''
 	def __init__(self, pmi_threshold_coef=2, minimum_term_freq=3):
+		'''
+		Parameters
+		----------
+		pmi_threshold_coef : float
+			Bigram filtering threshold (2 * PMI). Default 2.
+		minimum_term_freq : int
+			Minimum number of itmes term has to appear.  Default 3.
+
+		'''
 		self._threshold_coef = pmi_threshold_coef
 		self._min_freq = minimum_term_freq
 
 	def filter(self, term_doc_matrix):
 		'''
-		:param term_doc_matrix: TermDocMatrix
-		:return: TermDocMatrix pmi-filterd term doc matrix
+		Parameters
+		----------
+		term_doc_matrix  : TermDocMatrix
+
+		Returns
+		-------
+		TermDocMatrix pmi-filterd term doc matrix
 		'''
 		df = term_doc_matrix.get_term_freq_df()
 		if len(df) == 0:

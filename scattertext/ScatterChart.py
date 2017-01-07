@@ -20,14 +20,23 @@ class ScatterChart:
 	             seed=0,
 	             pmi_threshold_coefficient=3,
 	             filter_unigrams=False):
+
 		'''
-		:param term_doc_matrix: TermDocMatrix
-		:param minimum_term_frequency: int, minimum times an ngram has to be seen to be included
-		:param jitter: float
-		:param seed: float
-		:param pmi_threshold_coefficient: float, the minimum threshold
-		:param filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
-		:return dataframe, html
+
+		Parameters
+		----------
+		term_doc_matrix : TermDocMatrix
+			The term doc matrix to use for the scatter chart.
+		minimum_term_frequency : int
+			Minimum times an ngram has to be seen to be included. Default is 3.
+		jitter : float
+			Maximum amount of noise to be added to points, 0.2 is a lot. Default is 0.
+		seed : float
+			Random seed. Default 0
+		pmi_threshold_coefficient : int
+			Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 3
+		filter_unigrams : bool
+			If True, remove unigrams that are part of bigrams. Default is False.
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
@@ -44,20 +53,36 @@ class ScatterChart:
 	            scores=None,
 	            transform=percentile_ordinal):
 		'''
-		Returns a dictionary that encodes the scatter chart
+
+		Parameters
+		----------
+		category : str
+			Category to annotate.  Exact value of category.
+		category_name : str
+			Name of category which will appear on web site. Default None is same as category.
+		not_category_name : str
+			Name of ~category which will appear on web site. Default None is same as "not " + category.
+		scores : np.array
+			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+		transform : function
+			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_ordinal.
+		Returns
+		-------
+		Dictionary that encodes the scatter chart
 		information. The dictionary can be dumped as a json document, and
 		used in scattertext.html
+		 {info: {category_name: ..., not_category_name},
+		  data: [{term:,
+		          x:frequency [0-1],
+		          y:frequency [0-1],
+              s: score,
+              cat25k: freq per 25k in category,
+              cat: count in category,
+              ncat: count in non-category,
+              catdocs: [docnum, ...],
+              ncatdocs: [docnum, ...]
+              ncat25k: freq per 25k in non-category}, ...]}}
 
-		:param category: Category to annotate
-		:param category_name: Name of category which will appear on web site.
-		:param not_category_name: Name of non-category axis which will appear on web site.
-		:param scores: Scores to use.  Default to Scaled F-Score.
-		:param transform: Defaults to percentile_ordinal
-		:return: dictionary {info: {category_name: ..., not_category_name},
-		                     data: {term:, x:frequency [0-1], y:frequency [0-1],
-		                            s: score,
-		                            cat25k: freq per 25k in category,
-		                            ncat25k: freq per 25k in non-category}}
 		'''
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
@@ -101,6 +126,21 @@ class ScatterChart:
 	         words_to_annotate=[],
 	         scores=None,
 	         transform=percentile_ordinal):
+		'''
+		Outdated
+
+		Parameters
+		----------
+		category
+		num_top_words_to_annotate
+		words_to_annotate
+		scores
+		transform
+
+		Returns
+		-------
+		pd.DataFrame, html of fgure
+		'''
 		try:
 			import matplotlib.pyplot as plt
 		except:

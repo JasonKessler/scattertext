@@ -28,32 +28,40 @@ def produce_scattertext_html(term_doc_matrix,
                              filter_unigrams=False,
                              height_in_pixels=None,
                              width_in_pixels=None):
-	'''
+	'''Returns html code of visualization.
+
 	Parameters
 	----------
-	term_doc_matrix TermDocMatrix
-	category, str: name of category column
-	category_name, str: name of category to mine for
-	not_category_name, str: name of everything that isn't in category
-	protocol, str, optional, used prototcol of , http or https
-	filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
-	param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
-	param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
+	term_doc_matrix : TermDocMatrix
+		Corpus to use
+	category : str
+		name of category column
+	category_name: str
+		name of category to mine for
+	not_category_name: str
+		name of everything that isn't in category
+	protocol : str
+		optional, used prototcol of , http or https
+	filter_unigrams : bool
+		default False, do we filter unigrams that only occur in one bigram
+	param width_in_pixels: int
+		width of viz in pixels, if None, default to JS's choice
+	param height_in_pixels: int
+		height of viz in pixels, if None, default to JS's choice
 
 	Returns
 	-------
-	str, html of visualization
+		str, html of visualization
 	'''
-	scatter_chart = ScatterChart(term_doc_matrix=term_doc_matrix,
-	                             minimum_term_frequency=minimum_term_frequency,
-	                             pmi_threshold_coefficient=pmi_filter_thresold,
-	                             filter_unigrams=filter_unigrams)
-	scatter_chart_data = scatter_chart.to_dict(category=category,
-	                                           category_name=category_name,
-	                                           not_category_name=not_category_name,
-	                                           transform=percentile_ordinal)
-	viz_data_adapter = VizDataAdapter(scatter_chart_data)
-	html = HTMLVisualizationAssembly(viz_data_adapter,
+	scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix,
+	                                  minimum_term_frequency=minimum_term_frequency,
+	                                  pmi_threshold_coefficient=pmi_filter_thresold,
+	                                  filter_unigrams=filter_unigrams) \
+		.to_dict(category=category,
+	           category_name=category_name,
+	           not_category_name=not_category_name,
+	           transform=percentile_ordinal)
+	html = HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels,
 	                                 height_in_pixels).to_html(protocol=protocol)
 	return html
@@ -70,22 +78,33 @@ def produce_scattertext_explorer(corpus,
                                  height_in_pixels=None,
                                  width_in_pixels=None,
                                  max_snippets=None):
-	'''
+	'''Returns html code of visualization.
+
 	Parameters
 	----------
-	corpus corpus
-	category, str: name of category column
-	category_name, str: name of category to mine for
-	not_category_name, str: name of everything that isn't in category
-	protocol, str, optional, used prototcol of , http or https
-	filter_unigrams: bool, default False, do we filter unigrams that only occur in one bigram
-	param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
-	param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
-  param max_snippets: int or None, number of snippets to show when term is clicked.  If None, all are shown.
+	corpus : Corpus
+		Corpus to use
+	category : str
+		name of category column
+	category_name : str
+		name of category to mine for
+	not_category_name : str
+		name of everything that isn't in category
+	protocol : str
+		optional, used prototcol of , http or https
+	filter_unigrams : bool
+		default False, do we filter unigrams that only occur in one bigram
+	param width_in_pixels : int
+		width of viz in pixels, if None, default to JS's choice
+	param height_in_pixels : int
+		height of viz in pixels, if None, default to JS's choice
+  param max_snippets : int
+    number of snippets to show when term is clicked.  If None, all are shown.
 
 	Returns
 	-------
-	str, html of visualization
+		str, html of visualization
+
 	'''
 	scatter_chart = ScatterChartExplorer(corpus,
 	                                     minimum_term_frequency=minimum_term_frequency,

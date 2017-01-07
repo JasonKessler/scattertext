@@ -27,10 +27,19 @@ class TermDocMatrix:
 	'''
 	def __init__(self, X, y, term_idx_store, category_idx_store, unigram_frequency_path=None):
 		'''
-		:param X: csr_matrix term document matrix
-		:param y: np.array category index array
-		:param term_idx_store: IndexStore word index
-		:param category_idx_store: IndexStore category name index
+
+		Parameters
+		----------
+		X : csr_matrix
+			term document matrix
+		y : np.array
+			category index array
+		term_idx_store : IndexStore
+			Term indices
+		category_idx_store : IndexStore
+			Catgory indices
+		unigram_frequency_path : str or None
+			Path to term frequency file.
 		'''
 		self._X, self._y, self._term_idx_store, self._category_idx_store = \
 			X, y, term_idx_store, category_idx_store
@@ -41,7 +50,10 @@ class TermDocMatrix:
 
 	def get_num_docs(self):
 		'''
-		:return: int number of documents
+
+		Returns
+		-------
+		int, number of documents
 		'''
 		return len(self._y)
 
@@ -58,7 +70,10 @@ class TermDocMatrix:
 
 	def get_term_freq_df(self):
 		'''
-		:return: pd.DataFrame indexed on terms, with columns giving frequencies for each
+
+		Returns
+		-------
+		pd.DataFrame indexed on terms, with columns giving frequencies for each
 		'''
 		row = self._row_category_ids()
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
@@ -76,7 +91,10 @@ class TermDocMatrix:
 
 	def get_term_doc_count_df(self):
 		'''
-		:return: pd.DataFrame indexed on terms, with columns giving the number of docs containing each
+
+		Returns
+		-------
+		pd.DataFrame indexed on terms, with columns giving the number of docs containing each
 		'''
 		row = self._row_category_ids()
 		catX = self._change_document_type_in_matrix(self._X, row)
@@ -105,11 +123,16 @@ class TermDocMatrix:
 
 
 	def remove_terms(self, terms):
-		'''
-		:param terms: list of terms to remove
-		:return: TermDocMatrix : new object with terms removed.
+		'''Non destructive term removal.
 
-		This procedure is non-desctructive.
+		Parameters
+		----------
+		terms : list
+			list of terms to remove
+
+		Returns
+		-------
+		TermDocMatrix, new object with terms removed.
 		'''
 		idx_to_delete_list = []
 		for term in terms:
@@ -125,16 +148,28 @@ class TermDocMatrix:
 		                     unigram_frequency_path=self._unigram_frequency_path)
 
 	def get_posterior_mean_ratio_scores(self, category):
-		'''
-		:param category: str category name
-		:return:
+		''' Computes posterior mean score.
+		Parameters
+		----------
+		category : str
+			category name to score
+
+		Returns
+		-------
+			np.array
 		'''
 		return self._get_posterior_mean_ratio_from_category(category)
 
 	def get_rudder_scores(self, category):
-		'''
-		:param category: str category name
-		:return:
+		''' Computes Rudder score.
+		Parameters
+		----------
+		category : str
+			category name to score
+
+		Returns
+		-------
+			np.array
 		'''
 		category_percentiles = self._get_term_percentiles_in_category(category)
 		not_category_percentiles = self._get_term_percentiles_not_in_category(category)
@@ -160,9 +195,15 @@ class TermDocMatrix:
 		return posterior_mean
 
 	def get_logistic_regression_coefs_l2(self, category):
-		'''
-		:param category: str category name
-		:return: tuple (coefficient array, accuracy, majority class baseline accuracy)
+		''' Computes l2-penalized logistic regression score.
+		Parameters
+		----------
+		category : str
+			category name to score
+
+		Returns
+		-------
+			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
 		y = self._get_mask_from_category(category)
 		X = TfidfTransformer().fit_transform(self._X)
@@ -178,9 +219,15 @@ class TermDocMatrix:
 		return acc, baseline
 
 	def get_logistic_regression_coefs_l1(self, category):
-		'''
-		:param category: str category name
-		:return: tuple (coefficient array, accuracy, majority class baseline accuracy)
+		''' Computes l1-penalized logistic regression score.
+		Parameters
+		----------
+		category : str
+			category name to score
+
+		Returns
+		-------
+			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
 		y = self._get_mask_from_category(category)
 		y_continuous = self._get_continuous_version_boolean_y(y)
@@ -198,11 +245,20 @@ class TermDocMatrix:
 	                        category,
 	                        scaler_algo='normcdf',
 	                        beta=1.):
+		''' Computes scaled-fscores
+		Parameters
+		----------
+		category : str
+			category name to score
+		scaler_algo : str
+		  Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default normcdf
+		beta : float
+			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Defaults to 1.
+		Returns
+		-------
+			np.array of harmonic means of scaled P(word|category) and scaled P(category|word)
 		'''
-		:param category: str category name
-		:param scaler_algo: function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'
-		:return: array of harmonic means of scaled P(word|category) and scaled P(category|word)
-		'''
+
 		assert beta > 0
 		cat_word_counts, not_cat_word_counts = self._get_catetgory_and_non_category_word_counts(category)
 		scores = self._get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo, beta)
@@ -261,7 +317,9 @@ class TermDocMatrix:
 
 	def get_fisher_scores_vs_background(self):
 		'''
-		:return: pd.DataFrame of fisher scores vs background
+		Returns
+		-------
+			pd.DataFrame of fisher scores vs background
 		'''
 		df = self._get_corpus_joined_to_background()
 		odds_ratio, p_values = self._get_fisher_scores_from_counts(
@@ -274,7 +332,9 @@ class TermDocMatrix:
 
 	def get_posterior_mean_ratio_scores_vs_background(self):
 		'''
-		:return: pd.DataFrame of posterior mean scores vs background
+		Returns
+		-------
+			pd.DataFrame of posterior mean  scores vs background
 		'''
 		df = self._get_corpus_joined_to_background()
 		df['Log Posterior Mean Ratio'] = self._get_posterior_mean_ratio_from_counts(df['corpus'],
@@ -306,7 +366,9 @@ class TermDocMatrix:
 
 	def get_rudder_scores_vs_background(self):
 		'''
-		:return: pd.DataFrame of rudder scores vs background
+		Returns
+		-------
+    pd.DataFrame of rudder scores vs background
 		'''
 		df = self._get_corpus_joined_to_background()
 		corpus_percentiles = self._get_percentiles_from_freqs(df['corpus'])
@@ -347,8 +409,14 @@ class TermDocMatrix:
 	def get_scaled_f_score_scores_vs_background(self,
 	                                            scaler_algo='none'):
 		'''
-		:param scaler_algo: see get_scaled_f_score_scores
-		:return: returns dataframe of scaled_f_score scores compared to background corpus
+		Parameters
+		----------
+		scaler_algo : str
+			see get_scaled_f_score_scores
+
+		Returns
+		-------
+		pd.DataFrame of scaled_f_score scores compared to background corpus
 		'''
 		df = self._get_corpus_joined_to_background()
 		df['Scaled f-score'] = self._get_scaled_f_score_from_counts(

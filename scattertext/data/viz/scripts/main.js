@@ -82,16 +82,12 @@ function buildViz(widthInPixels = 800,
         var matches = [[], []];
         if (fullData.docs === undefined) return matches;
         for (var i in fullData.docs.texts) {
+            if(fullData.docs.labels[i] > 1) continue;
             var text = fullData.docs.texts[i];
             var pattern = new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b", "gim");
             var match;
             var sentenceOffsets = null;
             var lastSentenceStart = null;
-            if (max_snippets != null
-                && matches[fullData.docs.labels[0]] >= max_snippets
-                && matches[fullData.docs.labels[1]] >= max_snippets) {
-                break;
-            }
             while ((match = pattern.exec(text)) != null) {
                 if (sentenceOffsets == null) {
                     sentenceOffsets = getSentenceBoundaries(text);
@@ -101,28 +97,31 @@ function buildViz(widthInPixels = 800,
                 if (foundSnippet.sentenceStart == lastSentenceStart) continue;
                 lastSentenceStart = foundSnippet.sentenceStart;
                 var categoryMatches = matches[fullData.docs.labels[i]];
-                if (max_snippets != null && categoryMatches.length >= max_snippets) {
-                    break;
-                }
                 categoryMatches.push({
                     'snippet': foundSnippet.snippet,
                     'id': i
                 });
             }
         }
-        return matches;
+        return {'contexts': matches, 'info': d};
     }
 
-    function displayTermContexts(contexts) {
+    function displayTermContexts(termInfo, jump=true) {
+        var contexts = termInfo.contexts;
+        var info = termInfo.info;
         if (contexts[0].length == 0 && contexts[1].length == 0) {
             return null;
         }
-        var categoryNames = [fullData.info.category_name, fullData.info.not_category_name];
+        var categoryNames = [fullData.info.category_name,
+            fullData.info.not_category_name];
         d3.select('#cathead').html(categoryNames[0]);
         d3.select('#notcathead').html(categoryNames[1]);
         categoryNames
             .map(
                 function (catName, catIndex) {
+                    if (max_snippets != null) {
+                        var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
+                    }
                     var divId = catIndex == 0 ? '#cat' : '#notcat';
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
@@ -136,10 +135,26 @@ function buildViz(widthInPixels = 800,
                             return x.snippet;
                         });
                 });
-        if (window.location.hash == '#snippets') {
-            window.location.hash = '#snippetsalt';
-        } else {
-            window.location.hash = '#snippets';
+        d3.select('#termstats')
+            .selectAll("div")
+            .remove();
+        d3.select('#termstats')
+            .append('div')
+            .attr("class", "snippet_header")
+            .html('Term: <b>' + info.term + '</b>');
+        d3.select('#termstats')
+            .append('div')
+            .attr("class", "text_subheader")
+            .html('<table align="center" cellpadding="3"><tr><td rowspan="2">Usage per 25,000 words</td><td>'
+                + fullData.info.category_name + ': ' + info.cat25k + '</td></tr><tr><td>' +
+                fullData.info.not_category_name + ': ' + info.ncat25k + '</td></tr></table>');
+        console.log(info);
+        if (jump) {
+            if (window.location.hash == '#snippets') {
+                window.location.hash = '#snippetsalt';
+            } else {
+                window.location.hash = '#snippets';
+            }
         }
     }
 
@@ -169,7 +184,7 @@ function buildViz(widthInPixels = 800,
             .replace("'", " '")
             .trim();
         showToolTipForTerm(searchTerm);
-        displayTermContexts(gatherTermContexts(searchTermInfo));
+        displayTermContexts(gatherTermContexts(termDict[searchTerm]), false);
         return false;
     };
 
@@ -265,29 +280,9 @@ function buildViz(widthInPixels = 800,
             });
 
         coords = Object();
+
         function censorPoints(datum) {
             var term = datum.term;
-            //var curLabel = d3.select("body").append("div")
-            /*
-             var curLabel = d3.select('#' + divName).append("div")
-             .attr("class", "label").html('L')
-             .style("left", x(datum.x) + margin.left + 5 + 'px')
-             .style("top", y(datum.y) + margin.top + 4 + 'px');
-
-             var curDiv = curLabel._groups[0][0];
-
-             var x1 = curDiv.offsetLeft - 2 + 2;
-             var y1 = curDiv.offsetTop - 2 + 5;
-             var x2 = curDiv.offsetLeft + 2 + 2;
-             var y2 = curDiv.offsetTop + 2 + 5;
-
-             console.log(curLabel);
-             curLabel.remove();
-             //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
-             rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
-             //}
-             coords['~~' + term] = [x1, y1, x2, y2];
-             */
             var curLabel = svg.append("text")
                 .attr("x", x(datum.x))
                 .attr("y", y(datum.y) + 3)
@@ -305,23 +300,12 @@ function buildViz(widthInPixels = 800,
 
         function labelPointBottomLeft(i) {
             var term = data[i].term;
-            /*
-             var curLabel = makeWordInteractive(
-             svg.append("text")
-             .attr("x", x(data[i].x) + 3)
-             .attr("y", y(data[i].y) + 10)
-             .attr('class', 'small_label')
-             .attr("text-anchor", "start")
-             .text(term)
-             ,
-             term);
-             */
 
             var configs = [
                 {'anchor': 'end', 'xoff': -5, 'yoff': -3},
-                {'anchor': 'end', 'xoff': -5, 'yoff': 10},
-                {'anchor': 'start', 'xoff': 3, 'yoff': 10},
-                {'anchor': 'start', 'xoff': 3, 'yoff': -3}
+                //{'anchor': 'end', 'xoff': -5, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 3, 'yoff': 10}
+                //{'anchor': 'start', 'xoff': 3, 'yoff': -3}
             ];
             var matchedElement = null;
             for (var configI in configs) {
@@ -330,7 +314,7 @@ function buildViz(widthInPixels = 800,
                     svg.append("text")
                         .attr("x", x(data[i].x) + config['xoff'])
                         .attr("y", y(data[i].y) + config['yoff'])
-                        .attr('class', 'small_label')
+                        .attr('class', 'label')
                         .attr("text-anchor", config['anchor'])
                         .text(term),
                     term
@@ -342,66 +326,12 @@ function buildViz(widthInPixels = 800,
                     x2 = bbox.x + bbox.width - borderToRemove,
                     y2 = bbox.y + bbox.height - borderToRemove;
                 matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
-                if(matchedElement) {
+                if (matchedElement) {
                     curLabel.remove();
                 } else {
                     break;
                 }
             }
-            //move it to top right
-            /*
-             var width = curDiv.offsetWidth;
-             var height = curDiv.offsetHeight;
-
-             curLabel.remove();
-             var curLabel = d3.select("body").append("div")
-             .attr("class", "label").html(term)
-             .style("left", x(data[i].x) + margin.left  + 10 - width + 'px')
-             .style("top", y(data[i].y) + margin.top + 8  - height + 'px');
-             var curDiv = curLabel._groups[0][0];
-
-             var x2 = curDiv.offsetLeft;
-             var y2 = curDiv.offsetTop;
-             var x1 = curDiv.offsetLeft - curDiv.offsetWidth;
-             var y1 = curDiv.offsetTop - curDiv.offsetHeight;
-             */
-            //console.log('x' + x(data[i].x) + margin.left + ' vs ' + curDiv.offsetLeft);
-            //console.log(curDiv.offsetLeft - (10 + x(data[i].x) + margin.left));
-            //console.log('y' + y(data[i].y) +  margin.top);
-            //console.log(curDiv.offsetTop - (8 + y(data[i].y) +  margin.top));
-            /*
-             if (term == 'affordable') {
-             console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
-             var matchedCoord = coords[matchedElement];
-             var mx1 = matchedElement[0];
-             var my1 = matchedElement[1];
-             var mx2 = matchedElement[2];
-             var my2 = matchedElement[3];
-             var x_diff = 0;
-             var y_diff = 0;
-             if (x1 >= mx1 && x1 < mx2) {
-             x_diff = mx2 - x1;
-             }
-             if (x2 > mx1 && x2 <= mx2) {
-             x_diff = mx1 - x2;
-             }
-             x1 += x_diff;
-             x2 += x_diff;
-             if (y1 >= my1 && y1 < my2) {
-             y_diff = my2 - y1;
-             }
-             if (y2 > my1 && y2 <= my2) {
-             y_diff = my1 - y2;
-             }
-             y1 += y_diff;
-             y2 += y_diff;
-             console.log(y_diff, x_diff)
-             var matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
-             console.log(term + " " + " X" + x1 + ":" + x2 + " Y" + y1 + ":" + y2)
-             console.log('matchedElement ' + matchedElement)
-             console.log('matchedElement ' + matchedCoord)
-
-             }*/
 
             if (!matchedElement || term == 'auto') {
                 coords[term] = [x1, y1, x2, y2];
@@ -416,29 +346,6 @@ function buildViz(widthInPixels = 800,
         }
 
         var radius = 2;
-        //console.log('Data length ' + data.length);
-        // prevent intersections with points.. not quite working
-        /*
-         for (var i = 0; i < data.length; i++) {
-
-         //if (!searchRangeTree(rangeTree, x1, y1, x2, y2)) {
-         //    rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, i);
-         //}
-         }*/
-
-        //var nodes = Array.prototype.slice.call(svg.selectAll('circle')._groups[0],0);
-        //console.log("NODES");console.log(nodes);
-
-        /*
-         var nodeI = 0;
-         nodes.forEach(
-         function (node) {
-         var rect = node.getBoundingClientRect();
-         rangeTree = insertRangeTree(rangeTree, rect.left, rect.top, rect.right, rect.bottom, nodeI++);
-         }
-         );*/
-        //console.log("Range Tree");
-        //console.log(rangeTree);
 
         function euclideanDistanceSort(a, b) {
             var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
@@ -461,11 +368,8 @@ function buildViz(widthInPixels = 800,
         }
 
         data = data.sort(euclideanDistanceSort);
-
         data.forEach(censorPoints);
-        //console.log("coords")
-        //console.log(coords)
-        // Add the X Axis
+
         var myXAxis = svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
@@ -535,20 +439,6 @@ function buildViz(widthInPixels = 800,
                             .text(curTerm)
                         ,
                         curTerm);
-                    /*
-                     .on("mouseover", function (d) {
-                     showToolTipForTerm(curTerm);
-                     d3.select(this).style("stroke", "black");
-                     })
-                     .on("mouseout", function (d) {
-                     tooltip.transition()
-                     .duration(0)
-                     .style("opacity", 0);
-                     d3.select(this).style("stroke", null);
-                     })
-                     .on("click", function (d) {
-                     displayTermContexts(gatherTermContexts(termDict[curTerm]));
-                     });*/
                 })(word, curTerm);
                 rangeTree = registerFigureBBox(word);
             }

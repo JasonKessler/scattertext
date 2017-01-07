@@ -12,7 +12,20 @@ class HTMLVisualizationAssembly:
 	             height_in_pixels=None,
 	             max_snippets=None):
 		'''
-		:param visualization_data: VisualizationData
+
+		Parameters
+		----------
+		visualization_data : dict
+			From ScatterChart or a descendant
+		width_in_pixels : int
+			width of viz in pixels, if None, default to JS's choice
+		height_in_pixels : int
+			height of viz in pixels, if None, default to JS's choice
+		max_snippets int : int
+			max snippets to snow when temr is clicked, Defaults to show all
+		'''
+		'''
+		:param visualization_data:
 		:param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
 		:param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
 		:param max_snippets: int or None, max snippets to snow when temr is clicked, if None show all

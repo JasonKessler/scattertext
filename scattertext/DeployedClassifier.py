@@ -10,6 +10,17 @@ class DeployedClassifier:
 	             entity_types_to_censor,
 	             use_lemmas,
 	             clean_function):
+		'''Not working
+
+		Parameters
+		----------
+		target_category
+		category_idx_store
+		term_idx_store
+		entity_types_to_censor
+		use_lemmas
+		clean_function
+		'''
 		self._target_category = target_category
 		self._category_idx_store = category_idx_store
 		self._term_idx_store = term_idx_store,
@@ -18,9 +29,9 @@ class DeployedClassifier:
 		self._clean_function = clean_function
 
 	def classify(self, text, nlp):
-		X, y = self._get_features_and_labels_from_documents_and_indexes(category_doc_iter,
-		                                                                category_idx_store,
-		                                                                term_idx_store)
+		X, y = self._get_features_and_labels_from_documents_and_indexes(self._category_doc_iter,
+		                                                                self._category_idx_store,
+		                                                                self._term_idx_store)
 
 class NeedToTrainExceptionBeforeDeployingException(Exception):
 	pass
@@ -28,13 +39,15 @@ class NeedToTrainExceptionBeforeDeployingException(Exception):
 
 class DeployedClassifierFactory:
 	def __init__(self, term_doc_matrix, term_doc_matrix_factory, category, nlp=None):
-		'''
-		This is a class that enables one to train and save a classification model.
+		'''This is a class that enables one to train and save a classification model.
 
-		:param term_doc_matrix: TermDocMatrix
-		:param term_doc_matrix_factory: TermDocMatrixFactory
-		:param category: str (category name)
-		:param nlp: spaCy compatible nlp function
+		Parameters
+		----------
+		term_doc_matrix : TermDocMatrix
+		term_doc_matrix_factory : TermDocMatrixFactory
+		category : str
+			Category name
+		nlp : spacy.en.English
 		'''
 		self._term_doc_matrix = term_doc_matrix
 		self._term_doc_matrix_factory = term_doc_matrix_factory
@@ -45,6 +58,9 @@ class DeployedClassifierFactory:
 		self._proba = None
 
 	def passive_aggressive_train(self):
+		'''Trains passive aggressive classifier
+
+		'''
 		self._clf = PassiveAggressiveClassifier(n_iter=50, C=0.2, n_jobs=-1, random_state=0)
 		self._clf.fit(self._term_doc_matrix._X, self._term_doc_matrix._y)
 		y_dist = self._clf.decision_function(self._term_doc_matrix._X)
@@ -62,6 +78,8 @@ class DeployedClassifierFactory:
 		return self
 
 	def build(self):
+		'''Builds Depoyed Classifier
+		'''
 		if self._clf is None:
 			raise NeedToTrainExceptionBeforeDeployingException()
 		return DeployedClassifier(self._category,

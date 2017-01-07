@@ -1,7 +1,7 @@
 from scattertext.IndexStore import IndexStore
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
-from scattertext.TermDocMatrixFactory import FeatsFromSpacyDoc
+from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 import numpy as np
 
 class CorpusFromParsedDocuments(object):
@@ -10,14 +10,17 @@ class CorpusFromParsedDocuments(object):
 	             category_col,
 	             parsed_col,
 	             feats_from_spacy_doc=FeatsFromSpacyDoc()):
+
 		'''
 		Parameters
 		----------
-		df pd.DataFrame, contains category_col, and parse_col, were parsed col is entirely spacy docs
-		category_col str, name of category column in df
-		parsed_col str, name
-		use_lemmas (see FeatsFromSpacyDoc)
-		entity_types_to_censor
+		df : pd.DataFrame
+		 contains category_col, and parse_col, were parsed col is entirely spacy docs
+		category_col : str
+			name of category column in df
+		parsed_col : str
+			name of spacy parsed column in df
+		feats_from_spacy_doc : FeatsFromSpacyDoc
 		'''
 		self._df = df
 		self._category_col = category_col

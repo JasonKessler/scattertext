@@ -12,6 +12,17 @@ class ScatterChartExplorer(ScatterChart):
 	             seed=0,
 	             pmi_threshold_coefficient=3,
 	             filter_unigrams=False):
+		'''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
+
+		Parameters
+		----------
+		term_doc_matrix
+		minimum_term_frequency
+		jitter
+		seed
+		pmi_threshold_coefficient
+		filter_unigrams
+		'''
 		assert isinstance(term_doc_matrix, Corpus)
 		ScatterChart.__init__(self,
 		                     term_doc_matrix,
@@ -27,10 +38,23 @@ class ScatterChartExplorer(ScatterChart):
 	            not_category_name=None,
 	            scores=None,
 	            transform=percentile_ordinal):
+		'''See ScatterChart for parameter documentation.  This adds documents to the
+
+		Parameters
+		----------
+		category
+		category_name
+		not_category_name
+		scores
+		transform
+
+		Returns
+		-------
+
 		'''
-		Returns a dictionary that encodes the scatter chart
-		information. The dictionary can be dumped as a json document, and
-		used in scattertext.html
+
+		'''
+
 
 		:param category: Category to annotate
 		:param category_name: Name of category which will appear on web site.

@@ -39,8 +39,10 @@ class CSRMatrixFactory:
 
 	def set_last_col_idx(self, last_col_idx):
 		'''
-		:param last_col_idx: int in number of columns
-		:return: None
+		Parameters
+		----------
+		param last_col_idx : int
+			number of columns
 		'''
 		assert last_col_idx >= self._max_col
 		self._max_col = last_col_idx
@@ -53,15 +55,20 @@ class CSRMatrixFactory:
 
 def delete_columns(mat, columns_to_delete):
 	'''
-	:param mat: csr_matrix
-	:param columns_to_delete: list[int]
-	:return: csr_matrix that is stripped of columns indices columns_to_delete
-
 	>>> a = csr_matrix(np.array([[0, 1, 3, 0, 1, 0],
 		                           [0, 0, 1, 0, 1, 1]])
 	>>> delete_columns(a, [1,2]).todense()
 	matrix([[0, 0, 1, 0],
           [0, 0, 1, 1]])
+
+	Parameters
+	----------
+	mat : csr_matrix
+	columns_to_delete : list[int]
+
+	Returns
+	-------
+	csr_matrix that is stripped of columns indices columns_to_delete
 	'''
 	column_mask = np.ones(mat.shape[1], dtype=bool)
 	column_mask[columns_to_delete] = 0

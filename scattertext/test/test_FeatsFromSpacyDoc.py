@@ -2,7 +2,7 @@ from collections import Counter
 from unittest import TestCase
 
 from scattertext import fast_but_crap_nlp
-from scattertext.TermDocMatrixFactory import FeatsFromSpacyDoc
+from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 
 class TestFeatsFromSpacyDoc(TestCase):
@@ -33,4 +33,18 @@ class TestFeatsFromSpacyDoc(TestCase):
 		doc = fast_but_crap_nlp("A a bb cc.", {'bb': 'BAD'})
 		term_freq = FeatsFromSpacyDoc(entity_types_to_censor=set(['BAD'])).get_feats(doc)
 		self.assertEqual(Counter({'a': 2, 'a BAD': 1, 'BAD cc': 1, 'cc': 1, 'a a': 1, 'BAD': 1}),
+		                 term_freq)
+
+	def test_entity_tags(self):
+		doc = fast_but_crap_nlp("A a bb cc Bob.", {'bb': 'BAD'}, {'Bob': 'NNP'})
+		term_freq = FeatsFromSpacyDoc(entity_types_to_censor=set(['BAD'])).get_feats(doc)
+		self.assertEqual(Counter({'a': 2, 'a BAD': 1,
+		                          'BAD cc': 1, 'cc': 1,
+		                          'a a': 1, 'BAD': 1, 'bob': 1, 'cc bob': 1}),
+		                 term_freq)
+		term_freq = FeatsFromSpacyDoc(entity_types_to_censor=set(['BAD']),
+		                              tag_types_to_censor=set(['NNP'])).get_feats(doc)
+		self.assertEqual(Counter({'a': 2, 'a BAD': 1,
+		                          'BAD cc': 1, 'cc': 1,
+		                          'a a': 1, 'BAD': 1, 'NNP': 1, 'cc NNP': 1}),
 		                 term_freq)
