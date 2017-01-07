@@ -23,7 +23,6 @@ class TestParsedCorpus(TestCase):
 		cls.corpus = CorpusFromParsedDocuments(cls.df, 'category', 'parsed').build()
 
 	def test_get_text(self):
-		print([str(x) for x in self.corpus.get_texts()])
 		self.assertEqual(len([x for x in self.corpus.get_texts()]),
 		                 len(self.documents))
 		self.assertEqual([str(x) for x in self.corpus.get_texts()][0],

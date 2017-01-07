@@ -77,7 +77,8 @@ def produce_scattertext_explorer(corpus,
                                  filter_unigrams=False,
                                  height_in_pixels=None,
                                  width_in_pixels=None,
-                                 max_snippets=None):
+                                 max_snippets=None,
+                                 metadata=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -100,6 +101,8 @@ def produce_scattertext_explorer(corpus,
 		height of viz in pixels, if None, default to JS's choice
   param max_snippets : int
     number of snippets to show when term is clicked.  If None, all are shown.
+	metadata : list, optional
+		list of meta data strings that will be included for each document
 
 	Returns
 	-------
@@ -113,7 +116,8 @@ def produce_scattertext_explorer(corpus,
 	scatter_chart_data = scatter_chart.to_dict(category=category,
 	                                           category_name=category_name,
 	                                           not_category_name=not_category_name,
-	                                           transform=percentile_ordinal)
+	                                           transform=percentile_ordinal,
+	                                           metadata=metadata)
 	viz_data_adapter = VizDataAdapter(scatter_chart_data)
 	html = HTMLVisualizationAssembly(viz_data_adapter,
 	                                 width_in_pixels,

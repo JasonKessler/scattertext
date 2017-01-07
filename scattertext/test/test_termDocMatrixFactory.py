@@ -32,7 +32,6 @@ def build_hamlet_jz_corpus():
 		'parsed': [fast_but_crap_nlp(clean_function(doc)) for doc in documents]
 	})
 	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
-	print(df)
 	return CorpusFromParsedDocuments(
 		df=df,
 		category_col='category',

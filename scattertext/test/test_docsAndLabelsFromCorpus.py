@@ -22,7 +22,6 @@ class TestDocsAndLabelsFromCorpus(TestCase):
 	def test_main(self):
 		d = DocsAndLabelsFromCorpus(self.corpus)
 		output = d.get_labels_and_texts()
-		print(output)
 		self.assertTrue('texts' in output)
 		self.assertTrue('labels' in output)
 		self.assertEqual(self.corpus._y.astype(int).tolist(),

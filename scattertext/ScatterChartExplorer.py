@@ -37,32 +37,18 @@ class ScatterChartExplorer(ScatterChart):
 	            category_name=None,
 	            not_category_name=None,
 	            scores=None,
+	            metadata=None,
 	            transform=percentile_ordinal):
-		'''See ScatterChart for parameter documentation.  This adds documents to the
-
-		Parameters
-		----------
-		category
-		category_name
-		not_category_name
-		scores
-		transform
-
-		Returns
-		-------
-
 		'''
-
-		'''
-
-
 		:param category: Category to annotate
 		:param category_name: Name of category which will appear on web site.
 		:param not_category_name: Name of non-category axis which will appear on web site.
 		:param scores: Scores to use.  Default to Scaled F-Score.
 		:param transform: Defaults to percentile_ordinal
 		:return: dictionary {info: {category_name: ..., not_category_name},
-												 docs: {'texts': [doc1text, ...], 'labels': [1, 0, ...]}
+												 docs: {'texts': [doc1text, ...],
+												        'labels': [1, 0, ...],
+												        'meta': ['<b>blah</b>', '<b>blah</b>']}
 		                     data: {term:, x:frequency [0-1], y:frequency [0-1],
 		                            s: score,
 		                            cat25k: freq per 25k in category,
@@ -79,7 +65,14 @@ class ScatterChartExplorer(ScatterChart):
 		                        not_category_name=not_category_name,
 		                        scores=scores,
 		                        transform=percentile_ordinal)
-		j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix).get_labels_and_texts()
+
+		if metadata:
+			print('using metadata')
+			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix)\
+				.get_labels_and_texts_and_meta(metadata)
+		else:
+			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix)\
+				.get_labels_and_texts()
 		return j
 
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
