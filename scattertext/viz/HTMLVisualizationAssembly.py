@@ -59,7 +59,7 @@ class HTMLVisualizationAssembly:
 	def _full_content_of_javascript_files(self):
 		return '\n'.join([pkgutil.get_data('scattertext',
 		                                   'data/viz/scripts/' + script_name).decode('utf-8')
-		                  for script_name in ['range-tree.js',
+		                  for script_name in ['rectangle-holder.js',#'range-tree.js',
 		                                      'main.js']])
 
 	def _call_build_visualization_in_javascript(self):

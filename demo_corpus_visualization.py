@@ -1,11 +1,13 @@
 from __future__ import print_function
 
-import pandas as pd
 import re
+
+import pandas as pd
 
 from demo import clean_function_factory, iter_party_speech_pairs
 from scattertext import CorpusFromParsedDocuments, produce_scattertext_explorer
 from scattertext.FastButCrapNLP import fast_but_crap_nlp
+
 
 def speaker_function_factory():
 	only_speaker_text_re = re.compile(

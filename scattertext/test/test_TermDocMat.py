@@ -12,25 +12,30 @@ from scattertext.TermDocMatrixFactory import build_from_category_whitespace_deli
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 
 
+def make_a_test_term_doc_matrix():
+	# type: () -> TermDocMatrix
+	return build_from_category_whitespace_delimited_text(
+		get_test_categories_and_documents()
+	)
+
+
+def get_test_categories_and_documents():
+	return [
+		['a', '''hello my name is joe.
+			i've got a wife and three kids and i'm working.
+			in a button factory'''],
+		['b', '''this is another type of document
+			 another sentence in another document
+			 my name isn't joe here.'''],
+		['b', '''this is another document.
+				blah blah blah''']
+	]
+
+
 class TestTermDocMat(TestCase):
 	@classmethod
 	def setUp(cls):
-		cls.tdm = TestTermDocMat.make_a_test_term_doc_matrix()
-
-	@classmethod
-	def make_a_test_term_doc_matrix(cls):
-		# type: () -> TermDocMatrix
-		return build_from_category_whitespace_delimited_text(
-			[
-				['a', '''hello my name is joe.
-				i've got a wife and three kids and i'm working.
-				in a button factory'''],
-				['b', '''this is another type of document
-				 another sentence in another document
-				 my name isn't joe here.'''],
-				['b', '''this is another document.
-					blah blah blah''']
-			])
+		cls.tdm = make_a_test_term_doc_matrix()
 
 	def test_get_term_freq_df(self):
 		df = self.tdm.get_term_freq_df().sort_values('b freq', ascending=False)[:3]
@@ -69,7 +74,7 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(term_doc_lists['is'], [0, 1, 2])
 
 	def test_remove_terms(self):
-		tdm = self.make_a_test_term_doc_matrix()
+		tdm = make_a_test_term_doc_matrix()
 		with self.assertRaises(KeyError):
 			tdm.remove_terms(['elephant'])
 		tdm_removed = tdm.remove_terms(['hello', 'this', 'is'])

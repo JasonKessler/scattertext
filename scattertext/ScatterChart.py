@@ -4,6 +4,7 @@ from scipy.stats import rankdata
 from scattertext.Scalers import percentile_min, percentile_ordinal
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
 	filter_out_unigrams_that_only_occur_in_one_bigram
+from scattertext.termranking import AbsoluteFrequencyRanker
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):
@@ -19,7 +20,8 @@ class ScatterChart:
 	             jitter=0,
 	             seed=0,
 	             pmi_threshold_coefficient=3,
-	             filter_unigrams=False):
+	             filter_unigrams=False,
+	             term_ranker=AbsoluteFrequencyRanker):
 
 		'''
 
@@ -37,6 +39,9 @@ class ScatterChart:
 			Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 3
 		filter_unigrams : bool
 			If True, remove unigrams that are part of bigrams. Default is False.
+		term_ranker : TermRanker
+			TermRanker class for determining term frequency ranks.
+
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
@@ -44,6 +49,7 @@ class ScatterChart:
 		self.seed = seed
 		self.pmi_threshold_coefficient = pmi_threshold_coefficient
 		self.filter_unigrams = filter_unigrams
+		self.term_ranker = term_ranker
 		np.random.seed(seed)
 
 	def to_dict(self,
@@ -66,6 +72,7 @@ class ScatterChart:
 			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
 		transform : function
 			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_ordinal.
+
 		Returns
 		-------
 		Dictionary that encodes the scatter chart
@@ -106,12 +113,12 @@ class ScatterChart:
 		return j
 
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
-		json_df['cat25k'] = ((term_freq_df[category + ' freq'] * 1.
+		json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
 		                      / term_freq_df[category + ' freq'].sum()) * 25000)
-		json_df['ncat25k'] = ((term_freq_df['not cat freq'] * 1.
+		                     .apply(np.round).astype(np.int))
+		json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
 		                       / term_freq_df['not cat freq'].sum()) * 25000)
-		json_df['cat25k'] = json_df['cat25k'].apply(np.round).astype(np.int)
-		json_df['ncat25k'] = json_df['ncat25k'].apply(np.round).astype(np.int)
+		                      .apply(np.round).astype(np.int))
 
 	def _get_category_names(self, category):
 		other_categories = [val + ' freq' for _, val \
@@ -228,7 +235,7 @@ class ScatterChart:
 			return to_ret
 
 	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
-		df = self.term_doc_matrix.get_term_freq_df()
+		df = self.term_ranker(self.term_doc_matrix).get_ranks()
 		np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['not category score'] = np.sqrt(2) - df['category score']

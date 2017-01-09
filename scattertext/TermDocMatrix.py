@@ -46,6 +46,13 @@ class TermDocMatrix:
 		self._unigram_frequency_path = unigram_frequency_path
 
 	def get_categories(self):
+		'''
+
+		Returns
+		-------
+		list
+		Category names
+		'''
 		return self._category_idx_store.values()
 
 	def get_num_docs(self):
@@ -58,9 +65,12 @@ class TermDocMatrix:
 		return len(self._y)
 
 	def get_total_unigram_count(self):
+		return self._get_unigram_term_freq_df().sum()
+
+	def _get_unigram_term_freq_df(self):
 		return self._get_corpus_unigram_freq(
 			self.get_term_freq_df().sum(axis=1)
-		).sum()
+		)
 
 	def old_get_term_freq_df(self):
 		d = {'term': self._term_idx_store._i2val}
@@ -78,6 +88,19 @@ class TermDocMatrix:
 		row = self._row_category_ids()
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
 		return self._term_freq_df_from_matrix(newX)
+
+	def _row_category_ids(self):
+		row = self._X.tocoo().row
+		for i, cat in enumerate(self._y):
+			row[row == i] = cat
+		return row
+
+	def _term_freq_df_from_matrix(self, catX):
+		d = {'term': self._term_idx_store._i2val}
+		for idx, cat in self._category_idx_store.items():
+			d[cat + ' freq'] = catX[idx, :].A[0]
+		return pd.DataFrame(d).set_index('term')
+
 
 	def term_doc_lists(self):
 		'''
@@ -100,17 +123,6 @@ class TermDocMatrix:
 		catX = self._change_document_type_in_matrix(self._X, row)
 		return self._term_freq_df_from_matrix(catX)
 
-	def _row_category_ids(self):
-		row = self._X.tocoo().row
-		for i, cat in enumerate(self._y):
-			row[row == i] = cat
-		return row
-
-	def _term_freq_df_from_matrix(self, catX):
-		d = {'term': self._term_idx_store._i2val}
-		for idx, cat in self._category_idx_store.items():
-			d[cat + ' freq'] = catX[idx, :].A[0]
-		return pd.DataFrame(d).set_index('term')
 
 	def _change_document_type_in_matrix(self, X, new_doc_ids):
 		new_data = self._make_all_positive_data_ones(X.data)

@@ -1,7 +1,9 @@
+import numpy as np
+
 from scattertext import ScatterChart, percentile_ordinal
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus
-import numpy as np
+from scattertext.termranking import AbsoluteFrequencyRanker
 
 
 class ScatterChartExplorer(ScatterChart):
@@ -11,26 +13,20 @@ class ScatterChartExplorer(ScatterChart):
 	             jitter=0,
 	             seed=0,
 	             pmi_threshold_coefficient=3,
-	             filter_unigrams=False):
+	             filter_unigrams=False,
+	             term_ranker=AbsoluteFrequencyRanker):
 		'''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
 
-		Parameters
-		----------
-		term_doc_matrix
-		minimum_term_frequency
-		jitter
-		seed
-		pmi_threshold_coefficient
-		filter_unigrams
 		'''
 		assert isinstance(term_doc_matrix, Corpus)
 		ScatterChart.__init__(self,
-		                     term_doc_matrix,
-		                     minimum_term_frequency,
-		                     jitter,
-		                     seed,
-		                     pmi_threshold_coefficient,
-		                     filter_unigrams)
+		                      term_doc_matrix,
+		                      minimum_term_frequency,
+		                      jitter,
+		                      seed,
+		                      pmi_threshold_coefficient,
+		                      filter_unigrams,
+		                      term_ranker)
 
 	def to_dict(self,
 	            category,
@@ -60,18 +56,18 @@ class ScatterChartExplorer(ScatterChart):
 		'''
 
 		j = ScatterChart.to_dict(self,
-		                        category,
-		                        category_name=category_name,
-		                        not_category_name=not_category_name,
-		                        scores=scores,
-		                        transform=percentile_ordinal)
+		                         category,
+		                         category_name=category_name,
+		                         not_category_name=not_category_name,
+		                         scores=scores,
+		                         transform=percentile_ordinal)
 
 		if metadata:
 			print('using metadata')
-			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix)\
+			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix) \
 				.get_labels_and_texts_and_meta(metadata)
 		else:
-			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix)\
+			j['docs'] = DocsAndLabelsFromCorpus(self.term_doc_matrix) \
 				.get_labels_and_texts()
 		return j
 

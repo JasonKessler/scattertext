@@ -16,6 +16,7 @@ from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
+from scattertext import termranking
 
 
 def produce_scattertext_html(term_doc_matrix,
@@ -27,7 +28,8 @@ def produce_scattertext_html(term_doc_matrix,
                              minimum_term_frequency=3,
                              filter_unigrams=False,
                              height_in_pixels=None,
-                             width_in_pixels=None):
+                             width_in_pixels=None,
+                             term_ranker=termranking.AbsoluteFrequencyRanker):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -48,6 +50,8 @@ def produce_scattertext_html(term_doc_matrix,
 		width of viz in pixels, if None, default to JS's choice
 	param height_in_pixels: int
 		height of viz in pixels, if None, default to JS's choice
+	term_ranker : TermRanker
+			TermRanker class for determining term frequency ranks.
 
 	Returns
 	-------
@@ -56,7 +60,8 @@ def produce_scattertext_html(term_doc_matrix,
 	scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix,
 	                                  minimum_term_frequency=minimum_term_frequency,
 	                                  pmi_threshold_coefficient=pmi_filter_thresold,
-	                                  filter_unigrams=filter_unigrams) \
+	                                  filter_unigrams=filter_unigrams,
+	                                  term_ranker=term_ranker) \
 		.to_dict(category=category,
 	           category_name=category_name,
 	           not_category_name=not_category_name,
@@ -78,7 +83,8 @@ def produce_scattertext_explorer(corpus,
                                  height_in_pixels=None,
                                  width_in_pixels=None,
                                  max_snippets=None,
-                                 metadata=None):
+                                 metadata=None,
+                                 term_ranker=termranking.AbsoluteFrequencyRanker):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -103,6 +109,8 @@ def produce_scattertext_explorer(corpus,
     number of snippets to show when term is clicked.  If None, all are shown.
 	metadata : list, optional
 		list of meta data strings that will be included for each document
+	term_ranker : TermRanker
+			TermRanker class for determining term frequency ranks.
 
 	Returns
 	-------
@@ -112,7 +120,8 @@ def produce_scattertext_explorer(corpus,
 	scatter_chart = ScatterChartExplorer(corpus,
 	                                     minimum_term_frequency=minimum_term_frequency,
 	                                     pmi_threshold_coefficient=pmi_filter_thresold,
-	                                     filter_unigrams=filter_unigrams)
+	                                     filter_unigrams=filter_unigrams,
+	                                     term_ranker=term_ranker)
 	scatter_chart_data = scatter_chart.to_dict(category=category,
 	                                           category_name=category_name,
 	                                           not_category_name=not_category_name,

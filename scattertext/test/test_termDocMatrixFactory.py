@@ -59,6 +59,7 @@ def _testing_nlp(doc):
 	for tok in re.split(r"(\W)", doc):
 		pos = 'WORD'
 		ent = ''
+		tag = ''
 		if tok.strip() == '':
 			pos = 'SPACE'
 		elif re.match('^\W+$', tok):
@@ -67,7 +68,7 @@ def _testing_nlp(doc):
 			ent = 'PERSON'
 		if tok == 'Brooklyn':
 			ent = 'GPE'
-		toks.append(Tok(pos, tok[:2].lower(), tok.lower(), ent))
+		toks.append(Tok(pos, tok[:2].lower(), tok.lower(), ent, tag))
 	return Doc([toks])
 
 
