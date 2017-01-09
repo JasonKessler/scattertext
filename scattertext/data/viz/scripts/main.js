@@ -124,8 +124,6 @@ function buildViz(widthInPixels = 800,
         }
         var categoryNames = [fullData.info.category_name,
             fullData.info.not_category_name];
-        d3.select('#cathead').html(categoryNames[0]);
-        d3.select('#notcathead').html(categoryNames[1]);
         categoryNames
             .map(
                 function (catName, catIndex) {
@@ -143,9 +141,9 @@ function buildViz(widthInPixels = 800,
                             .html(meta);
                         context.snippets.forEach(function (snippet) {
                             d3.select(divId)
-                            .append("div")
-                            .attr('class', 'snippet')
-                            .html(snippet);
+                                .append("div")
+                                .attr('class', 'snippet')
+                                .html(snippet);
                         })
 
                     });
@@ -166,12 +164,15 @@ function buildViz(widthInPixels = 800,
             .append('div')
             .attr("class", "snippet_header")
             .html('Term: <b>' + info.term + '</b>');
-        d3.select('#termstats')
-            .append('div')
-            .attr("class", "text_subheader")
-            .html('<table align="center" cellpadding="3"><tr><td rowspan="2">Usage per 25,000 words</td><td>'
-                + fullData.info.category_name + ': ' + info.cat25k + '</td></tr><tr><td>' +
-                fullData.info.not_category_name + ': ' + info.ncat25k + '</td></tr></table>');
+        var message = '';
+        var cat_name = fullData.info.category_name;
+        var ncat_name = fullData.info.not_category_name;
+        d3.select('#cathead')
+            .style('fill', color(1))
+            .html(cat_name + ' frequency: <div class=text_subhead>' + info.cat25k + ' per 25,000 terms</div>');
+        d3.select('#notcathead')
+            .style('fill', color(0))
+            .html(ncat_name + ' frequency: <div class=text_subhead>' + info.ncat25k + ' per 25,000 terms</div>');
         console.log(info);
         if (jump) {
             if (window.location.hash == '#snippets') {
@@ -208,7 +209,10 @@ function buildViz(widthInPixels = 800,
             .replace("'", " '")
             .trim();
         showToolTipForTerm(searchTerm);
-        displayTermContexts(gatherTermContexts(termDict[searchTerm]), false);
+        var termInfo = termDict[searchTerm];
+        if (termInfo != null) {
+            displayTermContexts(gatherTermContexts(termInfo), false);
+        }
         return false;
     };
 
@@ -273,7 +277,8 @@ function buildViz(widthInPixels = 800,
         }) + 0.1]);
 
 
-        var rangeTree = null; // keep boxes of all points and labels here
+        //var rangeTree = null; // keep boxes of all points and labels here
+        var rectHolder = new RectangleHolder();
         // Add the scatterplot
         mysvg = svg.selectAll("dot")
             .data(data)
@@ -318,18 +323,20 @@ function buildViz(widthInPixels = 800,
                 y1 = bbox.y + borderToRemove,
                 x2 = bbox.x + bbox.width - borderToRemove,
                 y2 = bbox.y + bbox.height - borderToRemove;
-            rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
+            //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
+            rectHolder.add(new Rectangle(x1, y1, x2, y2));
+
             curLabel.remove();
         }
 
-        function labelPointBottomLeft(i) {
+        function labelPointsIfPossible(i) {
             var term = data[i].term;
 
             var configs = [
                 {'anchor': 'end', 'xoff': -5, 'yoff': -3},
-                //{'anchor': 'end', 'xoff': -5, 'yoff': 10},
-                {'anchor': 'start', 'xoff': 3, 'yoff': 10}
-                //{'anchor': 'start', 'xoff': 3, 'yoff': -3}
+                {'anchor': 'end', 'xoff': -5, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 3, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 3, 'yoff': -3}
             ];
             var matchedElement = null;
             for (var configI in configs) {
@@ -349,17 +356,21 @@ function buildViz(widthInPixels = 800,
                     y1 = bbox.y + borderToRemove,
                     x2 = bbox.x + bbox.width - borderToRemove,
                     y2 = bbox.y + bbox.height - borderToRemove;
-                matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+                //matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
+                var matchedElement = false;
+                rectHolder.findMatchingRectangles(x1, y1, x2, y2, function(elem) {matchedElement=true; return false;});
                 if (matchedElement) {
                     curLabel.remove();
                 } else {
+                    console.log('no match')
                     break;
                 }
             }
 
             if (!matchedElement || term == 'auto') {
                 coords[term] = [x1, y1, x2, y2];
-                rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
+                //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
+                rectHolder.add(new Rectangle(x1, y1, x2, y2));
                 return true;
 
             } else {
@@ -406,12 +417,11 @@ function buildViz(widthInPixels = 800,
                 y1 = bbox.y + borderToRemove,
                 x2 = bbox.x + bbox.width - borderToRemove,
                 y2 = bbox.y + bbox.height - borderToRemove;
-            return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
+            rectHolder.add(new Rectangle(x1, y1, x2, y2));
+            //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
         }
 
         //rangeTree = registerFigureBBox(myXAxis);
-
-
         var xLabel = svg.append("text")
             .attr("class", "x label")
             .attr("text-anchor", "end")
@@ -431,7 +441,7 @@ function buildViz(widthInPixels = 800,
             .attr("dx", "30px")
             .attr("dy", "-13px")
             .attr("transform", "rotate(-90)");
-        rangeTree = registerFigureBBox(myYAxis);
+        registerFigureBBox(myYAxis);
 
         var yLabel = svg.append("text")
             .attr("class", "y label")
@@ -440,7 +450,7 @@ function buildViz(widthInPixels = 800,
             .attr("dy", ".75em")
             .attr("transform", "rotate(-90)")
             .text(modelInfo['category_name'] + " Frequency");
-        //rangeTree = registerFigureBBox(yLabel);
+        registerFigureBBox(yLabel);
 
         word = svg.append("text")
             .attr("class", "category_header")
@@ -448,7 +458,7 @@ function buildViz(widthInPixels = 800,
             .attr("x", width)
             .attr("dy", "6px")
             .text("Top " + fullData['info']['category_name'] + ' Terms');
-        //rangeTree = registerFigureBBox(word);
+        registerFigureBBox(word);
 
         function showWordList(word, termDataList) {
             for (var i in termDataList) {
@@ -480,7 +490,7 @@ function buildViz(widthInPixels = 800,
 
         word = showWordList(word, data.sort(euclideanDistanceSortForNotCategory).slice(0, 14));
 
-        for (i = 0; i < data.length; labelPointBottomLeft(i++));
+        for (i = 0; i < data.length; labelPointsIfPossible(i++));
 
 
     };
