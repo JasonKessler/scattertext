@@ -65,9 +65,9 @@ Click for [interactive](https://jasonkessler.github.io/demo.html) version.
 Please see this [deck](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## Sources
-* Political data: scraped from [here](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
+* 2012 Convention Data: scraped from [The New York Times.](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
 * count_1w: Peter Norvig assembled this file (downloaded from [norvig.com](http://norvig.com/ngrams/count_1w.txt)). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
-* Inspiration for text scatter plots: Rudder, C. (2014). Dataclysm: Who we are when we think no one's looking.
+* Inspiration for text scatter plots: Rudder, Christian. Dataclysm: Who We Are (When We Think No One's Looking). Random House Incorporated, 2014.
 * The efficient RectangleHolder Javascript data structure was automatically generated using [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy).   Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
  

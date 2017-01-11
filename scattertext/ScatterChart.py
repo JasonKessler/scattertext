@@ -1,10 +1,11 @@
 import numpy as np
-from scipy.stats import rankdata
+from scipy.stats import rankdata, hmean
 
 from scattertext.Scalers import percentile_min, percentile_ordinal
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
 	filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.termranking import AbsoluteFrequencyRanker
+from scattertext.termscoring import ScaledFScore
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):
@@ -20,6 +21,7 @@ class ScatterChart:
 	             jitter=0,
 	             seed=0,
 	             pmi_threshold_coefficient=3,
+	             max_terms=None,
 	             filter_unigrams=False,
 	             term_ranker=AbsoluteFrequencyRanker):
 
@@ -29,17 +31,19 @@ class ScatterChart:
 		----------
 		term_doc_matrix : TermDocMatrix
 			The term doc matrix to use for the scatter chart.
-		minimum_term_frequency : int
+		minimum_term_frequency : int, optional
 			Minimum times an ngram has to be seen to be included. Default is 3.
-		jitter : float
+		jitter : float, optional
 			Maximum amount of noise to be added to points, 0.2 is a lot. Default is 0.
-		seed : float
+		seed : float, optional
 			Random seed. Default 0
 		pmi_threshold_coefficient : int
 			Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 3
-		filter_unigrams : bool
+		max_terms : int, optional
+			Maximum number of terms to include in visualization
+		filter_unigrams : bool, optional
 			If True, remove unigrams that are part of bigrams. Default is False.
-		term_ranker : TermRanker
+		term_ranker : TermRanker, optional
 			TermRanker class for determining term frequency ranks.
 
 		'''
@@ -50,6 +54,7 @@ class ScatterChart:
 		self.pmi_threshold_coefficient = pmi_threshold_coefficient
 		self.filter_unigrams = filter_unigrams
 		self.term_ranker = term_ranker
+		self.max_terms = max_terms
 		np.random.seed(seed)
 
 	def to_dict(self,
@@ -64,13 +69,13 @@ class ScatterChart:
 		----------
 		category : str
 			Category to annotate.  Exact value of category.
-		category_name : str
+		category_name : str, optional
 			Name of category which will appear on web site. Default None is same as category.
-		not_category_name : str
+		not_category_name : str, optional
 			Name of ~category which will appear on web site. Default None is same as "not " + category.
-		scores : np.array
+		scores : np.array, optional
 			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
-		transform : function
+		transform : function, optional
 			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_ordinal.
 
 		Returns
@@ -108,7 +113,8 @@ class ScatterChart:
 		j = {'info': {'category_name': category_name.title(),
 		              'not_category_name': not_category_name.title(),
 		              'category_terms': category_terms,
-		              'not_category_terms': not_category_terms}}
+		              'not_category_terms': not_category_terms,
+		              'category_internal_name': category}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
@@ -127,14 +133,75 @@ class ScatterChart:
 		all_categories = other_categories + [category + ' freq']
 		return all_categories, other_categories
 
+	def _get_coordinates_from_transform_and_jitter_frequencies(self,
+	                                                           category,
+	                                                           df,
+	                                                           other_categories,
+	                                                           transform):
+		x_data_raw = transform(df[other_categories].sum(axis=1))
+		y_data_raw = transform(df[category + ' freq'])
+		x_data = self._add_jitter(x_data_raw)
+		y_data = self._add_jitter(y_data_raw)
+		return x_data, y_data
+
+	def _add_jitter(self, vec):
+		"""
+		:param vec: array to jitter
+		:return: array, jittered version of arrays
+		"""
+		if self.jitter == 0:
+			return vec
+		else:
+			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
+			return to_ret
+
+	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
+		df = self.term_ranker(self.term_doc_matrix).get_ranks()
+		if scores is None:
+			scores = self._get_default_scores(category, df)
+		np.array(self.term_doc_matrix.get_rudder_scores(category))
+		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		df['not category score'] = np.sqrt(2) - df['category score']
+		df['color_scores'] = scores
+		df = filter_bigrams_by_pmis(
+			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
+			threshold_coef=self.pmi_threshold_coefficient
+		)
+		if self.filter_unigrams:
+			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
+		if len(df) == 0:
+			raise NoWordMeetsTermFrequencyRequirementsError()
+		df['category score rank'] = rankdata(df['category score'], method='ordinal')
+		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
+		if self.max_terms and self.max_terms < len(df):
+			assert self.max_terms > 0
+			df = self._limit_max_terms(category, df)
+		df = df.reset_index()
+		return df
+
+	def _limit_max_terms(self, category, df):
+		df['score'] = self._term_importance_ranks(category, df)
+		df = df.ix[df.sort_values('score').iloc[:self.max_terms].index]
+		return df[[c for c in df.columns if c != 'score']]
+
+	def _get_default_scores(self, category, df):
+		category_column_name = category + ' freq'
+		cat_word_counts = df[category_column_name]
+		not_cat_word_counts = df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+		scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
+		return scores
+
+	def _term_importance_ranks(self, category, df):
+		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
+
+
 	def draw(self,
 	         category,
 	         num_top_words_to_annotate=4,
 	         words_to_annotate=[],
 	         scores=None,
 	         transform=percentile_ordinal):
-		'''
-		Outdated
+		'''Outdated.  MPLD3 drawing.
 
 		Parameters
 		----------
@@ -211,54 +278,5 @@ class ScatterChart:
 		# adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
 		plt.show()
 		return df, fig_to_html(fig)
-
-	def _get_coordinates_from_transform_and_jitter_frequencies(self,
-	                                                           category,
-	                                                           df,
-	                                                           other_categories,
-	                                                           transform):
-		x_data_raw = transform(df[other_categories].sum(axis=1))
-		y_data_raw = transform(df[category + ' freq'])
-		x_data = self._add_jitter(x_data_raw)
-		y_data = self._add_jitter(y_data_raw)
-		return x_data, y_data
-
-	def _add_jitter(self, vec):
-		"""
-		:param vec: array to jitter
-		:return: array, jittered version of arrays
-		"""
-		if self.jitter == 0:
-			return vec
-		else:
-			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
-			return to_ret
-
-	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
-		df = self.term_ranker(self.term_doc_matrix).get_ranks()
-		np.array(self.term_doc_matrix.get_rudder_scores(category))
-		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
-		df['not category score'] = np.sqrt(2) - df['category score']
-		df['color_scores'] = self._get_color_scores(category, scores)
-		df = filter_bigrams_by_pmis(
-			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
-			threshold_coef=self.pmi_threshold_coefficient
-		)
-		if self.filter_unigrams:
-			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
-
-		if len(df) == 0:
-			raise NoWordMeetsTermFrequencyRequirementsError()
-		df['category score rank'] = rankdata(df['category score'], method='ordinal')
-		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
-		df = df.reset_index()
-		return df
-
-	def _get_color_scores(self, category, scores):
-		# type: (str, np.array) -> np.array
-		if scores is None:
-			return np.array(self.term_doc_matrix.get_scaled_f_scores(category))
-		return scores
-
 
 

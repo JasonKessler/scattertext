@@ -16,15 +16,14 @@ from scattertext.CSRMatrixTools import delete_columns
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
-
-class InvalidScalerException(Exception):
-	pass
+from scattertext.termscoring.ScaledFScore import InvalidScalerException
 
 
 class TermDocMatrix:
 	'''
 	!!! to do: refactor score functions into classes
 	'''
+
 	def __init__(self, X, y, term_idx_store, category_idx_store, unigram_frequency_path=None):
 		'''
 
@@ -101,7 +100,6 @@ class TermDocMatrix:
 			d[cat + ' freq'] = catX[idx, :].A[0]
 		return pd.DataFrame(d).set_index('term')
 
-
 	def term_doc_lists(self):
 		'''
 		Returns
@@ -123,7 +121,6 @@ class TermDocMatrix:
 		catX = self._change_document_type_in_matrix(self._X, row)
 		return self._term_freq_df_from_matrix(catX)
 
-
 	def _change_document_type_in_matrix(self, X, new_doc_ids):
 		new_data = self._make_all_positive_data_ones(X.data)
 		newX = csr_matrix((new_data, (new_doc_ids, X.indices)))
@@ -132,7 +129,6 @@ class TermDocMatrix:
 	def _make_all_positive_data_ones(self, newX):
 		# type: (sparse_matrix) -> sparse_matrix
 		return (newX > 0).astype(np.int32)
-
 
 	def remove_terms(self, terms):
 		'''Non destructive term removal.
@@ -151,8 +147,14 @@ class TermDocMatrix:
 			if term not in self._term_idx_store:
 				raise KeyError('Term %s not found' % (term))
 			idx_to_delete_list.append(self._term_idx_store.getidx(term))
+		return self.remove_terms_by_indices(idx_to_delete_list)
+
+	def remove_terms_by_indices(self, idx_to_delete_list):
 		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
 		new_X = delete_columns(self._X, idx_to_delete_list)
+		return self._term_doc_matrix_with_new_X(new_X, new_term_idx_store)
+
+	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
 		return TermDocMatrix(X=new_X,
 		                     y=self._y,
 		                     term_idx_store=new_term_idx_store,
@@ -405,7 +407,7 @@ class TermDocMatrix:
 		unigram_validator = re.compile('^[A-Za-z]+$')
 		corpus_unigram_freq = corpus_freq_df.ix[[term for term
 		                                         in corpus_freq_df.index
-		                                       if unigram_validator.match(term) is not None]]
+		                                         if unigram_validator.match(term) is not None]]
 		return corpus_unigram_freq
 
 	def _get_background_unigram_frequencies(self):
@@ -459,4 +461,3 @@ class TermDocMatrix:
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
-

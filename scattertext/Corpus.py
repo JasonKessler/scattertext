@@ -3,6 +3,7 @@ from numpy import nonzero
 
 from scattertext.TermDocMatrix import TermDocMatrix
 
+
 class Corpus(TermDocMatrix):
 	def __init__(self,
 	             X,
@@ -67,3 +68,11 @@ class Corpus(TermDocMatrix):
 		idx = self._term_idx_store.getidxstrict(ngram.lower())
 		mask = (self._X[:, idx] > 0).todense().A1
 		return mask
+
+	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
+		return Corpus(X=new_X,
+		              y=self._y,
+		              term_idx_store=new_term_idx_store,
+		              category_idx_store=self._category_idx_store,
+		              raw_texts=self._raw_texts,
+		              unigram_frequency_path=self._unigram_frequency_path)

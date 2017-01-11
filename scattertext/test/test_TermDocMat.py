@@ -5,9 +5,10 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
+from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext import TermDocMatrixFromPandas
 from scattertext.FastButCrapNLP import fast_but_crap_nlp
-from scattertext.TermDocMatrix import InvalidScalerException, TermDocMatrix
+from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 

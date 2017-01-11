@@ -63,8 +63,11 @@ def main():
 	                                    category_name='Democratic',
 	                                    not_category_name='Republican',
 	                                    width_in_pixels=1000,
-	                                    max_snippets=100,
-	                                    metadata=source_df['speaker'].tolist())
+	                                    max_terms=None,
+	                                    #max_docs_per_category=50,
+	                                    metadata=source_df['speaker']
+	                                    #singleScoreMode=True
+	                                    )
 	open('./demo_explorer.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_explorer.html in Chrome or Firefox.')
 

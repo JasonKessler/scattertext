@@ -1,6 +1,8 @@
 function buildViz(widthInPixels = 800,
                   heightInPixels = 600,
-                  max_snippets = null) {
+                  max_snippets = null,
+                  color = null,
+                  sortByDist = true) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -25,7 +27,10 @@ function buildViz(widthInPixels = 800,
         .attr("class", "label");
 
     // setup fill color
-    var color = d3.interpolateRdYlBu;
+    //var color = d3.interpolateRdYlBu;
+    if(color == null) {
+      color = d3.interpolateRdYlBu;
+    };
 
     // Adds the svg canvas
     // var svg = d3.select("body")
@@ -101,11 +106,6 @@ function buildViz(widthInPixels = 800,
                     match.index, pattern.lastIndex);
                 if (foundSnippet.sentenceStart == lastSentenceStart) continue;
                 lastSentenceStart = foundSnippet.sentenceStart;
-                //var categoryMatches = matches[fullData.docs.labels[i]];
-                /*categoryMatches.push({
-                 'snippet': foundSnippet.snippet,
-                 'id': i
-                 });*/
                 curMatch.snippets.push(foundSnippet.snippet);
                 matchFound = true;
             }
@@ -122,17 +122,19 @@ function buildViz(widthInPixels = 800,
         if (contexts[0].length == 0 && contexts[1].length == 0) {
             return null;
         }
-        var categoryNames = [fullData.info.category_name,
-            fullData.info.not_category_name];
-        categoryNames
+        //var categoryNames = [fullData.info.category_name,
+        //    fullData.info.not_category_name];
+        var catInternalName = fullData.info.category_internal_name;
+        fullData.docs.categories
             .map(
                 function (catName, catIndex) {
                     if (max_snippets != null) {
                         var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
                     }
-                    var divId = catIndex == 0 ? '#cat' : '#notcat';
+                    var divId = catName == catInternalName ? '#cat' : '#notcat';
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
+                    console.log(contexts);
                     contexts[catIndex].forEach(function (context) {
                         var meta = context.meta ? context.meta : '&nbsp;';
                         d3.select(divId)
@@ -147,15 +149,6 @@ function buildViz(widthInPixels = 800,
                         })
 
                     });
-                    /*d3.select(divId)
-                     .selectAll("div")
-                     .data(contexts[catIndex])
-                     .enter()
-                     .append("div")
-                     .attr('class', 'snippet')
-                     .html(function (x) {
-                     return x.snippet;
-                     });*/
                 });
         d3.select('#termstats')
             .selectAll("div")
@@ -167,12 +160,24 @@ function buildViz(widthInPixels = 800,
         var message = '';
         var cat_name = fullData.info.category_name;
         var ncat_name = fullData.info.not_category_name;
+
+        function getFrequencyDescription(name, count25k, count) {
+            var desc = name + ' frequency: <div class=text_subhead>' + count25k
+                + ' per 25,000 terms</div>';
+            if (count == 0) {
+                desc += '<u>Not found in any ' + name + ' documents.</u>';
+            } else {
+                desc += '<u>Some of the ' + count + ' snippets:</u>';
+            }
+            return desc;
+        }
+
         d3.select('#cathead')
             .style('fill', color(1))
-            .html(cat_name + ' frequency: <div class=text_subhead>' + info.cat25k + ' per 25,000 terms</div>');
+            .html(getFrequencyDescription(cat_name, info.cat25k, info.cat));
         d3.select('#notcathead')
             .style('fill', color(0))
-            .html(ncat_name + ' frequency: <div class=text_subhead>' + info.ncat25k + ' per 25,000 terms</div>');
+            .html(getFrequencyDescription(ncat_name, info.ncat25k, info.ncat));
         console.log(info);
         if (jump) {
             if (window.location.hash == '#snippets') {
@@ -185,12 +190,15 @@ function buildViz(widthInPixels = 800,
 
     function showTooltip(d, pageX, pageY) {
         deselectLastCircle();
+        var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
+        if(!sortByDist) {
+            message += '<br/>score: ' + d.s;
+        }
         tooltip.transition()
             .duration(0)
             .style("opacity", 1)
             .style("z-index", 10000000);
-
-        tooltip.html(d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words")
+        tooltip.html(message)
             .style("left", (pageX) + "px")
             .style("top", (pageY - 28) + "px");
 
@@ -358,11 +366,13 @@ function buildViz(widthInPixels = 800,
                     y2 = bbox.y + bbox.height - borderToRemove;
                 //matchedElement = searchRangeTree(rangeTree, x1, y1, x2, y2);
                 var matchedElement = false;
-                rectHolder.findMatchingRectangles(x1, y1, x2, y2, function(elem) {matchedElement=true; return false;});
+                rectHolder.findMatchingRectangles(x1, y1, x2, y2, function (elem) {
+                    matchedElement = true;
+                    return false;
+                });
                 if (matchedElement) {
                     curLabel.remove();
                 } else {
-                    console.log('no match')
                     break;
                 }
             }
@@ -402,7 +412,39 @@ function buildViz(widthInPixels = 800,
             return (aNotCatDist > bNotCatDist) * 2 - 1;
         }
 
-        data = data.sort(euclideanDistanceSort);
+        function scoreSort(a, b) {
+            return a.s - b.s;
+        }
+
+        function scoreSortForCategory(a, b) {
+            var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
+            var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
+            var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
+            var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
+            var aGood = aCatDist < aNotCatDist;
+            var bGood = bCatDist < bNotCatDist;
+            if (aGood && !bGood) return -1;
+            if (!aGood && bGood) return 1;
+            return b.s - a.s;
+        }
+
+        function scoreSortForNotCategory(a, b) {
+            var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
+            var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
+            var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
+            var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
+            var aGood = aCatDist > aNotCatDist;
+            var bGood = bCatDist > bNotCatDist;
+            if (aGood && !bGood) return -1;
+            if (!aGood && bGood) return 1;
+            return b.s - a.s;
+        }
+
+        if(sortByDist) {
+            data = data.sort(euclideanDistanceSort);
+        } else {
+            data = data.sort(scoreSort);
+        }
         data.forEach(censorPoints);
 
         var myXAxis = svg.append("g")
@@ -474,12 +516,14 @@ function buildViz(widthInPixels = 800,
                         ,
                         curTerm);
                 })(word, curTerm);
-                rangeTree = registerFigureBBox(word);
+                registerFigureBBox(word);
             }
             return word;
         }
 
-        word = showWordList(word, data.sort(euclideanDistanceSortForCategory).slice(0, 14));
+        word = showWordList(word, data.sort(
+            sortByDist ? euclideanDistanceSortForCategory : scoreSortForCategory
+        ).slice(0, 14));
 
         word = svg.append("text")
             .attr("class", "category_header")
@@ -488,7 +532,9 @@ function buildViz(widthInPixels = 800,
             .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
             .text("Top " + fullData['info']['not_category_name'] + ' Terms');
 
-        word = showWordList(word, data.sort(euclideanDistanceSortForNotCategory).slice(0, 14));
+        word = showWordList(word, data.sort(
+            sortByDist ? euclideanDistanceSortForNotCategory : scoreSortForNotCategory
+        ).slice(0, 14));
 
         for (i = 0; i < data.length; labelPointsIfPossible(i++));
 
@@ -501,6 +547,6 @@ function buildViz(widthInPixels = 800,
     // The tool tip is down here in order to make sure it has the highest z-index
     var tooltip = d3.select('#' + divName)
         .append("div")
-        .attr("class", "tooltip")
+        .attr("class", sortByDist ? "tooltip" : "tooltipscore")
         .style("opacity", 0);
 }

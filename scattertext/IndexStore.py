@@ -7,6 +7,9 @@ class IndexStore:
 	def getval(self, idx):
 		return self._i2val[idx]
 
+	def __len__(self):
+		return len(self._i2val)
+
 	def __contains__(self, val):
 		return self._hasval(val)
 

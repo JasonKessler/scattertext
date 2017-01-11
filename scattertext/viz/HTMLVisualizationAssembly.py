@@ -10,7 +10,9 @@ class HTMLVisualizationAssembly:
 	             visualization_data,
 	             width_in_pixels=None,
 	             height_in_pixels=None,
-	             max_snippets=None):
+	             max_snippets=None,
+	             color=None,
+	             sort_by_dist=True):
 		'''
 
 		Parameters
@@ -21,19 +23,19 @@ class HTMLVisualizationAssembly:
 			width of viz in pixels, if None, default to JS's choice
 		height_in_pixels : int
 			height of viz in pixels, if None, default to JS's choice
-		max_snippets int : int
+		max_snippets : int
 			max snippets to snow when temr is clicked, Defaults to show all
-		'''
-		'''
-		:param visualization_data:
-		:param width_in_pixels: int, width of viz in pixels, if None, default to JS's choice
-		:param height_in_pixels: int, height of viz in pixels, if None, default to JS's choice
-		:param max_snippets: int or None, max snippets to snow when temr is clicked, if None show all
+		color : str
+		  d3 color scheme
+		sort_by_dist : bool
+			sort by distance or score, default true
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
 		self._height_in_pixels = height_in_pixels
 		self._max_snippets = max_snippets
+		self._color = color
+		self._sort_by_dist = sort_by_dist
 
 	def to_html(self, protocol='http'):
 		self._ensure_valid_protocol(protocol)
@@ -67,9 +69,12 @@ class HTMLVisualizationAssembly:
 			return 'undefined' if x is None else str(x)
 		def js_default_value_to_null(x):
 			return 'null' if x is None else str(x)
+		def js_bool(x):
+			return 'true' if x else 'false'
 
 		return 'buildViz(' \
 		       + js_default_value(self._width_in_pixels) + ',' \
 		       + js_default_value(self._height_in_pixels)+ ',' \
-		       + js_default_value_to_null(self._max_snippets) \
-		       + ');'
+		       + js_default_value_to_null(self._max_snippets) + ',' \
+		       + js_default_value_to_null(self._color) + ',' \
+		       + js_bool(self._sort_by_dist)+ ');'
