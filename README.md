@@ -45,7 +45,8 @@ some design decisions that were made in Scattertext.  You can find it [2012 Poli
 
 Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](http://localhost:8888/notebooks/Presidential%20Debates.ipynb).     
 
-Finally, you can see an example of how tuning Scattertext can lead to more interpretable models, as shown by 
+Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
+tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie%20Revenue.ipynb). 
 
 ## Quickstart
 
