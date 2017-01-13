@@ -38,29 +38,41 @@ class TestHTMLVisualizationAssembly(TestCase):
 	def test_height_width_default(self):
 		assembler = self.make_assembler()
 		self.assertEqual(assembler._call_build_visualization_in_javascript(),
-		                 "buildViz(undefined,undefined,null,null);")
+		                 "buildViz(undefined,undefined,null,null,true,false,false);")
 
 	def test_color(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, color='d3.interpolatePurples')
 		                  ._call_build_visualization_in_javascript()),
-		                 'buildViz(undefined,undefined,null,d3.interpolatePurples);')
+		                 'buildViz(undefined,undefined,null,d3.interpolatePurples,true,false,false);')
+	def test_full_doc(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, use_full_doc=True)
+		                  ._call_build_visualization_in_javascript()),
+		                 'buildViz(undefined,undefined,null,null,true,true,false);')
+
+
+	def test_grey_zero_scores(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, grey_zero_scores=True)
+		                  ._call_build_visualization_in_javascript()),
+		                 'buildViz(undefined,undefined,null,null,true,false,true);')
 
 	def test_height_width_nondefault(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,undefined,null,null);")
+		                 "buildViz(1000,undefined,null,null,true,false,false);")
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, height_in_pixels=60)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(undefined,60,null,null);")
+		                 "buildViz(undefined,60,null,null,true,false,false);")
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,null,null);")
+		                 "buildViz(1000,60,null,null,true,false,false);")
 
 	def test_max_snippets(self):
 		visualization_data = self.make_adapter()
@@ -69,14 +81,14 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            width_in_pixels=1000,
 		                                            max_snippets=None)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,null,null);")
+		                 "buildViz(1000,60,null,null,true,false,false);")
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000,
 		                                            max_snippets=100)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,100,null);")
+		                 "buildViz(1000,60,100,null,true,false,false);")
 
 	def make_assembler(self):
 		visualization_data = self.make_adapter()

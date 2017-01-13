@@ -12,23 +12,29 @@ class HTMLVisualizationAssembly:
 	             height_in_pixels=None,
 	             max_snippets=None,
 	             color=None,
-	             sort_by_dist=True):
+	             grey_zero_scores=False,
+	             sort_by_dist=True,
+	             use_full_doc=False):
 		'''
 
 		Parameters
 		----------
 		visualization_data : dict
 			From ScatterChart or a descendant
-		width_in_pixels : int
+		width_in_pixels : int, optional
 			width of viz in pixels, if None, default to JS's choice
-		height_in_pixels : int
+		height_in_pixels : int, optional
 			height of viz in pixels, if None, default to JS's choice
-		max_snippets : int
+		max_snippets : int, optional
 			max snippets to snow when temr is clicked, Defaults to show all
-		color : str
+		color : str, optional
 		  d3 color scheme
-		sort_by_dist : bool
+		grey_zero_scores : bool, optional
+		  If True, color points with zero-scores a light shade of grey.  False by default.
+		sort_by_dist : bool, optional
 			sort by distance or score, default true
+		use_full_doc : bool, optional
+			use full document instead of sentence in snippeting
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
@@ -36,6 +42,8 @@ class HTMLVisualizationAssembly:
 		self._max_snippets = max_snippets
 		self._color = color
 		self._sort_by_dist = sort_by_dist
+		self._use_full_doc = use_full_doc
+		self._grey_zero_scores = grey_zero_scores
 
 	def to_html(self, protocol='http'):
 		self._ensure_valid_protocol(protocol)
@@ -77,4 +85,6 @@ class HTMLVisualizationAssembly:
 		       + js_default_value(self._height_in_pixels)+ ',' \
 		       + js_default_value_to_null(self._max_snippets) + ',' \
 		       + js_default_value_to_null(self._color) + ',' \
-		       + js_bool(self._sort_by_dist)+ ');'
+		       + js_bool(self._sort_by_dist)+ ',' \
+					 + js_bool(self._use_full_doc) + ',' \
+		       + js_bool(self._grey_zero_scores) + ');'

@@ -1,4 +1,4 @@
-// Created using Cozy: https://github.com/uwplse/cozy
+// Created using Cozy: github.com/uwplse/cozy
 function Rectangle(ax1, ay1, ax2, ay2) {
     this.ax1 = ax1;
     this.ay1 = ay1;

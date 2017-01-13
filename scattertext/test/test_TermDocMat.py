@@ -4,6 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext import TermDocMatrixFromPandas
@@ -67,6 +68,24 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(dict(term_df.ix['that']),
 		                 {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 0})
 
+	def test_get_unigram_corpus(self):
+		tdm = make_a_test_term_doc_matrix()
+		uni_tdm = tdm.get_unigram_corpus()
+		term_df = tdm.get_term_freq_df()
+		uni_term_df = uni_tdm.get_term_freq_df()
+		self.assertEqual(set(term for term in term_df.index if ' ' not in term and "'" not in term),
+		                 set(uni_term_df.index)),
+
+
+	def test_get_stoplisted_unigram_corpus(self):
+		tdm = make_a_test_term_doc_matrix()
+		uni_tdm = tdm.get_stoplisted_unigram_corpus()
+		term_df = tdm.get_term_freq_df()
+		uni_term_df = uni_tdm.get_term_freq_df()
+		self.assertEqual(set(term for term in term_df.index
+		                     if ' ' not in term and "'" not in term and term not in ENGLISH_STOP_WORDS),
+		                 set(uni_term_df.index)),
+
 	def test_term_doc_lists(self):
 		term_doc_lists = self.tdm.term_doc_lists()
 		self.assertEqual(type(term_doc_lists), dict)
@@ -112,7 +131,7 @@ class TestTermDocMat(TestCase):
 
 	def test_term_scores_background(self):
 		hamlet = get_hamlet_term_doc_matrix()
-		df = hamlet.get_scaled_f_score_scores_vs_background(
+		df = hamlet.get_scaled_f_scores_vs_background(
 			scaler_algo='none'
 		)
 		self.assertEqual({u'corpus', u'background', u'Scaled f-score'},

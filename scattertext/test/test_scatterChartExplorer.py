@@ -10,13 +10,13 @@ from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus
 class TestScatterChart(TestCase):
 	def test_to_dict(self):
 		corpus = build_hamlet_jz_corpus()
-		j = (ScatterChartExplorer(term_doc_matrix=corpus,
+		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
 		     .to_dict('hamlet'))
 		self.assertEqual(set(j.keys()), set(['info', 'data', 'docs']))
 		self.assertEqual(set(j['info'].keys()),
 		                 set(['not_category_name', 'category_name',
-		                      'category_terms', 'not_category_terms']))
+		                      'category_terms', 'not_category_terms','category_internal_name']))
 		self.assertEqual(list(j['docs']['labels']),
 		                 [0, 0, 0, 0, 1, 1, 1, 1])
 		self.assertEqual(list(j['docs']['texts']),
@@ -33,6 +33,7 @@ class TestScatterChart(TestCase):
 		            "cat25k": 758,
 		            "ncat25k": 0,
 		            's': 0.5,
+		            'os': 0.5192,
 		            'cat': 1,
 		            'ncat': 0,
 		            # not sure if i want to do it this way
@@ -46,16 +47,18 @@ class TestScatterChart(TestCase):
 				self.assertEqual(datum[var], expected[var])
 		self.assertEqual(set(expected.keys()), set(datum.keys()))
 		self.assertEqual(expected['term'], datum['term'])
-		self.assertEqual(j['docs'].keys(), ['texts', 'labels'])
+		self.assertEqual(j['docs'].keys(), ['texts', 'labels', 'categories'])
 
 	def test_metadata(self):
 		corpus = build_hamlet_jz_corpus()
 		meta = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
-		j = (ScatterChartExplorer(term_doc_matrix=corpus,
+		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
 		     .to_dict('hamlet', metadata=meta))
+		self.maxDiff = None
 		self.assertEqual(j['docs'],
 		                 {'labels': [0, 0, 0, 0, 1, 1, 1, 1],
+		                  'categories': ['hamlet', 'jay-z/r. kelly'],
 		                  'meta': ['one',
 		                           'two',
 		                           'three',

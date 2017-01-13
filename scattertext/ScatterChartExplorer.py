@@ -50,7 +50,7 @@ class ScatterChartExplorer(ScatterChart):
 		                         category_name=category_name,
 		                         not_category_name=not_category_name,
 		                         scores=scores,
-		                         transform=percentile_ordinal)
+		                         transform=transform)
 		docs_getter = self._make_docs_getter(max_docs_per_category)
 		j['docs'] = self._get_docs_structure(docs_getter, metadata)
 		return j

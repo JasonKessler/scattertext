@@ -9,6 +9,7 @@ from pandas.core.common import SettingWithCopyWarning
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
 from sklearn.cross_validation import cross_val_predict
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
@@ -99,6 +100,34 @@ class TermDocMatrix:
 		for idx, cat in self._category_idx_store.items():
 			d[cat + ' freq'] = catX[idx, :].A[0]
 		return pd.DataFrame(d).set_index('term')
+
+	def get_unigram_corpus(self):
+		'''
+		Returns
+		-------
+		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
+		'''
+		terms_to_ignore = [term for term
+		                   in self._term_idx_store._i2val
+		                   if ' ' in term or "'" in term]
+		return self.remove_terms(terms_to_ignore)
+
+	def get_stoplisted_unigram_corpus(self, stoplist=None):
+		'''
+		Parameters
+		-------
+		stoplist : list, optional
+
+		Returns
+		-------
+		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
+		'''
+		if stoplist is None:
+			stoplist = ENGLISH_STOP_WORDS
+		terms_to_ignore = [term for term
+		                   in self._term_idx_store._i2val
+		                   if ' ' in term or "'" in term or term in stoplist]
+		return self.remove_terms(terms_to_ignore)
 
 	def term_doc_lists(self):
 		'''
@@ -420,13 +449,12 @@ class TermDocMatrix:
 		                      names=['word', 'background'])
 		        .set_index('word'))
 
-	def get_scaled_f_score_scores_vs_background(self,
-	                                            scaler_algo='none'):
+	def get_scaled_f_scores_vs_background(self, scaler_algo='none'):
 		'''
 		Parameters
 		----------
 		scaler_algo : str
-			see get_scaled_f_score_scores
+			see get_scaled_f_scores
 
 		Returns
 		-------

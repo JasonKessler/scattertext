@@ -88,6 +88,7 @@ class ScatterChart:
 		          x:frequency [0-1],
 		          y:frequency [0-1],
               s: score,
+              os: original score,
               cat25k: freq per 25k in category,
               cat: count in category,
               ncat: count in non-category,
@@ -104,14 +105,17 @@ class ScatterChart:
 		json_df = df[['x', 'y', 'term']]
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
+		json_df['os'] = df['color_scores']
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])
 		if category_name is None:
 			category_name = category
 		if not_category_name is None:
 			not_category_name = 'Not ' + category_name
-		j = {'info': {'category_name': category_name.title(),
-		              'not_category_name': not_category_name.title(),
+		def better_title(x):
+			return ' '.join([t[0].upper() + t[1:].lower() for t in x.split()])
+		j = {'info': {'category_name': better_title(category_name),
+		              'not_category_name': better_title(not_category_name),
 		              'category_terms': category_terms,
 		              'not_category_terms': not_category_terms,
 		              'category_internal_name': category}}
@@ -159,7 +163,7 @@ class ScatterChart:
 		df = self.term_ranker(self.term_doc_matrix).get_ranks()
 		if scores is None:
 			scores = self._get_default_scores(category, df)
-		np.array(self.term_doc_matrix.get_rudder_scores(category))
+		#np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		df['not category score'] = np.sqrt(2) - df['category score']
 		df['color_scores'] = scores

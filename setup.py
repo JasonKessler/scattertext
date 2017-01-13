@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.1.9.8',
+      version='0.0.2.0.0',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
@@ -13,9 +13,8 @@ setup(name='scattertext',
 	      'numpy',
 	      'scipy',
 	      'sklearn',
-	      'pandas'
-	      # ,
-	      # 'spacy',
+	      'pandas',
+	      'spacy',
 	      # 'mpld3',
 	      # 'matplotlib',
 	      # 'seaborn',

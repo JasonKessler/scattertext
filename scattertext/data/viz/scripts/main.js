@@ -2,7 +2,9 @@ function buildViz(widthInPixels = 800,
                   heightInPixels = 600,
                   max_snippets = null,
                   color = null,
-                  sortByDist = true) {
+                  sortByDist = true,
+                  useFullDoc = false,
+                  greyZeroScores = false) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -28,9 +30,10 @@ function buildViz(widthInPixels = 800,
 
     // setup fill color
     //var color = d3.interpolateRdYlBu;
-    if(color == null) {
-      color = d3.interpolateRdYlBu;
-    };
+    if (color == null) {
+        color = d3.interpolateRdYlBu;
+    }
+    ;
 
     // Adds the svg canvas
     // var svg = d3.select("body")
@@ -110,7 +113,18 @@ function buildViz(widthInPixels = 800,
                 matchFound = true;
             }
             if (matchFound) {
+                if (useFullDoc) {
+                    curMatch.snippets = [
+                        text
+                            .replace(/\n$/g, '\n\n')
+                            .replace(
+                                new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b",
+                                    'gim'),
+                                '<b>$&</b>')
+                    ];
+                }
                 matches[fullData.docs.labels[i]].push(curMatch);
+
             }
         }
         return {'contexts': matches, 'info': d};
@@ -134,21 +148,20 @@ function buildViz(widthInPixels = 800,
                     var divId = catName == catInternalName ? '#cat' : '#notcat';
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
-                    console.log(contexts);
-                    contexts[catIndex].forEach(function (context) {
-                        var meta = context.meta ? context.meta : '&nbsp;';
-                        d3.select(divId)
-                            .append("div")
-                            .attr('class', 'snippet_meta')
-                            .html(meta);
-                        context.snippets.forEach(function (snippet) {
+                        contexts[catIndex].forEach(function (context) {
+                            var meta = context.meta ? context.meta : '&nbsp;';
                             d3.select(divId)
                                 .append("div")
-                                .attr('class', 'snippet')
-                                .html(snippet);
-                        })
+                                .attr('class', 'snippet_meta')
+                                .html(meta);
+                            context.snippets.forEach(function (snippet) {
+                                d3.select(divId)
+                                    .append("div")
+                                    .attr('class', 'snippet')
+                                    .html(snippet);
+                            })
 
-                    });
+                        });
                 });
         d3.select('#termstats')
             .selectAll("div")
@@ -167,7 +180,7 @@ function buildViz(widthInPixels = 800,
             if (count == 0) {
                 desc += '<u>Not found in any ' + name + ' documents.</u>';
             } else {
-                desc += '<u>Some of the ' + count + ' snippets:</u>';
+                desc += '<u>Some of the ' + count + ' mentions:</u>';
             }
             return desc;
         }
@@ -191,8 +204,8 @@ function buildViz(widthInPixels = 800,
     function showTooltip(d, pageX, pageY) {
         deselectLastCircle();
         var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
-        if(!sortByDist) {
-            message += '<br/>score: ' + d.s;
+        if (!sortByDist) {
+            message += '<br/>score: ' + d.os.toFixed(4);
         }
         tooltip.transition()
             .duration(0)
@@ -300,7 +313,11 @@ function buildViz(widthInPixels = 800,
                 return y(d.y);
             })
             .style("fill", function (d) {
-                return color(d.s);
+                if(greyZeroScores && d.os == 0) {
+                    return d3.rgb(230, 230, 230);
+                } else {
+                    return color(d.s);
+                }
             })
             .on("mouseover", function (d) {
                 showTooltip(d, d3.event.pageX, d3.event.pageY);
@@ -344,7 +361,9 @@ function buildViz(widthInPixels = 800,
                 {'anchor': 'end', 'xoff': -5, 'yoff': -3},
                 {'anchor': 'end', 'xoff': -5, 'yoff': 10},
                 {'anchor': 'start', 'xoff': 3, 'yoff': 10},
-                {'anchor': 'start', 'xoff': 3, 'yoff': -3}
+                {'anchor': 'start', 'xoff': 3, 'yoff': -3},
+                {'anchor': 'start', 'xoff': 5, 'yoff': 10},
+                {'anchor': 'start', 'xoff': 5, 'yoff': -3},
             ];
             var matchedElement = null;
             for (var configI in configs) {
@@ -440,7 +459,7 @@ function buildViz(widthInPixels = 800,
             return b.s - a.s;
         }
 
-        if(sortByDist) {
+        if (sortByDist) {
             data = data.sort(euclideanDistanceSort);
         } else {
             data = data.sort(scoreSort);
