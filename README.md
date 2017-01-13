@@ -13,22 +13,28 @@ got more fun.
 This is a tool that's intended for visualizing what words and phrases
  are more characteristic of a category than others.  
  
-Looking at 
+Consider this example: 
 
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012Conventions.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
-may seem overwhelming at first.  In fact, it's a relatively simple visualization of word use 
+Looking at this seem overwhelming.  In fact, it's a relatively simple visualization of word use 
 during the 2012 political convention.  Each dot corresponds to a word or phrase mentioned by Republicans or Democrats
-during thier conventions.  The closer a dot is to the top of the plot, the more frequently it was used by 
+during their conventions.  The closer a dot is to the top of the plot, the more frequently it was used by 
 Democrats.  The further right a  dot, the more that word or phrase was used by Republicans.  Words frequently
 used by both parties, like "of" and "the" and even "Mitt" tend to occur in the upper-right-hand corner. Although very low 
 frequency words have been hidden to preserve computing resources, a word that neither party used, like "giraffe" 
  would be in the bottom-left-hand corner.  
  
-The interesting things happen close to the upper-left and lower-right corners.  Here, these are words frequently used 
-  by Democrats or Republican but infrequently by the other party reside.  Interesting terms occur along the edges as well.
-  
-The inspiration for this algorithm came from Dataclysm (Rudder, 2014).
+The interesting things happen close to the upper-left and lower-right corners.  In the upper-left corner, 
+words like "auto" (as in auto bailout) and "millionaires" are frequently used by Democrats but infrequently or never used 
+by Republicans.  Symmetrically, terms frequently used by Republicans and infrequently by Democrats occupy the
+ bottom-right corner.  These include "big government" and "olympics", referring to the Salt Lake City olympics in which 
+ Gov. Romney was involved.
+ 
+Terms are colored by their association.  Those that are more associated with Democrats are blue, and those 
+more associated with Republicans red.  
+   
+The inspiration for this visualization came from Dataclysm (Rudder, 2014).
   
 Scattertext is designed to help you build these graphs and efficiently label points on them. 
 
@@ -36,12 +42,13 @@ The documentation (including this readme) is a work in
 progress.  Please see the quickstart as well as the accompanying Juypter 
 notebooks, and poking around the code and tests should give you a good idea of how things work. 
 
-The library covers some novel and effective term-importance algorithms, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content ot Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
+The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
-In the mean time, here's an example of on of the things the tool can 
-do-- a scatter chart showing language differences between Democratic 
-and Republican speakers in the 2012 American Political Conventions.  This walkthrough explains 
-some design decisions that were made in Scattertext.  You can find it [2012 Political Convention Exploration](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Development.ipynb).
+## Examples 
+
+I recommend you start with this example first.  It explains some design decisions that were made in 
+Scattertext, and explains the strings of points.  You can 
+find it [2012 Political Convention Exploration](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Development.ipynb).
 
 Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](http://localhost:8888/notebooks/Presidential%20Debates.ipynb).     
 
