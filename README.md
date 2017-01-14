@@ -27,8 +27,8 @@ frequency words have been hidden to preserve computing resources, a word that ne
  
 The interesting things happen close to the upper-left and lower-right corners.  In the upper-left corner, 
 words like "auto" (as in auto bailout) and "millionaires" are frequently used by Democrats but infrequently or never used 
-by Republicans.  Symmetrically, terms frequently used by Republicans and infrequently by Democrats occupy the
- bottom-right corner.  These include "big government" and "olympics", referring to the Salt Lake City olympics in which 
+by Republicans.  Likewise, terms frequently used by Republicans and infrequently by Democrats occupy the
+ bottom-right corner.  These include "big government" and "olympics", referring to the Salt Lake City Olympics in which 
  Gov. Romney was involved.
  
 Terms are colored by their association.  Those that are more associated with Democrats are blue, and those 
