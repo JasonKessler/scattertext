@@ -4,6 +4,10 @@ corpora, and presenting them in a sexy, interactive scatter plot with
 non-overlapping term labels.  Exploratory data analysis just 
 got more fun.
 
+## Data Day Texas 2017 Presentation
+[Scattertext: A Tool for Visualizing Differences in Language
+](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
+
 ## Installation
 
 `$ pip install scattertext && python -m spacy.en.download`
