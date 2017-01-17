@@ -8,7 +8,7 @@ from scattertext import produce_scattertext_explorer
 # compare chinese translations of tale of two cities and ulysses, from http://www.pku.edu.cn/study/novel/ulysses/cindex.htm
 
 def main():
-	df = pd.read_csv('scattertext/data/chinese.csv')
+	df = pd.read_csv('https://cdn.rawgit.com/JasonKessler/scattertext/e508bf32/scattertext/data/chinese.csv')
 	df['text'] = df['text'].apply(chinese_nlp)
 	corpus = CorpusFromParsedDocuments(df,
 	                                   category_col='novel',
