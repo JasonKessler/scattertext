@@ -6,7 +6,7 @@ from scattertext import termranking
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext.FastButCrapNLP import fast_but_crap_nlp
+from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.IndexStore import IndexStore
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.Scalers import percentile_ordinal
@@ -19,6 +19,7 @@ from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext import SampleCorpora
+from scattertext.ChineseNLP import chinese_nlp
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -96,7 +97,8 @@ def produce_scattertext_explorer(corpus,
                                  transform=percentile_ordinal,
                                  jitter=0,
                                  grey_zero_scores = False,
-                                 term_ranker=termranking.AbsoluteFrequencyRanker):
+                                 term_ranker=termranking.AbsoluteFrequencyRanker,
+                                 chinese_mode = False):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -143,7 +145,8 @@ def produce_scattertext_explorer(corpus,
 		If True, color points with zero-scores a light shade of grey.  False by default.
 	term_ranker : TermRanker, optional
 		TermRanker class for determining term frequency ranks.
-
+	chinese_mode : bool, optional
+		Use a special Javascript regular expression that's specific to chinese
 	Returns
 	-------
 		str, html of visualization
@@ -178,4 +181,5 @@ def produce_scattertext_explorer(corpus,
 	                                 color=color,
 	                                 grey_zero_scores=grey_zero_scores,
 	                                 sort_by_dist=sort_by_dist,
-	                                 use_full_doc=use_full_doc).to_html(protocol=protocol)
+	                                 use_full_doc=use_full_doc,
+	                                 chinese_mode=chinese_mode).to_html(protocol=protocol)

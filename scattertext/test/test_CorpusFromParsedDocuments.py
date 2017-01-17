@@ -4,10 +4,11 @@ import pkgutil
 import re
 from unittest import TestCase
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from scattertext import fast_but_crap_nlp, CorpusFromParsedDocuments, ParsedCorpus
+from scattertext import chinese_nlp
+from scattertext import whitespace_nlp, CorpusFromParsedDocuments, ParsedCorpus
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
 from scattertext.test.test_TermDocMat import get_hamlet_docs, get_hamlet_snippet_binary_category
 from scattertext.test.test_corpusFromPandas import get_docs_categories
@@ -55,7 +56,7 @@ def build_term_doc_matrix():
 	term_doc_matrix = TermDocMatrixFactory(
 		category_text_iter=iter_party_speech_pairs(),
 		clean_function=clean_function_factory(),
-		nlp=fast_but_crap_nlp
+		nlp=whitespace_nlp
 	).build()
 	return term_doc_matrix
 
@@ -66,7 +67,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		cls.categories, cls.documents = get_docs_categories()
 		cls.parsed_docs = []
 		for doc in cls.documents:
-			cls.parsed_docs.append(fast_but_crap_nlp(doc))
+			cls.parsed_docs.append(whitespace_nlp(doc))
 		cls.df = pd.DataFrame({'category': cls.categories,
 		                       'parsed': cls.parsed_docs})
 		cls.corpus_fact = CorpusFromParsedDocuments(cls.df, 'category', 'parsed')
@@ -87,7 +88,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		for party, speech in iter_party_speech_pairs():
 			cleaned_speech = clean(speech)
 			if cleaned_speech and cleaned_speech != '':
-				parsed_speech = fast_but_crap_nlp(cleaned_speech)
+				parsed_speech = whitespace_nlp(cleaned_speech)
 				data.append({'party': party,
 				             'text': parsed_speech})
 		corpus = CorpusFromParsedDocuments(pd.DataFrame(data),
@@ -102,26 +103,40 @@ class TestCorpusFromParsedDocuments(TestCase):
 		                 list(sorted(list(self.corpus_fact._category_idx_store.items()))))
 
 	def test_get_term_idx_and_x(self):
-		docs = [fast_but_crap_nlp('aa aa bb.'),
-		        fast_but_crap_nlp('bb aa a.')]
+		docs = [whitespace_nlp('aa aa bb.'),
+		        whitespace_nlp('bb aa a.')]
 		df = pd.DataFrame({'category': ['a', 'b'],
 		                   'parsed': docs})
 		corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')
 		corpus = corpus_fact.build()
-		self.assertEqual(list(corpus_fact._term_idx_store.items()),
-		                 [(0, 'aa'), (1, 'aa aa'), (2, 'bb'), (3, 'aa bb'), (4, 'a'),
-		                  (5, 'bb aa'), (6, 'aa a')]
-		                 )
-		self.assertEqual(list(sorted(corpus_fact.X.todok().items())),
-		                 [((0, 0), 2), ((0, 1), 1), ((0, 2), 1), ((0, 3), 1),
-		                  ((1, 0), 1), ((1, 2), 1), ((1, 4), 1), ((1, 5), 1), ((1, 6), 1)]
-		                 )
+
+		kvs = list(corpus_fact._term_idx_store.items())
+		keys = [k for k, v in kvs]
+		values = [v for k, v in kvs]
+		self.assertEqual(sorted(keys), list(range(7)))
+		self.assertEqual(sorted(values),
+		                 ['a', 'aa', 'aa a', 'aa aa', 'aa bb', 'bb', 'bb aa'])
+
+		def assert_word_in_doc_cnt(doc, word, count):
+			self.assertEqual(corpus_fact.X[doc, corpus_fact._term_idx_store.getidx(word)], count)
+
+		assert_word_in_doc_cnt(0, 'aa', 2)
+		assert_word_in_doc_cnt(0, 'bb', 1)
+		assert_word_in_doc_cnt(0, 'aa aa', 1)
+		assert_word_in_doc_cnt(0, 'aa bb', 1)
+		assert_word_in_doc_cnt(0, 'bb aa', 0)
+		assert_word_in_doc_cnt(1, 'bb', 1)
+		assert_word_in_doc_cnt(1, 'aa', 1)
+		assert_word_in_doc_cnt(1, 'a', 1)
+		assert_word_in_doc_cnt(1, 'bb aa', 1)
+		assert_word_in_doc_cnt(1, 'aa aa', 0)
+		assert_word_in_doc_cnt(1, 'aa a', 1)
 		self.assertTrue(isinstance(corpus, ParsedCorpus))
 
 	def test_hamlet(self):
 		raw_docs = get_hamlet_docs()
 		categories = [get_hamlet_snippet_binary_category(doc) for doc in raw_docs]
-		docs = [fast_but_crap_nlp(doc) for doc in raw_docs]
+		docs = [whitespace_nlp(doc) for doc in raw_docs]
 		df = pd.DataFrame({'category': categories,
 		                   'parsed': docs})
 		corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')

@@ -7,7 +7,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 
 from scattertext import CorpusFromParsedDocuments
 from scattertext import TermDocMatrixFactory
-from scattertext.FastButCrapNLP import fast_but_crap_nlp, Doc, Tok
+from scattertext.WhitespaceNLP import whitespace_nlp, Doc, Tok
 from scattertext.TermDocMatrixFactory import FeatsFromDoc
 
 
@@ -18,7 +18,7 @@ def build_hamlet_jz_term_doc_mat():
 	term_doc_mat = TermDocMatrixFactory(
 		category_text_iter=zip(categories, documents),
 		clean_function=clean_function,
-		nlp=fast_but_crap_nlp
+		nlp=whitespace_nlp
 	).build()
 	return term_doc_mat
 
@@ -29,7 +29,7 @@ def build_hamlet_jz_corpus():
 	clean_function = lambda text: '' if text.startswith('[') else text
 	df = pd.DataFrame({
 		'category': categories,
-		'parsed': [fast_but_crap_nlp(clean_function(doc)) for doc in documents]
+		'parsed': [whitespace_nlp(clean_function(doc)) for doc in documents]
 	})
 	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
 	return CorpusFromParsedDocuments(

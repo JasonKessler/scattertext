@@ -1,16 +1,24 @@
-# Scattertext 0.0.2
+# Scattertext 0.0.2.1
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
 got more fun.
 
-## Data Day Texas 2017 Presentation
-[Scattertext: A Tool for Visualizing Differences in Language
-](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
-
 ## Installation
 
 `$ pip install scattertext && python -m spacy.en.download`
+
+## Changelog
+
+### 0.0.2.1.0
+
+I've added support for Chinese, including the ChineseNLP class, which uses a RegExp-based 
+sentence splitter and [Jieba](https://github.com/fxsjy/jieba) for word 
+segmentation. To use it, see the `demo_chinese.py` file.  Note that `CorpusFromPandas`
+currently does not support ChineseNLP.
+
+In order for the visualization to work, set the `chinese_mode` flat to `True` in
+`produce_scattertext_explorer`.
 
 ## Overview
  
@@ -183,11 +191,15 @@ query findMatchingRectangles(bx1 : long, by1 : long, bx2 : long, by2 : long)
     ax1 < bx2 and ax2 > bx1 and ay1 < by2 and ay2 > by1(py2)
 ```
 
-Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
+
+## Data Day Texas 2017 Presentation
+
+[Scattertext: A Tool for Visualizing Differences in Language
+](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
 
 ## Technical underpinnings
 
-Please see this [deck](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
+Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## Sources
 * 2012 Convention Data: scraped from [The New York Times.](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
@@ -195,4 +207,5 @@ Please see this [deck](https://www.slideshare.net/JasonKessler/turning-unstructu
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
 * Inspiration for text scatter plots: Rudder, Christian. Dataclysm: Who We Are (When We Think No One's Looking). Random House Incorporated, 2014.
 * The efficient RectangleHolder Javascript data structure was automatically generated using [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy).   Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
+* Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
  

@@ -6,6 +6,12 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 
 class TestHTMLVisualizationAssembly(TestCase):
+	def get_params(self, param_dict={}):
+		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false', 'false', 'false']
+		for i, val in param_dict.items():
+			params[i] = val
+		return 'buildViz(' + ','.join(params) + ');'
+
 	def test_main(self):
 		assembler = self.make_assembler()
 		html = assembler.to_html()
@@ -37,42 +43,46 @@ class TestHTMLVisualizationAssembly(TestCase):
 
 	def test_height_width_default(self):
 		assembler = self.make_assembler()
-		self.assertEqual(assembler._call_build_visualization_in_javascript(),
-		                 "buildViz(undefined,undefined,null,null,true,false,false);")
+		self.assertEqual(assembler._call_build_visualization_in_javascript(), self.get_params())
 
 	def test_color(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, color='d3.interpolatePurples')
 		                  ._call_build_visualization_in_javascript()),
-		                 'buildViz(undefined,undefined,null,d3.interpolatePurples,true,false,false);')
+		                 self.get_params({3: 'd3.interpolatePurples'}))
+
 	def test_full_doc(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, use_full_doc=True)
 		                  ._call_build_visualization_in_javascript()),
-		                 'buildViz(undefined,undefined,null,null,true,true,false);')
-
+		                 self.get_params({5: 'true'}))
 
 	def test_grey_zero_scores(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, grey_zero_scores=True)
-		                  ._call_build_visualization_in_javascript()),
-		                 'buildViz(undefined,undefined,null,null,true,false,true);')
+		                  ._call_build_visualization_in_javascript()), self.get_params({6: 'true'}))
+
+	def test_chinese_mode(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, chinese_mode=True)
+		                  ._call_build_visualization_in_javascript()), self.get_params({7: 'true'}))
+
 
 	def test_height_width_nondefault(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,undefined,null,null,true,false,false);")
+		                 self.get_params({0:'1000'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, height_in_pixels=60)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(undefined,60,null,null,true,false,false);")
+		                 self.get_params({1:'60'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,null,null,true,false,false);")
+		                 self.get_params({0:'1000',1:'60'}))
 
 	def test_max_snippets(self):
 		visualization_data = self.make_adapter()
@@ -81,14 +91,14 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            width_in_pixels=1000,
 		                                            max_snippets=None)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,null,null,true,false,false);")
+		                 self.get_params({0:'1000',1:'60'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000,
 		                                            max_snippets=100)
 		                  ._call_build_visualization_in_javascript()),
-		                 "buildViz(1000,60,100,null,true,false,false);")
+		                 self.get_params({0:'1000',1:'60', 2:'100'}))
 
 	def make_assembler(self):
 		visualization_data = self.make_adapter()

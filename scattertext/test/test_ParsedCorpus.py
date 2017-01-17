@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
-from scattertext import fast_but_crap_nlp, CorpusFromParsedDocuments
+from scattertext import whitespace_nlp, CorpusFromParsedDocuments
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 
 
@@ -14,7 +14,7 @@ class TestParsedCorpus(TestCase):
 		cls.categories, cls.documents = get_docs_categories()
 		cls.parsed_docs = []
 		for doc in cls.documents:
-			cls.parsed_docs.append(fast_but_crap_nlp(doc))
+			cls.parsed_docs.append(whitespace_nlp(doc))
 		cls.df = pd.DataFrame({'category': cls.categories,
 		                       'author': ['a', 'a', 'c', 'c', 'c',
 		                                  'c', 'd', 'd', 'e', 'e'],

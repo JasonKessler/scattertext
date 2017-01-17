@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from scattertext.ChineseNLP import chinese_nlp
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
@@ -15,6 +16,8 @@ class ParsePipelineFactory:
 	             term_idx_store,
 	             y,
 	             term_doc_mat_fact):
+		if nlp == chinese_nlp:
+			raise Exception("Chinese NLP not yet supported.  Preparse chinese documents, and use CorpusFromParsedDocuments or a similar class.")
 		self.X_factory, self.category_idx_store, self.term_idx_store, self.y, self.nlp \
 			= X_factory, category_idx_store, term_idx_store, y, nlp
 		self._term_doc_mat_fact = term_doc_mat_fact

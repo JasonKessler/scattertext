@@ -3,7 +3,8 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from scattertext import fast_but_crap_nlp
+from scattertext import chinese_nlp
+from scattertext import whitespace_nlp
 from scattertext.Corpus import Corpus
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
@@ -32,6 +33,13 @@ class TestCorpusFromPandas(TestCase):
 		self.assertEqual(self.corpus.get_num_docs(), 10)
 		term_doc_df = self.corpus.get_term_freq_df()
 		self.assertEqual(term_doc_df.ix['of'].sum(), 3)
+
+	def test_chinese_error(self):
+		with self.assertRaises(Exception):
+			CorpusFromPandas(self.df,
+			                 'category',
+			                 'text',
+			                 nlp=chinese_nlp).build()
 
 	def test_get_texts(self):
 		self.assertTrue(all(self.df['text'] == self.corpus.get_texts()))
@@ -66,6 +74,4 @@ class TestCorpusFromPandas(TestCase):
 		cls.corpus = CorpusFromPandas(cls.df,
 		                              'category',
 		                              'text',
-		                              nlp=fast_but_crap_nlp).build()
-
-
+		                              nlp=whitespace_nlp).build()

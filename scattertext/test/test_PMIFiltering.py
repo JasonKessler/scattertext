@@ -4,7 +4,7 @@ import pandas as pd
 
 from scattertext import TermDocMatrixFilter
 from scattertext import TermDocMatrixFromPandas
-from scattertext import fast_but_crap_nlp
+from scattertext import whitespace_nlp
 from scattertext.TermDocMatrixFilter import AtLeastOneCategoryHasNoTermsException, filter_bigrams_by_pmis, \
 	unigrams_that_only_occur_in_one_bigram, filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.test.test_TermDocMat import get_hamlet_term_doc_matrix
@@ -45,7 +45,7 @@ class TestPMIFiltering(TestCase):
 			                         'category': ['a', 'a', 'a', 'b', 'b']}),
 			category_col='category',
 			text_col='text',
-			nlp=fast_but_crap_nlp
+			nlp=whitespace_nlp
 		).build().get_term_freq_df()
 		new_df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
 		self.assertFalse('cat' in new_df.index)

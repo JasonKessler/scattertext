@@ -14,7 +14,8 @@ class HTMLVisualizationAssembly:
 	             color=None,
 	             grey_zero_scores=False,
 	             sort_by_dist=True,
-	             use_full_doc=False):
+	             use_full_doc=False,
+	             chinese_mode=False):
 		'''
 
 		Parameters
@@ -43,6 +44,7 @@ class HTMLVisualizationAssembly:
 		self._color = color
 		self._sort_by_dist = sort_by_dist
 		self._use_full_doc = use_full_doc
+		self._chinese_mode = chinese_mode
 		self._grey_zero_scores = grey_zero_scores
 
 	def to_html(self, protocol='http'):
@@ -87,4 +89,5 @@ class HTMLVisualizationAssembly:
 		       + js_default_value_to_null(self._color) + ',' \
 		       + js_bool(self._sort_by_dist)+ ',' \
 					 + js_bool(self._use_full_doc) + ',' \
-		       + js_bool(self._grey_zero_scores) + ');'
+		       + js_bool(self._grey_zero_scores) + ',' \
+		       + js_bool(self._chinese_mode) + ');'

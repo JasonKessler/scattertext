@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from scattertext import CorpusFromParsedDocuments
-from scattertext import fast_but_crap_nlp
+from scattertext import whitespace_nlp
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, \
 	DocsAndLabelsFromCorpusSample
 from scattertext.test.test_corpusFromPandas import get_docs_categories
@@ -17,7 +17,7 @@ class TestDocsAndLabelsFromCorpus(TestCase):
 		cls.categories, cls.documents = get_docs_categories()
 		cls.parsed_docs = []
 		for doc in cls.documents:
-			cls.parsed_docs.append(fast_but_crap_nlp(doc))
+			cls.parsed_docs.append(whitespace_nlp(doc))
 		cls.df = pd.DataFrame({'category': cls.categories,
 		                       'parsed': cls.parsed_docs})
 		cls.corpus = CorpusFromParsedDocuments(cls.df, 'category', 'parsed').build()

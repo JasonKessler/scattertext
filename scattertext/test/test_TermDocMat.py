@@ -8,7 +8,7 @@ from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext import TermDocMatrixFromPandas
-from scattertext.FastButCrapNLP import fast_but_crap_nlp
+from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.test.test_corpusFromPandas import get_docs_categories
@@ -59,7 +59,7 @@ class TestTermDocMat(TestCase):
 		tdm_factory = TermDocMatrixFromPandas(df,
 		                                      'category',
 		                                      'text',
-		                                      nlp=fast_but_crap_nlp)
+		                                      nlp=whitespace_nlp)
 		term_doc_matrix = tdm_factory.build()
 
 		term_df = term_doc_matrix.get_term_freq_df()

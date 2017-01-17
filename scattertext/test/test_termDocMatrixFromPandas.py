@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pandas as pd
 
-from scattertext.FastButCrapNLP import fast_but_crap_nlp
+from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext import TermDocMatrixFromPandas
 from scattertext.test.test_termDocMatrixFactory import get_docs_categories
@@ -16,7 +16,7 @@ class TestTermDocMatrixFromPandas(TestCase):
 		tdm_factory = TermDocMatrixFromPandas(df,
 		                                      'category',
 		                                      'text',
-		                                      nlp=fast_but_crap_nlp)
+		                                      nlp=whitespace_nlp)
 		term_doc_matrix = tdm_factory.build()
 		self.assertIsInstance(term_doc_matrix, TermDocMatrix)
 		self.assertEqual(set(term_doc_matrix.get_categories()),

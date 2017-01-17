@@ -4,7 +4,8 @@ function buildViz(widthInPixels = 800,
                   color = null,
                   sortByDist = true,
                   useFullDoc = false,
-                  greyZeroScores = false) {
+                  greyZeroScores = false,
+                  chineseMode = false) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -56,7 +57,12 @@ function buildViz(widthInPixels = 800,
 
     function getSentenceBoundaries(text) {
         // !!! need to use spacy's spentence splitter
-        var sentenceRe = /\(?[^\.\?\!\n\b]+[\n\.!\?]\)?/g;
+        if (chineseMode) {
+            var sentenceRe = /\n/gmi;
+
+        } else {
+            var sentenceRe = /\(?[^\.\?\!\n\b]+[\n\.!\?]\)?/g;
+        }
         var offsets = [];
         var match;
         while ((match = sentenceRe.exec(text)) != null) {
@@ -89,42 +95,68 @@ function buildViz(widthInPixels = 800,
         var not_category_name = fullData['info']['not_category_name'];
         var matches = [[], []];
         if (fullData.docs === undefined) return matches;
-        for (var i in fullData.docs.texts) {
-            if (fullData.docs.labels[i] > 1) continue;
-            var text = fullData.docs.texts[i];
-            var pattern = new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b", "gim");
-            var match;
-            var sentenceOffsets = null;
-            var lastSentenceStart = null;
-            var matchFound = false;
-            var curMatch = {'id': i, 'snippets': []};
-            if (fullData.docs.meta) {
-                curMatch['meta'] = fullData.docs.meta[i];
-            }
-            while ((match = pattern.exec(text)) != null) {
-                if (sentenceOffsets == null) {
-                    sentenceOffsets = getSentenceBoundaries(text);
-                }
-                var foundSnippet = getMatchingSnippet(text, sentenceOffsets,
-                    match.index, pattern.lastIndex);
-                if (foundSnippet.sentenceStart == lastSentenceStart) continue;
-                lastSentenceStart = foundSnippet.sentenceStart;
-                curMatch.snippets.push(foundSnippet.snippet);
-                matchFound = true;
-            }
-            if (matchFound) {
-                if (useFullDoc) {
-                    curMatch.snippets = [
-                        text
-                            .replace(/\n$/g, '\n\n')
-                            .replace(
-                                new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b",
-                                    'gim'),
-                                '<b>$&</b>')
-                    ];
-                }
-                matches[fullData.docs.labels[i]].push(curMatch);
+        function stripNonWordChars(term) {
+            //d.term.replace(" ", "[^\\w]+")
+        }
 
+        function buildMatcher(term) {
+            var boundary = '\\b';
+            var wordSep = "[^\\w]+";
+            if (chineseMode) {
+                boundary = '( |$|^)';
+                wordSep = ' ';
+            }
+            var regexp = new RegExp(boundary + '('
+                + term.replace(' ', wordSep, 'gim') + ')' + boundary, 'gim');
+            try {
+                regexp.exec('X');
+            } catch (err) {
+                console.log("Can't search " + term);
+                console.log(err);
+                return null;
+            }
+            return regexp;
+        }
+        var pattern = buildMatcher(d.term);
+        if(pattern !== null) {
+            for (var i in fullData.docs.texts) {
+                if (fullData.docs.labels[i] > 1) continue;
+                var text = fullData.docs.texts[i];
+                //var pattern = new RegExp("\\b(" + stripNonWordChars(d.term) + ")\\b", "gim");
+                var match;
+                var sentenceOffsets = null;
+                var lastSentenceStart = null;
+                var matchFound = false;
+                var curMatch = {'id': i, 'snippets': []};
+                if (fullData.docs.meta) {
+                    curMatch['meta'] = fullData.docs.meta[i];
+                }
+                while ((match = pattern.exec(text)) != null) {
+                    if (sentenceOffsets == null) {
+                        sentenceOffsets = getSentenceBoundaries(text);
+                    }
+                    var foundSnippet = getMatchingSnippet(text, sentenceOffsets,
+                        match.index, pattern.lastIndex);
+                    if (foundSnippet.sentenceStart == lastSentenceStart) continue;
+                    lastSentenceStart = foundSnippet.sentenceStart;
+                    curMatch.snippets.push(foundSnippet.snippet);
+                    matchFound = true;
+                }
+                if (matchFound) {
+                    if (useFullDoc) {
+                        curMatch.snippets = [
+                            text
+                                .replace(/\n$/g, '\n\n')
+                                .replace(
+                                    //new RegExp("\\b(" + d.term.replace(" ", "[^\\w]+") + ")\\b",
+                                    //    'gim'),
+                                    pattern,
+                                    '<b>$&</b>')
+                        ];
+                    }
+                    matches[fullData.docs.labels[i]].push(curMatch);
+
+                }
             }
         }
         return {'contexts': matches, 'info': d};
@@ -148,20 +180,20 @@ function buildViz(widthInPixels = 800,
                     var divId = catName == catInternalName ? '#cat' : '#notcat';
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
-                        contexts[catIndex].forEach(function (context) {
-                            var meta = context.meta ? context.meta : '&nbsp;';
+                    contexts[catIndex].forEach(function (context) {
+                        var meta = context.meta ? context.meta : '&nbsp;';
+                        d3.select(divId)
+                            .append("div")
+                            .attr('class', 'snippet_meta')
+                            .html(meta);
+                        context.snippets.forEach(function (snippet) {
                             d3.select(divId)
                                 .append("div")
-                                .attr('class', 'snippet_meta')
-                                .html(meta);
-                            context.snippets.forEach(function (snippet) {
-                                d3.select(divId)
-                                    .append("div")
-                                    .attr('class', 'snippet')
-                                    .html(snippet);
-                            })
+                                .attr('class', 'snippet')
+                                .html(snippet);
+                        })
 
-                        });
+                    });
                 });
         d3.select('#termstats')
             .selectAll("div")
@@ -313,7 +345,7 @@ function buildViz(widthInPixels = 800,
                 return y(d.y);
             })
             .style("fill", function (d) {
-                if(greyZeroScores && d.os == 0) {
+                if (greyZeroScores && d.os == 0) {
                     return d3.rgb(230, 230, 230);
                 } else {
                     return color(d.s);
