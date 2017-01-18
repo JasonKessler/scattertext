@@ -11,6 +11,10 @@ got more fun.
 `$ pip install scattertext && python -m spacy.en.download`
 
 ## Changelog
+### 0.0.2.1.1
+
+Addition of `strip_final_period` param to `FeatsFromSpacyDoc` to deal with spaCy 
+ tokenization of all-caps documents that can leave periods at the end of terms.
 
 ### 0.0.2.1.0
 
@@ -72,7 +76,8 @@ tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.l
 ## Quickstart
 
 The following code creates a stand-alone HTML file that analyzes words 
-used by Democrats and Republicans in the 2012 party conventions, and outputs some noteable term associations.
+used by Democrats and Republicans in the 2012 party conventions, and outputs some notable
+ term associations.
  
 First, import Scattertext and spaCy.
 
@@ -82,7 +87,11 @@ First, import Scattertext and spaCy.
 >>> from pprint import pprint
 ```
 
-Next, assemble the data you want to analyze into a Pandas data Frame.
+Next, assemble the data you want to analyze into a Pandas data frame. It should have
+at least two columns, the text you'd like to analyze, and the category you'd like to 
+study. Here, the `text` column contains convention speeches while the `party` column
+ contains the party of the speaker.  We'll eventually use the `speaker` column
+ to label snippets in the visualization.
 
 ```pydocstring
 >>> convention_df = st.SampleCorpora.ConventionData2012.get_data()  
