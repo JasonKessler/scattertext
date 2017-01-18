@@ -4,6 +4,8 @@ corpora, and presenting them in a sexy, interactive scatter plot with
 non-overlapping term labels.  Exploratory data analysis just 
 got more fun.
 
+
+
 ## Installation
 
 `$ pip install scattertext && python -m spacy.en.download`
@@ -76,7 +78,7 @@ First, import Scattertext and spaCy.
 
 ```pydocstring
 >>> import scattertext as st
->>> from spacy.en import English
+>>> import spacy
 >>> from pprint import pprint
 ```
 
@@ -98,10 +100,11 @@ parameter.  Finally, pass a spaCy model in to the `nlp` argument and call `build
  
 ```pydocstring
 # Turn it into a Scattertext Corpus 
+>>> nlp = spacy.en.English()
 >>> corpus = st.CorpusFromPandas(convention_df, 
 ...                              category_col='party', 
 ...                              text_col='text',
-...                              nlp=English).build()
+...                              nlp=nlp).build()
 ```
 
 Let's see characteristic terms in the corpus, and terms that are most associated Democrats and Republicans.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content ot Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details on these approaches. 
