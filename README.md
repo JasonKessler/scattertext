@@ -60,12 +60,12 @@ The library covers some novel and effective term-importance formulas, including 
 
 I recommend you start with this example first.  It explains some design decisions that were made in 
 Scattertext, and explains the strings of points.  You can 
-find it [2012 Political Convention Exploration](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Development.ipynb).
+find it [2012 Political Convention Exploration](http://bit.ly/scattertextdevelopment).
 
-Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](http://localhost:8888/notebooks/Presidential%20Debates.ipynb).     
+Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
 
 Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
-tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie%20Revenue.ipynb). 
+tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
 
 ## Quickstart
 
