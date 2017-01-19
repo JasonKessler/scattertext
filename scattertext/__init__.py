@@ -20,6 +20,7 @@ from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext import SampleCorpora
 from scattertext.ChineseNLP import chinese_nlp
+from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 def produce_scattertext_html(term_doc_matrix,
                              category,

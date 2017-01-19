@@ -74,5 +74,5 @@ class Corpus(TermDocMatrix):
 		              y=self._y,
 		              term_idx_store=new_term_idx_store,
 		              category_idx_store=self._category_idx_store,
-		              raw_texts=self._raw_texts,
+		              raw_texts=self.get_texts(),
 		              unigram_frequency_path=self._unigram_frequency_path)
