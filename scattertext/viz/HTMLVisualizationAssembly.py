@@ -71,23 +71,25 @@ class HTMLVisualizationAssembly:
 	def _full_content_of_javascript_files(self):
 		return '\n'.join([pkgutil.get_data('scattertext',
 		                                   'data/viz/scripts/' + script_name).decode('utf-8')
-		                  for script_name in ['rectangle-holder.js',#'range-tree.js',
+		                  for script_name in ['rectangle-holder.js',  # 'range-tree.js',
 		                                      'main.js']])
 
 	def _call_build_visualization_in_javascript(self):
 		def js_default_value(x):
 			return 'undefined' if x is None else str(x)
+
 		def js_default_value_to_null(x):
 			return 'null' if x is None else str(x)
+
 		def js_bool(x):
 			return 'true' if x else 'false'
 
-		return 'buildViz(' \
-		       + js_default_value(self._width_in_pixels) + ',' \
-		       + js_default_value(self._height_in_pixels)+ ',' \
-		       + js_default_value_to_null(self._max_snippets) + ',' \
-		       + js_default_value_to_null(self._color) + ',' \
-		       + js_bool(self._sort_by_dist)+ ',' \
-					 + js_bool(self._use_full_doc) + ',' \
-		       + js_bool(self._grey_zero_scores) + ',' \
-		       + js_bool(self._chinese_mode) + ');'
+		arguments = [js_default_value(self._width_in_pixels),
+		             js_default_value(self._height_in_pixels),
+		             js_default_value_to_null(self._max_snippets),
+		             js_default_value_to_null(self._color),
+		             js_bool(self._sort_by_dist),
+		             js_bool(self._use_full_doc),
+		             js_bool(self._grey_zero_scores),
+		             js_bool(self._chinese_mode)]
+		return 'buildViz(' + ','.join(arguments) + ');'

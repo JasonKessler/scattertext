@@ -44,7 +44,6 @@ class ScatterChartExplorer(ScatterChart):
 		                            ncatdocs: [docnum, ...]
 		                            ncat25k: freq per 25k in non-category}}
 		'''
-
 		j = ScatterChart.to_dict(self,
 		                         category,
 		                         category_name=category_name,
@@ -64,10 +63,9 @@ class ScatterChartExplorer(ScatterChart):
 
 	def _get_docs_structure(self, docs_getter, metadata):
 		if metadata is not None:
-			docs = docs_getter.get_labels_and_texts_and_meta(np.array(metadata))
+			return docs_getter.get_labels_and_texts_and_meta(np.array(metadata))
 		else:
-			docs = docs_getter.get_labels_and_texts()
-		return docs
+			return docs_getter.get_labels_and_texts()
 
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
 		ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)

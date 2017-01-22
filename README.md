@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1
+# Scattertext 0.0.2.1.1
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
@@ -218,6 +218,5 @@ Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slid
 * count_1w: Peter Norvig assembled this file (downloaded from [norvig.com](http://norvig.com/ngrams/count_1w.txt)). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
 * Inspiration for text scatter plots: Rudder, Christian. Dataclysm: Who We Are (When We Think No One's Looking). Random House Incorporated, 2014.
-* The efficient RectangleHolder Javascript data structure was automatically generated using [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy).   Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
 * Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
  
