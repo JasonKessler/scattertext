@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1.1
+# Scattertext 0.0.2.1.3
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
@@ -9,22 +9,6 @@ Feel free to use the Slack channel [scattertext.slack.com](https://scattertext.s
 ## Installation
 
 `$ pip install scattertext && python -m spacy.en.download`
-
-## Changelog
-### 0.0.2.1.1
-
-Addition of `strip_final_period` param to `FeatsFromSpacyDoc` to deal with spaCy 
- tokenization of all-caps documents that can leave periods at the end of terms.
-
-### 0.0.2.1.0
-
-I've added support for Chinese, including the ChineseNLP class, which uses a RegExp-based 
-sentence splitter and [Jieba](https://github.com/fxsjy/jieba) for word 
-segmentation. To use it, see the `demo_chinese.py` file.  Note that `CorpusFromPandas`
-currently does not support ChineseNLP.
-
-In order for the visualization to work, set the `chinese_mode` flat to `True` in
-`produce_scattertext_explorer`.
 
 ## Overview
  
@@ -212,6 +196,26 @@ query findMatchingRectangles(bx1 : long, by1 : long, bx2 : long, by2 : long)
 ## Technical underpinnings
 
 Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
+
+## Changelog
+### 0.0.2.1.3
+
+Improved term-labeling.
+
+### 0.0.2.1.1
+
+Addition of `strip_final_period` param to `FeatsFromSpacyDoc` to deal with spaCy 
+ tokenization of all-caps documents that can leave periods at the end of terms.
+
+### 0.0.2.1.0
+
+I've added support for Chinese, including the ChineseNLP class, which uses a RegExp-based 
+sentence splitter and [Jieba](https://github.com/fxsjy/jieba) for word 
+segmentation. To use it, see the `demo_chinese.py` file.  Note that `CorpusFromPandas`
+currently does not support ChineseNLP.
+
+In order for the visualization to work, set the `chinese_mode` flat to `True` in
+`produce_scattertext_explorer`.
 
 ## Sources
 * 2012 Convention Data: scraped from [The New York Times.](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
