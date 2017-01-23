@@ -184,9 +184,14 @@ fields ax1 : long, ay1 : long, ax2 : long, ay2 : long
 assume ax1 < ax2 and ay1 < ay2
 query findMatchingRectangles(bx1 : long, by1 : long, bx2 : long, by2 : long)
     assume bx1 < bx2 and by1 < by2
-    ax1 < bx2 and ax2 > bx1 and ay1 < by2 and ay2 > by1(py2)
+    ax1 < bx2 and ax2 > bx1 and ay1 < by2 and ay2 > by1
 ```
 
+And it was called using
+```
+$ python2.7 src/main.py <script file name> --enable-volume-trees \
+  --js-class RectangleHolder --enable-hamt --enable-arrays --js rectangle_holder.js
+```
 
 ## Data Day Texas 2017 Presentation
 
