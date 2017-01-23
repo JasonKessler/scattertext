@@ -4,7 +4,7 @@ corpora, and presenting them in a sexy, interactive scatter plot with
 non-overlapping term labels.  Exploratory data analysis just 
 got more fun.
 
-
+Feel free to use the Slack channel [scattertext.slack.com](https://scattertext.slack.com/messages/general/) for help or to discuss the project.   
 
 ## Installation
 
