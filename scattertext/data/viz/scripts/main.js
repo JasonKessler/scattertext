@@ -396,6 +396,10 @@ function buildViz(widthInPixels = 800,
                 {'anchor': 'start', 'xoff': 3, 'yoff': -3},
                 {'anchor': 'start', 'xoff': 5, 'yoff': 10},
                 {'anchor': 'start', 'xoff': 5, 'yoff': -3},
+                {'anchor': 'start', 'xoff': 10, 'yoff': 15},
+                {'anchor': 'start', 'xoff': -10, 'yoff': -15},
+                {'anchor': 'start', 'xoff': 10, 'yoff': -15},
+                {'anchor': 'start', 'xoff': -10, 'yoff': 15},
             ];
             var matchedElement = null;
             for (var configI in configs) {
