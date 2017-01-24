@@ -1,17 +1,16 @@
 import numpy as np
-from scipy.stats import rankdata, hmean
+from scipy.stats import rankdata
 
 from scattertext.Scalers import percentile_min, percentile_ordinal
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
 	filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring import ScaledFScore
+from scattertext.termscoring.RudderScore import RudderScore
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):
 	pass
-
-
 
 
 class ScatterChart:
@@ -23,7 +22,8 @@ class ScatterChart:
 	             pmi_threshold_coefficient=3,
 	             max_terms=None,
 	             filter_unigrams=False,
-	             term_ranker=AbsoluteFrequencyRanker):
+	             term_ranker=AbsoluteFrequencyRanker,
+	             use_non_text_features=False):
 
 		'''
 
@@ -45,7 +45,8 @@ class ScatterChart:
 			If True, remove unigrams that are part of bigrams. Default is False.
 		term_ranker : TermRanker, optional
 			TermRanker class for determining term frequency ranks.
-
+		use_non_text_features : bool, default = False
+			Use non-BoW features (e.g., Empath) instead of text features
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
@@ -55,6 +56,9 @@ class ScatterChart:
 		self.filter_unigrams = filter_unigrams
 		self.term_ranker = term_ranker
 		self.max_terms = max_terms
+		self.use_non_text_features = False
+		if use_non_text_features:
+			self.use_non_text_features = use_non_text_features
 		np.random.seed(seed)
 
 	def to_dict(self,
@@ -112,8 +116,10 @@ class ScatterChart:
 			category_name = category
 		if not_category_name is None:
 			not_category_name = 'Not ' + category_name
+
 		def better_title(x):
 			return ' '.join([t[0].upper() + t[1:].lower() for t in x.split()])
+
 		j = {'info': {'category_name': better_title(category_name),
 		              'not_category_name': better_title(not_category_name),
 		              'category_terms': category_terms,
@@ -124,10 +130,10 @@ class ScatterChart:
 
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
 		json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
-		                      / term_freq_df[category + ' freq'].sum()) * 25000)
+		                       / term_freq_df[category + ' freq'].sum()) * 25000)
 		                     .apply(np.round).astype(np.int))
 		json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
-		                       / term_freq_df['not cat freq'].sum()) * 25000)
+		                        / term_freq_df['not cat freq'].sum()) * 25000)
 		                      .apply(np.round).astype(np.int))
 
 	def _get_category_names(self, category):
@@ -160,11 +166,19 @@ class ScatterChart:
 			return to_ret
 
 	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
-		df = self.term_ranker(self.term_doc_matrix).get_ranks()
+		term_ranker = self.term_ranker(self.term_doc_matrix)
+		if self.use_non_text_features:
+			term_ranker.use_non_text_features()
+		df = term_ranker.get_ranks()
 		if scores is None:
 			scores = self._get_default_scores(category, df)
-		#np.array(self.term_doc_matrix.get_rudder_scores(category))
-		df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		# np.array(self.term_doc_matrix.get_rudder_scores(category))
+		# df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		category_column_name = category + ' freq'
+		df['category score'] = RudderScore.get_score(
+			df[category_column_name],
+			df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+		)
 		df['not category score'] = np.sqrt(2) - df['category score']
 		df['color_scores'] = scores
 		df = filter_bigrams_by_pmis(
@@ -197,7 +211,6 @@ class ScatterChart:
 
 	def _term_importance_ranks(self, category, df):
 		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
-
 
 	def draw(self,
 	         category,
@@ -282,5 +295,3 @@ class ScatterChart:
 		# adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
 		plt.show()
 		return df, fig_to_html(fig)
-
-

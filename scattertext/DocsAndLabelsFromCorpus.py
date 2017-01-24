@@ -6,13 +6,21 @@ from scattertext.Corpus import Corpus
 class DocsAndLabelsFromCorpus:
 	def __init__(self, corpus):
 		assert (isinstance(corpus, Corpus))
+		self._use_non_text_features = False
 		self.corpus = corpus
+
+	def use_non_text_features(self):
+		self._use_non_text_features = True
+		return self
 
 	def get_labels_and_texts(self):
 		# type: () -> dict
-		return {'categories': self.corpus.get_categories(),
-		        'labels': self.corpus._y.astype(int).tolist(),
-		        'texts': self.corpus.get_texts().tolist()}
+		to_ret = {'categories': self.corpus.get_categories(),
+		          'labels': self.corpus._y.astype(int).tolist(),
+		          'texts': self.corpus.get_texts().tolist()}
+		if self._use_non_text_features:
+			to_ret['extra'] = self.corpus.list_extra_features()
+		return to_ret
 
 	def get_labels_and_texts_and_meta(self, metadata):
 		# type: (np.array) -> dict
@@ -42,6 +50,9 @@ class DocsAndLabelsFromCorpusSample(DocsAndLabelsFromCorpus):
 		to_ret = {'categories': self.corpus.get_categories(), 'labels': [], 'texts': []}
 		labels = self.corpus._y.astype(int)
 		texts = self.corpus.get_texts()
+		if self._use_non_text_features:
+			to_ret['extra'] = []
+			extrafeats = self.corpus.list_extra_features()
 		if metadata is not None:
 			to_ret['meta'] = []
 		for label_i in range(len(self.corpus._category_idx_store)):
@@ -52,6 +63,10 @@ class DocsAndLabelsFromCorpusSample(DocsAndLabelsFromCorpus):
 				to_ret['texts'] += list(texts[label_indices])
 				if metadata is not None:
 					to_ret['meta'] += list(metadata[label_indices])
+				if self._use_non_text_features:
+					print(len(texts), len(extrafeats), label_indices)
+					to_ret['extra'] += [extrafeats[i] for i in label_indices]
+
 		return to_ret
 
 	def get_labels_and_texts_and_meta(self, metadata):

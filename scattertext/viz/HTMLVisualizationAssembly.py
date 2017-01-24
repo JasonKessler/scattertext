@@ -15,7 +15,8 @@ class HTMLVisualizationAssembly:
 	             grey_zero_scores=False,
 	             sort_by_dist=True,
 	             use_full_doc=False,
-	             chinese_mode=False):
+	             chinese_mode=False,
+	             use_non_text_features=False):
 		'''
 
 		Parameters
@@ -36,6 +37,8 @@ class HTMLVisualizationAssembly:
 			sort by distance or score, default true
 		use_full_doc : bool, optional
 			use full document instead of sentence in snippeting
+		use_non_text_features : bool, optional
+			Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
@@ -46,6 +49,7 @@ class HTMLVisualizationAssembly:
 		self._use_full_doc = use_full_doc
 		self._chinese_mode = chinese_mode
 		self._grey_zero_scores = grey_zero_scores
+		self._use_non_text_features = use_non_text_features
 
 	def to_html(self, protocol='http'):
 		self._ensure_valid_protocol(protocol)
@@ -91,5 +95,6 @@ class HTMLVisualizationAssembly:
 		             js_bool(self._sort_by_dist),
 		             js_bool(self._use_full_doc),
 		             js_bool(self._grey_zero_scores),
-		             js_bool(self._chinese_mode)]
+		             js_bool(self._chinese_mode),
+		             js_bool(self._use_non_text_features)]
 		return 'buildViz(' + ','.join(arguments) + ');'

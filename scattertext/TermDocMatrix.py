@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns
+from scattertext.FeatureOuput import FeatureLister
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
@@ -25,24 +26,34 @@ class TermDocMatrix:
 	!!! to do: refactor score functions into classes
 	'''
 
-	def __init__(self, X, y, term_idx_store, category_idx_store, unigram_frequency_path=None):
+	def __init__(self,
+	             X, mX, y,
+	             term_idx_store,
+	             category_idx_store,
+	             metadata_idx_store,
+	             unigram_frequency_path=None):
 		'''
 
 		Parameters
 		----------
 		X : csr_matrix
 			term document matrix
+		mX : csr_matrix
+			metadata-document matrix
 		y : np.array
 			category index array
 		term_idx_store : IndexStore
 			Term indices
 		category_idx_store : IndexStore
 			Catgory indices
+		metadata_idx : IndexStore
+		  Document metadata indices
 		unigram_frequency_path : str or None
 			Path to term frequency file.
 		'''
-		self._X, self._y, self._term_idx_store, self._category_idx_store = \
-			X, y, term_idx_store, category_idx_store
+		self._X, self._mX, self._y, self._term_idx_store, self._category_idx_store = \
+			X, mX, y, term_idx_store, category_idx_store
+		self._metadata_idx_store = metadata_idx_store
 		self._unigram_frequency_path = unigram_frequency_path
 
 	def get_categories(self):
@@ -89,14 +100,36 @@ class TermDocMatrix:
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
 		return self._term_freq_df_from_matrix(newX)
 
+	def get_metadata_freq_df(self):
+		'''
+		Returns
+		-------
+		pd.DataFrame indexed on metadata, with columns giving frequencies for each
+		'''
+		row = self._row_category_ids_for_meta()
+		newX = csr_matrix((self._mX.data, (row, self._mX.indices)))
+		return self._metadata_freq_df_from_matrix(newX)
+
 	def _row_category_ids(self):
 		row = self._X.tocoo().row
 		for i, cat in enumerate(self._y):
 			row[row == i] = cat
 		return row
 
+	def _row_category_ids_for_meta(self):
+		row = self._mX.tocoo().row
+		for i, cat in enumerate(self._y):
+			row[row == i] = cat
+		return row
+
 	def _term_freq_df_from_matrix(self, catX):
-		d = {'term': self._term_idx_store._i2val}
+		return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
+
+	def _metadata_freq_df_from_matrix(self, catX):
+		return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
+
+	def _get_freq_df_using_idx_store(self, catX, idx_store):
+		d = {'term': idx_store._i2val}
 		for idx, cat in self._category_idx_store.items():
 			d[cat + ' freq'] = catX[idx, :].A[0]
 		return pd.DataFrame(d).set_index('term')
@@ -185,9 +218,11 @@ class TermDocMatrix:
 
 	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
 		return TermDocMatrix(X=new_X,
+		                     mX=self._mX,
 		                     y=self._y,
 		                     term_idx_store=new_term_idx_store,
 		                     category_idx_store=self._category_idx_store,
+		                     metadata_idx_store=self._metadata_idx_store,
 		                     unigram_frequency_path=self._unigram_frequency_path)
 
 	def get_posterior_mean_ratio_scores(self, category):
@@ -448,6 +483,16 @@ class TermDocMatrix:
 		return (pd.read_table(unigram_freq_table_buf,
 		                      names=['word', 'background'])
 		        .set_index('word'))
+
+	def list_extra_features(self):
+		'''
+		Returns
+		-------
+		List of dicts.  One dict for each document, keys are metadata, values are counts
+		'''
+		return FeatureLister(self._mX,
+		                     self._metadata_idx_store,
+		                     self.get_num_docs()).output()
 
 	def get_scaled_f_scores_vs_background(self, scaler_algo='none'):
 		'''

@@ -1,12 +1,16 @@
 from __future__ import print_function
 
 import scattertext.viz
+from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.CSRMatrixTools import CSRMatrixFactory
+from scattertext.ChineseNLP import chinese_nlp
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
+from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.IndexStore import IndexStore
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.Scalers import percentile_ordinal
@@ -16,11 +20,10 @@ from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
+from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
-from scattertext import SampleCorpora
-from scattertext.ChineseNLP import chinese_nlp
-from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -75,7 +78,10 @@ def produce_scattertext_html(term_doc_matrix,
 	                                 width_in_pixels,
 	                                 height_in_pixels).to_html(protocol=protocol)
 	return html
+
+
 from scattertext.termranking import OncePerDocFrequencyRanker
+
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -97,9 +103,10 @@ def produce_scattertext_explorer(corpus,
                                  use_full_doc=False,
                                  transform=percentile_ordinal,
                                  jitter=0,
-                                 grey_zero_scores = False,
+                                 grey_zero_scores=False,
                                  term_ranker=termranking.AbsoluteFrequencyRanker,
-                                 chinese_mode = False):
+                                 chinese_mode=False,
+                                 use_non_text_features=False):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -148,6 +155,8 @@ def produce_scattertext_explorer(corpus,
 		TermRanker class for determining term frequency ranks.
 	chinese_mode : bool, optional
 		Use a special Javascript regular expression that's specific to chinese
+	use_non_text_features : bool, optional
+		Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
 	Returns
 	-------
 		str, html of visualization
@@ -167,7 +176,8 @@ def produce_scattertext_explorer(corpus,
 	                                              filter_unigrams=filter_unigrams,
 	                                              jitter=jitter,
 	                                              max_terms=max_terms,
-	                                              term_ranker=term_ranker)
+	                                              term_ranker=term_ranker,
+	                                              use_non_text_features=use_non_text_features)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -183,4 +193,5 @@ def produce_scattertext_explorer(corpus,
 	                                 grey_zero_scores=grey_zero_scores,
 	                                 sort_by_dist=sort_by_dist,
 	                                 use_full_doc=use_full_doc,
-	                                 chinese_mode=chinese_mode).to_html(protocol=protocol)
+	                                 chinese_mode=chinese_mode,
+	                                 use_non_text_features=use_non_text_features).to_html(protocol=protocol)

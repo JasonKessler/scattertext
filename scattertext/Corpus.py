@@ -6,24 +6,37 @@ from scattertext.TermDocMatrix import TermDocMatrix
 
 class Corpus(TermDocMatrix):
 	def __init__(self,
-	             X,
-	             y,
+	             X, mX, y,
 	             term_idx_store,
 	             category_idx_store,
+	             metadata_idx_store,
 	             raw_texts,
 	             unigram_frequency_path=None):
 		'''
 		Parameters
 		----------
-		X csr_matrix
-		y np.array
-		term_idx_store IndexStore
-		category_idx_store IndexStore
-		raw_texts np.array or pd.Series
-		unigram_frequency_path str or None
+		X : csr_matrix
+			term document matrix
+		mX : csr_matrix
+			metadata-document matrix
+		y : np.array
+			category index array
+		term_idx_store : IndexStore
+			Term indices
+		category_idx_store : IndexStore
+			Catgory indices
+		metadata_idx_store : IndexStore
+		  Document metadata indices
+		raw_texts : np.array or pd.Series
+			Raw texts
+		unigram_frequency_path : str or None
+			Path to term frequency file.
 		'''
-		TermDocMatrix.__init__(self, X, y, term_idx_store,
-		                       category_idx_store, unigram_frequency_path)
+		TermDocMatrix.__init__(self, X, mX, y,
+		                       term_idx_store,
+		                       category_idx_store,
+		                       metadata_idx_store,
+		                       unigram_frequency_path)
 		self._raw_texts = raw_texts
 
 	def get_texts(self):
@@ -71,8 +84,10 @@ class Corpus(TermDocMatrix):
 
 	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
 		return Corpus(X=new_X,
+		              mX=self._mX,
 		              y=self._y,
 		              term_idx_store=new_term_idx_store,
 		              category_idx_store=self._category_idx_store,
+		              metadata_idx_store=self._metadata_idx_store,
 		              raw_texts=self.get_texts(),
 		              unigram_frequency_path=self._unigram_frequency_path)

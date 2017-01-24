@@ -2,8 +2,8 @@ import re
 from collections import Counter
 from unittest import TestCase
 
-from scattertext import whitespace_nlp
-from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext import whitespace_nlp, FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.WhitespaceNLP import Tok, Doc
 
 

@@ -5,7 +5,8 @@ function buildViz(widthInPixels = 800,
                   sortByDist = true,
                   useFullDoc = false,
                   greyZeroScores = false,
-                  chineseMode = false) {
+                  chineseMode = false,
+                  nonTextFeaturesMode = false) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -95,6 +96,43 @@ function buildViz(widthInPixels = 800,
         var not_category_name = fullData['info']['not_category_name'];
         var matches = [[], []];
         if (fullData.docs === undefined) return matches;
+        if (!nonTextFeaturesMode) {
+            return searchInText(d);
+        } else {
+            return searchInExtraFeatures(d);
+        }
+    }
+
+    function searchInExtraFeatures(d) {
+        console.log('fdjkaslafsd')
+        var matches = [[], []];
+        var term = d.term;
+        for (var i in fullData.docs.extra) {
+
+            if (term in fullData.docs.extra[i]) {
+                var strength = fullData.docs.extra[i][term] /
+                    Object.values(fullData.docs.extra[i]).reduce(
+                        function (a, b) {
+                            return a + b
+                        });
+                var text = fullData.docs.texts[i];
+                if (!useFullDoc)
+                    text = text.slice(0, 300);
+                var curMatch = {'id': i, 'snippets': [text], 'strength': strength};
+
+                curMatch['meta'] = fullData.docs.meta[i];
+                matches[fullData.docs.labels[i]].push(curMatch);
+            }
+        }
+        for (var i in [0, 1]) {
+            matches[i] = matches[i].sort(function (a, b) {
+                return a.strength < b.strength ? 1 : -1
+            })
+        }
+        return {'contexts': matches, 'info': d};
+    }
+
+    function searchInText(d) {
         function stripNonWordChars(term) {
             //d.term.replace(" ", "[^\\w]+")
         }
@@ -117,8 +155,10 @@ function buildViz(widthInPixels = 800,
             }
             return regexp;
         }
+
+        var matches = [[], []];
         var pattern = buildMatcher(d.term);
-        if(pattern !== null) {
+        if (pattern !== null) {
             for (var i in fullData.docs.texts) {
                 if (fullData.docs.labels[i] > 1) continue;
                 var text = fullData.docs.texts[i];

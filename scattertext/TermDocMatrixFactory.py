@@ -4,9 +4,9 @@ from collections import Counter
 import numpy as np
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
-from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 
 class CategoryTextIterNotSetError(Exception):
@@ -18,73 +18,67 @@ class TermDocMatrixFactory(object):
 	             category_text_iter=None,
 	             clean_function=lambda x: x,
 	             nlp=None,
-	             use_lemmas=False
+	             feats_from_spacy_doc=None
 	             ):
-		"""Class for easy construction of a term document matrix.
-		   This class let's you define an iterator for each document (text_iter),
-		   an iterator for each document's category name (category_iter),
-		   and a document cleaning function that's applied to each document
-		   before it's parsed.
+		"""
+		Class for easy construction of a term document matrix.
+	   This class let's you define an iterator for each document (text_iter),
+	   an iterator for each document's category name (category_iter),
+	   and a document cleaning function that's applied to each document
+	   before it's parsed.
 
-		   Parameters
-		   ----------
-		   category_text_iter : iter<str: category, unicode: document)>
-		       An iterator of pairs. The first element is a string category
-		       name, the second the text of a document.  You can also set this
-		       using the function set_category_text_iter.
-		   clean_function : function (default lambda x: x)
-		       A function that takes a unicode document and returns
-		       a cleaned version of that document
-		   post_nlp_clean_function : function (default lambda x: x)
-		       A function that takes a spaCy Doc
-		   nlp : spacy.en.English (default None)
-		       The spaCy parser used to parse documents.  If it's None,
-		       the class will go through the expensive operation of
-		       creating one to parse the text
-		   use_lemmas : bool (default False)
-		       Do we use the lower-cased strings or lemmas from
-		        the spaCy tokenization?
-		   Attributes
-		   ----------
-		   _clean_function : function
-		       function that takes a unicode document and returns
-		       a cleaned version of that document
-		   _text_iter : iter<unicode>
-		       an iterator that iterates through the unicode text of each
-		        document
-		   _category_iter : iter<str>
-		       an iterator the same size as text iter that gives a string or
-		       unicode name of each document catgory
-		   Examples
-		   --------
-		   >>> import scattertext as ST
-		   >>> documents = [u"What art thou that usurp'st this time of night,",
-		    u'Together with that fair and warlike form',
-		    u'In which the majesty of buried Denmark',
-		    u'Did sometimes march? by heaven I charge thee, speak!',
-				u'Halt! Who goes there?',
-				u'[Intro]',
-				u'It is I sire Tone from Brooklyn.',
-				u'Well, speak up man what is it?',
-				u'News from the East sire! THE BEST OF BOTH WORLDS HAS RETURNED!'
-		    ]
-		   >>> categories = ['hamlet'] * 4 + ['jay-z/r. kelly'] * 5
-		   >>> clean_function = lambda text: '' if text.startswith('[') else text
-		   >>> term_doc_mat = ST.TermDocMatrixFactory(
-		    category_text_iter = zip(categories, documents),
-		    clean_function = clean_function
-		   ).build()
-
+	   Parameters
+	   ----------
+	   category_text_iter : iter<str: category, unicode: document)>
+	       An iterator of pairs. The first element is a string category
+	       name, the second the text of a document.  You can also set this
+	       using the function set_category_text_iter.
+	   clean_function : function (default lambda x: x)
+	       A function that takes a unicode document and returns
+	       a cleaned version of that document
+	   post_nlp_clean_function : function (default lambda x: x)
+	       A function that takes a spaCy Doc
+	   nlp : spacy.en.English (default None)
+	       The spaCy parser used to parse documents.  If it's None,
+	       the class will go through the expensive operation of
+	       creating one to parse the text
+	   feats_from_spacy_doc : FeatsFromSpacyDoc (default None)
+	       Class for extraction of features from spacy
+	   Attributes
+	   ----------
+	   _clean_function : function
+	       function that takes a unicode document and returns
+	       a cleaned version of that document
+	   _text_iter : iter<unicode>
+	       an iterator that iterates through the unicode text of each
+	        document
+	   _category_iter : iter<str>
+	       an iterator the same size as text iter that gives a string or
+	       unicode name of each document catgory
+	   Examples
+	   --------
+	   >>> import scattertext as ST
+	   >>> documents = [u'What art thou that usurp''st this time of night,',
+	   ...u'Together with that fair and warlike form',
+	   ...u'In which the majesty of buried Denmark',
+	   ...u'Did sometimes march? by heaven I charge thee, speak!',
+		 ...u'Halt! Who goes there?',
+		 ...u'[Intro]',
+		 ...u'It is I sire Tone from Brooklyn.',
+		 ...u'Well, speak up man what is it?',
+		 ...u'News from the East sire! THE BEST OF BOTH WORLDS HAS RETURNED!']
+	   >>> categories = ['hamlet'] * 4 + ['jay-z/r. kelly'] * 5
+	   >>> clean_function = lambda text: '' if text.startswith('[') else text
+	   >>> term_doc_mat = ST.TermDocMatrixFactory(category_text_iter = zip(categories, documents),clean_function = clean_function).build()
 		"""
 		self._category_text_iter = category_text_iter
 		self._clean_function = clean_function
 		self._nlp = nlp
-		self._use_lemmas = use_lemmas
 		self._entity_types_to_censor = set()
-		self._feats_from_spacy_doc = FeatsFromSpacyDoc(
-			use_lemmas=use_lemmas,
-			entity_types_to_censor=self._entity_types_to_censor
-		)
+		if feats_from_spacy_doc is None:
+			self._feats_from_spacy_doc = FeatsFromSpacyDoc()
+		else:
+			self._feats_from_spacy_doc = feats_from_spacy_doc
 
 	def set_category_text_iter(self, category_text_iter):
 		"""Initializes the category_text_iter
@@ -189,38 +183,48 @@ class TermDocMatrixFactory(object):
 		'''
 		term_idx_store = IndexStore()
 		category_idx_store = IndexStore()
-		X, y = self._get_features_and_labels_from_documents_and_indexes(category_doc_iter,
-		                                                                category_idx_store,
-		                                                                term_idx_store)
+		metadata_idx_store = IndexStore()
+		X, mX, y = self._get_features_and_labels_from_documents_and_indexes(category_doc_iter,
+		                                                                    category_idx_store,
+		                                                                    term_idx_store,
+		                                                                    metadata_idx_store)
 		return TermDocMatrix(X,
+		                     mX,
 		                     y,
 		                     term_idx_store=term_idx_store,
-		                     category_idx_store=category_idx_store)
+		                     category_idx_store=category_idx_store,
+		                     metadata_idx_store=metadata_idx_store)
 
 	def _get_features_and_labels_from_documents_and_indexes(self,
 	                                                        category_doc_iter,
 	                                                        category_idx_store,
-	                                                        term_idx_store):
+	                                                        term_idx_store,
+	                                                        metadata_idx_store):
 		y = []
 		X_factory = CSRMatrixFactory()
+		mX_factory = CSRMatrixFactory()
 		for document_index, (category, parsed_text) in enumerate(category_doc_iter):
 			self._register_doc_and_category(X_factory,
+			                                mX_factory,
 			                                category,
 			                                category_idx_store,
 			                                document_index,
 			                                parsed_text,
-			                                term_idx_store, y)
+			                                term_idx_store,
+			                                metadata_idx_store,
+			                                y)
 		X = X_factory.get_csr_matrix()
+		mX = mX_factory.get_csr_matrix()
 		y = np.array(y)
-		return X, y
+		return X, mX, y
 
 	def _old_register_doc_and_category(self,
-	                               X_factory,
-	                               category, category_idx_store,
-	                               document_index,
-	                               parsed_text,
-	                               term_idx_store,
-	                               y):
+	                                   X_factory,
+	                                   category, category_idx_store,
+	                                   document_index,
+	                                   parsed_text,
+	                                   term_idx_store,
+	                                   y):
 		y.append(category_idx_store.getidx(category))
 		document_features = self._get_features_from_parsed_text(parsed_text, term_idx_store)
 		self._register_document_features_with_X_factory \
@@ -228,44 +232,31 @@ class TermDocMatrixFactory(object):
 
 	def _register_doc_and_category(self,
 	                               X_factory,
+	                               mX_factory,
 	                               category,
 	                               category_idx_store,
 	                               document_index,
 	                               parsed_text,
 	                               term_idx_store,
+	                               metadata_idx_store,
 	                               y):
 		y.append(category_idx_store.getidx(category))
 		for term, count in self._feats_from_spacy_doc.get_feats(parsed_text).items():
 			term_idx = term_idx_store.getidx(term)
 			X_factory[document_index, term_idx] = count
-
+		for term, val in self._feats_from_spacy_doc.get_doc_metadata(parsed_text).items():
+			meta_idx = metadata_idx_store.getidx(term)
+			X_factory[document_index, meta_idx] = val
 
 	def _register_document_features_with_X_factory(self, X_factory, doci, term_freq):
 		for word_idx, freq in term_freq.items():
 			X_factory[doci, word_idx] = freq
 
 	def _get_features_from_parsed_text(self, parsed_text, term_idx_store):
-		term_freq = Counter()
-		for sent in parsed_text.sents:
-			unigrams = []
-			for tok in sent:
-				if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
-					if tok.ent_type_ in self._entity_types_to_censor:
-						unigrams.append(tok.ent_type_)
-					else:
-						if self._use_lemmas:
-							if tok.lemma_.strip():
-								unigrams.append(tok.lemma_.strip())
-						else:
-							if tok.lower_.strip():
-								unigrams.append(tok.lower_.strip())
-			bigrams = list(map(' '.join, zip(unigrams[:-1], unigrams[1:])))
-			self._augment_term_freq_with_unigrams_and_bigrams(bigrams, term_freq, term_idx_store, unigrams)
-		return term_freq
+		return {term_idx_store.getidxstrict(k):v for k, v
+		        in self._feats_from_spacy_doc.get_feats(parsed_text).items()
+		        if k in term_idx_store}
 
-	def _augment_term_freq_with_unigrams_and_bigrams(self, bigrams, term_freq, term_idx_store, unigrams):
-		for term in unigrams + bigrams:
-			term_freq[term_idx_store.getidx(term)] += 1
 
 
 class FeatsFromDoc(TermDocMatrixFactory):
@@ -273,8 +264,7 @@ class FeatsFromDoc(TermDocMatrixFactory):
 	             term_idx_store,
 	             clean_function=lambda x: x,
 	             nlp=None,
-	             use_lemmas=False,
-	             entity_types=set()):
+	             feats_from_spacy_doc = None):
 		"""Class for extracting features from a new document.
 
 	   Parameters
@@ -289,13 +279,15 @@ class FeatsFromDoc(TermDocMatrixFactory):
 	       The spaCy parser used to parse documents.  If it's None,
 	       the class will go through the expensive operation of
 	       creating one to parse the text
-	   use_lemmas : bool (default False)
-	       Do we use the lower-cased strings or lemmas from
-	        the spaCy tokenization?
+	   feats_from_spacy_doc : FeatsFromSpacyDoc (default None)
+	       Class for extraction of features from spacy
+
 	   """
-		TermDocMatrixFactory.__init__(self, clean_function=clean_function, nlp=nlp, use_lemmas=use_lemmas)
+		TermDocMatrixFactory.__init__(self,
+		                              clean_function=clean_function,
+		                              nlp=nlp,
+		                              feats_from_spacy_doc=feats_from_spacy_doc)
 		self._term_idx_store = term_idx_store
-		self._entity_types_to_censor = entity_types
 
 	def feats_from_doc(self, raw_text):
 		'''
@@ -335,6 +327,8 @@ def build_from_category_whitespace_delimited_text(category_text_iter):
 	X_factory = CSRMatrixFactory()
 	term_idx_store = IndexStore()
 	category_idx_store = IndexStore()
+	mX_factory = CSRMatrixFactory()
+	metadata_idx_store = IndexStore()
 	for doci, (category, text) in enumerate(category_text_iter):
 		y.append(category_idx_store.getidx(category))
 		term_freq = Counter()
@@ -347,8 +341,10 @@ def build_from_category_whitespace_delimited_text(category_text_iter):
 				term_freq[term_idx_store.getidx(term)] += 1
 		for word_idx, freq in term_freq.items():
 			X_factory[doci, word_idx] = freq
-
+	metadata_idx_store = IndexStore()
 	return TermDocMatrix(X=X_factory.get_csr_matrix(),
+	                     mX=mX_factory.get_csr_matrix(),
 	                     y=np.array(y),
 	                     term_idx_store=term_idx_store,
+	                     metadata_idx_store=metadata_idx_store,
 	                     category_idx_store=category_idx_store)

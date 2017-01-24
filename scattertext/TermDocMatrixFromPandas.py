@@ -12,14 +12,16 @@ class ParsePipelineFactory:
 	def __init__(self,
 	             nlp,
 	             X_factory,
+	             mX_factory,
 	             category_idx_store,
 	             term_idx_store,
+	             metadata_idx_store,
 	             y,
 	             term_doc_mat_fact):
 		if nlp == chinese_nlp:
 			raise Exception("Chinese NLP not yet supported.  Preparse chinese documents, and use CorpusFromParsedDocuments or a similar class.")
-		self.X_factory, self.category_idx_store, self.term_idx_store, self.y, self.nlp \
-			= X_factory, category_idx_store, term_idx_store, y, nlp
+		self.X_factory, self.mX_factory, self.category_idx_store, self.term_idx_store, self.metadata_idx_store, self.y, self.nlp \
+			= X_factory, mX_factory, category_idx_store, term_idx_store, metadata_idx_store, y, nlp
 		self._term_doc_mat_fact = term_doc_mat_fact
 		self._text_col = self._term_doc_mat_fact._text_col
 		self._clean_function = self._term_doc_mat_fact._clean_function
@@ -41,11 +43,13 @@ class ParsePipelineFactory:
 
 	def _register_document(self, parsed_text, row):
 		self._register_doc_and_category(X_factory=self.X_factory,
+		                                mX_factory=self.mX_factory,
 		                                category=row[self._category_col],
 		                                category_idx_store=self.category_idx_store,
 		                                document_index=row.name,
 		                                parsed_text=parsed_text,
 		                                term_idx_store=self.term_idx_store,
+		                                metadata_idx_store=self.metadata_idx_store,
 		                                y=self.y)
 
 
@@ -56,7 +60,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 	             text_col,
 	             clean_function=lambda x: x,
 	             nlp=None,
-	             use_lemmas=False,
+	             feats_from_spacy_doc=None,
 	             verbose=False):
 		'''Creates a TermDocMatrix from a pandas data frame.
 
@@ -71,7 +75,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 			The name of the column which contains the category of interest.
 		clean_function : function, optional
 		nlp : function, optional
-		use_lemmas : boolean, optional
+		feats_from_spacy_doc : FeatsFromSpacyDoc or None
 		verbose : boolean, optional
 			If true, prints a message every time a document index % 100 is 0.
 
@@ -82,7 +86,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		TermDocMatrixFactory.__init__(self,
 		                              clean_function=clean_function,
 		                              nlp=nlp,
-		                              use_lemmas=use_lemmas)
+		                              feats_from_spacy_doc=feats_from_spacy_doc)
 		self.data_frame = data_frame.reset_index()
 		self._text_col = text_col
 		self._category_col = category_col
@@ -96,34 +100,41 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		TermDocMatrix
 		'''
 
-		X_factory, category_idx_store, term_idx_store, y \
+		X_factory, mX_factory, category_idx_store, term_idx_store, metadata_idx_store, y \
 			= self._init_term_doc_matrix_variables()
 		parse_pipeline = ParsePipelineFactory(self.get_nlp(),
 		                                      X_factory,
+		                                      mX_factory,
 		                                      category_idx_store,
 		                                      term_idx_store,
+		                                      metadata_idx_store,
 		                                      y,
 		                                      self)
 		df = self._clean_and_filter_nulls_and_empties_from_dataframe()
 		tdm = self._apply_pipeline_and_get_build_instance(X_factory,
+		                                                  mX_factory,
 		                                                  category_idx_store,
 		                                                  df,
 		                                                  parse_pipeline,
 		                                                  term_idx_store,
+		                                                  metadata_idx_store,
 		                                                  y)
 		return tdm
 
 	def _apply_pipeline_and_get_build_instance(self,
 	                                           X_factory,
+	                                           mX_factory,
 	                                           category_idx_store,
 	                                           df,
 	                                           parse_pipeline,
 	                                           term_idx_store,
+	                                           metadata_idx_store,
 	                                           y):
 		df.apply(parse_pipeline.parse, axis=1)
 		X = X_factory.get_csr_matrix()
+		mX = mX_factory.get_csr_matrix()
 		y = np.array(y)
-		tdm = TermDocMatrix(X, y, term_idx_store, category_idx_store)
+		tdm = TermDocMatrix(X, mX, y, term_idx_store, category_idx_store, metadata_idx_store)
 		return tdm
 
 	def _init_term_doc_matrix_variables(self):
@@ -140,8 +151,12 @@ class CorpusFactoryHelper(object):
 	def init_term_doc_matrix_variables():
 		y = []
 		X_factory = CSRMatrixFactory()
+		mX_factory = CSRMatrixFactory()
 		category_idx_store = IndexStore()
 		term_idx_store = IndexStore()
-		return X_factory, category_idx_store, term_idx_store, y
+		metadata_idx_store = IndexStore()
+
+		return X_factory, mX_factory, category_idx_store, \
+		       term_idx_store, metadata_idx_store, y
 
 

@@ -12,4 +12,8 @@ class AbsoluteFrequencyRanker(TermRanker):
 		pd.DataFrame
 
 		'''
-		return self._term_doc_matrix.get_term_freq_df()
+		if self._use_non_text_features:
+			return self._term_doc_matrix.get_metadata_freq_df()
+		else:
+			return self._term_doc_matrix.get_term_freq_df()
+

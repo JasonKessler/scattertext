@@ -1,7 +1,7 @@
 from scattertext.IndexStore import IndexStore
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
-from scattertext.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 import numpy as np
 
 class CorpusFromParsedDocuments(object):
@@ -28,7 +28,9 @@ class CorpusFromParsedDocuments(object):
 
 		self._category_idx_store = IndexStore()
 		self._X_factory = CSRMatrixFactory()
+		self._mX_factory = CSRMatrixFactory()
 		self._term_idx_store = IndexStore()
+		self._metadata_idx_store = IndexStore()
 		self._feats_from_spacy_doc = feats_from_spacy_doc
 
 	def build(self):
@@ -38,14 +40,17 @@ class CorpusFromParsedDocuments(object):
 		-------
 		scattertext.ParsedCorpus.ParsedCorpus
 		'''
-		self.y = self._get_y_and_populate_category_idx_store()
+		self._y = self._get_y_and_populate_category_idx_store()
 		self._df.apply(self._add_to_x_factory, axis=1)
-		self.X = self._X_factory.get_csr_matrix()
+		self._X = self._X_factory.get_csr_matrix()
+		self._mX = self._mX_factory.get_csr_matrix()
 		return ParsedCorpus(self._df,
-		                    self.X,
-		                    self.y,
+		                    self._X,
+		                    self._mX,
+		                    self._y,
 		                    self._term_idx_store,
 		                    self._category_idx_store,
+		                    self._metadata_idx_store,
 		                    self._parsed_col,
 		                    self._category_col)
 
@@ -57,3 +62,6 @@ class CorpusFromParsedDocuments(object):
 		for term, count in self._feats_from_spacy_doc.get_feats(parsed_text).items():
 			term_idx = self._term_idx_store.getidx(term)
 			self._X_factory[row.name, term_idx] = count
+		for meta, val in self._feats_from_spacy_doc.get_doc_metadata(parsed_text).items():
+			meta_idx = self._metadata_idx_store.getidx(meta)
+			self._mX_factory[row.name, meta_idx] = val

@@ -6,9 +6,10 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 from scattertext import CorpusFromParsedDocuments
+from scattertext import FeatsFromSpacyDoc, FeatsFromSpacyDocAndEmpath
 from scattertext import TermDocMatrixFactory
-from scattertext.WhitespaceNLP import whitespace_nlp, Doc, Tok
 from scattertext.TermDocMatrixFactory import FeatsFromDoc
+from scattertext.WhitespaceNLP import whitespace_nlp, Doc, Tok
 
 
 def build_hamlet_jz_term_doc_mat():
@@ -23,8 +24,9 @@ def build_hamlet_jz_term_doc_mat():
 	return term_doc_mat
 
 
+
 def build_hamlet_jz_corpus():
-	# type: () -> TermDocMatrix
+	# type: () -> Corpus
 	categories, documents = get_docs_categories()
 	clean_function = lambda text: '' if text.startswith('[') else text
 	df = pd.DataFrame({
@@ -38,6 +40,27 @@ def build_hamlet_jz_corpus():
 		parsed_col='parsed'
 	).build()
 
+
+def build_hamlet_jz_corpus_with_meta():
+	# type: () -> Corpus
+	def empath_mock(doc):
+		toks = doc.split()
+		num_toks = min(3,len(toks))
+		return {'cat'+str(len(tok)):val for val,tok in enumerate(toks[:num_toks])}
+
+	categories, documents = get_docs_categories()
+	clean_function = lambda text: '' if text.startswith('[') else text
+	df = pd.DataFrame({
+		'category': categories,
+		'parsed': [whitespace_nlp(clean_function(doc)) for doc in documents]
+	})
+	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
+	return CorpusFromParsedDocuments(
+		df=df,
+		category_col='category',
+		parsed_col='parsed',
+		feats_from_spacy_doc=FeatsFromSpacyDocAndEmpath(empath_analyze_function=empath_mock)
+	).build()
 
 def get_docs_categories():
 	documents = [u"What art thou that usurp'st this time of night,",
@@ -85,10 +108,9 @@ class TestTermDocMatrixFactory(TestCase):
 			TermDocMatrixFactory(
 				category_text_iter=zip(categories, documents),
 				clean_function=clean_function,
-				nlp=_testing_nlp
-			)
-				.censor_entity_types(set(['GPE']))
-				.build()
+				nlp=_testing_nlp,
+				feats_from_spacy_doc=FeatsFromSpacyDoc(entity_types_to_censor=set(['GPE']))
+			).build()
 		)
 		self.assertIn('GPE', set(term_doc_mat.get_term_freq_df().index))
 		self.assertNotIn('brooklyn', set(term_doc_mat.get_term_freq_df().index))
@@ -103,14 +125,15 @@ class TestFeatsFromDoc(TestCase):
 			TermDocMatrixFactory(
 				category_text_iter=zip(categories, documents),
 				clean_function=clean_function,
-				nlp=_testing_nlp
-			)
-				.censor_entity_types(entity_types)
-				.build()
+				nlp=_testing_nlp,
+				feats_from_spacy_doc=FeatsFromSpacyDoc(entity_types_to_censor=entity_types)
+			).build()
 		)
 		clf = PassiveAggressiveClassifier(n_iter=5, C=0.5, n_jobs=-1, random_state=0)
-		fdc = FeatsFromDoc(term_doc_mat._term_idx_store, clean_function=clean_function, entity_types=entity_types).set_nlp(
-			_testing_nlp)
+		fdc = FeatsFromDoc(term_doc_mat._term_idx_store,
+		                   clean_function=clean_function,
+		                   feats_from_spacy_doc=FeatsFromSpacyDoc(
+			                   entity_types_to_censor=entity_types)).set_nlp(_testing_nlp)
 		tfidf = TfidfTransformer(norm='l1')
 		X = tfidf.fit_transform(term_doc_mat._X)
 		clf.fit(X, term_doc_mat._y)

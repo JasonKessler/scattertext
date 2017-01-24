@@ -9,11 +9,11 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 	'''
 	def get_ranks(self):
 		row = self._term_doc_matrix._row_category_ids()
-		X = self._term_doc_matrix._X
+		X = self._get_X()
 		doc_lengths = X.sum(axis=1)
 		normX = self._get_normalized_X(X, doc_lengths)
 		categoryX = csr_matrix((normX.data, (row, normX.indices)))
-		return self._term_doc_matrix._term_freq_df_from_matrix(categoryX)
+		return self._get_freq_df(categoryX)
 
 	def _get_normalized_X(self, X, doc_lengths):
 		return csr_matrix(doc_lengths.mean() * X.astype(np.float32) / doc_lengths)

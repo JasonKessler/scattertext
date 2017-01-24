@@ -31,13 +31,16 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 
 	def _apply_pipeline_and_get_build_instance(self,
 	                                           X_factory,
+	                                           mX_factory,
 	                                           category_idx_store,
 	                                           df,
 	                                           parse_pipeline,
 	                                           term_idx_store,
+	                                           metadata_idx_store,
 	                                           y):
 		df.apply(parse_pipeline.parse, axis=1)
 		X = X_factory.get_csr_matrix()
+		mX = mX_factory.get_csr_matrix()
 		y = np.array(y)
 		raw_texts = df[self._text_col]
-		return Corpus(X, y, term_idx_store, category_idx_store, raw_texts)
+		return Corpus(X, mX, y, term_idx_store, category_idx_store, metadata_idx_store, raw_texts)

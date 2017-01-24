@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1.3
+# Scattertext 0.0.2.1.4
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
@@ -46,18 +46,9 @@ notebooks, and poking around the code and tests should give you a good idea of h
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
-## Examples 
+## Tutorial
 
-I recommend you start with this example first.  It explains some design decisions that were made in 
-Scattertext, and explains the strings of points.  You can 
-find it [2012 Political Convention Exploration](http://bit.ly/scattertextdevelopment).
-
-Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
-
-Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
-tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
-
-## Quickstart
+### Using Scattertext as a text analysis library: finding characteristic terms and their associations
 
 The following code creates a stand-alone HTML file that analyzes words 
 used by Democrats and Republicans in the 2012 party conventions, and outputs some notable
@@ -155,6 +146,9 @@ And Republicans:
  'in florida']
 ```
 
+
+### Visualizing term associations
+
 Now, let's write the scatter plot a stand-alone HTML file.  We'll make the y-axis category  "democrat", and name
 the category "Democrat" with a capital "D" for presentation 
 purposes.  We'll name the other category "Republican" with a capital R.  All documents in the corpus without 
@@ -173,9 +167,55 @@ each excerpt with the speaker using the `metadata` parameter.  Finally, we write
 Below is what the webpage looks like.  Click it and wait a few minutes for the interactive version.
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012Conventions.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
+### Visualizing Empath topics and categories
+
+In order to visualize Empath (Fast 2016) topics and categories instead of terms, we'll need to 
+create a `Corpus` of extracted topics and categories rather than unigrams and 
+bigrams. To do so, use the `FeatsOnlyFromEmpath` feature extractor.  See the sourcecode for 
+examples of how to make your own.
+```pydocstring
+>>> from scattertext import FeatsFromOnlyEmpath
+>>> corpus = st.CorpusFromParsedDocuments(convention_df,
+...                                       category_col='party',
+...                                       feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
+...                                       parsed_col='text').build()
+```
+
+When creating the visualization, pass the `use_non_text_features=True` argument into
+ `produce_scattertext_explorer`.  This will instruct it to use the labeled Empath 
+ topics and categories instead of looking for terms.  Since the documents returned
+ when a topic or category label is clicked will be in order of the document-level
+ category-association strength, setting `use_full_doc=True` makes sense, unless you have
+ enormous documents.  Otherwise, the first 300 characters will be shown.
+ 
+```pydocstring
+>>> html = st.produce_scattertext_explorer(corpus,
+...                                        category='democrat',
+...                                        category_name='Democratic',
+...                                        not_category_name='Republican',
+...                                        width_in_pixels=1000,
+...                                        metadata=convention_df['speaker'],
+...                                        use_non_text_features=True,
+...                                        use_full_doc=True)
+>>> open("Convention-Visualization-Empath.html", 'wb').write(html.encode('utf-8'))
+``` 
+
+## Examples 
+
+I recommend you start with this example first.  It explains some design decisions that were made in 
+Scattertext, and explains the strings of points.  You can 
+find it [2012 Political Convention Exploration](http://bit.ly/scattertextdevelopment). 
+
+Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
+
+Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
+tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
+
+
+[![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 ## A note on chart layout
 
-[Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy) (Loncaric, 2016) was used to help determine 
+[Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy) (Loncaric 2016) was used to help determine 
 which terms could be labeled without overlapping a circle or another label.  It automatically built a data structure to efficiently store and query the locations of each circle and labeled term.
 
 The script to build `rectangle-holder.js` was
@@ -203,6 +243,10 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## Changelog
+### 0.0.2.1.4
+
+Added preliminary support for visualizing [Empath](https://github.com/Ejhfast/empath-client) (Fast 2016) topics categories instead of emotions.  See the tutorial for more information. 
+
 ### 0.0.2.1.3
 
 Improved term-labeling.
@@ -228,4 +272,4 @@ In order for the visualization to work, set the `chinese_mode` flat to `True` in
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
 * Inspiration for text scatter plots: Rudder, Christian. Dataclysm: Who We Are (When We Think No One's Looking). Random House Incorporated, 2014.
 * Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
- 
+* Fast, Ethan, Binbin Chen, and Michael S. Bernstein. "Empath: Understanding topic signals in large-scale text." Proceedings of the 2016 CHI Conference on Human Factors in Computing Systems. ACM, 2016. 

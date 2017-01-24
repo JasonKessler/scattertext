@@ -1,19 +1,18 @@
-from scipy.sparse import csr_matrix
-import numpy as np
 import pandas as pd
 
 from scattertext.Corpus import Corpus
 from scattertext.IndexStore import IndexStore
-from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class ParsedCorpus(Corpus):
 	def __init__(self,
 	             df,
 	             X,
+	             mX,
 	             y,
 	             term_idx_store,
 	             category_idx_store,
+	             metadata_idx_store,
 	             parsed_col,
 	             category_col,
 	             unigram_frequency_path=None):
@@ -22,10 +21,11 @@ class ParsedCorpus(Corpus):
 		Parameters
 		----------
 		df pd.DataFrame, contains parsed_col and metadata
-		X csr_matrix
-		y np.array
-		term_idx_store IndexStore
-		category_idx_store IndexStore
+		X, csr_matrix
+		mX csr_matrix
+		y, np.array
+		term_idx_store, IndexStore
+		category_idx_store, IndexStore
 		parsed_col str, column in df containing parsed documents
 		category_col str, columns in df containing category
 		unigram_frequency_path str, None by default, path of unigram counts file
@@ -33,8 +33,12 @@ class ParsedCorpus(Corpus):
 		self._df = df
 		self._parsed_col = parsed_col
 		self._category_col = category_col
-		TermDocMatrix.__init__(self, X, y, term_idx_store,
-		                       category_idx_store, unigram_frequency_path)
+		# TermDocMatrix.__init__(self, X, y, term_idx_store,
+		#                       category_idx_store, unigram_frequency_path)
+		super(ParsedCorpus, self).__init__(X, mX, y, term_idx_store, category_idx_store,
+		                                   metadata_idx_store,
+		                                   self._df[self._parsed_col],
+		                                   unigram_frequency_path)
 
 	def get_texts(self):
 		'''
@@ -96,8 +100,3 @@ class ParsedCorpus(Corpus):
 			row_group_cat[row_group_cat == doc_idx] = group_idx
 			group_idx_to_cat_idx[group_idx] = self._y[doc_idx]
 		return group_idx_to_cat_idx, row_group_cat
-
-
-
-
-

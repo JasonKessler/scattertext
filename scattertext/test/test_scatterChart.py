@@ -4,7 +4,8 @@ from unittest import TestCase
 import numpy as np
 
 from scattertext import ScatterChart
-from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_term_doc_mat
+from scattertext.test.test_termDocMatrixFactory \
+	import build_hamlet_jz_term_doc_mat, build_hamlet_jz_corpus_with_meta
 
 
 class TestScatterChart(TestCase):
@@ -24,11 +25,27 @@ class TestScatterChart(TestCase):
 		            "term": "art",
 		            "cat25k": 758,
 		            "ncat25k": 0, 's': 0.5, 'os': 3}
-		datum = j['data'][0]
-		for var in ['x', 'y', 'cat25k', 'ncat25k', 's']:
-			np.testing.assert_almost_equal(expected[var], datum[var])
+		datum = [t for t in j['data'] if t['term'] == 'art'][0]
+		for var in ['cat25k', 'ncat25k']:
+			np.testing.assert_almost_equal(expected[var], datum[var], decimal=1)
 		self.assertEqual(expected.keys(), datum.keys())
 		self.assertEqual(expected['term'], datum['term'])
+		json.dumps(j)
+
+	def test_to_json_use_non_text_features(self):
+		tdm = build_hamlet_jz_corpus_with_meta()
+		# with self.assertRaises(NoWordMeetsTermFrequencyRequirementsError):
+		#	ScatterChart(term_doc_matrix=tdm).to_dict('hamlet')
+		j = (ScatterChart(term_doc_matrix=tdm,
+		                  minimum_term_frequency=0,
+		                  use_non_text_features=True)
+		     .to_dict('hamlet'))
+		self.assertEqual(set(j.keys()), set(['info', 'data']))
+		self.assertEqual(set(j['info'].keys()),
+		                 set(['not_category_name', 'category_name',
+		                      'category_terms', 'not_category_terms', 'category_internal_name']))
+		self.assertEqual({t['term'] for t in j['data']},
+		                 {'cat6', 'cat4', 'cat9', 'cat5', 'cat1', 'cat3', 'cat2'})
 		json.dumps(j)
 
 	def test_max_terms(self):
