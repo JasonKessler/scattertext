@@ -200,6 +200,9 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 >>> open("Convention-Visualization-Empath.html", 'wb').write(html.encode('utf-8'))
 ``` 
 
+[![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
+
+
 ## Examples 
 
 I recommend you start with this example first.  It explains some design decisions that were made in 
@@ -211,8 +214,6 @@ Scattertext can also be used to visualize **topic models**, analyze how **word v
 Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
 tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
 
-
-[![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 ## A note on chart layout
 
 [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy) (Loncaric 2016) was used to help determine 
