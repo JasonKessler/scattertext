@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1.5
+# Scattertext 0.0.2.1.4
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
@@ -244,7 +244,7 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## Changelog
-### 0.0.2.1.4
+### 0.0.2.1.4(.1)
 
 Added preliminary support for visualizing [Empath](https://github.com/Ejhfast/empath-client) (Fast 2016) topics categories instead of emotions.  See the tutorial for more information. 
 
