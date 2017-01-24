@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1.4
+# Scattertext 0.0.2.1.5
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 

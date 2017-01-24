@@ -8,7 +8,7 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 	This means that each term has a document-specific weight of  #(t,d)/|d|.
 	'''
 	def get_ranks(self):
-		row = self._term_doc_matrix._row_category_ids()
+		row = self._get_row_category_ids()
 		X = self._get_X()
 		doc_lengths = X.sum(axis=1)
 		normX = self._get_normalized_X(X, doc_lengths)

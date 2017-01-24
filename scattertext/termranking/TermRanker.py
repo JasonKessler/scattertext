@@ -39,5 +39,13 @@ class TermRanker:
 		else:
 			return self._term_doc_matrix._term_freq_df_from_matrix(X)
 
+	def _get_row_category_ids(self):
+		if self._use_non_text_features:
+			return self._term_doc_matrix._row_category_ids_for_meta()
+		else:
+			return self._term_doc_matrix._row_category_ids()
+
+
 	@abstractmethod
-	def get_ranks(self): pass
+	def get_ranks(self):
+		pass
