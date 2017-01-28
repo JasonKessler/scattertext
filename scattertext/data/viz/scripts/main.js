@@ -60,7 +60,6 @@ function buildViz(widthInPixels = 800,
         // !!! need to use spacy's spentence splitter
         if (chineseMode) {
             var sentenceRe = /\n/gmi;
-
         } else {
             var sentenceRe = /\(?[^\.\?\!\n\b]+[\n\.!\?]\)?/g;
         }
@@ -104,7 +103,6 @@ function buildViz(widthInPixels = 800,
     }
 
     function searchInExtraFeatures(d) {
-        console.log('fdjkaslafsd')
         var matches = [[], []];
         var term = d.term;
         for (var i in fullData.docs.extra) {
@@ -633,6 +631,41 @@ function buildViz(widthInPixels = 800,
 
         for (i = 0; i < data.length; labelPointsIfPossible(i++));
 
+        function populateCorpusStats() {
+            var wordCounts = {};
+            var docCounts = {}
+            fullData.docs.labels.forEach(function (x, i) {
+                var cnt = (
+                    fullData.docs.texts[i]
+                        .trim()
+                        .replace(/['";:,.?¿\-!¡]+/g, '')
+                        .match(/\S+/g) || []
+                ).length;
+                wordCounts[x] = wordCounts[x] ? wordCounts[x] + cnt : cnt
+            });
+            fullData.docs.labels.forEach(function (x) {
+                docCounts[x] = docCounts[x] ? docCounts[x] + 1 : 1
+            });
+            var messages = [];
+            fullData.docs.categories.forEach(function (x, i) {
+                var name = fullData.info.not_category_name;
+                if (x == fullData.info.category_internal_name) {
+                    name = fullData.info.category_name;
+                }
+
+                messages.push('<b>' + name + '</b> document count: '
+                    + Number(docCounts[i]).toLocaleString('en')
+                    + '; word count: '
+                    + Number(wordCounts[i]).toLocaleString('en'));
+            });
+
+            d3.select('#corpus-stats')
+                .style('width', width + margin.left + margin.right + 200)
+                .append('div')
+                .html(messages.join('<br />'));
+        };
+
+        populateCorpusStats();
 
     };
 

@@ -1,4 +1,5 @@
 from collections import Counter
+from functools import partial
 
 from scattertext import FeatsFromSpacyDoc
 
@@ -20,7 +21,8 @@ class FeatsFromSpacyDocAndEmpath(FeatsFromSpacyDoc):
 				raise Exception("Please install the empath library to use FeatsFromSpacyDocAndEmpath.")
 			self._empath_analyze_function = empath.Empath().analyze
 		else:
-			self._empath_analyze_function = empath_analyze_function
+			self._empath_analyze_function = partial(empath_analyze_function,
+			                                        kwargs={'tokenizer': 'bigram'})
 		super(FeatsFromSpacyDocAndEmpath, self).__init__(**kwargs)
 
 	def get_doc_metadata(self, doc, prefix=''):

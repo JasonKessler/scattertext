@@ -148,6 +148,10 @@ input:focus {
   font-size: 10px;
 }
 
+#corpus-stats {
+  text-align: center;
+}
+
 #cat {
 }
 
@@ -158,6 +162,7 @@ input:focus {
 <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/d3-scale-chromatic.v1.min.js" charset="utf-8"></script>
 <div id="d3-div-1"> </div>
+<div id="corpus-stats"> </div>
 <form name="termForm" onSubmit="handleSearch(); return false;">
   <input name="Submit" type="submit" value="Search for term">
   <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
