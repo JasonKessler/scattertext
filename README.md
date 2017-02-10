@@ -1,4 +1,4 @@
-# Scattertext 0.0.2.1.5
+# Scattertext 0.0.2.2
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
@@ -17,7 +17,7 @@ This is a tool that's intended for visualizing what words and phrases
  
 Consider this example: 
 
-[![Conventions-Visualization.html](https://jasonkessler.github.io/2012Conventions.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
+[![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
 Looking at this seem overwhelming.  In fact, it's a relatively simple visualization of word use 
 during the 2012 political convention.  Each dot corresponds to a word or phrase mentioned by Republicans or Democrats
@@ -35,6 +35,9 @@ by Republicans.  Likewise, terms frequently used by Republicans and infrequently
  
 Terms are colored by their association.  Those that are more associated with Democrats are blue, and those 
 more associated with Republicans red.  
+
+Terms (only unigrams for now) that are most characteristic of the both sets of documents are displayed
+ on the far-right of the visualization.
    
 The inspiration for this visualization came from Dataclysm (Rudder, 2014).
   
@@ -151,7 +154,7 @@ And Republicans:
 
 Now, let's write the scatter plot a stand-alone HTML file.  We'll make the y-axis category  "democrat", and name
 the category "Democrat" with a capital "D" for presentation 
-purposes.  We'll name the other category "Republican" with a capital R.  All documents in the corpus without 
+purposes.  We'll name the other category "Republican" with a capital "R".  All documents in the corpus without 
 the category "democrat" will be considered Republican. We set the width of the visualization in pixels, and label 
 each excerpt with the speaker using the `metadata` parameter.  Finally, we write the visualization to an HTML file.
  
@@ -165,7 +168,7 @@ each excerpt with the speaker using the `metadata` parameter.  Finally, we write
 >>> open("Convention-Visualization.html", 'wb').write(html.encode('utf-8'))
 ```
 Below is what the webpage looks like.  Click it and wait a few minutes for the interactive version.
-[![Conventions-Visualization.html](https://jasonkessler.github.io/2012Conventions.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
+[![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
 ### Visualizing Empath topics and categories
 
@@ -244,9 +247,17 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## Changelog
+### 0.0.2.2
+
+Addition option of showing characteristic terms (from the full set of documents) being considered.
+The option (`show_characteristic` in `produce_scattertext_explorer`) is on by default, 
+but currently unavailable for Chinese.  If you know of a good Chinese wordcount list,
+please let me know.  The algorithm used to produce these is F-Score.  See [this and the following slide](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/58) for more details
+
 ### 0.0.2.1.5
 
-Added document and word count statistic. 
+Added document and word count statistics to main visualization. 
+
 ### 0.0.2.1.4
 
 Added preliminary support for visualizing [Empath](https://github.com/Ejhfast/empath-client) (Fast 2016) topics categories instead of emotions.  See the tutorial for more information. 

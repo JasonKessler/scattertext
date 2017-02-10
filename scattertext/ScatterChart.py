@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import rankdata
 
 from scattertext.Scalers import percentile_min, percentile_ordinal
@@ -110,6 +111,15 @@ class ScatterChart:
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		json_df['os'] = df['color_scores']
+		bg_terms = self.term_doc_matrix.get_scaled_f_scores_vs_background()
+		bg_terms = bg_terms['Scaled f-score']
+		bg_terms.name = 'bg'
+		bg_terms = bg_terms.reset_index()
+		bg_terms.columns = ['term' if x == 'index' else x for x in bg_terms.columns]
+		json_df = pd.merge(json_df, bg_terms, on='term', how='left')
+		json_df['bg'] = json_df['bg'].fillna(0)
+
+
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])
 		if category_name is None:

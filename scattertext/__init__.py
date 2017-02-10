@@ -106,7 +106,8 @@ def produce_scattertext_explorer(corpus,
                                  grey_zero_scores=False,
                                  term_ranker=termranking.AbsoluteFrequencyRanker,
                                  chinese_mode=False,
-                                 use_non_text_features=False):
+                                 use_non_text_features=False,
+                                 show_characteristic=True):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -157,6 +158,9 @@ def produce_scattertext_explorer(corpus,
 		Use a special Javascript regular expression that's specific to chinese
 	use_non_text_features : bool, optional
 		Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
+	show_characteristic: bool, default True
+		Show characteristic terms on the far left-hand side of the visualization
+
 	Returns
 	-------
 		str, html of visualization
@@ -194,4 +198,6 @@ def produce_scattertext_explorer(corpus,
 	                                 sort_by_dist=sort_by_dist,
 	                                 use_full_doc=use_full_doc,
 	                                 chinese_mode=chinese_mode,
-	                                 use_non_text_features=use_non_text_features).to_html(protocol=protocol)
+	                                 use_non_text_features=use_non_text_features,
+	                                 show_characteristic=show_characteristic)\
+		.to_html(protocol=protocol)

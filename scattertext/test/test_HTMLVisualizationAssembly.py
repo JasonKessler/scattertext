@@ -7,7 +7,7 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
-		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false', 'false', 'false', 'false']
+		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false', 'false', 'false', 'false', 'true']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'buildViz(' + ','.join(params) + ');'
@@ -92,6 +92,15 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            use_non_text_features=True)
 		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({0: '1000', 1: '60', 8: 'true'}))
+
+	def test_show_characteristic(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            show_characteristic=False)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 9: 'false'}))
 
 	def test_max_snippets(self):
 		visualization_data = self.make_adapter()

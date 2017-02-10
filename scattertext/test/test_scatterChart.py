@@ -24,7 +24,10 @@ class TestScatterChart(TestCase):
 		            "y": 0.42,
 		            "term": "art",
 		            "cat25k": 758,
-		            "ncat25k": 0, 's': 0.5, 'os': 3}
+		            "ncat25k": 0,
+		            's': 0.5,
+		            'os': 3,
+		            'bg': 3}
 		datum = [t for t in j['data'] if t['term'] == 'art'][0]
 		for var in ['cat25k', 'ncat25k']:
 			np.testing.assert_almost_equal(expected[var], datum[var], decimal=1)

@@ -6,7 +6,8 @@ function buildViz(widthInPixels = 800,
                   useFullDoc = false,
                   greyZeroScores = false,
                   chineseMode = false,
-                  nonTextFeaturesMode = false) {
+                  nonTextFeaturesMode = false,
+                  showCharacteristic = true) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -39,7 +40,7 @@ function buildViz(widthInPixels = 800,
 
     // Adds the svg canvas
     // var svg = d3.select("body")
-    var svg = d3.select('#' + divName)
+    svg = d3.select('#' + divName)
         .append("svg")
         .attr("width", width + margin.left + margin.right + 200)
         .attr("height", height + margin.top + margin.bottom)
@@ -509,6 +510,10 @@ function buildViz(widthInPixels = 800,
             return a.s - b.s;
         }
 
+        function backgroundScoreSort(a, b) {
+            return b.bg - a.bg;
+        }
+
         function scoreSortForCategory(a, b) {
             var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
             var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
@@ -587,49 +592,86 @@ function buildViz(widthInPixels = 800,
             .text(modelInfo['category_name'] + " Frequency");
         registerFigureBBox(yLabel);
 
-        word = svg.append("text")
+        var catHeader = svg.append("text")
             .attr("class", "category_header")
             .attr("text-anchor", "start")
             .attr("x", width)
             .attr("dy", "6px")
-            .text("Top " + fullData['info']['category_name'] + ' Terms');
-        registerFigureBBox(word);
+            .text("Top " + fullData['info']['category_name']);
+        registerFigureBBox(catHeader);
+        console.log(catHeader);
 
         function showWordList(word, termDataList) {
+            var maxWidth = word.node().getBBox().width;
             for (var i in termDataList) {
                 var curTerm = termDataList[i].term;
                 word = (function (word, curTerm) {
                     return makeWordInteractive(
                         svg.append("text")
                             .attr("text-anchor", "start")
-                            .attr("x", width + 10)
+                            .attr("x", word.node().getBBox().x)
                             .attr("y", word.node().getBBox().y
                                 + 2 * word.node().getBBox().height)
                             .text(curTerm)
                         ,
                         curTerm);
                 })(word, curTerm);
+                if (word.node().getBBox().width > maxWidth)
+                    maxWidth = word.node().getBBox().width;
                 registerFigureBBox(word);
             }
-            return word;
+            return {
+                'word': word,
+                'maxWidth': maxWidth
+            };
         }
 
-        word = showWordList(word, data.sort(
+        var wordListData = showWordList(catHeader, data.sort(
             sortByDist ? euclideanDistanceSortForCategory : scoreSortForCategory
         ).slice(0, 14));
+        var word = wordListData.word;
+        var maxWidth = wordListData.maxWidth;
 
         word = svg.append("text")
             .attr("class", "category_header")
             .attr("text-anchor", "start")
             .attr("x", width)
             .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
-            .text("Top " + fullData['info']['not_category_name'] + ' Terms');
+            .text("Top " + fullData['info']['not_category_name']);
 
-        word = showWordList(word, data.sort(
+
+        var wordListData =  showWordList(word, data.sort(
             sortByDist ? euclideanDistanceSortForNotCategory : scoreSortForNotCategory
         ).slice(0, 14));
+        var word = wordListData.word;
+        if (wordListData.maxWidth > maxWidth) {
+            maxWidth = wordListData.maxWidth;
+        }
+
+
+
+        if(!nonTextFeaturesMode && !chineseMode && showCharacteristic) {
+            word = svg.append("text")
+                .attr("class", "category_header")
+                .attr("text-anchor", "start")
+                .attr("x", catHeader.node().getBBox().x + maxWidth + 10)
+                .attr("dy", "6px")
+                .text('Characteristic');
+
+            var wordListData =  showWordList(word,
+                data.sort(backgroundScoreSort).slice(0, 30));
+            word = wordListData.word;
+            maxWidth = wordListData.maxWidth;
+            console.log(maxWidth);
+            console.log(word.node().getBBox().x + maxWidth);
+
+            svg.attr('width', word.node().getBBox().x + 3*maxWidth + 10);
+        }
+
+
 
         for (i = 0; i < data.length; labelPointsIfPossible(i++));
+
 
         function populateCorpusStats() {
             var wordCounts = {};
