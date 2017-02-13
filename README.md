@@ -246,7 +246,7 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 
 Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
-## Changelog
+## What's new
 ### 0.0.2.2
 
 Addition option of showing characteristic terms (from the full set of documents) being considered.
