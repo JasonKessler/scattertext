@@ -1,4 +1,20 @@
 # Scattertext 0.0.2.2
+
+**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
+
+- [Installation](#)
+- [Overview](#)
+- [Tutorial](#)
+    - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#)
+    - [Visualizing term associations](#)
+    - [Visualizing Empath topics and categories](#)
+- [Examples](#)
+- [A note on chart layout](#)
+- [Data Day Texas 2017 Presentation](#)
+- [Technical underpinnings](#)
+- [What's new](#)
+- [Sources](#)
+
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
 non-overlapping term labels.  Exploratory data analysis just 
