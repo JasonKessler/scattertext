@@ -29,7 +29,7 @@ class TestScatterChart(TestCase):
 		                  'halt! who goes there?', 'it is i sire tone from brooklyn.',
 		                  'well, speak up man what is it?',
 		                  'news from the east sire! the best of both worlds has returned!'])
-		expected = {'y': 0.5, 'ncat': 0, 'ncat25k': 0,
+		expected = {'y': 0.5, 'ncat': 0, 'ncat25k': 0, 'bg': 5,
 		            'cat': 1, 's': 0.5, 'term': 'art', 'os': 0.5192,
 		            'cat25k': 758, 'x': 0.06}
 

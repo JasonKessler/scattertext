@@ -143,7 +143,7 @@ class TestTermDocMat(TestCase):
 		self.assertEqual({u'corpus', u'background', u'Rudder'},
 		                 set(df.columns))
 		self.assertEqual(list(df.index[:3]),
-		                 ['voltimand', 'knavish', 'mobled'])
+		                 ['voltimand', 'whoreson', 'mobled'])
 
 		df = hamlet.get_posterior_mean_ratio_scores_vs_background()
 		self.assertEqual({u'corpus', u'background', u'Log Posterior Mean Ratio'},
