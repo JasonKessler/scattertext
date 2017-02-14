@@ -1,8 +1,8 @@
-# Scattertext 0.0.2.2
+#Scattertext 0.0.2.2
 
-**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
+**Table of Contents**
 
-- [Installation](#)
+- [Installation](#Installation)
 - [Overview](#)
 - [Tutorial](#)
     - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#)
@@ -22,11 +22,11 @@ got more fun.
 
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
 
-## Installation
-
+##Installation 
+[](#Installation)
 `$ pip install scattertext && python -m spacy.en.download`
 
-## Overview
+##Overview
  
 This is a tool that's intended for visualizing what words and phrases
  are more characteristic of a category than others.  
@@ -65,9 +65,9 @@ notebooks, and poking around the code and tests should give you a good idea of h
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
-## Tutorial
+##Tutorial
 
-### Using Scattertext as a text analysis library: finding characteristic terms and their associations
+###Using Scattertext as a text analysis library: finding characteristic terms and their associations
 
 The following code creates a stand-alone HTML file that analyzes words 
 used by Democrats and Republicans in the 2012 party conventions, and outputs some notable
@@ -165,8 +165,7 @@ And Republicans:
  'in florida']
 ```
 
-
-### Visualizing term associations
+###Visualizing term associations
 
 Now, let's write the scatter plot a stand-alone HTML file.  We'll make the y-axis category  "democrat", and name
 the category "Democrat" with a capital "D" for presentation 
@@ -186,7 +185,7 @@ each excerpt with the speaker using the `metadata` parameter.  Finally, we write
 Below is what the webpage looks like.  Click it and wait a few minutes for the interactive version.
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
-### Visualizing Empath topics and categories
+###Visualizing Empath topics and categories
 
 In order to visualize Empath (Fast 2016) topics and categories instead of terms, we'll need to 
 create a `Corpus` of extracted topics and categories rather than unigrams and 
@@ -222,7 +221,7 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
 
-## Examples 
+##Examples 
 
 I recommend you start with this example first.  It explains some design decisions that were made in 
 Scattertext, and explains the strings of points.  You can 
@@ -233,7 +232,7 @@ Scattertext can also be used to visualize **topic models**, analyze how **word v
 Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
 tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
 
-## A note on chart layout
+##A note on chart layout
 
 [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy) (Loncaric 2016) was used to help determine 
 which terms could be labeled without overlapping a circle or another label.  It automatically built a data structure to efficiently store and query the locations of each circle and labeled term.
@@ -253,16 +252,15 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
   --js-class RectangleHolder --enable-hamt --enable-arrays --js rectangle_holder.js
 ```
 
-## Data Day Texas 2017 Presentation
+##Talks on Scattertext and Methods Used
 
-[Scattertext: A Tool for Visualizing Differences in Language
+* [Scattertext: A Tool for Visualizing Differences in Language
 ](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
 
-## Technical underpinnings
 
-Please see [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
+* [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
-## What's new
+##What's new
 ### 0.0.2.2
 
 Addition option of showing characteristic terms (from the full set of documents) being considered.
@@ -297,7 +295,7 @@ currently does not support ChineseNLP.
 In order for the visualization to work, set the `chinese_mode` flat to `True` in
 `produce_scattertext_explorer`.
 
-## Sources
+##Sources
 * 2012 Convention Data: scraped from [The New York Times.](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
 * count_1w: Peter Norvig assembled this file (downloaded from [norvig.com](http://norvig.com/ngrams/count_1w.txt)). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
