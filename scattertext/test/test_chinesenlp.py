@@ -1,7 +1,5 @@
 from unittest import TestCase
 
-from datashape import pprint
-
 from scattertext.ChineseNLP import chinese_nlp
 
 

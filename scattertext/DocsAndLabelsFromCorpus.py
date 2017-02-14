@@ -62,7 +62,7 @@ class DocsAndLabelsFromCorpusSample(DocsAndLabelsFromCorpus):
 				to_ret['labels'] += list([int(e) for e in labels[label_indices]])
 				to_ret['texts'] += list(texts[label_indices])
 				if metadata is not None:
-					to_ret['meta'] += list(metadata[label_indices])
+					to_ret['meta'] += [metadata[i] for i in label_indices]
 				if self._use_non_text_features:
 					print(len(texts), len(extrafeats), label_indices)
 					to_ret['extra'] += [extrafeats[i] for i in label_indices]
