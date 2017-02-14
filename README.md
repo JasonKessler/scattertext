@@ -5,14 +5,14 @@
 
 **Table of Contents**
 
-- [Installation](#Installation)
-- [Overview](#Overview)
-- [Tutorial](#Tutorial)
-- [Examples](#Examples)
-- [A note on chart layout](#A note on chart layout)
-- [Presentations on Scattertext](#Presentations on Scattertext)
-- [What's new](#What's new)
-- [Sources](#Sources)
+- [Installation](#installation)
+- [Overview](#overview)
+- [Tutorial](#tutorial)
+- [Examples](#examples)
+- [A note on chart layout](#a-note-on-chart-layout)
+- [Presentations on Scattertext](#presentations-on-scattertext)
+- [What's new](#whats-new)
+- [Sources](#sources)
 
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
@@ -35,7 +35,7 @@ Consider this example:
 
 Looking at this seem overwhelming.  In fact, it's a relatively simple visualization of word use 
 during the 2012 political convention.  Each dot corresponds to a word or phrase mentioned by Republicans or Democrats
-during their conventions.  The closer a dot is to the top of the plot, the more frequently it was used by 
+during their conventions.  The closer Fa dot is to the top of the plot, the more frequently it was used by 
 Democrats.  The further right a  dot, the more that word or phrase was used by Republicans.  Words frequently
 used by both parties, like "of" and "the" and even "Mitt" tend to occur in the upper-right-hand corner. Although very low 
 frequency words have been hidden to preserve computing resources, a word that neither party used, like "giraffe" 
