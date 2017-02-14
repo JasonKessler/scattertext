@@ -9,7 +9,7 @@ from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 
 
-def mock_empath_analyze(doc):
+def mock_empath_analyze(doc, **kwargs):
 	doc.split()
 	return {'disappointment': 0.0, 'violence': 0.0, 'ugliness': 0.0, 'legend': 0.0, 'farming': 0.0, 'hygiene': 0.0,
 	        'help': 0.0, 'payment': 0.0, 'pride': 0.0, 'prison': 0.0, 'night': 2.0, 'warmth': 0.0, 'magic': 0.0,
@@ -44,7 +44,7 @@ def mock_empath_analyze(doc):
 	        'trust': 0.0, 'cleaning': 0.0, 'masculine': 0.0, 'horror': 0.0}
 
 
-class TestFeatsFromSpacyDocAndEmpath(TestCase):
+class TestFeatsFsromSpacyDocAndEmpath(TestCase):
 	def test_main(self):
 		feat_getter = FeatsFromSpacyDocAndEmpath(empath_analyze_function=mock_empath_analyze)
 		sys.modules['empath'] = Mock(analyze=mock_empath_analyze)
