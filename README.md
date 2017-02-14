@@ -1,19 +1,17 @@
+(https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)
+
 #Scattertext 0.0.2.2
 
 **Table of Contents**
 
 - [Installation](#Installation)
-- [Overview](#)
-- [Tutorial](#)
-    - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#)
-    - [Visualizing term associations](#)
-    - [Visualizing Empath topics and categories](#)
-- [Examples](#)
-- [A note on chart layout](#)
-- [Data Day Texas 2017 Presentation](#)
-- [Technical underpinnings](#)
-- [What's new](#)
-- [Sources](#)
+- [Overview](#Overview)
+- [Tutorial](#Tutorial)
+- [Examples](#Examples)
+- [A note on chart layout](#A note on chart layout)
+- [Presentations on Scattertext](#Presentations on Scattertext)
+- [What's new](#What's new)
+- [Sources](#Sources)
 
 A tool for finding distinguishing terms in small-to-medium-sized
 corpora, and presenting them in a sexy, interactive scatter plot with 
@@ -23,7 +21,6 @@ got more fun.
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
 
 ##Installation 
-[](#Installation)
 `$ pip install scattertext && python -m spacy.en.download`
 
 ##Overview
@@ -252,7 +249,7 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
   --js-class RectangleHolder --enable-hamt --enable-arrays --js rectangle_holder.js
 ```
 
-##Talks on Scattertext and Methods Used
+##Presentations on Scattertext
 
 * [Scattertext: A Tool for Visualizing Differences in Language
 ](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
