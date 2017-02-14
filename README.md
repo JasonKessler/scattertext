@@ -1,4 +1,5 @@
-(https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)
+[![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
+[![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 
 #Scattertext 0.0.2.2
 
