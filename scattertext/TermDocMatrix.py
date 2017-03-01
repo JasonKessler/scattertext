@@ -274,13 +274,16 @@ class TermDocMatrix:
 		posterior_mean = (1. + a) / (1. + a + b + beta)
 		return posterior_mean
 
-	def get_logistic_regression_coefs_l2(self, category):
+	def get_logistic_regression_coefs_l2(self, category,
+	                                     clf = RidgeClassifierCV()):
 		''' Computes l2-penalized logistic regression score.
 		Parameters
 		----------
 		category : str
 			category name to score
 
+		category : str
+			category name to score
 		Returns
 		-------
 			(coefficient array, accuracy, majority class baseline accuracy)
@@ -288,7 +291,6 @@ class TermDocMatrix:
 		from sklearn.cross_validation import cross_val_predict
 		y = self._get_mask_from_category(category)
 		X = TfidfTransformer().fit_transform(self._X)
-		clf = RidgeClassifierCV()
 		clf.fit(X, y)
 		y_hat = cross_val_predict(clf, X, y)
 		acc, baseline = self._get_accuracy_and_baseline_accuracy(y, y_hat)
@@ -299,7 +301,10 @@ class TermDocMatrix:
 		baseline = max([sum(y), len(y) - sum(y)]) * 1. / len(y)
 		return acc, baseline
 
-	def get_logistic_regression_coefs_l1(self, category):
+	def get_logistic_regression_coefs_l1(self, category,
+	                                     clf = LassoCV(alphas=[0.1, 0.001],
+	                                                   max_iter=10000,
+	                                                   n_jobs=-1)):
 		''' Computes l1-penalized logistic regression score.
 		Parameters
 		----------
@@ -315,7 +320,7 @@ class TermDocMatrix:
 		y_continuous = self._get_continuous_version_boolean_y(y)
 		# X = TfidfTransformer().fit_transform(self._X)
 		X = self._X
-		clf = LassoCV(alphas=[0.1, 0.001], max_iter=10000, n_jobs=-1)
+
 		clf.fit(X, y_continuous)
 		y_hat = (cross_val_predict(clf, X, y_continuous) > 0)
 		acc, baseline = self._get_accuracy_and_baseline_accuracy(y, y_hat)

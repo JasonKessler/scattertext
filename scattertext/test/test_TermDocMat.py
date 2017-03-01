@@ -5,6 +5,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas
 from scattertext.TermDocMatrix import TermDocMatrix
@@ -142,7 +143,7 @@ class TestTermDocMat(TestCase):
 		self.assertEqual({u'corpus', u'background', u'Rudder'},
 		                 set(df.columns))
 		self.assertEqual(list(df.index[:3]),
-		                 ['voltimand', 'whoreson', 'mobled'])
+		                 ['voltimand', 'knavish', 'mobled'])
 
 		df = hamlet.get_posterior_mean_ratio_scores_vs_background()
 		self.assertEqual({u'corpus', u'background', u'Log Posterior Mean Ratio'},
@@ -184,14 +185,15 @@ class TestTermDocMat(TestCase):
 	def test_log_reg(self):
 		hamlet = get_hamlet_term_doc_matrix()
 		df = hamlet.get_term_freq_df()
-		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet')
-		l1scores, acc, baseline = hamlet.get_logistic_regression_coefs_l1('hamlet')
+		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet',clf=LinearRegression())
+		l1scores, acc, baseline = hamlet.get_logistic_regression_coefs_l1('hamlet', clf=LinearRegression())
 		self.assertGreaterEqual(acc, 0)
 		self.assertGreaterEqual(baseline, 0)
 		self.assertGreaterEqual(1, acc)
 		self.assertGreaterEqual(1, baseline)
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
-		                 ['hamlet', 'hamlet,', 'the'])
+		                 ['the', 'starts', 'incorporal'])
+		                 #['hamlet', 'hamlet,', 'the'])
 
 
 def get_hamlet_term_doc_matrix():

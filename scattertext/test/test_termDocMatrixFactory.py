@@ -112,7 +112,7 @@ class TestTermDocMatrixFactory(TestCase):
 				feats_from_spacy_doc=FeatsFromSpacyDoc(entity_types_to_censor=set(['GPE']))
 			).build()
 		)
-		self.assertIn('GPE', set(term_doc_mat.get_term_freq_df().index))
+		self.assertIn('_GPE', set(term_doc_mat.get_term_freq_df().index))
 		self.assertNotIn('brooklyn', set(term_doc_mat.get_term_freq_df().index))
 
 
