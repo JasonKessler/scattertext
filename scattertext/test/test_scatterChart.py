@@ -3,6 +3,7 @@ from unittest import TestCase
 
 import numpy as np
 
+from scattertext import LogOddsRatioUninformativeDirichletPrior
 from scattertext import ScatterChart
 from scattertext.test.test_termDocMatrixFactory \
 	import build_hamlet_jz_term_doc_mat, build_hamlet_jz_corpus_with_meta
@@ -28,12 +29,25 @@ class TestScatterChart(TestCase):
 		            's': 0.5,
 		            'os': 3,
 		            'bg': 3}
-		datum = [t for t in j['data'] if t['term'] == 'art'][0]
+		datum = self._get_data_example(j)
 		for var in ['cat25k', 'ncat25k']:
 			np.testing.assert_almost_equal(expected[var], datum[var], decimal=1)
 		self.assertEqual(expected.keys(), datum.keys())
 		self.assertEqual(expected['term'], datum['term'])
-		json.dumps(j)
+
+	def _get_data_example(self, j):
+		return [t for t in j['data'] if t['term'] == 'art'][0]
+
+	def test_p_vals(self):
+		tdm = build_hamlet_jz_term_doc_mat()
+		j = (ScatterChart(term_doc_matrix=tdm,
+		                  minimum_term_frequency=0,
+		                  term_significance=LogOddsRatioUninformativeDirichletPrior())
+		     .to_dict('hamlet'))
+		datum = self._get_data_example(j)
+		print(datum)
+		self.assertIn('p', datum.keys())
+
 
 	def test_to_json_use_non_text_features(self):
 		tdm = build_hamlet_jz_corpus_with_meta()

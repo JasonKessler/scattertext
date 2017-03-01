@@ -7,6 +7,11 @@ body {
   font: 12px Arial;
 }
 
+
+svg {
+  font: 12px Helvetica;
+}
+
 path {
   stroke: steelblue;
   stroke-width: 2;
@@ -64,6 +69,7 @@ div.label {
   padding: 1px;
   border-spacing: 1px;
   font: 10px sans-serif;
+  font-family: Sans-Serif;
   border: 0;
   pointer-events: none;
 }
@@ -105,7 +111,8 @@ input:focus {
 }
 
 .snippet_header {
-  font: 20px sans-serif;
+  font-size: 20px;
+  font-family: Helvetica, Arial, Sans-Serif;
   font-weight: bolder;
   #text-decoration: underline;
   text-align: center;
@@ -114,8 +121,19 @@ input:focus {
   padding-bottom: 10px;
 }
 
+
+#title-div {
+  font-size: 20px;
+  font-family: Helvetica, Arial, Sans-Serif;
+  text-align: center;
+}
+
+
 .text_header {
   font: 18px sans-serif;
+  font-size: 18px;
+  font-family: Helvetica, Arial, Sans-Serif;
+
   font-weight: bolder;
   text-decoration: underline;
   text-align: center;
@@ -124,14 +142,18 @@ input:focus {
 }
 
 .text_subheader {
-  font: 14px sans-serif;
+  font-size: 14px;
+  font-family: Helvetica, Arial, Sans-Serif;
+
   text-align: center;
 }
 
+
 .snippet_meta {
   border-top: 3px solid #4588ba;
-  font: 12px sans-serif;
-  color: darkblue;
+  font-size: 12px;
+  font-family: Helvetica, Arial, Sans-Serif;
+color: darkblue;
 }
 
 .left_contexts {
@@ -143,6 +165,17 @@ input:focus {
   width: 45%;
   float: left;
 }
+
+.scattertext {
+  font-size: 10px;
+  font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.label {
+  font-size: 10px;
+  font-family: Helvetica, Arial, Sans-Serif;
+}
+
 
 .small_label {
   font-size: 10px;
@@ -159,9 +192,11 @@ input:focus {
 }
 
 </style>
-<script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/d3-scale-chromatic.v1.min.js" charset="utf-8"></script>
-<div id="d3-div-1"> </div>
+<!-- EXTRA LIBS -->
+<span id="title-div"></span>
+<div class="scattertext" id="d3-div-1"> </div>
 <div id="corpus-stats"> </div>
 <form name="termForm" onSubmit="handleSearch(); return false;">
   <input name="Submit" type="submit" value="Search for term">

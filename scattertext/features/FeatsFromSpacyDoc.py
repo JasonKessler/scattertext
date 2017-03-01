@@ -51,7 +51,7 @@ class FeatsFromSpacyDoc(object):
 			for tok in sent:
 				if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
 					if tok.ent_type_ in self._entity_types_to_censor:
-						unigrams.append(tok.ent_type_)
+						unigrams.append('_'+tok.ent_type_)
 					elif tok.tag_ in self._tag_types_to_censor:
 						unigrams.append(tok.tag_)
 					elif self._use_lemmas and tok.lemma_.strip():

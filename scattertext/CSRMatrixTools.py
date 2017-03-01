@@ -28,7 +28,7 @@ class CSRMatrixFactory:
 
 		Returns
 		-------
-		None
+		Noone
 		'''
 		row, col = row_col
 		self.rows.append(row)

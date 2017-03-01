@@ -8,9 +8,10 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
-from sklearn.cross_validation import cross_val_predict
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns
@@ -55,6 +56,7 @@ class TermDocMatrix:
 			X, mX, y, term_idx_store, category_idx_store
 		self._metadata_idx_store = metadata_idx_store
 		self._unigram_frequency_path = unigram_frequency_path
+		self._background_corpus = None
 
 	def get_categories(self):
 		'''
@@ -100,6 +102,15 @@ class TermDocMatrix:
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
 		return self._term_freq_df_from_matrix(newX)
 
+	def _term_freq_df_from_matrix(self, catX):
+		return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
+
+	def _get_freq_df_using_idx_store(self, catX, idx_store):
+		d = {'term': idx_store._i2val}
+		for idx, cat in self._category_idx_store.items():
+			d[cat + ' freq'] = catX[idx, :].A[0]
+		return pd.DataFrame(d).set_index('term')
+
 	def get_metadata_freq_df(self):
 		'''
 		Returns
@@ -122,17 +133,8 @@ class TermDocMatrix:
 			row[row == i] = cat
 		return row
 
-	def _term_freq_df_from_matrix(self, catX):
-		return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
-
 	def _metadata_freq_df_from_matrix(self, catX):
 		return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
-
-	def _get_freq_df_using_idx_store(self, catX, idx_store):
-		d = {'term': idx_store._i2val}
-		for idx, cat in self._category_idx_store.items():
-			d[cat + ' freq'] = catX[idx, :].A[0]
-		return pd.DataFrame(d).set_index('term')
 
 	def get_unigram_corpus(self):
 		'''
@@ -283,6 +285,7 @@ class TermDocMatrix:
 		-------
 			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
+		from sklearn.cross_validation import cross_val_predict
 		y = self._get_mask_from_category(category)
 		X = TfidfTransformer().fit_transform(self._X)
 		clf = RidgeClassifierCV()
@@ -307,14 +310,53 @@ class TermDocMatrix:
 		-------
 			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
+		from sklearn.cross_validation import cross_val_predict
 		y = self._get_mask_from_category(category)
 		y_continuous = self._get_continuous_version_boolean_y(y)
-		X = TfidfTransformer().fit_transform(self._X)
-		clf = LassoCV(alphas=[0.1, 0.5, 1, 5])
+		# X = TfidfTransformer().fit_transform(self._X)
+		X = self._X
+		clf = LassoCV(alphas=[0.1, 0.001], max_iter=10000, n_jobs=-1)
 		clf.fit(X, y_continuous)
 		y_hat = (cross_val_predict(clf, X, y_continuous) > 0)
 		acc, baseline = self._get_accuracy_and_baseline_accuracy(y, y_hat)
+		clf.fit(X, y_continuous)
 		return clf.coef_, acc, baseline
+
+	def get_regression_coefs(self, category, clf=ElasticNet()):
+		''' Computes regression score of tdfidf transformed features
+		Parameters
+		----------
+		category : str
+			category name to score
+		clf : sklearn regressor
+
+		Returns
+		-------
+		coefficient array
+		'''
+		self._fit_tfidf_model(category, clf)
+		return clf.coef_
+
+	def get_logreg_coefs(self, category, clf=LogisticRegression()):
+		''' Computes regression score of tdfidf transformed features
+		Parameters
+		----------
+		category : str
+			category name to score
+		clf : sklearn regressor
+
+		Returns
+		-------
+		coefficient array
+		'''
+		self._fit_tfidf_model(category, clf)
+		return clf.coef_[0]
+
+	def _fit_tfidf_model(self, category, clf):
+		y = self._get_mask_from_category(category)
+		y_continuous = self._get_continuous_version_boolean_y(y)
+		X = TfidfTransformer().fit_transform(self._X)
+		clf.fit(X, y_continuous)
 
 	def _get_continuous_version_boolean_y(self, y_bool):
 		return 1000 * (y_bool * 2. - 1)
@@ -352,7 +394,8 @@ class TermDocMatrix:
 		)
 		return scores
 
-	def _computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(self, cat_word_counts,
+	def _computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(self,
+	                                                                                  cat_word_counts,
 	                                                                                  p_category_given_word,
 	                                                                                  p_word_given_category,
 	                                                                                  scaler):
@@ -365,8 +408,7 @@ class TermDocMatrix:
 		df_with_count['scale p_word_given_category'] = scaler(df_with_count['p_word_given_category'])
 		df_with_count['scale p_category_given_word'] = scaler(df_with_count['p_category_given_word'])
 		df['scale p_word_given_category'] = 0
-		df.loc[df_with_count.index, 'scale p_word_given_category'] \
-			= df_with_count['scale p_word_given_category']
+		df.loc[df_with_count.index, 'scale p_word_given_category'] = df_with_count['scale p_word_given_category']
 		df['scale p_category_given_word'] = 0
 		df.loc[df_with_count.index, 'scale p_category_given_word'] \
 			= df_with_count['scale p_category_given_word']
@@ -459,6 +501,32 @@ class TermDocMatrix:
 	def _rescale_labels_to_neg_one_pos_one(self, category):
 		return (self._get_mask_from_category(category)) * 2 - 1
 
+	def set_background_corpus(self, background):
+		'''
+		Parameters
+		----------
+		background
+
+		'''
+		if issubclass(type(background), TermDocMatrix):
+			self._background_corpus = pd.DataFrame(background
+			                                       .get_term_freq_df()
+			                                       .sum(axis=1),
+			                                       columns=['background']).reset_index()
+			self._background_corpus.columns = ['word', 'background']
+		elif (type(background) == pd.DataFrame
+		      and set(background.columns) == set(['word', 'background'])):
+			self._background_corpus = background
+		else:
+			raise Exception('The argument named background must be a subclass of TermDocMatrix or a ' \
+			                + 'DataFrame with columns "word" and "background", where "word" ' \
+			                + 'is the term text, and "background" is its frequency.')
+
+	def get_background_corpus(self):
+		if self._background_corpus is not None:
+			return self._background_corpus
+		return None
+
 	def _get_corpus_joined_to_background(self):
 		background_df = self._get_background_unigram_frequencies()
 		term_freq_df = self.get_term_freq_df()
@@ -475,6 +543,8 @@ class TermDocMatrix:
 		return corpus_unigram_freq
 
 	def _get_background_unigram_frequencies(self):
+		if self.get_background_corpus() is not None:
+			return self.get_background_corpus()
 		if self._unigram_frequency_path:
 			unigram_freq_table_buf = open(self._unigram_frequency_path)
 		else:
@@ -482,6 +552,8 @@ class TermDocMatrix:
 			                                  .decode('utf-8'))
 		return (pd.read_table(unigram_freq_table_buf,
 		                      names=['word', 'background'])
+		        .sort_values(ascending=False, by='background')
+		        .drop_duplicates(['word'])
 		        .set_index('word'))
 
 	def list_extra_features(self):

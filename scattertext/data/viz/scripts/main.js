@@ -7,7 +7,11 @@ function buildViz(widthInPixels = 800,
                   greyZeroScores = false,
                   chineseMode = false,
                   nonTextFeaturesMode = false,
-                  showCharacteristic = true) {
+                  showCharacteristic = true,
+                  wordVecMaxPValue = false,
+                  saveSvgButton = false,
+                  reverseSortScoresForNotCategory = false,
+                  minPVal=0.05) {
     var divName = 'd3-div-1';
 
     // Set the dimensions of the canvas / graph
@@ -368,11 +372,18 @@ function buildViz(widthInPixels = 800,
             return d.y;
         }) + 0.1]);
 
+        /*
+        data.sort(function (a, b) {
+            return Math.abs(b.os) - Math.abs(a.os)
+        });
+        */
+
 
         //var rangeTree = null; // keep boxes of all points and labels here
         var rectHolder = new RectangleHolder();
         // Add the scatterplot
-        mysvg = svg.selectAll("dot")
+        mysvg = svg
+            .selectAll("dot")
             .data(data)
             .enter()
             .append("circle")
@@ -448,6 +459,8 @@ function buildViz(widthInPixels = 800,
                         .attr("x", x(data[i].x) + config['xoff'])
                         .attr("y", y(data[i].y) + config['yoff'])
                         .attr('class', 'label')
+                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                        .attr('font-size', '10px')
                         .attr("text-anchor", config['anchor'])
                         .text(term),
                     term
@@ -510,32 +523,43 @@ function buildViz(widthInPixels = 800,
             return a.s - b.s;
         }
 
+        function scoreSortReverse(a, b) {
+            return b.s - a.s;
+        }
+
         function backgroundScoreSort(a, b) {
             return b.bg - a.bg;
         }
 
-        function scoreSortForCategory(a, b) {
+        function arePointsPredictiveOfDifferentCategories(a, b) {
             var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
             var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
             var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
             var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
             var aGood = aCatDist < aNotCatDist;
             var bGood = bCatDist < bNotCatDist;
+            return {aGood: aGood, bGood: bGood};
+        }
+
+        function scoreSortForCategory(a, b) {
+            var __ret = arePointsPredictiveOfDifferentCategories(a, b);
+            var aGood = __ret.aGood;
+            var bGood = __ret.bGood;
             if (aGood && !bGood) return -1;
             if (!aGood && bGood) return 1;
             return b.s - a.s;
         }
 
         function scoreSortForNotCategory(a, b) {
-            var aCatDist = a.x * a.x + (1 - a.y) * (1 - a.y);
-            var bCatDist = b.x * b.x + (1 - b.y) * (1 - b.y);
-            var aNotCatDist = a.y * a.y + (1 - a.x) * (1 - a.x);
-            var bNotCatDist = b.y * b.y + (1 - b.x) * (1 - b.x);
-            var aGood = aCatDist > aNotCatDist;
-            var bGood = bCatDist > bNotCatDist;
-            if (aGood && !bGood) return -1;
-            if (!aGood && bGood) return 1;
-            return b.s - a.s;
+            var __ret = arePointsPredictiveOfDifferentCategories(a, b);
+            var aGood = __ret.aGood;
+            var bGood = __ret.bGood;
+            if (aGood && !bGood) return 1;
+            if (!aGood && bGood) return -1;
+            if (reverseSortScoresForNotCategory)
+                return a.s - b.s;
+            else
+                return b.s - a.s;
         }
 
         if (sortByDist) {
@@ -567,7 +591,10 @@ function buildViz(widthInPixels = 800,
             .attr("text-anchor", "end")
             .attr("x", width)
             .attr("y", height - 6)
+            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+            .attr('font-size', '10px')
             .text(modelInfo['not_category_name'] + " Frequency");
+
         //console.log('xLabel');
         //console.log(xLabel);
 
@@ -580,6 +607,8 @@ function buildViz(widthInPixels = 800,
             .style("text-anchor", "end")
             .attr("dx", "30px")
             .attr("dy", "-13px")
+            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+            .attr('font-size', '10px')
             .attr("transform", "rotate(-90)");
         registerFigureBBox(myYAxis);
 
@@ -589,14 +618,19 @@ function buildViz(widthInPixels = 800,
             .attr("y", 6)
             .attr("dy", ".75em")
             .attr("transform", "rotate(-90)")
+            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+            .attr('font-size', '10px')
             .text(modelInfo['category_name'] + " Frequency");
         registerFigureBBox(yLabel);
 
         var catHeader = svg.append("text")
-            .attr("class", "category_header")
             .attr("text-anchor", "start")
             .attr("x", width)
             .attr("dy", "6px")
+            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+            .attr('font-size', '12px')
+            .attr('font-weight', 'bolder')
+            .attr('font-decoration', 'underline')
             .text("Top " + fullData['info']['category_name']);
         registerFigureBBox(catHeader);
         console.log(catHeader);
@@ -609,6 +643,8 @@ function buildViz(widthInPixels = 800,
                     return makeWordInteractive(
                         svg.append("text")
                             .attr("text-anchor", "start")
+                            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                            .attr('font-size', '12px')
                             .attr("x", word.node().getBBox().x)
                             .attr("y", word.node().getBBox().y
                                 + 2 * word.node().getBBox().height)
@@ -626,51 +662,100 @@ function buildViz(widthInPixels = 800,
             };
         }
 
-        var wordListData = showWordList(catHeader, data.sort(
-            sortByDist ? euclideanDistanceSortForCategory : scoreSortForCategory
-        ).slice(0, 14));
+        function pickEuclideanDistanceSortAlgo(category) {
+            if (category == true) return euclideanDistanceSortForCategory;
+            return euclideanDistanceSortForNotCategory;
+        }
+
+        function pickScoreSortAlgo(category) {
+            console.log("PICK SCORE ALGO")
+            console.log(category)
+            if (category == true) {
+                return scoreSortForCategory;
+            } else {
+                return scoreSortForNotCategory;
+            }
+        }
+
+        function pickTermSortingAlgorithm(category) {
+            if (sortByDist) return pickEuclideanDistanceSortAlgo(category);
+            return pickScoreSortAlgo(category);
+        }
+
+        function showAssociatedWordList(header, isAssociatedToCategory, length=14) {
+            var sortedData = null;
+            var sortingAlgo = pickTermSortingAlgorithm(isAssociatedToCategory);
+            sortedData = data.sort(sortingAlgo);
+            if (wordVecMaxPValue) {
+                function signifTest(x) {
+                    if (isAssociatedToCategory)
+                        return x.p >= 1-minPVal;
+                    return x.p <= minPVal;
+                }
+
+                sortedData = sortedData.filter(signifTest)
+            }
+            return showWordList(header, sortedData.slice(0, length));
+
+        }
+
+        var wordListData = showAssociatedWordList(catHeader, true);
         var word = wordListData.word;
         var maxWidth = wordListData.maxWidth;
 
-        word = svg.append("text")
-            .attr("class", "category_header")
+        catHeader = svg.append("text")
+            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+            .attr('font-size', '12px')
+            .attr('font-weight', 'bolder')
+            .attr('font-decoration', 'underline')
             .attr("text-anchor", "start")
             .attr("x", width)
             .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
             .text("Top " + fullData['info']['not_category_name']);
 
 
-        var wordListData =  showWordList(word, data.sort(
-            sortByDist ? euclideanDistanceSortForNotCategory : scoreSortForNotCategory
-        ).slice(0, 14));
-        var word = wordListData.word;
+        wordListData = showAssociatedWordList(catHeader, false);
+        word = wordListData.word;
         if (wordListData.maxWidth > maxWidth) {
             maxWidth = wordListData.maxWidth;
         }
 
 
-
-        if(!nonTextFeaturesMode && !chineseMode && showCharacteristic) {
+        if (!nonTextFeaturesMode && !chineseMode && showCharacteristic) {
+            var title = 'Characteristic';
+            if (wordVecMaxPValue) {
+                title = 'Most similar';
+            }
             word = svg.append("text")
-                .attr("class", "category_header")
+                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                 .attr("text-anchor", "start")
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bolder')
+                .attr('font-decoration', 'underline')
                 .attr("x", catHeader.node().getBBox().x + maxWidth + 10)
                 .attr("dy", "6px")
-                .text('Characteristic');
+                .text(title);
+            var sortMethod = backgroundScoreSort;
+            if (wordVecMaxPValue) {
+                sortMethod = scoreSortReverse;
+            }
+            var wordListData = showWordList(word, data.sort(sortMethod).slice(0, 30));
+            ;
 
-            var wordListData =  showWordList(word,
-                data.sort(backgroundScoreSort).slice(0, 30));
             word = wordListData.word;
             maxWidth = wordListData.maxWidth;
             console.log(maxWidth);
             console.log(word.node().getBBox().x + maxWidth);
 
-            svg.attr('width', word.node().getBBox().x + 3*maxWidth + 10);
+            svg.attr('width', word.node().getBBox().x + 3 * maxWidth + 10);
         }
 
-
-
-        for (i = 0; i < data.length; labelPointsIfPossible(i++));
+        var numPointsLabeled = 0;
+        for (var i = 0; i < data.length; i++) {
+            if(labelPointsIfPossible(i)) numPointsLabeled++;
+        }
+        console.log('numPointsLabeled');
+        console.log(numPointsLabeled);
 
 
         function populateCorpusStats() {
@@ -708,6 +793,32 @@ function buildViz(widthInPixels = 800,
         };
 
         populateCorpusStats();
+
+        if (saveSvgButton) {
+            // from http://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
+            var svgElement = document.getElementById("d3-div-1");
+
+            var serializer = new XMLSerializer();
+            var source = serializer.serializeToString(svgElement);
+
+            if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            if (!source.match(/^<svg[^>]+"http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
+                source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+            }
+
+            source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+            var url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+
+            var downloadLink = document.createElement("a");
+            downloadLink.href = url;
+            downloadLink.download = fullData['info']['category_name'] + ".svg";
+            downloadLink.innerText = 'Download SVG';
+            document.body.appendChild(downloadLink);
+
+        }
 
     };
 

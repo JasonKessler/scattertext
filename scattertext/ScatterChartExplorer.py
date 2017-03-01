@@ -1,6 +1,7 @@
 import numpy as np
 
-from scattertext import ScatterChart, percentile_ordinal
+from scattertext import ScatterChart
+from scattertext import percentile_alphabetical
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
 
@@ -13,7 +14,7 @@ class ScatterChartExplorer(ScatterChart):
 
 		'''
 		assert isinstance(corpus, Corpus)
-		ScatterChart.__init__(self,  corpus, **kwargs)
+		ScatterChart.__init__(self, corpus, **kwargs)
 
 	def to_dict(self,
 	            category,
@@ -22,7 +23,7 @@ class ScatterChartExplorer(ScatterChart):
 	            scores=None,
 	            metadata=None,
 	            max_docs_per_category=None,
-	            transform=percentile_ordinal):
+	            transform=percentile_alphabetical):
 		'''
 		:param category: Category to annotate
 		:param category_name: Name of category which will appear on web site.
@@ -30,13 +31,15 @@ class ScatterChartExplorer(ScatterChart):
 		:param scores: Scores to use.  Default to Scaled F-Score.
 		:param metadata: None or array-like.  List of metadata for each document.
 		:param max_docs_per_category: None or int.  Maximum number of documents to store per category.
-		:param transform: Defaults to percentile_ordinal
+		:param transform: Defaults to percentile_lexicographic
 		:return: dictionary {info: {category_name: ..., not_category_name},
 												 docs: {'texts': [doc1text, ...],
 												        'labels': [1, 0, ...],
 												        'meta': ['<b>blah</b>', '<b>blah</b>']}
 		                     data: {term:, x:frequency [0-1], y:frequency [0-1],
 		                            s: score,
+		                            bg: background score,
+		                            as: association score,
 		                            cat25k: freq per 25k in category,
 		                            cat: count in category,
 		                            ncat: count in non-category,
@@ -62,7 +65,6 @@ class ScatterChartExplorer(ScatterChart):
 		if self.use_non_text_features:
 			docs_getter = docs_getter.use_non_text_features()
 		return docs_getter
-
 
 	def _get_docs_structure(self, docs_getter, metadata):
 		if metadata is not None:

@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 
-from scattertext.Scalers import percentile_min, percentile_ordinal
+from scattertext.PValGetter import get_p_vals
+from scattertext.Scalers import percentile_min, percentile_alphabetical
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
 	filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.termranking import AbsoluteFrequencyRanker
@@ -24,7 +25,8 @@ class ScatterChart:
 	             max_terms=None,
 	             filter_unigrams=False,
 	             term_ranker=AbsoluteFrequencyRanker,
-	             use_non_text_features=False):
+	             use_non_text_features=False,
+	             term_significance=None):
 
 		'''
 
@@ -48,6 +50,8 @@ class ScatterChart:
 			TermRanker class for determining term frequency ranks.
 		use_non_text_features : bool, default = False
 			Use non-BoW features (e.g., Empath) instead of text features
+		term_significance : TermSignifiance instance or None
+			Way of getting signfiance scores.  If None, p values will not be added.
 		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
@@ -60,6 +64,7 @@ class ScatterChart:
 		self.use_non_text_features = False
 		if use_non_text_features:
 			self.use_non_text_features = use_non_text_features
+		self.term_significance = term_significance
 		np.random.seed(seed)
 
 	def to_dict(self,
@@ -67,7 +72,7 @@ class ScatterChart:
 	            category_name=None,
 	            not_category_name=None,
 	            scores=None,
-	            transform=percentile_ordinal):
+	            transform=percentile_alphabetical):
 		'''
 
 		Parameters
@@ -81,7 +86,7 @@ class ScatterChart:
 		scores : np.array, optional
 			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
 		transform : function, optional
-			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_ordinal.
+			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.
 
 		Returns
 		-------
@@ -94,6 +99,7 @@ class ScatterChart:
 		          y:frequency [0-1],
               s: score,
               os: original score,
+              p: p-val,
               cat25k: freq per 25k in category,
               cat: count in category,
               ncat: count in non-category,
@@ -108,17 +114,12 @@ class ScatterChart:
 			(category, df, other_categories, transform)
 		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
 		json_df = df[['x', 'y', 'term']]
+		if self.term_significance:
+			json_df['p'] = df['p']
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		json_df['os'] = df['color_scores']
-		bg_terms = self.term_doc_matrix.get_scaled_f_scores_vs_background()
-		bg_terms = bg_terms['Scaled f-score']
-		bg_terms.name = 'bg'
-		bg_terms = bg_terms.reset_index()
-		bg_terms.columns = ['term' if x == 'index' else x for x in bg_terms.columns]
-		json_df = pd.merge(json_df, bg_terms, on='term', how='left')
-		json_df['bg'] = json_df['bg'].fillna(0)
-
+		json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
 
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])
@@ -137,6 +138,15 @@ class ScatterChart:
 		              'category_internal_name': category}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
+
+	def _get_corpus_characteristic_scores(self, json_df):
+		bg_terms = self.term_doc_matrix.get_scaled_f_scores_vs_background()
+		bg_terms = bg_terms['Scaled f-score']
+		bg_terms.name = 'bg'
+		bg_terms = bg_terms.reset_index()
+		bg_terms.columns = ['term' if x == 'index' else x for x in bg_terms.columns]
+		json_df = pd.merge(json_df, bg_terms, on='term', how='left')
+		return json_df['bg'].fillna(0)
 
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
 		json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
@@ -158,8 +168,8 @@ class ScatterChart:
 	                                                           df,
 	                                                           other_categories,
 	                                                           transform):
-		x_data_raw = transform(df[other_categories].sum(axis=1))
-		y_data_raw = transform(df[category + ' freq'])
+		x_data_raw = transform(df[other_categories].sum(axis=1), df.index)
+		y_data_raw = transform(df[category + ' freq'], df.index)
 		x_data = self._add_jitter(x_data_raw)
 		y_data = self._add_jitter(y_data_raw)
 		return x_data, y_data
@@ -189,6 +199,9 @@ class ScatterChart:
 			df[category_column_name],
 			df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
 		)
+		if self.term_significance is not None:
+			df['p'] = get_p_vals(self.term_doc_matrix, category_column_name,
+			                     self.term_significance)
 		df['not category score'] = np.sqrt(2) - df['category score']
 		df['color_scores'] = scores
 		df = filter_bigrams_by_pmis(
@@ -227,7 +240,7 @@ class ScatterChart:
 	         num_top_words_to_annotate=4,
 	         words_to_annotate=[],
 	         scores=None,
-	         transform=percentile_ordinal):
+	         transform=percentile_alphabetical):
 		'''Outdated.  MPLD3 drawing.
 
 		Parameters

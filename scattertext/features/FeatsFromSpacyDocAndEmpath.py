@@ -1,11 +1,17 @@
 from collections import Counter
 from functools import partial
 
-from scattertext import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 
 class FeatsFromSpacyDocAndEmpath(FeatsFromSpacyDoc):
-	def __init__(self, empath_analyze_function=None, **kwargs):
+	def __init__(self,
+	             use_lemmas=False,
+	             entity_types_to_censor=set(),
+	             tag_types_to_censor=set(),
+	             strip_final_period=False,
+	             empath_analyze_function=None,
+	             **kwargs):
 		'''
 		Parameters
 		----------
@@ -23,7 +29,10 @@ class FeatsFromSpacyDocAndEmpath(FeatsFromSpacyDoc):
 		else:
 			self._empath_analyze_function = partial(empath_analyze_function,
 			                                        kwargs={'tokenizer': 'bigram'})
-		super(FeatsFromSpacyDocAndEmpath, self).__init__(**kwargs)
+		super(FeatsFromSpacyDocAndEmpath, self).__init__(use_lemmas,
+		                                                 entity_types_to_censor,
+		                                                 tag_types_to_censor,
+		                                                 strip_final_period)
 
 	def get_doc_metadata(self, doc, prefix=''):
 		empath_counter = Counter()

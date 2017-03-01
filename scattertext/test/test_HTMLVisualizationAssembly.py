@@ -7,10 +7,26 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
-		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false', 'false', 'false', 'false', 'true']
+		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
+		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'buildViz(' + ','.join(params) + ');'
+
+	def make_assembler(self):
+		visualization_data = self.make_adapter()
+		assembler = HTMLVisualizationAssembly(visualization_data)
+		return assembler
+
+	def make_adapter(self):
+		words_dict = {"info": {"not_category_name": "Republican", "category_name": "Democratic"},
+		              "data": [{"y": 0.33763837638376387, "term": "crises", "ncat25k": 0,
+		                        "cat25k": 1, "x": 0.0, "s": 0.878755930416447},
+		                       {"y": 0.5, "term": "something else", "ncat25k": 0,
+		                        "cat25k": 1, "x": 0.0,
+		                        "s": 0.5}]}
+		visualization_data = VizDataAdapter(words_dict)
+		return visualization_data
 
 	def test_main(self):
 		assembler = self.make_assembler()
@@ -19,8 +35,18 @@ class TestHTMLVisualizationAssembly(TestCase):
 			self.assertEqual(type(html), unicode)
 		else:
 			self.assertEqual(type(html), str)
+		self.assertFalse('<!-- EXTRA LIBS -->' in html)
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 		self.assertTrue('Republican' in html)
+
+	def test_save_svg_button(self):
+		assembly = HTMLVisualizationAssembly(self.make_adapter(), save_svg_button=True)
+		html = assembly.to_html()
+		self.assertEqual(assembly._call_build_visualization_in_javascript(),
+		                 self.get_params({11: 'true'}))
+		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
+		#self.assertTrue('d3-save-svg.min.js' in html)
+
 
 	def test_protocol_is_https(self):
 		html = self.make_assembler().to_html(protocol='https')
@@ -34,7 +60,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 
 	def test_protocol_defaults_to_http(self):
 		self.assertEqual(self.make_assembler().to_html(protocol='http'),
-		                 self.make_assembler().to_html(), )
+		                 self.make_assembler().to_html())
 
 	def test_raise_invalid_protocol_exception(self):
 		with self.assertRaisesRegexp(BaseException,
@@ -44,6 +70,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 	def test_height_width_default(self):
 		assembler = self.make_assembler()
 		self.assertEqual(assembler._call_build_visualization_in_javascript(), self.get_params())
+
 
 	def test_color(self):
 		visualization_data = self.make_adapter()
@@ -67,22 +94,26 @@ class TestHTMLVisualizationAssembly(TestCase):
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, chinese_mode=True)
 		                  ._call_build_visualization_in_javascript()), self.get_params({7: 'true'}))
 
+	def test_reverse_sort_scores_for_not_category(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, reverse_sort_scores_for_not_category=False)
+		                  ._call_build_visualization_in_javascript()), self.get_params({12: 'false'}))
 
 	def test_height_width_nondefault(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 self.get_params({0:'1000'}))
+		                 self.get_params({0: '1000'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, height_in_pixels=60)
 		                  ._call_build_visualization_in_javascript()),
-		                 self.get_params({1:'60'}))
+		                 self.get_params({1: '60'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000)
 		                  ._call_build_visualization_in_javascript()),
-		                 self.get_params({0:'1000',1:'60'}))
+		                 self.get_params({0: '1000', 1: '60'}))
 
 	def test_use_non_text_features(self):
 		visualization_data = self.make_adapter()
@@ -109,26 +140,30 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            width_in_pixels=1000,
 		                                            max_snippets=None)
 		                  ._call_build_visualization_in_javascript()),
-		                 self.get_params({0:'1000',1:'60'}))
+		                 self.get_params({0: '1000', 1: '60'}))
 
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            height_in_pixels=60,
 		                                            width_in_pixels=1000,
 		                                            max_snippets=100)
 		                  ._call_build_visualization_in_javascript()),
-		                 self.get_params({0:'1000',1:'60', 2:'100'}))
+		                 self.get_params({0: '1000', 1: '60', 2: '100'}))
 
-	def make_assembler(self):
+	def test_word_vec_use_p_vals(self):
 		visualization_data = self.make_adapter()
-		assembler = HTMLVisualizationAssembly(visualization_data)
-		return assembler
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            word_vec_use_p_vals=True)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 10: 'true'}))
 
-	def make_adapter(self):
-		words_dict = {"info": {"not_category_name": "Republican", "category_name": "Democratic"},
-		              "data": [{"y": 0.33763837638376387, "term": "crises", "ncat25k": 0,
-		                        "cat25k": 1, "x": 0.0, "s": 0.878755930416447},
-		                       {"y": 0.5, "term": "something else", "ncat25k": 0,
-		                        "cat25k": 1, "x": 0.0,
-		                        "s": 0.5}]}
-		visualization_data = VizDataAdapter(words_dict)
-		return visualization_data
+	def test_max_p_val(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            word_vec_use_p_vals=True,
+		                                            max_p_val=0.01)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 10: 'true', 13: '0.01'}))

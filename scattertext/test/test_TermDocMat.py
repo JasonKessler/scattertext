@@ -6,11 +6,11 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
-from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext import TermDocMatrixFromPandas
-from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
+from scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 
 
@@ -75,7 +75,6 @@ class TestTermDocMat(TestCase):
 		uni_term_df = uni_tdm.get_term_freq_df()
 		self.assertEqual(set(term for term in term_df.index if ' ' not in term and "'" not in term),
 		                 set(uni_term_df.index)),
-
 
 	def test_get_stoplisted_unigram_corpus(self):
 		tdm = make_a_test_term_doc_matrix()
@@ -151,6 +150,32 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
+	def test_set_background_corpus(self):
+		tdm = get_hamlet_term_doc_matrix()
+		with self.assertRaisesRegex(Exception, "The argument.+"):
+			tdm.set_background_corpus(1)
+		with self.assertRaisesRegex(Exception, "The argument.+"):
+			back_df = pd.DataFrame()
+			tdm.set_background_corpus(back_df)
+		with self.assertRaisesRegex(Exception, "The argument.+"):
+			back_df = pd.DataFrame({'word': ['a', 'bee'], 'backgasdround': [3, 1]})
+			tdm.set_background_corpus(back_df)
+		back_df = pd.DataFrame({'word': ['a', 'bee'], 'background': [3, 1]})
+		tdm.set_background_corpus(back_df)
+		tdm.set_background_corpus(tdm)
+
+	def test_get_background_corpus(self):
+		tdm = get_hamlet_term_doc_matrix()
+		background = tdm.get_background_corpus()
+		self.assertEqual(background, None)
+		back_df = pd.DataFrame({'word': ['a', 'bee'], 'background': [3, 1]})
+		tdm.set_background_corpus(back_df)
+		self.assertEqual(tdm.get_background_corpus().to_dict(),
+		                 back_df.to_dict())
+		tdm.set_background_corpus(tdm)
+		self.assertEqual(set(tdm.get_background_corpus().to_dict().keys()),
+		                 set(['word', 'background']))
+
 	# to do: come up with faster way of testing fisher
 	# df = hamlet.get_fisher_scores_vs_background()
 	# self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
@@ -167,8 +192,6 @@ class TestTermDocMat(TestCase):
 		self.assertGreaterEqual(1, baseline)
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
 		                 ['hamlet', 'hamlet,', 'the'])
-
-
 
 
 def get_hamlet_term_doc_matrix():

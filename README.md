@@ -1,13 +1,16 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 
-#Scattertext 0.0.2.2
+#Scattertext 0.0.2.3
 
 **Table of Contents**
 
 - [Installation](#installation)
 - [Overview](#overview)
 - [Tutorial](#tutorial)
+- [Advanced Uses](#advanced-uses)
+    - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
+    - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [Presentations on Scattertext](#presentations-on-scattertext)
@@ -219,6 +222,79 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
 
+##Advanced uses
+
+###Visualizing query-based categorical differences  
+Word representations have recently become a hot topic in NLP.  While lots of work has been done visualizing 
+how terms relate to one another given their scores 
+(e.g., [http://projector.tensorflow.org/](http://projector.tensorflow.org/)),
+none to my knowledge has been done visualizing how we can use these to examine how 
+document categories differ. 
+
+In this example given a query term, "jobs", we can see how Republicans and 
+Democrats talk about it differently.
+
+In this configuration of Scattertext, words are colored by their similarity to a query phrase.  
+This is done using [spaCy](https://spacy.io/)-provided GloVe word vectors (trained on 
+the Common Crawl corpus). The cosine distance between vectors is used, 
+with mean vectors used for phrases.
+
+The calculation of the most similar terms associated with each category is a simple heuristic.  First, 
+sets of terms closely associated with a category are found. Second, these terms are ranked 
+based on their similarity to the query, and the top rank terms are displayed to the right of the 
+scatterplot.  
+
+A term is considered associated if its p-value is less than 0.05.  P-values are 
+determined using Monroe et al. (2008)'s difference in the weighted log-odds-ratios with an 
+uninformative Dirichlet prior.  This is the only model-based method discussed in Monroe et al. 
+that does not rely on a large, in-domain background corpus. Since we are scoring 
+bigrams in addition to the unigrams scored by Monroe, the size of the corpus would have to be larger 
+to have high enough bigram counts for proper penalization. This function 
+relies the Dirichlet distribution's parameter alpha, a vector, which is uniformly set to 0.01.
+
+Here is the Scattertext to produce such a visualization. 
+ 
+```pydocstring
+>>> from scattertext word_similarity_explorer
+>>> html = word_similarity_explorer(corpus,
+...                                 category='democrat',
+...                                 category_name='Democratic',
+...                                 not_category_name='Republican',
+...                                 target_term='jobs',
+...                                 minimum_term_frequency=5,
+...                                 pmi_filter_thresold=4,
+...                                 width_in_pixels=1000,
+...                                 metadata=convention_df['speaker'],
+...                                 alpha=0.01,
+...                                 max_p_val=0.05,
+...                                 save_svg_button=True)
+>>> open("Convention-Visualization-Jobs.html", 'wb').write(html.encode('utf-8'))
+``` 
+[![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Convention-Visualization-Jobs.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
+
+
+###Visualizing any kind of term score
+
+We can use Scattertext to visualize alternative types of word scores, and ensure that 0 scores are greyed out.  Use the `sparse_explroer` function to acomplish this, and see its source code for more details.     
+
+```pydocstring
+>>> from sklearn.linear_model import Lasso
+>>> from scattertext sparse_explorer
+>>> html = sparse_explorer(corpus,
+...                        category='democrat',
+...                        category_name='Democratic',
+...                        not_category_name='Republican',
+...                        scores = corpus.get_regression_coefs('democrat', Lasso(max_iter=10000)),
+...                        minimum_term_frequency=5,
+...                        pmi_filter_thresold=4,
+...                        width_in_pixels=1000,
+...                        metadata=convention_df['speaker'])
+>>> 
+open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
+```
+
+[![Convention-Visualization-Sparse.html](https://jasonkessler.github.io/Convention-Visualization-Sparse.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
+
 ##Examples 
 
 I recommend you start with this example first.  It explains some design decisions that were made in 
@@ -259,6 +335,18 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.3
+Ability to see how a particular term is discussed differently between categories
+through the `word_similarity_explorer` function. 
+
+Specialized mode to view sparse term scores.
+
+Fixed a bug that was caused by repeated values in background unigram counts.
+
+Added true alphabetical term sorting in visualizations.
+  
+Added an optional save-as-SVG button.
+
 ### 0.0.2.2
 
 Addition option of showing characteristic terms (from the full set of documents) being considered.
@@ -299,4 +387,4 @@ In order for the visualization to work, set the `chinese_mode` flat to `True` in
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
 * Inspiration for text scatter plots: Rudder, Christian. Dataclysm: Who We Are (When We Think No One's Looking). Random House Incorporated, 2014.
 * Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
-* Fast, Ethan, Binbin Chen, and Michael S. Bernstein. "Empath: Understanding topic signals in large-scale text." Proceedings of the 2016 CHI Conference on Human Factors in Computing Systems. ACM, 2016. 
+* Fast, Ethan, Binbin Chen, and Michael S. Bernstein. "Empath: Understanding topic signals in large-scale text." Proceedings of the 2016 CHI Conference on Human Factors in Computing Systems. ACM, 2016.

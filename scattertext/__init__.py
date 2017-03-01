@@ -1,5 +1,8 @@
 from __future__ import print_function
 
+import numpy as np
+from sklearn.linear_model import Lasso
+
 import scattertext.viz
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
@@ -8,12 +11,9 @@ from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ChineseNLP import chinese_nlp
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
-from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
-from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.IndexStore import IndexStore
 from scattertext.ParsedCorpus import ParsedCorpus
-from scattertext.Scalers import percentile_ordinal
+from scattertext.Scalers import percentile_alphabetical
 from scattertext.ScatterChart import ScatterChart
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
 from scattertext.TermDocMatrix import TermDocMatrix
@@ -21,7 +21,12 @@ from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
+from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
+from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 
 
@@ -73,14 +78,11 @@ def produce_scattertext_html(term_doc_matrix,
 		.to_dict(category=category,
 	           category_name=category_name,
 	           not_category_name=not_category_name,
-	           transform=percentile_ordinal)
+	           transform=percentile_alphabetical)
 	html = HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels,
 	                                 height_in_pixels).to_html(protocol=protocol)
 	return html
-
-
-from scattertext.termranking import OncePerDocFrequencyRanker
 
 
 def produce_scattertext_explorer(corpus,
@@ -100,14 +102,19 @@ def produce_scattertext_explorer(corpus,
                                  scores=None,
                                  singleScoreMode=False,
                                  sort_by_dist=True,
+                                 reverse_sort_scores_for_not_category=True,
                                  use_full_doc=False,
-                                 transform=percentile_ordinal,
+                                 transform=percentile_alphabetical,
                                  jitter=0,
                                  grey_zero_scores=False,
                                  term_ranker=termranking.AbsoluteFrequencyRanker,
                                  chinese_mode=False,
                                  use_non_text_features=False,
-                                 show_characteristic=True):
+                                 show_characteristic=True,
+                                 word_vec_use_p_vals=False,
+                                 max_p_val=0.05,
+                                 term_significance=None,
+                                 save_svg_button=False):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -144,6 +151,10 @@ def produce_scattertext_explorer(corpus,
 		Label terms based on score vs distance from corner.  Good for topic scores. Show only one color.
 	sort_by_dist: bool, optional
 		Label terms based distance from corner. True by default.  Negated by singleScoreMode.
+	reverse_sort_scores_for_not_category: bool, optional
+		If using a custom score, score the not-category class by
+		lowest-score-as-most-predictive. Turn this off for word vectory
+		or topic similarity. Default True.
 	use_full_doc : bool, optional
 		Use the full document in snippets.  False by default.
 	transform : function, optional
@@ -160,14 +171,21 @@ def produce_scattertext_explorer(corpus,
 		Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
 	show_characteristic: bool, default True
 		Show characteristic terms on the far left-hand side of the visualization
-
+	word_vec_use_p_vals: bool, default False
+		Sort by harmonic mean of score and distance.
+	max_p_val : float, default 0.05
+		If word_vec_use_p_vals, the minimum p val to use.
+	term_significance : TermSignifiance instance or None
+		Way of getting signfiance scores.  If None, p values will not be added.
+	save_svg_button : bool, default False
+		Add a save as SVG button to the page.
 	Returns
 	-------
 		str, html of visualization
 
 	'''
 	color = None
-	if singleScoreMode:
+	if singleScoreMode or word_vec_use_p_vals:
 		color = 'd3.interpolatePurples'
 	if singleScoreMode or not sort_by_dist:
 		sort_by_dist = False
@@ -181,7 +199,8 @@ def produce_scattertext_explorer(corpus,
 	                                              jitter=jitter,
 	                                              max_terms=max_terms,
 	                                              term_ranker=term_ranker,
-	                                              use_non_text_features=use_non_text_features)
+	                                              use_non_text_features=use_non_text_features,
+	                                              term_significance=term_significance)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -196,8 +215,100 @@ def produce_scattertext_explorer(corpus,
 	                                 color=color,
 	                                 grey_zero_scores=grey_zero_scores,
 	                                 sort_by_dist=sort_by_dist,
+	                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
 	                                 use_full_doc=use_full_doc,
 	                                 chinese_mode=chinese_mode,
 	                                 use_non_text_features=use_non_text_features,
-	                                 show_characteristic=show_characteristic)\
+	                                 show_characteristic=show_characteristic,
+	                                 word_vec_use_p_vals=word_vec_use_p_vals,
+	                                 save_svg_button=save_svg_button) \
 		.to_html(protocol=protocol)
+
+
+def word_similarity_explorer(corpus,
+                             category,
+                             category_name,
+                             not_category_name,
+                             target_term,
+                             nlp=None,
+                             alpha=0.01,
+                             max_p_val=0.05,
+                             **kwargs):
+	'''
+	Parameters
+	----------
+	corpus : Corpus
+		Corpus to use.
+	category : str
+		Name of category column as it appears in original data frame.
+	category_name : str
+		Name of category to use.  E.g., "5-star reviews."
+	not_category_name : str
+		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+	target_term : str
+		Word or phrase for semantic similarity comparison
+	alpha : float, default = 0.01
+		Uniform dirichlet prior for p-value calculation
+	max_p_val : float, default = 0.05
+		Max p-val to use find set of terms for similarity calculation
+
+	nlp : spacy.en.English, optional
+	Returns
+	-------
+		str, html of visualization
+	'''
+
+	if nlp is None:
+		import spacy
+		nlp = spacy.en.English()
+
+	base_term = nlp(target_term)
+	scores = np.array([base_term.similarity(nlp(tok))
+	                   for tok
+	                   in corpus._term_idx_store._i2val])
+	return produce_scattertext_explorer(corpus,
+	                                    category,
+	                                    category_name,
+	                                    not_category_name,
+	                                    scores=scores,
+	                                    sort_by_dist=False,
+	                                    reverse_sort_scores_for_not_category=False,
+	                                    word_vec_use_p_vals=True,
+	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                    max_p_val=max_p_val,
+	                                    **kwargs)
+
+
+def sparse_explorer(corpus,
+                    category,
+                    category_name,
+                    not_category_name,
+                    scores,
+                    **kwargs):
+	'''
+	Parameters
+	----------
+	corpus : Corpus
+		Corpus to use.
+	category : str
+		Name of category column as it appears in original data frame.
+	category_name : str
+		Name of category to use.  E.g., "5-star reviews."
+	not_category_name : str
+		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+	scores : np.array
+		Scores to display in visualization.  Zero scores are grey.
+	Returns
+	-------
+		str, html of visualization
+	'''
+
+	return produce_scattertext_explorer(
+		corpus,
+		category,
+		category_name,
+		not_category_name,
+		scores=scores,
+		sort_by_dist=False,
+		grey_zero_scores=True,
+		**kwargs)
