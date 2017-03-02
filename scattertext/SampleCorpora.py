@@ -1,7 +1,9 @@
 # Helper functions for loading political convention data set
-import json
-import re
-import urllib
+import json, sys, re
+if sys.version_info[0] >= 3:
+	from urllib.request import urlopen
+else:
+	from urllib2 import urlopen
 
 import pandas as pd
 
@@ -42,7 +44,7 @@ class ConventionData2012(object):
 	@staticmethod
 	def _convention_speech_iter():
 		url = 'https://gitcdn.xyz/repo/JasonKessler/scattertext/master/scattertext/data/political_data.json'
-		return json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+		return json.loads(urlopen(url).read().decode('utf-8'))
 
 	@staticmethod
 	def _iter_party_speech_pairs():

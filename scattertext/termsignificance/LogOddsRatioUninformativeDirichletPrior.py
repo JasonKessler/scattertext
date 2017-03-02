@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from scipy.stats import norm
 
@@ -17,7 +18,7 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 	def get_p_vals(self, X):
 		'''
 		Implements the log-odds-ratio with an uninformative dirichlet prior from
-		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin'words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
+		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
 
 		Parameters
 		----------
