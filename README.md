@@ -27,6 +27,17 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 ##Installation 
 `$ pip install scattertext && python -m spacy.en.download`
 
+##Citation
+Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
+```
+@article{kessler2017scattertext,
+  title = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
+  author = {Kessler, Jason~S.},
+  journal={arXiv preprint arXiv:1607.04606},
+  year={2017}
+}
+```
+
 ##Overview
  
 This is a tool that's intended for visualizing what words and phrases
