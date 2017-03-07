@@ -221,6 +221,7 @@ def produce_scattertext_explorer(corpus,
 	                                 use_non_text_features=use_non_text_features,
 	                                 show_characteristic=show_characteristic,
 	                                 word_vec_use_p_vals=word_vec_use_p_vals,
+	                                 max_p_val=max_p_val,
 	                                 save_svg_button=save_svg_button) \
 		.to_html(protocol=protocol)
 

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.2.3',
+      version='0.0.2.4',
       description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
@@ -27,4 +27,10 @@ setup(name='scattertext',
       test_suite="nose.collector",
       tests_require=['nose'],
       setup_requires=['nose>=1.0'],
-      zip_safe=False)
+      entry_points={
+	      'console_scripts': [
+		      'scattertext = scattertext.CLI:main',
+	      ],
+      },
+      zip_safe=False
+      )

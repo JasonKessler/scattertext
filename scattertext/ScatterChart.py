@@ -61,9 +61,7 @@ class ScatterChart:
 		self.filter_unigrams = filter_unigrams
 		self.term_ranker = term_ranker
 		self.max_terms = max_terms
-		self.use_non_text_features = False
-		if use_non_text_features:
-			self.use_non_text_features = use_non_text_features
+		self.use_non_text_features = use_non_text_features
 		self.term_significance = term_significance
 		np.random.seed(seed)
 
@@ -119,7 +117,8 @@ class ScatterChart:
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		json_df['os'] = df['color_scores']
-		json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
+		if not self.use_non_text_features:
+			json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
 
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])

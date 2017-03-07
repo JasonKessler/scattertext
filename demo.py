@@ -1,8 +1,6 @@
 import spacy
 
-from scattertext import LogOddsRatioUninformativeDirichletPrior
 from scattertext import SampleCorpora
-from scattertext import Scalers
 from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
@@ -23,5 +21,3 @@ html = produce_scattertext_explorer(corpus,
                                     metadata=convention_df['speaker'])
 open('./demo.html', 'wb').write(html.encode('utf-8'))
 print('Open ./demo.html in Chrome or Firefox.')
-
-

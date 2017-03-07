@@ -204,7 +204,6 @@ create a `Corpus` of extracted topics and categories rather than unigrams and
 bigrams. To do so, use the `FeatsOnlyFromEmpath` feature extractor.  See the sourcecode for 
 examples of how to make your own.
 ```pydocstring
->>> from scattertext import FeatsFromOnlyEmpath
 >>> corpus = st.CorpusFromParsedDocuments(convention_df,
 ...                                       category_col='party',
 ...                                       feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
