@@ -107,7 +107,7 @@ def produce_scattertext_explorer(corpus,
                                  transform=percentile_alphabetical,
                                  jitter=0,
                                  grey_zero_scores=False,
-                                 term_ranker=termranking.AbsoluteFrequencyRanker,
+                                 term_ranker=None,
                                  chinese_mode=False,
                                  use_non_text_features=False,
                                  show_characteristic=True,
@@ -191,6 +191,8 @@ def produce_scattertext_explorer(corpus,
 		sort_by_dist = False
 	else:
 		sort_by_dist = True
+	if term_ranker is None:
+		term_ranker = termranking.AbsoluteFrequencyRanker
 
 	scatter_chart_explorer = ScatterChartExplorer(corpus,
 	                                              minimum_term_frequency=minimum_term_frequency,

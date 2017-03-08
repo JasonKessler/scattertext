@@ -4,6 +4,8 @@ import pandas as pd
 import spacy.en
 
 from scattertext import CorpusFromPandas, produce_scattertext_explorer
+from scattertext.WhitespaceNLP import whitespace_nlp_with_sentences
+from scattertext.termranking import OncePerDocFrequencyRanker
 
 
 def main():
@@ -45,6 +47,13 @@ def main():
 	parser.add_argument('--minimum_term_frequency', action='store',
 	                    dest='minimum_term_frequency', type=int, default=3,
 	                    help="Minimum number of times a term needs to appear. Default 3")
+	parser.add_argument('--regex_parser', action='store_true',
+	                    dest='regex_parser', default=False,
+	                    help="If present, don't use spaCy for preprocessing.  Instead, "
+	                         "use a simple, dumb, regex.")
+	parser.add_argument('--one_use_per_doc', action='store_true',
+	                    dest='one_use_per_doc', default=False,
+	                    help="Only count one use per document.")
 	args = parser.parse_args()
 	df = pd.read_csv(args.datafile)
 
@@ -60,7 +69,15 @@ def main():
 	if args.positive_category not in df[args.category_column].unique():
 		raise Exception("positive_category (%s) must be in the column ""%s"", with a case-sensitive match." %
 		                (args.positive_category, args.category_column))
-	nlp = spacy.en.English()
+	if args.regex_parser:
+		nlp = whitespace_nlp_with_sentences
+	else:
+		nlp = spacy.en.English()
+
+	term_ranker = None
+	if args.one_use_per_doc is True:
+		term_ranker = OncePerDocFrequencyRanker
+
 	category_display_name = args.category_display_name
 	if category_display_name is None:
 		category_display_name = args.positive_category
@@ -79,8 +96,10 @@ def main():
 	                                    minimum_term_frequency=args.minimum_term_frequency,
 	                                    pmi_filter_thresold=args.pmi_threshold,
 	                                    width_in_pixels=args.width_in_pixels,
+	                                    term_ranker=term_ranker,
 	                                    metadata=None if args.metadata_column is None \
-		                                    else df[args.metadata_column])
+		                                    else df[args.metadata_column]
+	                                    )
 	if args.outputfile == '-':
 		print(html)
 	else:

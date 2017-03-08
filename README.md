@@ -93,13 +93,20 @@ the columns are text and party, respectively.
 
 The example below processes the CSV file, and the resulting HTML visualization into cli_demo.html.
 
+Note, the parameter `--minimum_term_frequency=8` omit terms that occur less than 8 
+times, and `--regex_parser` indicates a simple regular expression parser should 
+ be used in place of spaCy. The flag `--one_use_per_doc` indicates that term frequency
+  should be calculated by only counting no more than one occurrence of a term in a document. 
+
 ```bash
 $ curl -s https://cdn.rawgit.com/JasonKessler/scattertext/master/scattertext/data/political_data.csv | head -2
 party,speaker,text
 democrat,BARACK OBAMA,"Thank you. Thank you. Thank you. Thank you so much.Thank you.Thank you so much. Thank you. Thank you very much, everybody. Thank you.
+$
 $ scattertext --datafile=https://cdn.rawgit.com/JasonKessler/scattertext/master/scattertext/data/political_data.csv \
 > --text_column=text --category_column=party --metadata_column=speaker --positive_category=democrat \
-> --category_display_name=Democratic --not_category_display_name=Republican --outputfile=cli_demo.html
+> --category_display_name=Democratic --not_category_display_name=Republican --minimum_term_frequency=8 \
+> --one_use_per_doc --regex_parser --outputfile=cli_demo.html
 ```
 
 
@@ -331,14 +338,19 @@ open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
 
 ##Examples 
 
+Please see 
+
 I recommend you start with this example first.  It explains some design decisions that were made in 
 Scattertext, and explains the strings of points.  You can 
 find it [2012 Political Convention Exploration](http://bit.ly/scattertextdevelopment). 
 
 Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
 
-Finally, we use the task of predicting a movie's revenue from the content of its reviews as an example of 
-tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://bit.ly/scattertextrevenuemovie). 
+We use the task of predicting a movie's revenue from the content of its reviews as an example of 
+tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie-Revenue.ipynb). 
+
+To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
+a bad idea) check out the [Subjective vs. Objective](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb) notebook.  
 
 ##A note on chart layout
 
@@ -369,6 +381,9 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.4.1
+Fixed links in Readme, and made regex NLP available in CLI.
+
 ### 0.0.2.4
 Added the command line tool, and fixed a bug related to Empath visualizations.
 
