@@ -22,7 +22,7 @@ warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 
 
-class TermDocMatrix:
+class TermDocMatrix(object):
 	'''
 	!!! to do: refactor score functions into classes
 	'''

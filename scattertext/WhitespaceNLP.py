@@ -28,6 +28,8 @@ class Doc:
 	def __str__(self):
 		return self.string
 
+	def __repr__(self):
+		return self.string
 
 def whitespace_nlp(doc, entity_type=None, tag_type=None):
 	toks = _regex_parse_sentence(doc, entity_type, tag_type)

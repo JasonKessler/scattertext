@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 
-#Scattertext 0.0.2.4.1
+#Scattertext 0.0.2.4.2
 
 **Table of Contents**
 
@@ -28,6 +28,8 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
 
 `$ pip install scattertext && python -m spacy.en.download`
+
+Python 2.7 support is experimental.
 
 ##Citation
 Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
@@ -381,6 +383,11 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.4.2
+Fixed a couple issues that rendered Scattertext broken in Python 2. Chinese processing still does not work.
+
+Note: Use Python 3.4+ if you can.
+
 ### 0.0.2.4.1
 Fixed links in Readme, and made regex NLP available in CLI.
 

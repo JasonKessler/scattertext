@@ -32,7 +32,7 @@ class TestScatterChart(TestCase):
 		datum = self._get_data_example(j)
 		for var in ['cat25k', 'ncat25k']:
 			np.testing.assert_almost_equal(expected[var], datum[var], decimal=1)
-		self.assertEqual(expected.keys(), datum.keys())
+		self.assertEqual(set(expected.keys()), set(datum.keys()))
 		self.assertEqual(expected['term'], datum['term'])
 
 	def _get_data_example(self, j):

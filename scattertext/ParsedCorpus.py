@@ -1,4 +1,5 @@
 import pandas as pd
+import sys
 
 from scattertext.Corpus import Corpus
 from scattertext.IndexStore import IndexStore
@@ -46,6 +47,8 @@ class ParsedCorpus(Corpus):
 		-------
 		pd.Series, all raw documents
 		'''
+		if sys.version_info[0] == 2:
+			return self._df[self._parsed_col]
 		return self._df[self._parsed_col].apply(str)
 
 	def search(self, ngram):

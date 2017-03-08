@@ -1,5 +1,6 @@
 from collections import Counter
 from functools import partial
+from sys import version_info
 
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
@@ -36,7 +37,9 @@ class FeatsFromSpacyDocAndEmpath(FeatsFromSpacyDoc):
 
 	def get_doc_metadata(self, doc, prefix=''):
 		empath_counter = Counter()
-		for empath_category, score in self._empath_analyze_function(str(doc)).items():
+		if version_info[0] >= 3:
+			doc = str(doc)
+		for empath_category, score in self._empath_analyze_function(doc).items():
 			if score > 0:
 				empath_counter[prefix + empath_category] = int(score)
 		return empath_counter

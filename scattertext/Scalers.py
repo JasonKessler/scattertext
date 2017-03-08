@@ -61,5 +61,5 @@ def percentile_alphabetical(vec, terms):
 
 
 def _scale_0_to_1(vec_ss):
-	vec_ss = (vec_ss - vec_ss.min()) / (vec_ss.max() - vec_ss.min())
+	vec_ss = (vec_ss - vec_ss.min())*1. / (vec_ss.max() - vec_ss.min())
 	return vec_ss
