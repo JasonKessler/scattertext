@@ -35,6 +35,11 @@ def whitespace_nlp(doc, entity_type=None, tag_type=None):
 
 
 def _regex_parse_sentence(doc, entity_type, tag_type):
+	toks = _toks_from_sentence(doc, entity_type, tag_type)
+	return toks
+
+
+def _toks_from_sentence(doc, entity_type, tag_type):
 	toks = []
 	for tok in re.split(r"(\W)", doc):
 		pos = 'WORD'
@@ -46,8 +51,7 @@ def _regex_parse_sentence(doc, entity_type, tag_type):
 		                tok[:2].lower(),
 		                tok.lower(),
 		                ent_type='' if entity_type is None else entity_type.get(tok, ''),
-		                tag='' if tag_type is None else tag_type.get(tok, ''),
-		                orth=tok))
+		                tag='' if tag_type is None else tag_type.get(tok, '')))
 	return toks
 
 
@@ -56,7 +60,7 @@ def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
 	sents = []
 	for sent in pat.findall(doc):
 		toks = []
-		for tok in re.split(r"(\W)", doc):
+		for tok in re.split(r"(\W)", sent):
 			pos = 'WORD'
 			if tok.strip() == '':
 				pos = 'SPACE'
