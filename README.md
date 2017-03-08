@@ -25,6 +25,8 @@ got more fun.
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
 
 ##Installation 
+Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
+
 `$ pip install scattertext && python -m spacy.en.download`
 
 ##Citation
@@ -78,6 +80,28 @@ notebooks, and poking around the code and tests should give you a good idea of h
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
 ##Tutorial
+
+###Help! I don't know Python but I still want to use Scattertext.
+While you should learn Python fully use Scattertext, I've put some of the basic 
+functionality in a commandline tool.  The tool is installed when you follow the procedure layed out
+above.
+
+Run `$ scattertext --help` from the commandline to see the full usage information.  Here's a quick example of
+how to use vanilla Scattertext on a CSV file.  The file needs to have at least two columns,
+one containing the text to be analyzed, and another containing the category.  In the example CSV below,
+the columns are text and party, respectively.
+
+The example below processes the CSV file, and the resulting HTML visualization into cli_demo.html.
+
+```bash
+$ curl -s https://cdn.rawgit.com/JasonKessler/scattertext/master/scattertext/data/political_data.csv | head -2
+party,speaker,text
+democrat,BARACK OBAMA,"Thank you. Thank you. Thank you. Thank you so much.Thank you.Thank you so much. Thank you. Thank you very much, everybody. Thank you.
+$ scattertext --datafile=https://cdn.rawgit.com/JasonKessler/scattertext/master/scattertext/data/political_data.csv \
+> --text_column=text --category_column=party --metadata_column=speaker --positive_category=democrat \
+> --category_display_name=Democratic --not_category_display_name=Republican --outputfile=cli_demo.html
+```
+
 
 ###Using Scattertext as a text analysis library: finding characteristic terms and their associations
 
@@ -345,6 +369,9 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.4
+Added the command line tool, and fixed a bug related to Empath visualizations.
+
 ### 0.0.2.3
 Ability to see how a particular term is discussed differently between categories
 through the `word_similarity_explorer` function. 
