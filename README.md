@@ -1,11 +1,12 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 
-#Scattertext 0.0.2.4.2
+#Scattertext 0.0.2.4.3
 
 **Table of Contents**
 
 - [Installation](#installation)
+- [Citation](#citation)
 - [Overview](#overview)
 - [Tutorial](#tutorial)
 - [Advanced Uses](#advanced-uses)
@@ -33,15 +34,17 @@ Python 2.7 support is experimental.
 
 ##Citation
 Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
+
+Preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
+
 ```
 @article{kessler2017scattertext,
   title = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
   author = {Kessler, Jason~S.},
-  journal={arXiv preprint arXiv:1607.04606},
+  journal={arXiv preprint arXiv:1703.00565},
   year={2017}
 }
 ```
-
 ##Overview
  
 This is a tool that's intended for visualizing what words and phrases
