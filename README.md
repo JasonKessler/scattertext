@@ -32,6 +32,8 @@ Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/down
 
 Python 2.7 support is experimental.
 
+The HTML outputs look best in Chrome and Safari.
+
 ##Citation
 Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
 
