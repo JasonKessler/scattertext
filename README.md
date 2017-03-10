@@ -35,7 +35,7 @@ Python 2.7 support is experimental.
 ##Citation
 Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
 
-Preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
+Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 
 ```
 @article{kessler2017scattertext,
@@ -80,7 +80,7 @@ Scattertext is designed to help you build these graphs and efficiently label poi
 
 The documentation (including this readme) is a work in 
 progress.  Please see the quickstart as well as the accompanying Juypter 
-notebooks, and poking around the code and tests should give you a good idea of how things work. 
+notebooks (like [this one](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb)), and poking around the code and tests should give you a good idea of how things work. 
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
@@ -343,19 +343,14 @@ open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
 
 ##Examples 
 
-Please see 
-
-I recommend you start with this example first.  It explains some design decisions that were made in 
-Scattertext, and explains the strings of points.  You can 
-find it [2012 Political Convention Exploration](http://bit.ly/scattertextdevelopment). 
+To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
+a bad idea) check out the [Subjective vs. Objective](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb) notebook.  
 
 Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
 
 We use the task of predicting a movie's revenue from the content of its reviews as an example of 
 tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie-Revenue.ipynb). 
 
-To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
-a bad idea) check out the [Subjective vs. Objective](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb) notebook.  
 
 ##A note on chart layout
 
