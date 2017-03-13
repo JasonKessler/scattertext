@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 
-#Scattertext 0.0.2.4.3
+#Scattertext 0.0.2.4.4
 
 **Table of Contents**
 
@@ -383,6 +383,11 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.4.4
+Corrected example links on this Readme.
+   
+Fixed a bug in Issue 8 where the HTML visualization produced by `produce_scattertext_html` would fail.
+
 ### 0.0.2.4.2
 Fixed a couple issues that rendered Scattertext broken in Python 2. Chinese processing still does not work.
 
