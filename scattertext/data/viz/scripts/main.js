@@ -792,7 +792,9 @@ function buildViz(widthInPixels = 800,
                 .html(messages.join('<br />'));
         };
 
-        populateCorpusStats();
+        if(fullData.docs) {
+            populateCorpusStats();
+        }
 
         if (saveSvgButton) {
             // from http://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
