@@ -384,6 +384,13 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ##What's new
+### 0.0.2.4.5
+Fixed matched snippet not displaying issue [#9](/../../issues/9), and fixed a Python 2 issue 
+in created a visualization using a `ParsedCorpus` prepared via `CorpusFromParsedDocuments`, mentioned
+in the latter part of the issue [#8](/../../issues/8) discussion.
+
+Again, Python 2 is supported in experimental mode only.
+
 ### 0.0.2.4.4
 Corrected example links on this Readme.
    

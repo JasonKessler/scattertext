@@ -1,9 +1,12 @@
 import json
+import sys
 
 import numpy as np
 
+from scattertext import ChineseNLP
+from scattertext import WhitespaceNLP
 
-# from http://stackoverflow.com/questions/27050108/convert-numpy-type-to-python/27050186#27050186
+
 class MyEncoder(json.JSONEncoder):
 	def default(self, obj):
 		if isinstance(obj, np.integer):
@@ -12,6 +15,14 @@ class MyEncoder(json.JSONEncoder):
 			return float(obj)
 		elif isinstance(obj, np.ndarray):
 			return obj.tolist()
+		elif isinstance(obj, WhitespaceNLP.Doc):
+			return repr(obj)
+		elif isinstance(obj, ChineseNLP.Doc):
+			return repr(obj)
+		elif 'spacy' in sys.modules:
+			import spacy
+			if isinstance(obj, spacy.tokens.doc.Doc):
+				return repr(obj)
 		else:
 			return super(MyEncoder, self).default(obj)
 
@@ -34,6 +45,8 @@ class VizDataAdapter:
 
 	def to_javascript(self):
 		starter = 'function getDataAndInfo() { return'
-		word_dict_json = json.dumps(self.word_dict)
+		#import pdb;
+		#pdb.set_trace()
+		word_dict_json = json.dumps(self.word_dict, cls=MyEncoder)
 		ender = '; }'
 		return starter + word_dict_json + ender
