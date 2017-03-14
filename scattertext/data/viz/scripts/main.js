@@ -92,6 +92,9 @@ function buildViz(widthInPixels = 800,
         }
         var snippet = (text.slice(sentenceStart, start) + "<b>" + text.slice(start, end)
         + "</b>" + text.slice(end, sentenceEnd)).trim();
+        if(sentenceStart == null) {
+            sentenceStart = 0;
+        }
         return {'snippet': snippet, 'sentenceStart': sentenceStart};
     }
 
@@ -180,7 +183,7 @@ function buildViz(widthInPixels = 800,
                     }
                     var foundSnippet = getMatchingSnippet(text, sentenceOffsets,
                         match.index, pattern.lastIndex);
-                    if (foundSnippet.sentenceStart == lastSentenceStart) continue;
+                    if (foundSnippet.sentenceStart == lastSentenceStart) continue; // ensure we don't duplicate sentences
                     lastSentenceStart = foundSnippet.sentenceStart;
                     curMatch.snippets.push(foundSnippet.snippet);
                     matchFound = true;
