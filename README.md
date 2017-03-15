@@ -453,7 +453,7 @@ currently does not support ChineseNLP.
 In order for the visualization to work, set the `chinese_mode` flat to `True` in
 `produce_scattertext_explorer`.
 
-##Sources
+## Sources
 * 2012 Convention Data: scraped from [The New York Times.](http://www.nytimes.com/interactive/2012/09/06/us/politics/convention-word-counts.html?_r=0)
 * count_1w: Peter Norvig assembled this file (downloaded from [norvig.com](http://norvig.com/ngrams/count_1w.txt)). See http://norvig.com/ngrams/ for an explanation of how it was gathered from a very large corpus.
 * hamlet.txt: William Shakespeare. From [shapespeare.mit.edu](http://shakespeare.mit.edu/hamlet/full.html)
