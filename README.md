@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 <!--[![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)-->
 
-#Scattertext 0.0.2.4.5
+# Scattertext 0.0.2.4.5
 
 **Table of Contents**
 
@@ -26,7 +26,7 @@ got more fun.
 
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
 
-##Installation 
+## Installation 
 Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
 
 `$ pip install scattertext && python -m spacy.en.download`
@@ -35,7 +35,7 @@ Python 2.7 support is experimental.
 
 The HTML outputs look best in Chrome and Safari.
 
-##Citation
+## Citation
 Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
 
 Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
@@ -48,7 +48,7 @@ Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
   year={2017}
 }
 ```
-##Overview
+## Overview
  
 This is a tool that's intended for visualizing what words and phrases
  are more characteristic of a category than others.  
@@ -87,9 +87,9 @@ notebooks (like [this one](http://nbviewer.jupyter.org/urls/jasonkessler.github.
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
-##Tutorial
+## Tutorial
 
-###Help! I don't know Python but I still want to use Scattertext.
+### Help! I don't know Python but I still want to use Scattertext.
 While you should learn Python fully use Scattertext, I've put some of the basic 
 functionality in a commandline tool.  The tool is installed when you follow the procedure layed out
 above.
@@ -118,7 +118,7 @@ $ scattertext --datafile=https://cdn.rawgit.com/JasonKessler/scattertext/master/
 ```
 
 
-###Using Scattertext as a text analysis library: finding characteristic terms and their associations
+### Using Scattertext as a text analysis library: finding characteristic terms and their associations
 
 The following code creates a stand-alone HTML file that analyzes words 
 used by Democrats and Republicans in the 2012 party conventions, and outputs some notable
@@ -216,7 +216,7 @@ And Republicans:
  'in florida']
 ```
 
-###Visualizing term associations
+### Visualizing term associations
 
 Now, let's write the scatter plot a stand-alone HTML file.  We'll make the y-axis category  "democrat", and name
 the category "Democrat" with a capital "D" for presentation 
@@ -236,7 +236,7 @@ each excerpt with the speaker using the `metadata` parameter.  Finally, we write
 Below is what the webpage looks like.  Click it and wait a few minutes for the interactive version.
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
-###Visualizing Empath topics and categories
+### Visualizing Empath topics and categories
 
 In order to visualize Empath (Fast 2016) topics and categories instead of terms, we'll need to 
 create a `Corpus` of extracted topics and categories rather than unigrams and 
@@ -271,9 +271,9 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
 
-##Advanced uses
+## Advanced uses
 
-###Visualizing query-based categorical differences  
+### Visualizing query-based categorical differences  
 Word representations have recently become a hot topic in NLP.  While lots of work has been done visualizing 
 how terms relate to one another given their scores 
 (e.g., [http://projector.tensorflow.org/](http://projector.tensorflow.org/)),
@@ -322,7 +322,7 @@ Here is the Scattertext to produce such a visualization.
 [![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Convention-Visualization-Jobs.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
 
 
-###Visualizing any kind of term score
+### Visualizing any kind of term score
 
 We can use Scattertext to visualize alternative types of word scores, and ensure that 0 scores are greyed out.  Use the `sparse_explroer` function to acomplish this, and see its source code for more details.     
 
@@ -344,7 +344,7 @@ open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
 
 [![Convention-Visualization-Sparse.html](https://jasonkessler.github.io/Convention-Visualization-Sparse.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
 
-##Examples 
+## Examples 
 
 To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
 a bad idea) check out the [Subjective vs. Objective](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb) notebook.  
@@ -355,7 +355,7 @@ We use the task of predicting a movie's revenue from the content of its reviews 
 tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie-Revenue.ipynb). 
 
 
-##A note on chart layout
+## A note on chart layout
 
 [Cozy: The Collection Synthesizer](https://github.com/uwplse/cozy) (Loncaric 2016) was used to help determine 
 which terms could be labeled without overlapping a circle or another label.  It automatically built a data structure to efficiently store and query the locations of each circle and labeled term.
@@ -375,7 +375,7 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
   --js-class RectangleHolder --enable-hamt --enable-arrays --js rectangle_holder.js
 ```
 
-##Presentations on Scattertext
+## Presentations on Scattertext
 
 * [Scattertext: A Tool for Visualizing Differences in Language
 ](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
@@ -383,7 +383,7 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
-##What's new
+## What's new
 ### 0.0.2.4.5
 Fixed matched snippet not displaying issue [#9](/../../issues/9), and fixed a Python 2 issue 
 in created a visualization using a `ParsedCorpus` prepared via `CorpusFromParsedDocuments`, mentioned
