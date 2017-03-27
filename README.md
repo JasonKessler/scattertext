@@ -31,7 +31,13 @@ Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/down
 
 `$ pip install scattertext && python -m spacy.en.download`
 
-Python 2.7 support is experimental.
+If you cannot (or don't want to) install spaCy, substitute `nlp = spacy.en.English()` lines with
+`nlp = scattertext.WhitespaceNLP.whitespace_nlp`.  Note, this is not compatible 
+with `word_similarity_explorer`, and the tokenization and sentence boundary detection 
+capabilities will be low-performance regular expressions. See `demo_without_spacy.py`
+for an example.
+
+Python 2.7 support is experimental.  Many things will break.
 
 The HTML outputs look best in Chrome and Safari.
 
@@ -161,7 +167,9 @@ parameter.  Finally, pass a spaCy model in to the `nlp` argument and call `build
 ...                              nlp=nlp).build()
 ```
 
-Let's see characteristic terms in the corpus, and terms that are most associated Democrats and Republicans.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content ot Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details on these approaches. 
+Let's see characteristic terms in the corpus, and terms that are most associated Democrats and 
+Republicans.  See slides 
+[52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content ot Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details on these approaches. 
 
 Here are the terms that differentiate the corpus from a general English corpus. 
 ```pydocstring
@@ -379,7 +387,6 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 
 * [Scattertext: A Tool for Visualizing Differences in Language
 ](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
-
 
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
