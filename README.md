@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
-<!--[![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)-->
+[![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
 # Scattertext 0.0.2.4.5
 
@@ -42,16 +42,18 @@ Python 2.7 support is experimental.  Many things will break.
 The HTML outputs look best in Chrome and Safari.
 
 ## Citation
-Kessler, Jason S. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. arXiv. 2017.
+. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL): System Demonstrations. 2017.
 
 Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 
 ```
 @article{kessler2017scattertext,
-  title = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
-  author = {Kessler, Jason~S.},
-  journal={arXiv preprint arXiv:1703.00565},
-  year={2017}
+  author    = {Kessler, Jason S.},
+  title     = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
+  booktitle = {Proceedings of ACL-2017 System Demonstrations},
+  year      = {2017},
+  address   = {Vancouver, Canada},
+  publisher = {Association for Computational Linguistics},
 }
 ```
 ## Overview
