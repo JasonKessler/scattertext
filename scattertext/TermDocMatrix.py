@@ -159,10 +159,33 @@ class TermDocMatrix(object):
 		'''
 		if stoplist is None:
 			stoplist = ENGLISH_STOP_WORDS
+		else:
+			stoplist = [w.lower() for w in stoplist]
+		return self._remove_terms_from_list(stoplist)
+
+	def get_stoplisted_unigram_corpus_and_custom(self,
+	                                             custom_stoplist):
+		'''
+		Parameters
+		-------
+		stoplist : list of lower-cased words, optional
+
+		Returns
+		-------
+		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
+		'''
+		if type(custom_stoplist) == str:
+			custom_stoplist = [custom_stoplist]
+		return self._remove_terms_from_list(set(ENGLISH_STOP_WORDS)
+		                                    | set(w.lower() for w in custom_stoplist))
+
+	def _remove_terms_from_list(self, stoplist):
 		terms_to_ignore = [term for term
 		                   in self._term_idx_store._i2val
-		                   if ' ' in term or "'" in term or term in stoplist]
+		                   if ' ' in term or "'" in term
+		                   or term in stoplist]
 		return self.remove_terms(terms_to_ignore)
+
 
 	def term_doc_lists(self):
 		'''
@@ -611,3 +634,4 @@ class TermDocMatrix(object):
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
+

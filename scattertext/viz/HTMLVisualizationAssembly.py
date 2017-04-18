@@ -82,8 +82,12 @@ class HTMLVisualizationAssembly:
 			self._visualization_data.to_javascript(),
 			self._call_build_visualization_in_javascript()
 		])
+
 		html_file = (self._full_content_of_html_file()
-		             .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1))
+		             .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
+		             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
+		             )
+
 		extra_libs = ''
 		if self._save_svg_button:
 			# extra_libs = '<script src="https://cdn.rawgit.com/edeno/d3-save-svg/gh-pages/assets/d3-save-svg.min.js" charset="utf-8"></script>'
@@ -103,10 +107,17 @@ class HTMLVisualizationAssembly:
 		                        'data/viz/scattertext.html').decode('utf-8')
 
 	def _full_content_of_javascript_files(self):
-		return '\n'.join([pkgutil.get_data('scattertext',
-		                                   'data/viz/scripts/' + script_name).decode('utf-8')
-		                  for script_name in ['rectangle-holder.js',  # 'range-tree.js',
-		                                      'main.js']])
+		return '; \n \n '.join([self._get_packaged_file_content(script_name)
+		                        for script_name in [
+			                        #'d3.min.js',
+			                        #'d3-scale-chromatic.v1.min.js',
+			                        'rectangle-holder.js',  # 'range-tree.js',
+			                        'main.js',
+		                        ]])
+
+	def _get_packaged_file_content(self, file_name):
+		return pkgutil.get_data('scattertext',
+		                        'data/viz/scripts/' + file_name).decode('utf-8')
 
 	def _call_build_visualization_in_javascript(self):
 		def js_default_value(x):

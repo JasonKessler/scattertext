@@ -48,7 +48,6 @@ class TestScatterChart(TestCase):
 		print(datum)
 		self.assertIn('p', datum.keys())
 
-
 	def test_to_json_use_non_text_features(self):
 		tdm = build_hamlet_jz_corpus_with_meta()
 		# with self.assertRaises(NoWordMeetsTermFrequencyRequirementsError):
@@ -80,7 +79,6 @@ class TestScatterChart(TestCase):
 		                  max_terms=10)
 		     .to_dict('hamlet'))
 		self.assertEqual(10, len(j['data']))
-
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,

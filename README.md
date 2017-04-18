@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.4.5
+# Scattertext 0.0.2.4.6
 
 **Table of Contents**
 
@@ -393,6 +393,11 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+### 0.0.2.4.6
+Some minor bug fixes, and added a `minimum_not_category_term_frequency` parameter.  This fixes a problem with 
+visualizing imbalanced datasets.  It sets a minimum number of times a word that does not appear in the target 
+category must appear before it is displayed
+
 ### 0.0.2.4.5
 Fixed matched snippet not displaying issue [#9](/../../issues/9), and fixed a Python 2 issue 
 in created a visualization using a `ParsedCorpus` prepared via `CorpusFromParsedDocuments`, mentioned

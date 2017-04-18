@@ -83,7 +83,27 @@ class TestTermDocMat(TestCase):
 		term_df = tdm.get_term_freq_df()
 		uni_term_df = uni_tdm.get_term_freq_df()
 		self.assertEqual(set(term for term in term_df.index
-		                     if ' ' not in term and "'" not in term and term not in ENGLISH_STOP_WORDS),
+		                     if ' ' not in term
+		                     and "'" not in term
+		                     and term not in ENGLISH_STOP_WORDS),
+		                 set(uni_term_df.index)),
+
+	def test_get_stoplisted_unigram_corpus_and_custom(self):
+		tdm = make_a_test_term_doc_matrix()
+		uni_tdm = tdm.get_stoplisted_unigram_corpus_and_custom(['joe'])
+		self._assert_stoplisted_minus_joe(tdm, uni_tdm)
+
+		uni_tdm = tdm.get_stoplisted_unigram_corpus_and_custom('joe')
+		self._assert_stoplisted_minus_joe(tdm, uni_tdm)
+
+	def _assert_stoplisted_minus_joe(self, tdm, uni_tdm):
+		term_df = tdm.get_term_freq_df()
+		uni_term_df = uni_tdm.get_term_freq_df()
+		self.assertEqual(set(term for term in term_df.index
+		                     if ' ' not in term
+		                     and 'joe' != term.lower()
+		                     and "'" not in term
+		                     and term not in ENGLISH_STOP_WORDS),
 		                 set(uni_term_df.index)),
 
 	def test_term_doc_lists(self):

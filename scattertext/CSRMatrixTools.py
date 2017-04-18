@@ -47,9 +47,22 @@ class CSRMatrixFactory:
 		assert last_col_idx >= self._max_col
 		self._max_col = last_col_idx
 
-	def get_csr_matrix(self, dtype=np.int32):
+	def set_last_row_idx(self, last_row_idx):
+		'''
+		Parameters
+		----------
+		param last_row_idx : int
+			number of rows
+		'''
+		assert last_row_idx >= self._max_row
+		self._max_row = last_row_idx
+
+	def get_csr_matrix(self, dtype=np.int32, make_square = False):
+		shape = (self._max_row + 1, self._max_col + 1)
+		if make_square:
+			shape = (max(shape), max(shape))
 		return csr_matrix((self.data, (self.rows, self.cols)),
-		                  shape=(self._max_row + 1, self._max_col + 1),
+		                  shape=shape,
 		                  dtype=dtype)
 
 

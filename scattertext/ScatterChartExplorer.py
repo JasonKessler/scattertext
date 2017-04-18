@@ -62,7 +62,7 @@ class ScatterChartExplorer(ScatterChart):
 			docs_getter = DocsAndLabelsFromCorpus(self.term_doc_matrix)
 		else:
 			docs_getter = DocsAndLabelsFromCorpusSample(self.term_doc_matrix, max_docs_per_category)
-		if self.use_non_text_features:
+		if self.scatterchartdata.use_non_text_features:
 			docs_getter = docs_getter.use_non_text_features()
 		return docs_getter
 

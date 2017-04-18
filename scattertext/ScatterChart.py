@@ -15,10 +15,10 @@ class NoWordMeetsTermFrequencyRequirementsError(Exception):
 	pass
 
 
-class ScatterChart:
+class ScatterChartData(object):
 	def __init__(self,
-	             term_doc_matrix,
 	             minimum_term_frequency=3,
+	             minimum_not_category_term_frequency=0,
 	             jitter=0,
 	             seed=0,
 	             pmi_threshold_coefficient=3,
@@ -27,7 +27,6 @@ class ScatterChart:
 	             term_ranker=AbsoluteFrequencyRanker,
 	             use_non_text_features=False,
 	             term_significance=None):
-
 		'''
 
 		Parameters
@@ -36,6 +35,9 @@ class ScatterChart:
 			The term doc matrix to use for the scatter chart.
 		minimum_term_frequency : int, optional
 			Minimum times an ngram has to be seen to be included. Default is 3.
+		minimum_not_category_term_frequency : int, optional
+		  If an n-gram does not occur in the category, minimum times it
+		   must been seen to be included. Default is 0.
 		jitter : float, optional
 			Maximum amount of noise to be added to points, 0.2 is a lot. Default is 0.
 		seed : float, optional
@@ -53,9 +55,9 @@ class ScatterChart:
 		term_significance : TermSignifiance instance or None
 			Way of getting signfiance scores.  If None, p values will not be added.
 		'''
-		self.term_doc_matrix = term_doc_matrix
 		self.jitter = jitter
 		self.minimum_term_frequency = minimum_term_frequency
+		self.minimum_not_category_term_frequency = minimum_not_category_term_frequency
 		self.seed = seed
 		self.pmi_threshold_coefficient = pmi_threshold_coefficient
 		self.filter_unigrams = filter_unigrams
@@ -64,6 +66,15 @@ class ScatterChart:
 		self.use_non_text_features = use_non_text_features
 		self.term_significance = term_significance
 		np.random.seed(seed)
+
+
+
+class ScatterChart:
+	def __init__(self,
+	             term_doc_matrix,
+	             **kwargs):
+		self.term_doc_matrix = term_doc_matrix
+		self.scatterchartdata = ScatterChartData(**kwargs)
 
 	def to_dict(self,
 	            category,
@@ -112,12 +123,12 @@ class ScatterChart:
 			(category, df, other_categories, transform)
 		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
 		json_df = df[['x', 'y', 'term']]
-		if self.term_significance:
+		if self.scatterchartdata.term_significance:
 			json_df['p'] = df['p']
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		json_df['os'] = df['color_scores']
-		if not self.use_non_text_features:
+		if not self.scatterchartdata.use_non_text_features:
 			json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
 
 		category_terms = list(json_df.sort_values('s')['term'][:10])
@@ -167,8 +178,10 @@ class ScatterChart:
 	                                                           df,
 	                                                           other_categories,
 	                                                           transform):
-		x_data_raw = transform(df[other_categories].sum(axis=1), df.index)
-		y_data_raw = transform(df[category + ' freq'], df.index)
+		not_counts= df[other_categories].sum(axis=1)
+		counts = df[category + ' freq']
+		x_data_raw = transform(not_counts, df.index, counts)
+		y_data_raw = transform(counts, df.index, not_counts)
 		x_data = self._add_jitter(x_data_raw)
 		y_data = self._add_jitter(y_data_raw)
 		return x_data, y_data
@@ -178,15 +191,15 @@ class ScatterChart:
 		:param vec: array to jitter
 		:return: array, jittered version of arrays
 		"""
-		if self.jitter == 0:
+		if self.scatterchartdata.jitter == 0:
 			return vec
 		else:
-			to_ret = vec + np.random.rand(1, len(vec))[0] * self.jitter
+			to_ret = vec + np.random.rand(1, len(vec))[0] * self.scatterchartdata.jitter
 			return to_ret
 
 	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
-		term_ranker = self.term_ranker(self.term_doc_matrix)
-		if self.use_non_text_features:
+		term_ranker = self.scatterchartdata.term_ranker(self.term_doc_matrix)
+		if self.scatterchartdata.use_non_text_features:
 			term_ranker.use_non_text_features()
 		df = term_ranker.get_ranks()
 		if scores is None:
@@ -196,43 +209,58 @@ class ScatterChart:
 		category_column_name = category + ' freq'
 		df['category score'] = RudderScore.get_score(
 			df[category_column_name],
-			df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+			self._get_not_category_term_frequency(category_column_name, df)
 		)
-		if self.term_significance is not None:
+		if self.scatterchartdata.term_significance is not None:
 			df['p'] = get_p_vals(self.term_doc_matrix, category_column_name,
-			                     self.term_significance)
+			                     self.scatterchartdata.term_significance)
 		df['not category score'] = np.sqrt(2) - df['category score']
 		df['color_scores'] = scores
+		df = self._filter_bigrams_by_minimum_not_category_term_freq(category_column_name, df)
 		df = filter_bigrams_by_pmis(
-			df[df[all_categories].sum(axis=1) > self.minimum_term_frequency],
-			threshold_coef=self.pmi_threshold_coefficient
+			self._filter_by_minimum_term_frequency(all_categories, df),
+			threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
 		)
-		if self.filter_unigrams:
+
+		if self.scatterchartdata.filter_unigrams:
 			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
 		if len(df) == 0:
 			raise NoWordMeetsTermFrequencyRequirementsError()
 		df['category score rank'] = rankdata(df['category score'], method='ordinal')
 		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
-		if self.max_terms and self.max_terms < len(df):
-			assert self.max_terms > 0
+		if self.scatterchartdata.max_terms and self.scatterchartdata.max_terms < len(df):
+			assert self.scatterchartdata.max_terms > 0
 			df = self._limit_max_terms(category, df)
 		df = df.reset_index()
 		return df
 
+	def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, df):
+		return df[(df[category_column_name] > 0)
+		          | (self._get_not_category_term_frequency(category_column_name, df)
+		             >= self.scatterchartdata.minimum_not_category_term_frequency)]
+
+	def _filter_by_minimum_term_frequency(self, all_categories, df):
+		return df[df[all_categories].sum(axis=1)
+		          > self.scatterchartdata.minimum_term_frequency]
+
 	def _limit_max_terms(self, category, df):
 		df['score'] = self._term_importance_ranks(category, df)
-		df = df.ix[df.sort_values('score').iloc[:self.max_terms].index]
+		df = df.ix[df.sort_values('score').iloc[:self.scatterchartdata.max_terms].index]
 		return df[[c for c in df.columns if c != 'score']]
 
 	def _get_default_scores(self, category, df):
 		category_column_name = category + ' freq'
 		cat_word_counts = df[category_column_name]
-		not_cat_word_counts = df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+		not_cat_word_counts = self._get_not_category_term_frequency(category_column_name, df)
 		scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
 		return scores
 
 	def _term_importance_ranks(self, category, df):
 		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
+
+	def _get_not_category_term_frequency(self, category_column_name, df):
+		return df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+
 
 	def draw(self,
 	         category,

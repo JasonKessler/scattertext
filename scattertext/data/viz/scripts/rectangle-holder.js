@@ -3721,5 +3721,5 @@ RectangleHolder.prototype.findMatchingRectangles = function (bx1, by1, bx2, by2,
             }
             _prev_cursor5 = null;
         }
-    }
+    };
 }

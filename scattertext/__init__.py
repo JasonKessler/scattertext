@@ -56,6 +56,13 @@ def produce_scattertext_html(term_doc_matrix,
 		name of everything that isn't in category
 	protocol : str
 		optional, used prototcol of , http or https
+	minimum_term_frequency : int, optional
+		Minimum number of times word needs to appear to make it into visualization.
+	minimum_not_category_term_frequency : int, optional
+	  If an n-gram does not occur in the category, minimum times it
+	   must been seen to be included. Default is 0.
+	max_terms : int, optional
+		Maximum number of terms to include in visualization.
 	filter_unigrams : bool
 		default False, do we filter unigrams that only occur in one bigram
 	width_in_pixels: int
@@ -92,6 +99,7 @@ def produce_scattertext_explorer(corpus,
                                  protocol='https',
                                  pmi_filter_thresold=2,
                                  minimum_term_frequency=3,
+                                 minimum_not_category_term_frequency=0,
                                  max_terms=None,
                                  filter_unigrams=False,
                                  height_in_pixels=None,
@@ -131,6 +139,9 @@ def produce_scattertext_explorer(corpus,
 		Protocol to use.  Either http or https.  Default is https.
 	minimum_term_frequency : int, optional
 		Minimum number of times word needs to appear to make it into visualization.
+	minimum_not_category_term_frequency : int, optional
+	  If an n-gram does not occur in the category, minimum times it
+	   must been seen to be included. Default is 0.
 	max_terms : int, optional
 		Maximum number of terms to include in visualization.
 	filter_unigrams : bool, optional
@@ -196,6 +207,7 @@ def produce_scattertext_explorer(corpus,
 
 	scatter_chart_explorer = ScatterChartExplorer(corpus,
 	                                              minimum_term_frequency=minimum_term_frequency,
+	                                              minimum_not_category_term_frequency=minimum_not_category_term_frequency,
 	                                              pmi_threshold_coefficient=pmi_filter_thresold,
 	                                              filter_unigrams=filter_unigrams,
 	                                              jitter=jitter,
