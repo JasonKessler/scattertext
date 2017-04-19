@@ -329,7 +329,7 @@ Here is the Scattertext to produce such a visualization.
 ...                                 save_svg_button=True)
 >>> open("Convention-Visualization-Jobs.html", 'wb').write(html.encode('utf-8'))
 ``` 
-[![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Convention-Visualization-Jobs.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
+[![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Convention-Visualization-Jobs.png)](https://jasonkessler.github.io/Convention-Visualization-Jobs.html)
 
 
 ### Visualizing any kind of term score
