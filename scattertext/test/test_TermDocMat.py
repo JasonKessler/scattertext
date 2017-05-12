@@ -8,7 +8,7 @@ from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas
-from scattertext.TermDocMatrix import TermDocMatrix
+from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
@@ -75,7 +75,17 @@ class TestTermDocMat(TestCase):
 		term_df = tdm.get_term_freq_df()
 		uni_term_df = uni_tdm.get_term_freq_df()
 		self.assertEqual(set(term for term in term_df.index if ' ' not in term and "'" not in term),
-		                 set(uni_term_df.index)),
+		                 set(uni_term_df.index))
+
+	def test_remove_entity_tags(self):
+		tdm = make_a_test_term_doc_matrix()
+		removed_tags_tdm = tdm.remove_entity_tags()
+		term_df = tdm.get_term_freq_df()
+		removed_tags_term_df = removed_tags_tdm.get_term_freq_df()
+		expected_terms = set(term for term in term_df.index
+		          if not any(t in SPACY_ENTITY_TAGS for t in term.split()))
+		removed_terms = set(removed_tags_term_df.index)
+		self.assertEqual(expected_terms, removed_terms),
 
 	def test_get_stoplisted_unigram_corpus(self):
 		tdm = make_a_test_term_doc_matrix()
@@ -171,6 +181,8 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
+
+
 	def test_set_background_corpus(self):
 		tdm = get_hamlet_term_doc_matrix()
 		with self.assertRaisesRegex(Exception, "The argument.+"):
@@ -205,7 +217,7 @@ class TestTermDocMat(TestCase):
 	def test_log_reg(self):
 		hamlet = get_hamlet_term_doc_matrix()
 		df = hamlet.get_term_freq_df()
-		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet',clf=LinearRegression())
+		df['logreg'], acc, baseline = hamlet.get_logistic_regression_coefs_l2('hamlet', clf=LinearRegression())
 		l1scores, acc, baseline = hamlet.get_logistic_regression_coefs_l1('hamlet', clf=LinearRegression())
 		self.assertGreaterEqual(acc, 0)
 		self.assertGreaterEqual(baseline, 0)
@@ -213,7 +225,8 @@ class TestTermDocMat(TestCase):
 		self.assertGreaterEqual(1, baseline)
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
 		                 ['the', 'starts', 'incorporal'])
-		                 #['hamlet', 'hamlet,', 'the'])
+
+	# ['hamlet', 'hamlet,', 'the'])
 
 
 def get_hamlet_term_doc_matrix():

@@ -21,6 +21,11 @@ warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 
+SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
+                     'loc', 'product', 'event', 'work_of_art', 'language',
+                     'type', 'date', 'time', 'percent', 'money', 'quantity',
+                     'ordinal', 'cardinal']
+
 
 class TermDocMatrix(object):
 	'''
@@ -147,6 +152,19 @@ class TermDocMatrix(object):
 		                   if ' ' in term or "'" in term]
 		return self.remove_terms(terms_to_ignore)
 
+	def remove_entity_tags(self):
+		'''
+		Returns
+		-------
+		A new TermDocumentMatrix consisting of only terms in the current TermDocumentMatrix
+		 that aren't spaCy entity tags.
+
+		Note: Used if entity types are censored using FeatsFromSpacyDoc(tag_types_to_censor=...).
+		'''
+		terms_to_remove = [term for term in self._term_idx_store._i2val
+		                   if any([word in SPACY_ENTITY_TAGS for word in term.split()])]
+		return self.remove_terms(terms_to_remove)
+
 	def get_stoplisted_unigram_corpus(self, stoplist=None):
 		'''
 		Parameters
@@ -185,7 +203,6 @@ class TermDocMatrix(object):
 		                   if ' ' in term or "'" in term
 		                   or term in stoplist]
 		return self.remove_terms(terms_to_ignore)
-
 
 	def term_doc_lists(self):
 		'''
@@ -298,7 +315,7 @@ class TermDocMatrix(object):
 		return posterior_mean
 
 	def get_logistic_regression_coefs_l2(self, category,
-	                                     clf = RidgeClassifierCV()):
+	                                     clf=RidgeClassifierCV()):
 		''' Computes l2-penalized logistic regression score.
 		Parameters
 		----------
@@ -325,9 +342,9 @@ class TermDocMatrix(object):
 		return acc, baseline
 
 	def get_logistic_regression_coefs_l1(self, category,
-	                                     clf = LassoCV(alphas=[0.1, 0.001],
-	                                                   max_iter=10000,
-	                                                   n_jobs=-1)):
+	                                     clf=LassoCV(alphas=[0.1, 0.001],
+	                                                 max_iter=10000,
+	                                                 n_jobs=-1)):
 		''' Computes l1-penalized logistic regression score.
 		Parameters
 		----------
@@ -634,4 +651,3 @@ class TermDocMatrix(object):
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
-
