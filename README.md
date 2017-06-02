@@ -399,8 +399,8 @@ function. When run, a plot is produced that contains category associated terms
 colored in either red or blue hues, and terms not associated with either class
 colored in greyscale and slightly smaller. The intensity of each color indicates 
  association with the query term.  For example:
-
-[![Conventions-Visualization.html](https://jasonkessler.github.io/Conventions-Viz-Explanation.png)]
+ 
+[![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Conventions-Viz-Explanation.png)](https://jasonkessler.github.io/Convention-Visualization-Jobs.html)
 
 ### 0.0.2.4.6
 Some minor bug fixes, and added a `minimum_not_category_term_frequency` parameter.  This fixes a problem with 
