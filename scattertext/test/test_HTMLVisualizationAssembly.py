@@ -1,14 +1,15 @@
 import sys
 from unittest import TestCase
 
-from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
+from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly, DEFAULT_D3_URL, \
+	DEFAULT_D3_SCALE_CHROMATIC
 from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
 		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
-		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05']
+		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05', 'false']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'buildViz(' + ','.join(params) + ');'
@@ -45,7 +46,8 @@ class TestHTMLVisualizationAssembly(TestCase):
 		self.assertEqual(assembly._call_build_visualization_in_javascript(),
 		                 self.get_params({11: 'true'}))
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
-		#self.assertTrue('d3-save-svg.min.js' in html)
+
+	# self.assertTrue('d3-save-svg.min.js' in html)
 
 
 	def test_protocol_is_https(self):
@@ -57,6 +59,20 @@ class TestHTMLVisualizationAssembly(TestCase):
 		html = self.make_assembler().to_html(protocol='http')
 		self.assertFalse('https://' in html)
 		self.assertTrue('http://' in html)
+
+	def test_protocol_default_d3_url(self):
+		html = self.make_assembler().to_html()
+		self.assertTrue(DEFAULT_D3_URL in html)
+		html = self.make_assembler().to_html(d3_url='d3.js')
+		self.assertTrue(DEFAULT_D3_URL not in html)
+		self.assertTrue('d3.js' in html)
+
+	def test_protocol_default_d3_chromatic_url(self):
+		html = self.make_assembler().to_html()
+		self.assertTrue(DEFAULT_D3_SCALE_CHROMATIC in html)
+		html = self.make_assembler().to_html(d3_scale_chromatic_url='d3-scale-chromatic.v1.min.js')
+		self.assertTrue(DEFAULT_D3_SCALE_CHROMATIC not in html)
+		self.assertTrue('d3-scale-chromatic.v1.min.js' in html)
 
 	def test_protocol_defaults_to_http(self):
 		self.assertEqual(self.make_assembler().to_html(protocol='http'),
@@ -70,7 +86,6 @@ class TestHTMLVisualizationAssembly(TestCase):
 	def test_height_width_default(self):
 		assembler = self.make_assembler()
 		self.assertEqual(assembler._call_build_visualization_in_javascript(), self.get_params())
-
 
 	def test_color(self):
 		visualization_data = self.make_adapter()
@@ -167,3 +182,13 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            max_p_val=0.01)
 		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({0: '1000', 1: '60', 10: 'true', 13: '0.01'}))
+
+	def test_p_value_colors(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            word_vec_use_p_vals=True,
+		                                            p_value_colors=True)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 10: 'true', 14: 'true'}))

@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.4.6
+# Scattertext 0.0.2.5.0
 
 **Table of Contents**
 
@@ -67,7 +67,7 @@ Consider this example:
 
 Looking at this seem overwhelming.  In fact, it's a relatively simple visualization of word use 
 during the 2012 political convention.  Each dot corresponds to a word or phrase mentioned by Republicans or Democrats
-during their conventions.  The closer Fa dot is to the top of the plot, the more frequently it was used by 
+during their conventions.  The closer a dot is to the top of the plot, the more frequently it was used by 
 Democrats.  The further right a  dot, the more that word or phrase was used by Republicans.  Words frequently
 used by both parties, like "of" and "the" and even "Mitt" tend to occur in the upper-right-hand corner. Although very low 
 frequency words have been hidden to preserve computing resources, a word that neither party used, like "giraffe" 
@@ -393,10 +393,22 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+### 0.0.2.5.0
+Enhanced the visualization of query-based categorical differences, a.k.a the `word_similarity_explorer`
+function. When run, a plot is produced that contains category associated terms 
+colored in either red or blue hues, and terms not associated with either class
+colored in greyscale and slightly smaller. The intensity of each color indicates 
+ association with the query term.  For example:
+
+[![Conventions-Visualization.html](https://jasonkessler.github.io/Conventions-Viz-Explanation.png)]
+
 ### 0.0.2.4.6
 Some minor bug fixes, and added a `minimum_not_category_term_frequency` parameter.  This fixes a problem with 
 visualizing imbalanced datasets.  It sets a minimum number of times a word that does not appear in the target 
-category must appear before it is displayed
+category must appear before it is displayed.
+
+Added `TermDocMatrix.remove_entity_tags` method to remove entity type tags 
+from the analysis. 
 
 ### 0.0.2.4.5
 Fixed matched snippet not displaying issue [#9](/../../issues/9), and fixed a Python 2 issue 

@@ -83,7 +83,7 @@ class TestTermDocMat(TestCase):
 		term_df = tdm.get_term_freq_df()
 		removed_tags_term_df = removed_tags_tdm.get_term_freq_df()
 		expected_terms = set(term for term in term_df.index
-		          if not any(t in SPACY_ENTITY_TAGS for t in term.split()))
+		                     if not any(t in SPACY_ENTITY_TAGS for t in term.split()))
 		removed_terms = set(removed_tags_term_df.index)
 		self.assertEqual(expected_terms, removed_terms),
 
@@ -181,7 +181,14 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
-
+	def test_get_category_names_by_row(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		returned = hamlet.get_category_names_by_row()
+		self.assertEqual(len(hamlet._y),
+		                 len(returned))
+		np.testing.assert_almost_equal([hamlet.get_categories().index(x)
+		                                for x in returned],
+		                               hamlet._y)
 
 	def test_set_background_corpus(self):
 		tdm = get_hamlet_term_doc_matrix()

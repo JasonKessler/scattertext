@@ -141,6 +141,14 @@ class TermDocMatrix(object):
 	def _metadata_freq_df_from_matrix(self, catX):
 		return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
 
+	def get_category_names_by_row(self):
+		'''
+		Returns
+		-------
+		np.array of the category name for each row
+		'''
+		return np.array(self.get_categories())[self._y]
+
 	def get_unigram_corpus(self):
 		'''
 		Returns
@@ -219,7 +227,8 @@ class TermDocMatrix(object):
 
 		Returns
 		-------
-		pd.DataFrame indexed on terms, with columns giving the number of docs containing each
+		pd.DataFrame indexed on terms, with columns giving the
+		 number of docs containing each term
 		'''
 		row = self._row_category_ids()
 		catX = self._change_document_type_in_matrix(self._X, row)
@@ -234,13 +243,15 @@ class TermDocMatrix(object):
 		# type: (sparse_matrix) -> sparse_matrix
 		return (newX > 0).astype(np.int32)
 
-	def remove_terms(self, terms):
+	def remove_terms(self, terms, ignore_absences=False):
 		'''Non destructive term removal.
 
 		Parameters
 		----------
 		terms : list
 			list of terms to remove
+		ignore_absences : bool, False by default
+			if term does not appear, don't raise an error, just move on.
 
 		Returns
 		-------
@@ -249,7 +260,9 @@ class TermDocMatrix(object):
 		idx_to_delete_list = []
 		for term in terms:
 			if term not in self._term_idx_store:
-				raise KeyError('Term %s not found' % (term))
+				if not ignore_absences:
+					raise KeyError('Term %s not found' % (term))
+				continue
 			idx_to_delete_list.append(self._term_idx_store.getidx(term))
 		return self.remove_terms_by_indices(idx_to_delete_list)
 
@@ -651,3 +664,4 @@ class TermDocMatrix(object):
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
+

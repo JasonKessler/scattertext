@@ -19,7 +19,7 @@ class ScatterChartData(object):
 	def __init__(self,
 	             minimum_term_frequency=3,
 	             minimum_not_category_term_frequency=0,
-	             jitter=0,
+	             jitter=None,
 	             seed=0,
 	             pmi_threshold_coefficient=3,
 	             max_terms=None,
@@ -39,7 +39,7 @@ class ScatterChartData(object):
 		  If an n-gram does not occur in the category, minimum times it
 		   must been seen to be included. Default is 0.
 		jitter : float, optional
-			Maximum amount of noise to be added to points, 0.2 is a lot. Default is 0.
+			Maximum amount of noise to be added to points, 0.2 is a lot. Default is None to disable jitter.
 		seed : float, optional
 			Random seed. Default 0
 		pmi_threshold_coefficient : int
@@ -191,11 +191,9 @@ class ScatterChart:
 		:param vec: array to jitter
 		:return: array, jittered version of arrays
 		"""
-		if self.scatterchartdata.jitter == 0:
+		if self.scatterchartdata.jitter == 0 or self.scatterchartdata.jitter is None:
 			return vec
-		else:
-			to_ret = vec + np.random.rand(1, len(vec))[0] * self.scatterchartdata.jitter
-			return to_ret
+		return vec + np.random.rand(1, len(vec))[0] * self.scatterchartdata.jitter
 
 	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
 		term_ranker = self.scatterchartdata.term_ranker(self.term_doc_matrix)

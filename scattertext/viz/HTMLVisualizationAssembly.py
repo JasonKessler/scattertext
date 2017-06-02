@@ -4,6 +4,10 @@ import pkgutil
 class InvalidProtocolException(Exception):
 	pass
 
+DEFAULT_D3_URL \
+	= 'http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js'
+DEFAULT_D3_SCALE_CHROMATIC \
+	= 'http://d3js.org/d3-scale-chromatic.v1.min.js'
 
 class HTMLVisualizationAssembly:
 	def __init__(self,
@@ -21,7 +25,8 @@ class HTMLVisualizationAssembly:
 	             show_characteristic=True,
 	             word_vec_use_p_vals=False,
 	             max_p_val=0.05,
-	             save_svg_button=False):
+	             save_svg_button=False,
+	             p_value_colors=False):
 		'''
 
 		Parameters
@@ -58,6 +63,9 @@ class HTMLVisualizationAssembly:
 			word_vec_use_p_vals is True.
 		save_svg_button : bool, default False
 			Add a save as SVG button to the page.
+		p_value_colors : bool, default False
+		  Color points differently if p val is above 1-max_p_val, below max_p_val, or
+		   in between.
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
@@ -74,8 +82,25 @@ class HTMLVisualizationAssembly:
 		self._max_p_val = max_p_val
 		self._save_svg_button = save_svg_button
 		self._reverse_sort_scores_for_not_category = reverse_sort_scores_for_not_category
+		self._p_value_colors = p_value_colors
 
-	def to_html(self, protocol='http'):
+	def to_html(self,
+	            protocol='http',
+	            d3_url = None,
+	            d3_scale_chromatic_url = None):
+		'''
+		Parameters
+		----------
+		protocol, 'http' or 'https' for including external urls
+		d3_url, str, None by default.  The url (or path) of d3.
+		  By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
+		d3_scale_chromatic_url, str, None by default.
+
+		Returns
+		-------
+		str, the html file representation
+
+		'''
 		self._ensure_valid_protocol(protocol)
 		javascript_to_insert = '\n'.join([
 			self._full_content_of_javascript_files(),
@@ -83,8 +108,17 @@ class HTMLVisualizationAssembly:
 			self._call_build_visualization_in_javascript()
 		])
 
+		if d3_url is None:
+			d3_url = DEFAULT_D3_URL
+
+		if d3_scale_chromatic_url is None:
+			d3_scale_chromatic_url = DEFAULT_D3_SCALE_CHROMATIC
+
+
 		html_file = (self._full_content_of_html_file()
 		             .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
+		             .replace('<!--D3URL-->', d3_url, 1)
+		             .replace('<!--D3SCALECHROMATIC-->', d3_scale_chromatic_url)
 		             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
 		             )
 
@@ -145,5 +179,6 @@ class HTMLVisualizationAssembly:
 		             js_bool(self._word_vec_use_p_vals),
 		             js_bool(self._save_svg_button),
 		             js_bool(self._reverse_sort_scores_for_not_category),
-		             js_float(self._max_p_val)]
+		             js_float(self._max_p_val),
+		             js_bool(self._p_value_colors)]
 		return 'buildViz(' + ','.join(arguments) + ');'

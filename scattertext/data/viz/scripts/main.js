@@ -1,18 +1,19 @@
 buildViz = function (d3) {
-    return function(widthInPixels = 800,
-                      heightInPixels = 600,
-                      max_snippets = null,
-                      color = null,
-                      sortByDist = true,
-                      useFullDoc = false,
-                      greyZeroScores = false,
-                      chineseMode = false,
-                      nonTextFeaturesMode = false,
-                      showCharacteristic = true,
-                      wordVecMaxPValue = false,
-                      saveSvgButton = false,
-                      reverseSortScoresForNotCategory = false,
-                      minPVal=0.05) {
+    return function (widthInPixels = 800,
+                     heightInPixels = 600,
+                     max_snippets = null,
+                     color = null,
+                     sortByDist = true,
+                     useFullDoc = false,
+                     greyZeroScores = false,
+                     chineseMode = false,
+                     nonTextFeaturesMode = false,
+                     showCharacteristic = true,
+                     wordVecMaxPValue = false,
+                     saveSvgButton = false,
+                     reverseSortScoresForNotCategory = false,
+                     minPVal = 0.05,
+                     pValueColors = false) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -36,6 +37,7 @@ buildViz = function (d3) {
         var label = d3.select('#' + divName).append("div")
             .attr("class", "label");
 
+        var interpolateLightGreys = d3.interpolate(d3.rgb(230, 230, 230), d3.rgb(130, 130, 130));
         // setup fill color
         //var color = d3.interpolateRdYlBu;
         if (color == null) {
@@ -284,8 +286,13 @@ buildViz = function (d3) {
             deselectLastCircle();
             var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
             if (!sortByDist) {
-                message += '<br/>score: ' + d.os.toFixed(4);
+                message += '<br/>score: ' + d.os.toFixed(5);
             }
+            /*
+            if (d.p) {
+                message += ';  (p:' + d.p.toFixed(5) +')';
+            }*/
+
             tooltip.transition()
                 .duration(0)
                 .style("opacity", 1)
@@ -391,7 +398,12 @@ buildViz = function (d3) {
                 .data(data)
                 .enter()
                 .append("circle")
-                .attr("r", 2)
+                .attr("r", function (d) {
+                    if(pValueColors && d.p) {
+                        return (d.p >= 1 - minPVal || d.p <= minPVal) ? 2 : 1.75;
+                    }
+                    return 2;
+                })
                 .attr("cx", function (d) {
                     return x(d.x);
                 })
@@ -402,6 +414,14 @@ buildViz = function (d3) {
                     //.attr("fill", function (d) {
                     if (greyZeroScores && d.os == 0) {
                         return d3.rgb(230, 230, 230);
+                    } else if(pValueColors && d.p) {
+                        if(d.p >= 1 - minPVal) {
+                            return d3.interpolateYlGnBu(d.s);
+                        } else if (d.p <= minPVal) {
+                            return d3.interpolateYlOrBr(d.s);
+                        } else {
+                            return interpolateLightGreys(d.s);
+                        }
                     } else {
                         return color(d.s);
                     }
@@ -429,7 +449,6 @@ buildViz = function (d3) {
                     .attr("y", y(datum.y) + 3)
                     .attr("text-anchor", "middle")
                     .text("x");
-                console.log(curLabel);
                 var bbox = curLabel.node().getBBox();
                 var borderToRemove = .5;
                 var x1 = bbox.x + borderToRemove,

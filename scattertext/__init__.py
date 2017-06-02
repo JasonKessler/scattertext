@@ -121,6 +121,7 @@ def produce_scattertext_explorer(corpus,
                                  show_characteristic=True,
                                  word_vec_use_p_vals=False,
                                  max_p_val=0.05,
+                                 p_value_colors=False,
                                  term_significance=None,
                                  save_svg_button=False):
 	'''Returns html code of visualization.
@@ -186,6 +187,10 @@ def produce_scattertext_explorer(corpus,
 		Sort by harmonic mean of score and distance.
 	max_p_val : float, default 0.05
 		If word_vec_use_p_vals, the minimum p val to use.
+	p_value_colors : bool, default False
+	  Color points differently if p val is above 1-max_p_val, below max_p_val, or
+	   in between.
+	p_value_colors : false
 	term_significance : TermSignifiance instance or None
 		Way of getting signfiance scores.  If None, p values will not be added.
 	save_svg_button : bool, default False
@@ -236,7 +241,8 @@ def produce_scattertext_explorer(corpus,
 	                                 show_characteristic=show_characteristic,
 	                                 word_vec_use_p_vals=word_vec_use_p_vals,
 	                                 max_p_val=max_p_val,
-	                                 save_svg_button=save_svg_button) \
+	                                 save_svg_button=save_svg_button,
+	                                 p_value_colors=p_value_colors) \
 		.to_html(protocol=protocol)
 
 
@@ -291,6 +297,7 @@ def word_similarity_explorer(corpus,
 	                                    word_vec_use_p_vals=True,
 	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
 	                                    max_p_val=max_p_val,
+	                                    p_value_colors = True,
 	                                    **kwargs)
 
 
