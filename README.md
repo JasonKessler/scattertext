@@ -42,7 +42,7 @@ Python 2.7 support is experimental.  Many things will break.
 The HTML outputs look best in Chrome and Safari.
 
 ## Citation
-. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL): System Demonstrations. 2017.
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL): System Demonstrations. 2017.
 
 Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 
@@ -250,14 +250,8 @@ Below is what the webpage looks like.  Click it and wait a few minutes for the i
 
 In order to visualize Empath (Fast 2016) topics and categories instead of terms, we'll need to 
 create a `Corpus` of extracted topics and categories rather than unigrams and 
-bigrams. To do so, use the `FeatsOnlyFromEmpath` feature extractor.  See the sourcecode for 
+bigrams. To do so, use the `FeatsOnlyFromEmpath` feature extractor.  See the source code for 
 examples of how to make your own.
-```pydocstring
->>> corpus = st.CorpusFromParsedDocuments(convention_df,
-...                                       category_col='party',
-...                                       feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
-...                                       parsed_col='text').build()
-```
 
 When creating the visualization, pass the `use_non_text_features=True` argument into
  `produce_scattertext_explorer`.  This will instruct it to use the labeled Empath 
@@ -267,6 +261,10 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
  enormous documents.  Otherwise, the first 300 characters will be shown.
  
 ```pydocstring
+>>> corpus = st.CorpusFromParsedDocuments(convention_df,
+...                                       category_col='party',
+...                                       feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
+...                                       parsed_col='text').build()
 >>> html = st.produce_scattertext_explorer(corpus,
 ...                                        category='democrat',
 ...                                        category_name='Democratic',
