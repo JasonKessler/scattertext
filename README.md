@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.5.0
+# Scattertext 0.0.2.6.0
 
 **Table of Contents**
 
@@ -13,6 +13,7 @@
 - [Advanced Uses](#advanced-uses)
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
     - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
+    - [Custom term positions](#custom-term-positions)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [Presentations on Scattertext](#presentations-on-scattertext)
@@ -261,12 +262,12 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
  enormous documents.  Otherwise, the first 300 characters will be shown.
  
 ```pydocstring
->>> corpus = st.CorpusFromParsedDocuments(convention_df,
-...                                       category_col='party',
-...                                       feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
-...                                       parsed_col='text').build()
->>> html = st.produce_scattertext_explorer(corpus,
-...                                        category='democrat',
+>>> empath_corpus = st.CorpusFromParsedDocuments(convention_df,
+...                                              category_col='party',
+...                                              feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
+...                                              parsed_col='text').build()
+>>> html = st.produce_scattertext_explorer(empath_corpus,
+...                                        corpus_for_empath='democrat',
 ...                                        category_name='Democratic',
 ...                                        not_category_name='Republican',
 ...                                        width_in_pixels=1000,
@@ -309,7 +310,7 @@ bigrams in addition to the unigrams scored by Monroe, the size of the corpus wou
 to have high enough bigram counts for proper penalization. This function 
 relies the Dirichlet distribution's parameter alpha, a vector, which is uniformly set to 0.01.
 
-Here is the Scattertext to produce such a visualization. 
+Here is the code  to produce such a visualization. 
  
 ```pydocstring
 >>> from scattertext word_similarity_explorer
@@ -336,7 +337,7 @@ We can use Scattertext to visualize alternative types of word scores, and ensure
 
 ```pydocstring
 >>> from sklearn.linear_model import Lasso
->>> from scattertext sparse_explorer
+>>> from scattertext import sparse_explorer
 >>> html = sparse_explorer(corpus,
 ...                        category='democrat',
 ...                        category_name='Democratic',
@@ -346,11 +347,67 @@ We can use Scattertext to visualize alternative types of word scores, and ensure
 ...                        pmi_filter_thresold=4,
 ...                        width_in_pixels=1000,
 ...                        metadata=convention_df['speaker'])
->>> 
-open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
+>>> open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
 ```
 
 [![Convention-Visualization-Sparse.html](https://jasonkessler.github.io/Convention-Visualization-Sparse.png)](https://jasonkessler.github.io/Convention-Visualization-Sparse.html)
+
+### Custom term positions
+
+You can also use custom term positions and axis labels.  For example, you can base terms' y-axis 
+positions on a regression coefficient and their x-axis on term frequency and label the axes
+ accordingly.  The one catch is that axis positions must be scaled between 0 and 1.
+
+First, let's define two scaling functions: `scale` to project positive values to \[0,1\], and 
+`zero_centered_scale` project real values to \[0,1\], with negative values always \<0.5, and
+positive values always \>0.5.
+
+```pydocstring
+>>> def scale(ar):
+...     return (ar - ar.min()) / (ar.max() - ar.min())
+...
+>>> def zero_centered_scale(ar):
+...     ar[ar > 0] = scale(ar[ar > 0])
+...     ar[ar < 0] = -scale(-ar[ar < 0])
+...     return (ar + 1) / 2.
+```
+
+Next, let's compute and scale term frequencies and L2-penalized regression coefficients. We'll
+hang on to the original coefficients and allow users to view them by mousing over terms.  
+
+```pydocstring
+>>> from sklearn.linear_model import LogisticRegression
+>>> import numpy as np
+>>>
+>>> frequencies_scaled = scale(np.log(term_freq_df.sum(axis=1).values))
+>>> scores = corpus.get_logreg_coefs('democrat',
+...                                  LogisticRegression(penalty='l2', C=10, max_iter=10000, n_jobs=-1))
+>>> scores_scaled = zero_centered_scale(scores)
+```
+
+Finally, we can write the visualization. Note the use of the `x_coords` and `y_coords` 
+parameters to store the respective coordinates, the `scores` and `sort_by_dist` arguments
+ to register the original coefficients and use them to rank the terms in the right-hand
+ list, and the `x_label` and `y_label` arguments to label axes.
+ 
+```pydocstring
+>>> html = produce_scattertext_explorer(corpus,
+...                                     category='democrat',
+...                                     category_name='Democratic',
+...                                     not_category_name='Republican',
+...                                     minimum_term_frequency=5,
+...                                     pmi_filter_thresold=4,
+...                                     width_in_pixels=1000,
+...                                     x_coords=frequencies_scaled,
+...                                     y_coords=scores_scaled,
+...                                     scores=scores,
+...                                     sort_by_dist=False,
+...                                     metadata=convention_df['speaker'],
+...                                     x_label='Log frequency',
+...                                     y_label='L2-penalized logistic regression coef')
+>>> open('demo_custom_coordinates.html', 'wb').write(html.encode('utf-8'))
+```
+[![demo_custom_coordinates.html](https://jasonkessler.github.io/demo_custom_coordinates.png)](https://jasonkessler.github.io/demo_custom_coordinates.html)
 
 ## Examples 
 
@@ -391,6 +448,12 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+### 0.0.2.6.0
+Custom term positions and axis labels.  Although not recommended, you can 
+visualize different metrics on each axis in visualizations similar to Monroe et al. (2008).
+Please see [Custom term positions](#custom-term-positions) for more info.
+
+ 
 ### 0.0.2.5.0
 Enhanced the visualization of query-based categorical differences, a.k.a the `word_similarity_explorer`
 function. When run, a plot is produced that contains category associated terms 

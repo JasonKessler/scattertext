@@ -48,10 +48,17 @@ class TestDocsAndLabelsFromCorpus(TestCase):
 		d = DocsAndLabelsFromCorpus(corpus).use_non_text_features()
 		metadata = ['meta%s'%(i) for i in range(corpus.get_num_docs())]
 		output = d.get_labels_and_texts_and_meta(metadata)
+		extra_val = [{'cat3': 1, 'cat4': 2}, {'cat4': 2}, {'cat5': 1, 'cat3': 2},
+		                                    {'cat9': 1, 'cat6': 2}, {'cat3': 1, 'cat4': 2},
+		                                    {'cat1': 2, 'cat2': 1},
+		                                    {'cat5': 1, 'cat2': 2},
+		                                    {'cat3': 2, 'cat4': 1}]
+		extra_val = [{'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}]
+
 		self.assertEqual(output, {'categories': ['hamlet', 'jay-z/r. kelly'],
 		                          'texts': ["what art thou that usurp'st this time of night,", 'together with that fair and warlike form', 'in which the majesty of buried denmark', 'did sometimes march? by heaven i charge thee, speak!', 'halt! who goes there?', 'it is i sire tone from brooklyn.', 'well, speak up man what is it?', 'news from the east sire! the best of both worlds has returned!'], 'meta': ['meta0', 'meta1', 'meta2', 'meta3', 'meta4', 'meta5', 'meta6', 'meta7'],
 		                          'labels': [0, 0, 0, 0, 1, 1, 1, 1],
-		                          'extra': [{'cat3': 1, 'cat4': 2}, {'cat4': 2}, {'cat5': 1, 'cat3': 2}, {'cat9': 1, 'cat6': 2}, {'cat3': 1, 'cat4': 2}, {'cat1': 2, 'cat2': 1}, {'cat5': 1, 'cat2': 2}, {'cat3': 2, 'cat4': 1}]}
+		                          'extra': extra_val}
 )
 
 

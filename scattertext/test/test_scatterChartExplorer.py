@@ -80,18 +80,20 @@ class TestScatterChart(TestCase):
 		                          minimum_term_frequency=0,
 		                          use_non_text_features=True)
 		     .to_dict('hamlet', metadata=meta))
+		extras = [{'cat3': 1, 'cat4': 2},
+		          {'cat4': 2},
+		          {'cat3': 2, 'cat5': 1},
+		          {'cat6': 2, 'cat9': 1},
+		          {'cat3': 1, 'cat4': 2},
+		          {'cat1': 2, 'cat2': 1},
+		          {'cat2': 2, 'cat5': 1},
+		          {'cat3': 2, 'cat4': 1}]
+		extras = [{'cat1': 2}] * 8
 		self.maxDiff = None
 		self.assertEqual(j['docs'],
 		                 {'labels': [0, 0, 0, 0, 1, 1, 1, 1],
 		                  'categories': ['hamlet', 'jay-z/r. kelly'],
-		                  'extra': [{'cat3': 1, 'cat4': 2},
-		                            {'cat4': 2},
-		                            {'cat3': 2, 'cat5': 1},
-		                            {'cat6': 2, 'cat9': 1},
-		                            {'cat3': 1, 'cat4': 2},
-		                            {'cat1': 2, 'cat2': 1},
-		                            {'cat2': 2, 'cat5': 1},
-		                            {'cat3': 2, 'cat4': 1}],
+		                  'extra': extras,
 		                  'meta': ['one',
 		                           'two',
 		                           'three',

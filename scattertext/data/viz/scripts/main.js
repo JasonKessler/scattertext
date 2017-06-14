@@ -13,7 +13,9 @@ buildViz = function (d3) {
                      saveSvgButton = false,
                      reverseSortScoresForNotCategory = false,
                      minPVal = 0.05,
-                     pValueColors = false) {
+                     pValueColors = false,
+                     xLabelText = null,
+                     yLabelText = null) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -25,13 +27,29 @@ buildViz = function (d3) {
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
 
-        function axisLabeler(d, i) {
-            return ["Infrequent", "Average", "Frequent"][i]
+        console.log('X Label');
+        console.log(xLabelText);
+        console.log('Y Label');
+        console.log(yLabelText);
+        console.log(yLabelText == null);
+        console.log(yLabelText != null);
+        console.log(yLabelText === undefined);
+        console.log(yLabelText !== undefined);
+
+        function axisLabelerFactory(axis) {
+            if ((axis == "x" && xLabelText == null)
+                || (axis == "y" && yLabelText == null))
+                return function (d, i) {
+                    return ["Infrequent", "Average", "Frequent"][i];
+                };
+
+            return function (d, i) {
+                return ["Low", "Medium", "High"][i];
+            }
         }
 
-        var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabeler);
-
-        var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabeler);
+        var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
+        var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabelerFactory('y'));
 
         // var label = d3.select("body").append("div")
         var label = d3.select('#' + divName).append("div")
@@ -289,9 +307,9 @@ buildViz = function (d3) {
                 message += '<br/>score: ' + d.os.toFixed(5);
             }
             /*
-            if (d.p) {
-                message += ';  (p:' + d.p.toFixed(5) +')';
-            }*/
+             if (d.p) {
+             message += ';  (p:' + d.p.toFixed(5) +')';
+             }*/
 
             tooltip.transition()
                 .duration(0)
@@ -399,7 +417,7 @@ buildViz = function (d3) {
                 .enter()
                 .append("circle")
                 .attr("r", function (d) {
-                    if(pValueColors && d.p) {
+                    if (pValueColors && d.p) {
                         return (d.p >= 1 - minPVal || d.p <= minPVal) ? 2 : 1.75;
                     }
                     return 2;
@@ -414,8 +432,8 @@ buildViz = function (d3) {
                     //.attr("fill", function (d) {
                     if (greyZeroScores && d.os == 0) {
                         return d3.rgb(230, 230, 230);
-                    } else if(pValueColors && d.p) {
-                        if(d.p >= 1 - minPVal) {
+                    } else if (pValueColors && d.p) {
+                        if (d.p >= 1 - minPVal) {
                             return d3.interpolateYlGnBu(d.s);
                         } else if (d.p <= minPVal) {
                             return d3.interpolateYlOrBr(d.s);
@@ -618,7 +636,7 @@ buildViz = function (d3) {
                 .attr("y", height - 6)
                 .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                 .attr('font-size', '10px')
-                .text(modelInfo['not_category_name'] + " Frequency");
+                .text(getLabelText('x'));
 
             //console.log('xLabel');
             //console.log(xLabel);
@@ -637,6 +655,20 @@ buildViz = function (d3) {
                 .attr("transform", "rotate(-90)");
             registerFigureBBox(myYAxis);
 
+            function getLabelText(axis) {
+                if (axis == 'y') {
+                    if (yLabelText == null)
+                        return modelInfo['not_category_name'] + " Frequency";
+                    else
+                        return yLabelText;
+                } else {
+                    if (xLabelText == null)
+                        return modelInfo['category_name'] + " Frequency";
+                    else
+                        return xLabelText;
+                }
+            }
+
             var yLabel = svg.append("text")
                 .attr("class", "y label")
                 .attr("text-anchor", "end")
@@ -645,7 +677,7 @@ buildViz = function (d3) {
                 .attr("transform", "rotate(-90)")
                 .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                 .attr('font-size', '10px')
-                .text(modelInfo['category_name'] + " Frequency");
+                .text(getLabelText('y'));
             registerFigureBBox(yLabel);
 
             var catHeader = svg.append("text")

@@ -80,7 +80,6 @@ class TestFeatsFromOnlyEmpath(TestCase):
 		metadata_freq = feat_getter.get_doc_metadata(doc)
 
 		self.assertEqual(term_freq, Counter())
-		print(metadata_freq)
 		self.assertEqual(metadata_freq['ridicule'], 1)
 		self.assertNotIn('fashion', metadata_freq)
 		self.assertNotIn('document', metadata_freq)

@@ -1,5 +1,5 @@
 import pkgutil
-
+import json
 
 class InvalidProtocolException(Exception):
 	pass
@@ -26,7 +26,9 @@ class HTMLVisualizationAssembly:
 	             word_vec_use_p_vals=False,
 	             max_p_val=0.05,
 	             save_svg_button=False,
-	             p_value_colors=False):
+	             p_value_colors=False,
+	             x_label=None,
+	             y_label=None):
 		'''
 
 		Parameters
@@ -66,6 +68,10 @@ class HTMLVisualizationAssembly:
 		p_value_colors : bool, default False
 		  Color points differently if p val is above 1-max_p_val, below max_p_val, or
 		   in between.
+		x_label : str, default None
+			If present, use as the x-axis label
+		y_label : str, default None
+			If present, use as the y-axis label
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
@@ -83,6 +89,8 @@ class HTMLVisualizationAssembly:
 		self._save_svg_button = save_svg_button
 		self._reverse_sort_scores_for_not_category = reverse_sort_scores_for_not_category
 		self._p_value_colors = p_value_colors
+		self._x_label = x_label
+		self._y_label = y_label
 
 	def to_html(self,
 	            protocol='http',
@@ -157,6 +165,9 @@ class HTMLVisualizationAssembly:
 		def js_default_value(x):
 			return 'undefined' if x is None else str(x)
 
+		def js_default_string(x):
+			return 'undefined' if x is None else json.dumps(str(x))
+
 		def js_default_value_to_null(x):
 			return 'null' if x is None else str(x)
 
@@ -180,5 +191,7 @@ class HTMLVisualizationAssembly:
 		             js_bool(self._save_svg_button),
 		             js_bool(self._reverse_sort_scores_for_not_category),
 		             js_float(self._max_p_val),
-		             js_bool(self._p_value_colors)]
+		             js_bool(self._p_value_colors),
+		             js_default_string(self._x_label),
+		             js_default_string(self._y_label)]
 		return 'buildViz(' + ','.join(arguments) + ');'

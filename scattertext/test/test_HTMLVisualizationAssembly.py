@@ -9,7 +9,8 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
 		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
-		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05', 'false']
+		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05',
+		          'false', 'undefined', 'undefined']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'buildViz(' + ','.join(params) + ');'
@@ -192,3 +193,21 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            p_value_colors=True)
 		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({0: '1000', 1: '60', 10: 'true', 14: 'true'}))
+
+	def test_x_label(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            x_label='x label')
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 15: '"x label"'}))
+
+	def test_y_label(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            height_in_pixels=60,
+		                                            width_in_pixels=1000,
+		                                            y_label='y label')
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({0: '1000', 1: '60', 16: '"y label"'}))

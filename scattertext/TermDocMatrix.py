@@ -63,6 +63,14 @@ class TermDocMatrix(object):
 		self._unigram_frequency_path = unigram_frequency_path
 		self._background_corpus = None
 
+	def get_num_terms(self):
+		'''
+		Returns
+		-------
+		The number of terms registered in the term doc matrix
+		'''
+		return len(self._term_idx_store)
+
 	def get_categories(self):
 		'''
 

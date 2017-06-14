@@ -4,6 +4,7 @@ import re
 This is a fast but awful partial implementation of Spacy.  It's useful for testing.
 '''
 
+
 class Tok:
 	def __init__(self, pos, lem, low, ent_type, tag):
 		self.pos_ = pos
@@ -11,11 +12,16 @@ class Tok:
 		self.lower_ = low
 		self.ent_type_ = ent_type
 		self.tag_ = tag
+
 	def __str__(self):
 		return self.lower_
 
+	def __len__(self):
+		return len(self.lower_)
+
+
 class Doc:
-	def __init__(self, sents, raw = None):
+	def __init__(self, sents, raw=None):
 		self.sents = sents
 		if raw is None:
 			self.string = ' '.join(
@@ -30,6 +36,12 @@ class Doc:
 
 	def __repr__(self):
 		return self.string
+
+	def __iter__(self):
+		for sent in self.sents:
+			for tok in sent:
+				yield tok
+
 
 def whitespace_nlp(doc, entity_type=None, tag_type=None):
 	toks = _regex_parse_sentence(doc, entity_type, tag_type)
@@ -76,4 +88,3 @@ def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
 		sents.append(toks)
 		toks = []
 	return Doc(sents, doc)
-

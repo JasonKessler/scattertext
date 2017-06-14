@@ -40,6 +40,9 @@ class TestTermDocMat(TestCase):
 	def setUp(cls):
 		cls.tdm = make_a_test_term_doc_matrix()
 
+	def test_get_num_terms(self):
+		self.assertEqual(self.tdm.get_num_terms(), self.tdm._X.shape[1])
+
 	def test_get_term_freq_df(self):
 		df = self.tdm.get_term_freq_df().sort_values('b freq', ascending=False)[:3]
 		self.assertEqual(list(df.index), ['another', 'blah', 'blah blah'])

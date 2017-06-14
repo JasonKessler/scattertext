@@ -44,7 +44,7 @@ def build_hamlet_jz_corpus():
 def build_hamlet_jz_corpus_with_meta():
 	# type: () -> Corpus
 	def empath_mock(doc, **kwargs):
-		toks = doc.split()
+		toks = list(doc)
 		num_toks = min(3,len(toks))
 		return {'cat'+str(len(tok)):val for val,tok in enumerate(toks[:num_toks])}
 

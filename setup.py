@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.2.5.0',
-      description='An NLP libarary to help find interesting terms in small to medium-sized corpora.',
+      version='0.0.2.6.0',
+      description='An NLP package to visualize interesting terms in text.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
       author_email='jason.kessler@gmail.com',

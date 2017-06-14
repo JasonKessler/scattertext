@@ -5,6 +5,7 @@ import numpy as np
 
 from scattertext import LogOddsRatioUninformativeDirichletPrior
 from scattertext import ScatterChart
+from scattertext.ScatterChart import CoordinatesNotRightException
 from scattertext.test.test_termDocMatrixFactory \
 	import build_hamlet_jz_term_doc_mat, build_hamlet_jz_corpus_with_meta
 
@@ -48,6 +49,33 @@ class TestScatterChart(TestCase):
 		print(datum)
 		self.assertIn('p', datum.keys())
 
+	def test_inject_coordinates(self):
+		tdm = build_hamlet_jz_term_doc_mat()
+		freq_df = tdm.get_term_freq_df()
+		scatter_chart = ScatterChart(term_doc_matrix=tdm,
+		                             minimum_term_frequency=0)
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates([], [])
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(freq_df[freq_df.columns[0]], [])
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates([], freq_df[freq_df.columns[0]])
+		x = freq_df[freq_df.columns[1]].astype(np.float)
+		y = freq_df[freq_df.columns[0]].astype(np.float)
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(x, y)
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(x, y/y.max())
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(x/x.max(), y)
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(-x / x.max(), -y / y.max())
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(-x / x.max(), y / y.max())
+		with self.assertRaises(CoordinatesNotRightException):
+			scatter_chart.inject_coordinates(x / x.max(), -y / y.max())
+		scatter_chart.inject_coordinates(x / x.max(), y / y.max())
+
 	def test_to_json_use_non_text_features(self):
 		tdm = build_hamlet_jz_corpus_with_meta()
 		# with self.assertRaises(NoWordMeetsTermFrequencyRequirementsError):
@@ -59,9 +87,11 @@ class TestScatterChart(TestCase):
 		self.assertEqual(set(j.keys()), set(['info', 'data']))
 		self.assertEqual(set(j['info'].keys()),
 		                 set(['not_category_name', 'category_name',
-		                      'category_terms', 'not_category_terms', 'category_internal_name']))
-		self.assertEqual({t['term'] for t in j['data']},
-		                 {'cat6', 'cat4', 'cat9', 'cat5', 'cat1', 'cat3', 'cat2'})
+		                      'category_terms', 'not_category_terms',
+		                      'category_internal_name']))
+		self.assertEqual({t['term'] for t in j['data']}, {'cat1'}
+		                 #{'cat4', 'cat9', 'cat5', 'cat0', 'cat3', 'cat2', 'cat1'}
+		                 )
 		json.dumps(j)
 
 	def test_max_terms(self):

@@ -68,6 +68,8 @@ class ScatterChartData(object):
 		np.random.seed(seed)
 
 
+class CoordinatesNotRightException(Exception): pass
+
 
 class ScatterChart:
 	def __init__(self,
@@ -75,6 +77,36 @@ class ScatterChart:
 	             **kwargs):
 		self.term_doc_matrix = term_doc_matrix
 		self.scatterchartdata = ScatterChartData(**kwargs)
+		self.x_coords = None
+		self.y_coords = None
+
+	def inject_coordinates(self, x_coords, y_coords):
+		'''
+		Inject custom x and y coordinates for each term into chart.
+
+		Parameters
+		----------
+		x_coords: array-like, positions on x-axis \in [0,1]
+		y_coords: array-like, positions on y-axis \in [0,1]
+
+		Returns
+		-------
+		self: ScatterChart
+
+		'''
+		self._verify_coordinates(x_coords, 'x')
+		self._verify_coordinates(y_coords, 'y')
+		self.x_coords = x_coords
+		self.y_coords = y_coords
+
+	def _verify_coordinates(self, coords, name):
+		if len(coords) != self.term_doc_matrix.get_num_terms():
+			raise CoordinatesNotRightException("Length of %s_cords must be the same as the number "
+			                                   "of terms in the term_doc_matrix." % (name))
+		if max(coords) > 1:
+			raise CoordinatesNotRightException("Max value of %s_cords must be <= 1." % (name))
+		if min(coords) < 0:
+			raise CoordinatesNotRightException("Min value of %s_cords must be >= 0." % (name))
 
 	def to_dict(self,
 	            category,
@@ -119,8 +151,10 @@ class ScatterChart:
 		'''
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
-		df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
-			(category, df, other_categories, transform)
+		if self.x_coords is None:
+			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
+				(category, df, other_categories, transform)
+			df['x'], df['y'] = self.x_coords, self.y_coords
 		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
 		json_df = df[['x', 'y', 'term']]
 		if self.scatterchartdata.term_significance:
@@ -178,7 +212,7 @@ class ScatterChart:
 	                                                           df,
 	                                                           other_categories,
 	                                                           transform):
-		not_counts= df[other_categories].sum(axis=1)
+		not_counts = df[other_categories].sum(axis=1)
 		counts = df[category + ' freq']
 		x_data_raw = transform(not_counts, df.index, counts)
 		y_data_raw = transform(counts, df.index, not_counts)
@@ -200,6 +234,9 @@ class ScatterChart:
 		if self.scatterchartdata.use_non_text_features:
 			term_ranker.use_non_text_features()
 		df = term_ranker.get_ranks()
+		if self.x_coords is not None:
+			df['x'] = self.x_coords
+			df['y'] = self.y_coords
 		if scores is None:
 			scores = self._get_default_scores(category, df)
 		# np.array(self.term_doc_matrix.get_rudder_scores(category))
@@ -259,7 +296,6 @@ class ScatterChart:
 	def _get_not_category_term_frequency(self, category_column_name, df):
 		return df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
 
-
 	def draw(self,
 	         category,
 	         num_top_words_to_annotate=4,
@@ -290,8 +326,9 @@ class ScatterChart:
 			raise Exception("mpld3 need to be installed to use this function.")
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
-		x_data, y_data = self._get_coordinates_from_transform_and_jitter_frequencies \
-			(category, df, other_categories, transform)
+		if self.x_coords is None:
+			df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
+				(category, df, other_categories, transform)
 		df_to_annotate = df[(df['not category score rank'] <= num_top_words_to_annotate)
 		                    | (df['category score rank'] <= num_top_words_to_annotate)
 		                    | df['term'].isin(words_to_annotate)]
@@ -307,8 +344,8 @@ class ScatterChart:
 		plt.gcf().subplots_adjust(bottom=0.2)
 		plt.gcf().subplots_adjust(right=0.2)
 
-		points = ax.scatter(x_data,
-		                    y_data,
+		points = ax.scatter(self.x_coords,
+		                    self.y_coords,
 		                    c=-df['color_scores'],
 		                    cmap='seismic',
 		                    s=10,
@@ -332,7 +369,7 @@ class ScatterChart:
 			verticalalignment = 'bottom' if alignment_criteria else 'top'
 			term = row['term']
 			ax.annotate(term,
-			            (x_data[i], y_data[i]),
+			            (self.x_coords[i], y_data[i]),
 			            size=15,
 			            horizontalalignment=horizontalalignment,
 			            verticalalignment=verticalalignment,

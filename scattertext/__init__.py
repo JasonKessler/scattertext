@@ -1,7 +1,6 @@
 from __future__ import print_function
-import sys
+
 import numpy as np
-from sklearn.linear_model import Lasso
 
 import scattertext.viz
 from scattertext import SampleCorpora
@@ -108,6 +107,8 @@ def produce_scattertext_explorer(corpus,
                                  max_docs_per_category=None,
                                  metadata=None,
                                  scores=None,
+                                 x_coords=None,
+                                 y_coords=None,
                                  singleScoreMode=False,
                                  sort_by_dist=True,
                                  reverse_sort_scores_for_not_category=True,
@@ -123,7 +124,9 @@ def produce_scattertext_explorer(corpus,
                                  max_p_val=0.05,
                                  p_value_colors=False,
                                  term_significance=None,
-                                 save_svg_button=False):
+                                 save_svg_button=False,
+                                 x_label = None,
+                                 y_label = None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -159,6 +162,12 @@ def produce_scattertext_explorer(corpus,
 		list of meta data strings that will be included for each document
 	scores : np.array, optional
 		Array of term scores or None.
+	x_coords : np.array, optional
+		Array of term x-axis positions or None.  Must be in [0,1].
+		If present, y_cords must also be present.
+	y_coords : np.array, optional
+		Array of term x-axis positions or None.  Must be in [0,1].
+		If present, y_cords must also be present.
 	singleScoreMode : bool, optional
 		Label terms based on score vs distance from corner.  Good for topic scores. Show only one color.
 	sort_by_dist: bool, optional
@@ -190,11 +199,14 @@ def produce_scattertext_explorer(corpus,
 	p_value_colors : bool, default False
 	  Color points differently if p val is above 1-max_p_val, below max_p_val, or
 	   in between.
-	p_value_colors : false
 	term_significance : TermSignifiance instance or None
 		Way of getting signfiance scores.  If None, p values will not be added.
 	save_svg_button : bool, default False
 		Add a save as SVG button to the page.
+	x_label : str, default None
+		Custom x-axis label
+	y_label : str, default None
+		Custom y-axis label
 	Returns
 	-------
 		str, html of visualization
@@ -220,6 +232,11 @@ def produce_scattertext_explorer(corpus,
 	                                              term_ranker=term_ranker,
 	                                              use_non_text_features=use_non_text_features,
 	                                              term_significance=term_significance)
+	if ((x_coords is None and y_coords is not None)
+	    or (y_coords is None and x_coords is not None)):
+		raise Exception("Both x_coords and y_coords need to be passed or both left blank")
+	if x_coords is not None:
+		scatter_chart_explorer.inject_coordinates(x_coords, y_coords)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -242,7 +259,9 @@ def produce_scattertext_explorer(corpus,
 	                                 word_vec_use_p_vals=word_vec_use_p_vals,
 	                                 max_p_val=max_p_val,
 	                                 save_svg_button=save_svg_button,
-	                                 p_value_colors=p_value_colors) \
+	                                 p_value_colors=p_value_colors,
+	                                 x_label=x_label,
+	                                 y_label=y_label) \
 		.to_html(protocol=protocol)
 
 
@@ -297,7 +316,7 @@ def word_similarity_explorer(corpus,
 	                                    word_vec_use_p_vals=True,
 	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
 	                                    max_p_val=max_p_val,
-	                                    p_value_colors = True,
+	                                    p_value_colors=True,
 	                                    **kwargs)
 
 
