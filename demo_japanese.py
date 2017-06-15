@@ -1,6 +1,6 @@
 import pandas as pd
 from urllib.request import urlopen
-
+import scattertext as st
 
 def main():
 	shisei = _parse_geutenberg('http://www.gutenberg.org/files/31617/31617-0.txt')
