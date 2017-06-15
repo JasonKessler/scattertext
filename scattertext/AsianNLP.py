@@ -65,11 +65,14 @@ def chinese_nlp(doc, entity_type=None, tag_type=None):
 	return _asian_tokenization(doc, entity_type, tag_type, tokenizer)
 
 def _get_japanese_tokenizer():
-	global tinysegmenter
+	global japanese_tokenizer
 	if 'tinysegmenter' not in sys.modules:
 		tinysegmenter = __import__('tinysegmenter')
-	print(dir(tinysegmenter))
-	return tinysegmenter.tokenize
+		try:
+			japanese_tokenizer = tinysegmenter.TinySegmenter.tokenize
+		except:
+			japanese_tokenizer = tinysegmenter.tinysegmenter.tokenize
+	return japanese_tokenizer
 
 def _asian_tokenization(doc, entity_type, tag_type, tokenizer):
 	sents = []
