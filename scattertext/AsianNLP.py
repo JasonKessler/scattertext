@@ -68,6 +68,7 @@ def _get_japanese_tokenizer():
 	global tinysegmenter
 	if 'tinysegmenter' not in sys.modules:
 		tinysegmenter = __import__('tinysegmenter')
+	print(dir(tinysegmenter))
 	return tinysegmenter.tokenize
 
 def _asian_tokenization(doc, entity_type, tag_type, tokenizer):

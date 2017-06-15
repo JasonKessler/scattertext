@@ -18,6 +18,8 @@ class TestAsianNLP(TestCase):
 
 	def test_japanese(self):
 		doc = japanese_nlp(self.japanese_text)
+		doc = japanese_nlp(self.japanese_text)
+
 		sent1 = doc.sents[0]
 		print(sent1)
 		self.assertEqual(str(sent1), u'（ 淸實 《 きよざね 》 ） 私共 《 わたくしど も 》 は 、 唯 《 た ゞ 》 君 《 きみ 》 の 仰 《 おほ 》 せ の まま に 、 此處 《 こ ゝ 》 までお供 《 とも 》 致 《 い た 》 して 參 《 まゐ 》 つた の で ござり ます 。')
