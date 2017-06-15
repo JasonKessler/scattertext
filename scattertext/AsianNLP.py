@@ -69,7 +69,7 @@ def _get_japanese_tokenizer():
 	if 'tinysegmenter' not in sys.modules:
 		tinysegmenter = __import__('tinysegmenter')
 		try:
-			japanese_tokenizer = tinysegmenter.TinySegmenter.tokenize
+			japanese_tokenizer = tinysegmenter.TinySegmenter().tokenize
 		except:
 			japanese_tokenizer = tinysegmenter.tinysegmenter.tokenize
 	return japanese_tokenizer
