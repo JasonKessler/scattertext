@@ -417,6 +417,7 @@ parameters to store the respective coordinates, the `scores` and `sort_by_dist` 
 ```
 [![demo_custom_coordinates.html](https://jasonkessler.github.io/demo_custom_coordinates.png)](https://jasonkessler.github.io/demo_custom_coordinates.html)
 
+
 ## Examples 
 
 To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
@@ -463,6 +464,10 @@ Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of 
 
 Also, the `chiense_mode` boolean parameter in 
 `produce_scattertext_explorer` has been renamed to `asian_mode`.
+
+For example, the output of `demo_japanese.py` is:
+[![demo_japanese.html](https://jasonkessler.github.io/demo_japanese.png)](https://jasonkessler.github.io/demo_japanese.html)
+
 
 ### 0.0.2.6.0
 Custom term positions and axis labels.  Although not recommended, you can 
