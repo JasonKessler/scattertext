@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from scattertext.ChineseNLP import chinese_nlp
+from scattertext.AsianNLP import chinese_nlp
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix

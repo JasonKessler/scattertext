@@ -27,6 +27,16 @@ def build_hamlet_jz_term_doc_mat():
 
 def build_hamlet_jz_corpus():
 	# type: () -> Corpus
+	df = build_hamlet_jz_df()
+	return CorpusFromParsedDocuments(
+		df=df,
+		category_col='category',
+		parsed_col='parsed'
+	).build()
+
+
+def build_hamlet_jz_df():
+	# type: () -> pd.DataFrame
 	categories, documents = get_docs_categories()
 	clean_function = lambda text: '' if text.startswith('[') else text
 	df = pd.DataFrame({
@@ -34,11 +44,7 @@ def build_hamlet_jz_corpus():
 		'parsed': [whitespace_nlp(clean_function(doc)) for doc in documents]
 	})
 	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
-	return CorpusFromParsedDocuments(
-		df=df,
-		category_col='category',
-		parsed_col='parsed'
-	).build()
+	return df
 
 
 def build_hamlet_jz_corpus_with_meta():

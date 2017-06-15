@@ -6,8 +6,8 @@ import scattertext.viz
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
+from scattertext.AsianNLP import chinese_nlp, japanese_nlp
 from scattertext.CSRMatrixTools import CSRMatrixFactory
-from scattertext.ChineseNLP import chinese_nlp
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 from scattertext.IndexStore import IndexStore
@@ -117,7 +117,7 @@ def produce_scattertext_explorer(corpus,
                                  jitter=0,
                                  grey_zero_scores=False,
                                  term_ranker=None,
-                                 chinese_mode=False,
+                                 asian_mode=False,
                                  use_non_text_features=False,
                                  show_characteristic=True,
                                  word_vec_use_p_vals=False,
@@ -125,8 +125,8 @@ def produce_scattertext_explorer(corpus,
                                  p_value_colors=False,
                                  term_significance=None,
                                  save_svg_button=False,
-                                 x_label = None,
-                                 y_label = None):
+                                 x_label=None,
+                                 y_label=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -186,8 +186,8 @@ def produce_scattertext_explorer(corpus,
 		If True, color points with zero-scores a light shade of grey.  False by default.
 	term_ranker : TermRanker, optional
 		TermRanker class for determining term frequency ranks.
-	chinese_mode : bool, optional
-		Use a special Javascript regular expression that's specific to chinese
+	asian_mode : bool, optional
+		Use a special Javascript regular expression that's specific to chinese or japanese
 	use_non_text_features : bool, optional
 		Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
 	show_characteristic: bool, default True
@@ -253,7 +253,7 @@ def produce_scattertext_explorer(corpus,
 	                                 sort_by_dist=sort_by_dist,
 	                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
 	                                 use_full_doc=use_full_doc,
-	                                 chinese_mode=chinese_mode,
+	                                 asian_mode=asian_mode,
 	                                 use_non_text_features=use_non_text_features,
 	                                 show_characteristic=show_characteristic,
 	                                 word_vec_use_p_vals=word_vec_use_p_vals,

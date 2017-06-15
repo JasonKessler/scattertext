@@ -6,7 +6,9 @@ from scattertext.TermDocMatrix import TermDocMatrix
 
 class Corpus(TermDocMatrix):
 	def __init__(self,
-	             X, mX, y,
+	             X,
+	             mX,
+	             y,
 	             term_idx_store,
 	             category_idx_store,
 	             metadata_idx_store,

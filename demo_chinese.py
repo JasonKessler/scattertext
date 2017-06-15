@@ -19,7 +19,7 @@ def main():
 	                                    not_category_name='Ulysses',
 	                                    width_in_pixels=1000,
 	                                    metadata=df['novel'],
-	                                    chinese_mode=True)
+	                                    asian_mode=True)
 	open('./demo_chinese.html', 'w').write(html)
 	print('Open ./demo_chinese.html in Chrome or Firefox.')
 

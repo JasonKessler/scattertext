@@ -20,7 +20,7 @@ class HTMLVisualizationAssembly:
 	             sort_by_dist=True,
 	             reverse_sort_scores_for_not_category=True,
 	             use_full_doc=False,
-	             chinese_mode=False,
+	             asian_mode=False,
 	             use_non_text_features=False,
 	             show_characteristic=True,
 	             word_vec_use_p_vals=False,
@@ -80,7 +80,7 @@ class HTMLVisualizationAssembly:
 		self._color = color
 		self._sort_by_dist = sort_by_dist
 		self._use_full_doc = use_full_doc
-		self._chinese_mode = chinese_mode
+		self._asian_mode = asian_mode
 		self._grey_zero_scores = grey_zero_scores
 		self._use_non_text_features = use_non_text_features
 		self._show_characteristic = show_characteristic
@@ -184,7 +184,7 @@ class HTMLVisualizationAssembly:
 		             js_bool(self._sort_by_dist),
 		             js_bool(self._use_full_doc),
 		             js_bool(self._grey_zero_scores),
-		             js_bool(self._chinese_mode),
+		             js_bool(self._asian_mode),
 		             js_bool(self._use_non_text_features),
 		             js_bool(self._show_characteristic),
 		             js_bool(self._word_vec_use_p_vals),

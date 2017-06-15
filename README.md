@@ -2,8 +2,15 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.6.0
+# Scattertext 0.0.2.7.0
 
+### Updates
+Fixed a bug in 0.0.2.6.0 that transposed default axis labels.
+
+Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of how to use Japanese.
+
+Also, the `chiense_mode` boolean parameter in 
+`produce_scattertext_explorer` has been renamed to `asian_mode`.
 **Table of Contents**
 
 - [Installation](#installation)
@@ -26,6 +33,7 @@ non-overlapping term labels.  Exploratory data analysis just
 got more fun.
 
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
+
 
 ## Installation 
 Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
@@ -448,6 +456,14 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+### 0.0.2.7.0
+Fixed a bug in 0.0.2.6.0 that transposed default axis labels.
+
+Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of how to use Japanese.
+
+Also, the `chiense_mode` boolean parameter in 
+`produce_scattertext_explorer` has been renamed to `asian_mode`.
+
 ### 0.0.2.6.0
 Custom term positions and axis labels.  Although not recommended, you can 
 visualize different metrics on each axis in visualizations similar to Monroe et al. (2008).
@@ -537,7 +553,7 @@ sentence splitter and [Jieba](https://github.com/fxsjy/jieba) for word
 segmentation. To use it, see the `demo_chinese.py` file.  Note that `CorpusFromPandas`
 currently does not support ChineseNLP.
 
-In order for the visualization to work, set the `chinese_mode` flat to `True` in
+In order for the visualization to work, set the `asian_mode` flag to `True` in
 `produce_scattertext_explorer`.
 
 ## Sources

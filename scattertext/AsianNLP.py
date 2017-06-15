@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
-
-import jieba
+import sys
+#import jieba
 
 '''
-I don't speak Chinese, but implemented a very simple sentence splitter.  Assistance would be greatly appreciated.
+I don't speak Chinese or Japanese, but implemented a very simple sentence splitter.  Assistance 
+would be greatly appreciated.
 '''
 
 
@@ -49,15 +50,36 @@ class Sentence(object):
 
 punct_re = re.compile(r'^(\?|!|:|,|\.|【|】|［|］|（|）|：|；|，|？|。|」|！|﹂|”|"|_|﹏|《|》|〈|〉|‧|、|「|」|﹁|﹂|"|"|～|—|—)+$')
 
+def japanese_nlp(doc, entity_type=None, tag_type=None):
+	tokenizer = _get_japanese_tokenizer()
+	return _asian_tokenization(doc, entity_type, tag_type, tokenizer)
+
+def _get_chinese_tokenizer():
+	global jieba
+	if 'jieba' not in sys.modules:
+		jieba = __import__('jieba')
+	return jieba.cut
+
 def chinese_nlp(doc, entity_type=None, tag_type=None):
+	tokenizer = _get_chinese_tokenizer()
+	return _asian_tokenization(doc, entity_type, tag_type, tokenizer)
+
+def _get_japanese_tokenizer():
+	global tinysegmenter
+	if 'tinysegmenter' not in sys.modules:
+		tinysegmenter = __import__('tinysegmenter')
+	return tinysegmenter.tokenize
+
+def _asian_tokenization(doc, entity_type, tag_type, tokenizer):
 	sents = []
 	for paragraph in doc.split('\n'):
 		sent_splits = iter(re.split(r'(？|。|」|！)+', paragraph, flags=re.MULTILINE))
 		for partial_sent in sent_splits:
-			sent = partial_sent + next(sent_splits,'')
+			sent = partial_sent + next(sent_splits, '')
 			if sent.strip() == '': continue
 			toks = []
-			for tok in jieba.cut(sent, ):
+			# for tok in jieba.cut(sent, ):
+			for tok in tokenizer(sent):
 				pos = 'WORD'
 				if tok.strip() == '':
 					pos = 'SPACE'

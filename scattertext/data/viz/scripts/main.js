@@ -6,7 +6,7 @@ buildViz = function (d3) {
                      sortByDist = true,
                      useFullDoc = false,
                      greyZeroScores = false,
-                     chineseMode = false,
+                     asianMode = false,
                      nonTextFeaturesMode = false,
                      showCharacteristic = true,
                      wordVecMaxPValue = false,
@@ -84,7 +84,7 @@ buildViz = function (d3) {
 
         function getSentenceBoundaries(text) {
             // !!! need to use spacy's sentence splitter
-            if (chineseMode) {
+            if (asianMode) {
                 var sentenceRe = /\n/gmi;
             } else {
                 var sentenceRe = /\(?[^\.\?\!\n\b]+[\n\.!\?]\)?/g;
@@ -167,7 +167,7 @@ buildViz = function (d3) {
             function buildMatcher(term) {
                 var boundary = '\\b';
                 var wordSep = "[^\\w]+";
-                if (chineseMode) {
+                if (asianMode) {
                     boundary = '( |$|^)';
                     wordSep = ' ';
                 }
@@ -658,12 +658,12 @@ buildViz = function (d3) {
             function getLabelText(axis) {
                 if (axis == 'y') {
                     if (yLabelText == null)
-                        return modelInfo['not_category_name'] + " Frequency";
+                        return modelInfo['category_name'] + " Frequency";
                     else
                         return yLabelText;
                 } else {
                     if (xLabelText == null)
-                        return modelInfo['category_name'] + " Frequency";
+                        return modelInfo['not_category_name'] + " Frequency";
                     else
                         return xLabelText;
                 }
@@ -778,7 +778,7 @@ buildViz = function (d3) {
             }
 
 
-            if (!nonTextFeaturesMode && !chineseMode && showCharacteristic) {
+            if (!nonTextFeaturesMode && !asianMode && showCharacteristic) {
                 var title = 'Characteristic';
                 if (wordVecMaxPValue) {
                     title = 'Most similar';

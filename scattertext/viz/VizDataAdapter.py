@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 
-from scattertext import ChineseNLP
+from scattertext import AsianNLP
 from scattertext import WhitespaceNLP
 
 
@@ -17,7 +17,7 @@ class MyEncoder(json.JSONEncoder):
 			return obj.tolist()
 		elif isinstance(obj, WhitespaceNLP.Doc):
 			return repr(obj)
-		elif isinstance(obj, ChineseNLP.Doc):
+		elif isinstance(obj, AsianNLP.Doc):
 			return repr(obj)
 		elif 'spacy' in sys.modules:
 			import spacy

@@ -107,7 +107,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 
 	def test_chinese_mode(self):
 		visualization_data = self.make_adapter()
-		self.assertEqual((HTMLVisualizationAssembly(visualization_data, chinese_mode=True)
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, asian_mode=True)
 		                  ._call_build_visualization_in_javascript()), self.get_params({7: 'true'}))
 
 	def test_reverse_sort_scores_for_not_category(self):

@@ -34,8 +34,6 @@ class ParsedCorpus(Corpus):
 		self._df = df
 		self._parsed_col = parsed_col
 		self._category_col = category_col
-		# TermDocMatrix.__init__(self, X, y, term_idx_store,
-		#                       category_idx_store, unigram_frequency_path)
 		super(ParsedCorpus, self).__init__(X, mX, y, term_idx_store, category_idx_store,
 		                                   metadata_idx_store,
 		                                   self._df[self._parsed_col],
