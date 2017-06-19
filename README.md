@@ -2,15 +2,11 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.7.0
+# Scattertext 0.0.2.7.1
 
 ### Updates
-Fixed a bug in 0.0.2.6.0 that transposed default axis labels.
 
-Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of how to use Japanese.
 
-Also, the `chiense_mode` boolean parameter in 
-`produce_scattertext_explorer` has been renamed to `asian_mode`.
 **Table of Contents**
 
 - [Installation](#installation)
@@ -457,6 +453,39 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+### 0.0.2.7.1
+Added the `d3_url` and `d3_scale_chromatic_url` parameters to 
+`produce_scattertext_explorer`.  This provides a way to manually specify the paths to "d3.js" 
+(i.e., the file from "https://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js") and
+"d3-scale-chromatic.v1.js" (i.e., the file from "https://d3js.org/d3-scale-chromatic.v1.min.js").
+
+This is important if you're getting the error:
+
+```
+Javascript error adding output!
+TypeError: d3.scaleLinear is not a function
+See your browser Javascript console for more details.
+``` 
+
+It also lets you use Scattertext if you're serving in an environment with no (or a restricted) 
+external Internet connection. 
+
+For example, if "d3.min.js" and "d3-scale-chromatic.v1.min.js" were present in the current
+working directory, calling the following code would reference them locally instead of 
+the remote Javascript files. See [Visualizing term associations](#visualizing-term-associations) 
+for code context. 
+
+```pydocstring
+>>> html = st.produce_scattertext_explorer(corpus,
+...          category='democrat',
+...          category_name='Democratic',
+...          not_category_name='Republican',
+...          width_in_pixels=1000,
+...          metadata=convention_df['speaker'],
+...          d3_url='d3.min.js',
+...          d3_scale_chromatic_url='d3-scale-chromatic.v1.min.js')
+```
+
 ### 0.0.2.7.0
 Fixed a bug in 0.0.2.6.0 that transposed default axis labels.
 

@@ -126,7 +126,9 @@ def produce_scattertext_explorer(corpus,
                                  term_significance=None,
                                  save_svg_button=False,
                                  x_label=None,
-                                 y_label=None):
+                                 y_label=None,
+                                 d3_url=None,
+                                 d3_scale_chromatic_url=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -207,6 +209,12 @@ def produce_scattertext_explorer(corpus,
 		Custom x-axis label
 	y_label : str, default None
 		Custom y-axis label
+	d3_url, str, None by default.  The url (or path) of d3.
+		URL of d3, to be inserted into <script src="..."/>.  Overrides `protocol`.
+	  By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
+	d3_scale_chromatic_url, str, None by default.  Overrides `protocol`.
+	  URL of d3 scale chromatic, to be inserted into <script src="..."/>
+	  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
 	Returns
 	-------
 		str, html of visualization
@@ -262,7 +270,9 @@ def produce_scattertext_explorer(corpus,
 	                                 p_value_colors=p_value_colors,
 	                                 x_label=x_label,
 	                                 y_label=y_label) \
-		.to_html(protocol=protocol)
+		.to_html(protocol=protocol,
+	           d3_url=d3_url,
+	           d3_scale_chromatic_url=d3_scale_chromatic_url)
 
 
 def word_similarity_explorer(corpus,
