@@ -49,11 +49,19 @@ class ParsedCorpus(Corpus):
 			return self._df[self._parsed_col]
 		return self._df[self._parsed_col].apply(str)
 
+	def get_parsed_docs(self):
+		'''
+		Returns
+		-------
+		pd.Series, Doc represententions of texts.
+		'''
+		return self._df[self._parsed_col]
+
 	def search(self, ngram):
 		'''
 		Parameters
 		----------
-		ngram str or unicode, string to search for
+		ngram, str or unicode, string to search for
 
 		Returns
 		-------

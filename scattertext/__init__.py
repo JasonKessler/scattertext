@@ -23,6 +23,7 @@ from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
+from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, Word2VecFromParsedCorpusBigrams
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
@@ -275,6 +276,72 @@ def produce_scattertext_explorer(corpus,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url)
 
 
+def word_similarity_explorer_gensim(corpus,
+                                    category,
+                                    category_name,
+                                    not_category_name,
+                                    target_term,
+                                    word2vec=None,
+                                    alpha=0.01,
+                                    max_p_val=0.05,
+                                    **kwargs):
+	'''
+		Parameters
+		----------
+		corpus : Corpus
+			Corpus to use.
+		category : str
+			Name of category column as it appears in original data frame.
+		category_name : str
+			Name of category to use.  E.g., "5-star reviews."
+		not_category_name : str
+			Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+		target_term : str
+			Word or phrase for semantic similarity comparison
+		word2vec : word2vec.Word2Vec
+		  Gensim-compatible Word2Vec model of lower-cased corpus. If none, o
+		  ne will be trained using Word2VecFromParsedCorpus(corpus).train()
+		alpha : float, default = 0.01
+			Uniform dirichlet prior for p-value calculation
+		max_p_val : float, default = 0.05
+			Max p-val to use find set of terms for similarity calculation
+
+		nlp : spacy.en.English, optional
+		Returns
+		-------
+			str, html of visualization
+		'''
+
+	if word2vec is None:
+		word2vec = Word2VecFromParsedCorpus(corpus).train()
+
+	scores = []
+
+	for tok in corpus._term_idx_store._i2val:
+		try:
+			scores.append(word2vec.similarity(target_term, tok.replace(' ', '_')))
+		except:
+			try:
+				scores.append(np.mean([word2vec.similarity(target_term, tok_part)
+			                         for tok_part in tok.split()]))
+			except:
+				scores.append(0)
+	scores = np.array(scores)
+
+	return produce_scattertext_explorer(corpus,
+	                                    category,
+	                                    category_name,
+	                                    not_category_name,
+	                                    scores=scores,
+	                                    sort_by_dist=False,
+	                                    reverse_sort_scores_for_not_category=False,
+	                                    word_vec_use_p_vals=True,
+	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                    max_p_val=max_p_val,
+	                                    p_value_colors=True,
+	                                    **kwargs)
+
+
 def word_similarity_explorer(corpus,
                              category,
                              category_name,
@@ -297,6 +364,8 @@ def word_similarity_explorer(corpus,
 		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
 	target_term : str
 		Word or phrase for semantic similarity comparison
+	nlp : spaCy-like parsing function
+		E.g., spacy.en.English, whitespace_nlp, etc...
 	alpha : float, default = 0.01
 		Uniform dirichlet prior for p-value calculation
 	max_p_val : float, default = 0.05

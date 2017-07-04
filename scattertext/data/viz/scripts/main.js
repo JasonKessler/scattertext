@@ -605,11 +605,9 @@ buildViz = function (d3) {
                     return b.s - a.s;
             }
 
-            if (sortByDist) {
-                data = data.sort(euclideanDistanceSort);
-            } else {
-                data = data.sort(scoreSort);
-            }
+            data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
+            console.log("Sorted Data:");
+            console.log(data);
             data.forEach(censorPoints);
 
             var myXAxis = svg.append("g")

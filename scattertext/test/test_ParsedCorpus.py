@@ -28,6 +28,10 @@ class TestParsedCorpus(TestCase):
 		self.assertEqual([str(x) for x in self.corpus.get_texts()][0],
 		                 "what art thou that usurp'st this time of night,")
 
+	def test_get_parsed_docs(self):
+		doc = [x for x in self.corpus.get_parsed_docs()][0]
+		doc.sents
+
 	def test_search(self):
 		self.assertEqual(len(self.corpus.search('bigram')), 1)
 		df = self.corpus.search('bigram')

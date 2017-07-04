@@ -31,15 +31,14 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		np.array of p-values
 
 		'''
+
+		# Equation 16 of Monroe et al. 2008.
+		lod_odds_ratio = self.get_log_odds_with_prior(X)
+
+		# Equation 19
 		a_w = self.alpha_w
 		n_pos, n_neg = X.sum(axis=0)
 		a_0 = X.shape[0] * a_w
-
-		# Equation 16 of Monroe et al. 2008.
-		lod_odds_ratio = (np.log((X[:, 0] + a_w) / (n_pos + a_0 - X[:, 0] - a_w))
-		                  - np.log((X[:, 1] + a_w) / (n_neg + a_0 - X[:, 1] - a_w)))
-
-		# Equation 19
 		std_lod_odds_ratio = (1. / (X[:, 0] + a_w)
 		                      + 1. / (n_pos + a_0 - X[:, 0] - a_w)
 		                      + 1. / (X[:, 1] + a_w)
@@ -49,5 +48,12 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		z_scores = lod_odds_ratio / np.sqrt(std_lod_odds_ratio)
 
 		return norm.cdf(z_scores)
+
+	def get_log_odds_with_prior(self, X):
+		a_w = self.alpha_w
+		n_pos, n_neg = X.sum(axis=0)
+		a_0 = X.shape[0] * a_w
+		return (np.log((X[:, 0] + a_w) / (n_pos + a_0 - X[:, 0] - a_w))
+		        - np.log((X[:, 1] + a_w) / (n_neg + a_0 - X[:, 1] - a_w)))
 
 

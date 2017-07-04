@@ -73,14 +73,12 @@ class TestFeatsFromSpacyDoc(TestCase):
  SPECIFICALLY IF THEY HAVE
  ENOUGH.''')
 		feats = FeatsFromSpacyDoc().get_feats(doc)
-		print(feats)
 		self.assertEqual(feats, Counter(
 			{'i': 2, 'have': 2, 'that question.': 1, 'answer': 1, 'question.': 1, 'enough.': 1, 'i have': 1,
 			 'them specifically': 1, 'have enough.': 1, 'not asked': 1, 'they have': 1, 'have not': 1, 'specifically': 1,
 			 'answer that': 1, 'question. i': 1, "can't": 1, 'if': 1, 'they': 1, "can't answer": 1, 'asked': 1, 'them': 1,
 			 'if they': 1, 'asked them': 1, 'that': 1, 'not': 1, "i can't": 1, 'specifically if': 1}))
 		feats = FeatsFromSpacyDoc(strip_final_period=True).get_feats(doc)
-		print(feats)
 		self.assertEqual(feats, Counter(
 			{'i': 2, 'have': 2, 'that question': 1, 'answer': 1, 'question': 1, 'enough': 1, 'i have': 1,
 			 'them specifically': 1, 'have enough': 1, 'not asked': 1, 'they have': 1,

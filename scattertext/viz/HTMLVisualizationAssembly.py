@@ -101,8 +101,11 @@ class HTMLVisualizationAssembly:
 		----------
 		protocol, 'http' or 'https' for including external urls
 		d3_url, str, None by default.  The url (or path) of d3.
+			URL of d3, to be inserted into <script src="..."/>
 		  By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
 		d3_scale_chromatic_url, str, None by default.
+		  URL of d3_scale_chromatic_url, to be inserted into <script src="..."/>
+		  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
 
 		Returns
 		-------

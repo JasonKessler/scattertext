@@ -66,3 +66,8 @@ class ConventionData2012(object):
 				             'text': cleaned_speech,
 				             'speaker': speaker_name})
 		return pd.DataFrame(data)
+
+class PresidentialDebates2016(object):
+	@staticmethod
+	def get_data():
+		return pd.DataFrame(data)

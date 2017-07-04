@@ -21,7 +21,6 @@ class TestAsianNLP(TestCase):
 		doc = japanese_nlp(self.japanese_text)
 
 		sent1 = doc.sents[0]
-		print(sent1)
 		self.assertGreater(len(str(sent1)), 10)
 		self.assertEqual(len(doc.sents), 7)
 

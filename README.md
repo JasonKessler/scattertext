@@ -2,10 +2,16 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.7.1
+# Scattertext 0.0.2.8.0
 
 ### Updates
 
+Fixed bug in Scaled F-Score computations, and changed computation to better score words that are inversely correlated to category.
+
+Added `Word2VecFromParsedCorpus` to automate training Gensim word vectors from a corpus, and  
+`word_similarity_explorer_gensim` to produce the visualization.  
+
+See `demo_gensim_similarity.py` for an example. 
 
 **Table of Contents**
 
@@ -333,6 +339,56 @@ Here is the code  to produce such a visualization.
 >>> open("Convention-Visualization-Jobs.html", 'wb').write(html.encode('utf-8'))
 ``` 
 [![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/Convention-Visualization-Jobs.png)](https://jasonkessler.github.io/Convention-Visualization-Jobs.html)
+
+
+#### Developing and using bespoke word representations 
+
+Scattertext can interface with Gensim Word2Vec models.  For example, here's a snippet from `demo_gensim_similarity.py`
+which illustrates how to train and use a word2vec model on a corpus.  Note the similarities produced 
+reflect quirks of the corpus, e.g., "8" tends to refer to the 8% unemployment rate at the time of the
+convention.
+
+```python
+import spacy
+from gensim.models import word2vec
+from scattertext import SampleCorpora, word_similarity_explorer_gensim, Word2VecFromParsedCorpus
+from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
+nlp = spacy.en.English()
+convention_df = SampleCorpora.ConventionData2012.get_data()
+convention_df['parsed'] = convention_df.text.apply(nlp)
+corpus = CorpusFromParsedDocuments(convention_df, category_col='party', parsed_col='parsed').build()
+model = word2vec.Word2Vec(size=300,
+                          alpha=0.025,
+                          window=5,
+                          min_count=5,
+                          max_vocab_size=None,
+                          sample=0,
+                          seed=1,
+                          workers=1,
+                          min_alpha=0.0001,
+                          sg=1,
+                          hs=1,
+                          negative=0,
+                          cbow_mean=0,
+                          iter=1,
+                          null_word=0,
+                          trim_rule=None,
+                          sorted_vocab=1)
+html = word_similarity_explorer_gensim(corpus,
+                                       category='democrat',
+                                       category_name='Democratic',
+                                       not_category_name='Republican',
+                                       target_term='jobs',
+                                       minimum_term_frequency=5,
+                                       pmi_filter_thresold=4,
+                                       width_in_pixels=1000,
+                                       metadata=convention_df['speaker'],
+                                       word2vec=Word2VecFromParsedCorpus(corpus, model).train(),
+                                       max_p_val=0.05,
+                                       save_svg_button=True)
+open('./demo_gensim_similarity.html', 'wb').write(html.encode('utf-8'))
+```
+[![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/demo_gensim_similarity.png)](https://jasonkessler.github.io/demo_gensim_similarity.html)
 
 
 ### Visualizing any kind of term score

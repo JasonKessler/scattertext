@@ -46,7 +46,6 @@ class TestScatterChart(TestCase):
 		                  term_significance=LogOddsRatioUninformativeDirichletPrior())
 		     .to_dict('hamlet'))
 		datum = self._get_data_example(j)
-		print(datum)
 		self.assertIn('p', datum.keys())
 
 	def test_inject_coordinates(self):

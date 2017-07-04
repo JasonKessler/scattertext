@@ -19,7 +19,7 @@ from scattertext.FeatureOuput import FeatureLister
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
-from scattertext.termscoring.ScaledFScore import InvalidScalerException
+from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScore
 
 SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'loc', 'product', 'event', 'work_of_art', 'language',
@@ -451,6 +451,7 @@ class TermDocMatrix(object):
 		return np.array(scores)
 
 	def _get_scaled_f_score_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo, beta=1):
+		'''
 		scaler = self._get_scaler_function(scaler_algo)
 		p_word_given_category = cat_word_counts.astype(np.float64) / cat_word_counts.sum()
 		p_category_given_word = cat_word_counts.astype(np.float64) / (cat_word_counts + not_cat_word_counts)
@@ -458,7 +459,8 @@ class TermDocMatrix(object):
 			= self._computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(
 			cat_word_counts, p_category_given_word, p_word_given_category, scaler
 		)
-		return scores
+		'''
+		return ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts, scaler_algo, beta=beta)
 
 	def _computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(self,
 	                                                                                  cat_word_counts,
@@ -487,10 +489,10 @@ class TermDocMatrix(object):
 	def _get_scaler_function(self, scaler_algo):
 		scaler = None
 		if scaler_algo == 'percentile':
-			scaler = lambda x: norm.cdf(x, x.mean(), x.std())
+			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
 		elif scaler_algo == 'normcdf':
 			# scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)
-			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
+			scaler = lambda x: norm.cdf(x, x.mean(), x.std())
 		elif scaler_algo == 'none':
 			scaler = lambda x: x
 		else:
@@ -507,7 +509,7 @@ class TermDocMatrix(object):
 		-------
 			pd.DataFrame of fisher scores vs background
 		'''
-		df = self._get_corpus_joined_to_background()
+		df = self.get_term_and_background_counts()
 		odds_ratio, p_values = self._get_fisher_scores_from_counts(
 			df['corpus'], df['background'])
 		df['Odds ratio'] = odds_ratio
@@ -522,7 +524,7 @@ class TermDocMatrix(object):
 		-------
 			pd.DataFrame of posterior mean  scores vs background
 		'''
-		df = self._get_corpus_joined_to_background()
+		df = self.get_term_and_background_counts()
 		df['Log Posterior Mean Ratio'] = self._get_posterior_mean_ratio_from_counts(df['corpus'],
 		                                                                            df['background'])
 		return df.sort_values('Log Posterior Mean Ratio', ascending=False)
@@ -556,7 +558,7 @@ class TermDocMatrix(object):
 		-------
     pd.DataFrame of rudder scores vs background
 		'''
-		df = self._get_corpus_joined_to_background()
+		df = self.get_term_and_background_counts()
 		corpus_percentiles = self._get_percentiles_from_freqs(df['corpus'])
 		background_percentiles = self._get_percentiles_from_freqs(df['background'])
 		df['Rudder'] = (self._get_rudder_scores_for_percentile_pair(corpus_percentiles,
@@ -593,7 +595,21 @@ class TermDocMatrix(object):
 			return self._background_corpus
 		return None
 
-	def _get_corpus_joined_to_background(self):
+	def get_term_and_background_counts(self):
+		'''
+		Returns
+		-------
+		A pd.DataFrame consisting of unigram term counts of words occurring
+		 in the TermDocumentMatrix and their corresponding background corpus
+		 counts.  The dataframe has two columns, corpus and background.
+
+		>>> corpus.get_unigram_corpus.get_term_and_background_counts()
+		                  corpus  background
+		obama              702.0    565739.0
+		romney             570.0    695398.0
+		barack             248.0    227861.0
+		...
+		'''
 		background_df = self._get_background_unigram_frequencies()
 		term_freq_df = self.get_term_freq_df()
 		corpus_freq_df = pd.DataFrame({'corpus': term_freq_df.sum(axis=1)})
@@ -643,7 +659,7 @@ class TermDocMatrix(object):
 		-------
 		pd.DataFrame of scaled_f_score scores compared to background corpus
 		'''
-		df = self._get_corpus_joined_to_background()
+		df = self.get_term_and_background_counts()
 		df['Scaled f-score'] = self._get_scaled_f_score_from_counts(
 			df['corpus'], df['background'], scaler_algo
 		)

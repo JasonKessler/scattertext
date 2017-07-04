@@ -6,12 +6,13 @@ This is a fast but awful partial implementation of Spacy.  It's useful for testi
 
 
 class Tok:
-	def __init__(self, pos, lem, low, ent_type, tag):
+	def __init__(self, pos, lem, low, ent_type, tag, is_punct=False):
 		self.pos_ = pos
 		self.lemma_ = lem
 		self.lower_ = low
 		self.ent_type_ = ent_type
 		self.tag_ = tag
+		self.is_punct = is_punct
 
 	def __str__(self):
 		return self.lower_
