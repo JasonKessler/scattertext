@@ -388,6 +388,7 @@ html = word_similarity_explorer_gensim(corpus,
                                        save_svg_button=True)
 open('./demo_gensim_similarity.html', 'wb').write(html.encode('utf-8'))
 ```
+How Democrats and Republicans talked differently about "jobs" in their 2012 convention speeches. 
 [![Convention-Visualization-Jobs.html](https://jasonkessler.github.io/demo_gensim_similarity.png)](https://jasonkessler.github.io/demo_gensim_similarity.html)
 
 
