@@ -7,6 +7,36 @@ class InvalidScalerException(Exception):
 	pass
 
 
+class ScoreBalancer(object):
+	@staticmethod
+	def balance_scores(cat_scores, not_cat_scores):
+		scores = ScoreBalancer.balance_scores_and_dont_scale(cat_scores, not_cat_scores)
+		return ScoreBalancer._zero_centered_scale(scores)
+
+	@staticmethod
+	def balance_scores_and_dont_scale(cat_scores, not_cat_scores):
+		median = np.median(cat_scores)
+		scores = np.zeros(len(cat_scores)).astype(np.float)
+		scores[cat_scores > median] = cat_scores[cat_scores > median]
+		not_cat_mask = cat_scores < median if median != 0 else cat_scores <= median
+		scores[not_cat_mask] = -not_cat_scores[not_cat_mask]
+		return scores
+
+	@staticmethod
+	def _zero_centered_scale(ar):
+		ar[ar > 0] = ScoreBalancer._scale(ar[ar > 0])
+		ar[ar < 0] = -ScoreBalancer._scale(-ar[ar < 0])
+		return (ar + 1) / 2.
+
+	@staticmethod
+	def _scale(ar):
+		if len(ar) == 0:
+			return ar
+		if ar.min() == ar.max():
+			return np.full(len(ar), 0.5)
+		return (ar - ar.min()) / (ar.max() - ar.min())
+
+
 class ScaledFScore(object):
 	@staticmethod
 	def get_scores(cat_word_counts, not_cat_word_counts, scaler_algo='normcdf', beta=1.):
@@ -26,17 +56,12 @@ class ScaledFScore(object):
 			 of scaled P(word|~category) and scaled P(~category|word).  Array is squashed to between
 			 0 and 1, with 0.5 indicating a median score.
 		'''
-		cat_scores = ScaledFScore.get_scores_for_category(cat_word_counts, not_cat_word_counts,
-		                                                  scaler_algo, beta)
+
+		cat_scores = ScaledFScore.get_scores_for_category(cat_word_counts, not_cat_word_counts, scaler_algo, beta)
 		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts, cat_word_counts,
 		                                                      scaler_algo, beta)
 		# import pdb; pdb.set_trace()
-		median = np.median(cat_scores)
-		scores = np.zeros(len(cat_word_counts)).astype(np.float)
-		scores[cat_scores > median] = cat_scores[cat_scores > median]
-		not_cat_mask = cat_scores < median if median != 0 else cat_scores <= median
-		scores[not_cat_mask] = -not_cat_scores[not_cat_mask]
-		return ScaledFScore._zero_centered_scale(scores)
+		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 
 	@staticmethod
 	def get_scores_for_category(cat_word_counts, not_cat_word_counts, scaler_algo='normcdf', beta=1.):
@@ -57,20 +82,6 @@ class ScaledFScore(object):
 		scores = ScaledFScore._get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts,
 		                                                      scaler_algo, beta)
 		return np.array(scores)
-
-	@staticmethod
-	def _zero_centered_scale(ar):
-		ar[ar > 0] = ScaledFScore._scale(ar[ar > 0])
-		ar[ar < 0] = -ScaledFScore._scale(-ar[ar < 0])
-		return (ar + 1) / 2.
-
-	@staticmethod
-	def _scale(ar):
-		if len(ar) == 0:
-			return ar
-		if ar.min() == ar.max():
-			return np.full(len(ar), 0.5)
-		return (ar - ar.min()) / (ar.max() - ar.min())
 
 	@staticmethod
 	def _get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo, beta=1.):

@@ -16,6 +16,7 @@ from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns
 from scattertext.FeatureOuput import FeatureLister
+from scattertext.termscoring.CornerScore import CornerScore
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
@@ -300,6 +301,21 @@ class TermDocMatrix(object):
 			np.array
 		'''
 		return self._get_posterior_mean_ratio_from_category(category)
+
+	def get_corner_scores(self, category):
+		''' Computes corner score, which is inversely correlated
+		to the Rudder score to the nearest upper-left or lower-right corner.
+		Parameters
+		----------
+		category : str
+			category name to score
+
+		Returns
+		-------
+			np.array
+		'''
+		return CornerScore.get_scores(
+			*self._get_catetgory_and_non_category_word_counts(category))
 
 	def get_rudder_scores(self, category):
 		''' Computes Rudder score.
@@ -688,4 +704,3 @@ class TermDocMatrix(object):
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
-

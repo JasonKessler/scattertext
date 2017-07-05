@@ -13,6 +13,12 @@ class LogOddsUninformativePriorScore:
 		return scores
 
 	@staticmethod
+	def get_delta_hats(cat_word_counts, not_cat_word_counts, alpha_w=0.01):
+		return (LogOddsRatioUninformativeDirichletPrior(alpha_w)
+		        .get_log_odds_with_prior(LogOddsUninformativePriorScore
+		                                 ._turn_counts_into_matrix(cat_word_counts, not_cat_word_counts)))
+
+	@staticmethod
 	def get_thresholded_score(cat_word_counts, not_cat_word_counts, alpha_w=0.01, threshold=0.05):
 		scores = (LogOddsUninformativePriorScore
 		          .get_score(cat_word_counts, not_cat_word_counts, alpha_w))

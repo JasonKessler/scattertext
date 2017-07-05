@@ -15,6 +15,8 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		'''
 		self.alpha_w = alpha_w
 
+
+
 	def get_p_vals(self, X):
 		'''
 		Implements the log-odds-ratio with an uninformative dirichlet prior from
@@ -24,7 +26,7 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		----------
 		X : np.array
 			Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
-			positive class, while X[:,1] is the negative class.
+			positive class, while X[:,1] is the negative class. None by default
 
 		Returns
 		-------

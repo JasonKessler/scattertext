@@ -12,6 +12,12 @@ class TestLogOddsUninformativePriorScore(TestCase):
 		np.testing.assert_almost_equal(scores,
 		                               np.array([0.4447054, 0.9433088, 0.4447054, -0.9971462]))
 
+	def test_get_delta_hats(self):
+		cat_counts, not_cat_counts = self._get_counts()
+		scores = LogOddsUninformativePriorScore.get_delta_hats(cat_counts, not_cat_counts)
+		np.testing.assert_almost_equal(scores,
+		                               np.array([-0.6095321, -1.0345766, -0.6095321,  1.5201005]))
+
 	def test_get_score_threshold(self):
 		cat_counts, not_cat_counts = self._get_counts()
 		scores = LogOddsUninformativePriorScore.get_thresholded_score(cat_counts, not_cat_counts)

@@ -148,6 +148,7 @@ class TestTermDocMat(TestCase):
 		self.tdm.get_scaled_f_scores('a', scaler_algo='percentile')
 		self.tdm.get_scaled_f_scores('a', scaler_algo='normcdf')
 		df['rudder'] = self.tdm.get_rudder_scores('b')
+		df['corner'] = self.tdm.get_corner_scores('b')
 		df['fisher oddsratio'], df['fisher pval'] = self.tdm.get_fisher_scores('b')
 
 		self.assertEqual(list(df.sort_values(by='posterior ratio', ascending=False).index[:3]),

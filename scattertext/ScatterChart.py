@@ -8,7 +8,7 @@ from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
 	filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring import ScaledFScore
-from scattertext.termscoring.RudderScore import RudderScore
+from scattertext.termscoring.CornerScore import CornerScore
 
 
 class NoWordMeetsTermFrequencyRequirementsError(Exception):
@@ -242,14 +242,17 @@ class ScatterChart:
 		# np.array(self.term_doc_matrix.get_rudder_scores(category))
 		# df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		category_column_name = category + ' freq'
-		df['category score'] = RudderScore.get_score(
+		df['category score'] = CornerScore.get_scores_for_category(
 			df[category_column_name],
 			self._get_not_category_term_frequency(category_column_name, df)
 		)
 		if self.scatterchartdata.term_significance is not None:
 			df['p'] = get_p_vals(self.term_doc_matrix, category_column_name,
 			                     self.scatterchartdata.term_significance)
-		df['not category score'] = np.sqrt(2) - df['category score']
+		df['not category score'] = CornerScore.get_scores_for_category(
+			self._get_not_category_term_frequency(category_column_name, df),
+			df[category_column_name]
+		)
 		df['color_scores'] = scores
 		df = self._filter_bigrams_by_minimum_not_category_term_freq(category_column_name, df)
 		df = filter_bigrams_by_pmis(

@@ -2,16 +2,11 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.8.0
+# Scattertext 0.0.2.8.1
 
 ### Updates
 
-Fixed bug in Scaled F-Score computations, and changed computation to better score words that are inversely correlated to category.
-
-Added `Word2VecFromParsedCorpus` to automate training Gensim word vectors from a corpus, and  
-`word_similarity_explorer_gensim` to produce the visualization.  
-
-See `demo_gensim_similarity.py` for an example. 
+Added `TermDocMatrix.get_corner_score`, giving an improved version of the Rudder Score.
 
 **Table of Contents**
 
@@ -510,6 +505,16 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+
+### 0.0.2.8.0
+Fixed bug in Scaled F-Score computations, and changed computation to better score words that are inversely correlated to category.
+
+Added `Word2VecFromParsedCorpus` to automate training Gensim word vectors from a corpus, and  
+`word_similarity_explorer_gensim` to produce the visualization.  
+
+See `demo_gensim_similarity.py` for an example. 
+
+
 ### 0.0.2.7.1
 Added the `d3_url` and `d3_scale_chromatic_url` parameters to 
 `produce_scattertext_explorer`.  This provides a way to manually specify the paths to "d3.js" 
