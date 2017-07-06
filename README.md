@@ -2,11 +2,18 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.8.1
+# Scattertext 0.0.2.8.2
 
 ### Updates
 
-Added `TermDocMatrix.get_corner_score`, giving an improved version of the Rudder Score.
+Added `TermDocMatrix.get_corner_score`, giving an improved version of the 
+Rudder Score.  Exposing `whitespace_nlp_with_sentences`.  It's a lightweight
+ bad regex sentence splitter built a top a bad regex tokenizer that somewhat
+ apes spaCy's API. Use it if you don't have spaCy and the English model 
+ downloaded or if you care more about memory footprint and speed than accuracy.
+ 
+It's not compatible with `word_similarity_explorer` but is compatible with 
+ `word_similarity_explorer_gensim'.
 
 **Table of Contents**
 

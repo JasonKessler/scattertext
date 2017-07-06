@@ -19,11 +19,12 @@ from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
-from scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
-from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, Word2VecFromParsedCorpusBigrams
+from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
+	Word2VecFromParsedCorpusBigrams
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
@@ -323,7 +324,7 @@ def word_similarity_explorer_gensim(corpus,
 		except:
 			try:
 				scores.append(np.mean([word2vec.similarity(target_term, tok_part)
-			                         for tok_part in tok.split()]))
+				                       for tok_part in tok.split()]))
 			except:
 				scores.append(0)
 	scores = np.array(scores)
