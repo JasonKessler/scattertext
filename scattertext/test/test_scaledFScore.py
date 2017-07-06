@@ -9,9 +9,9 @@ class TestScaledFScore(TestCase):
 	def test_get_scores(self):
 		cat_counts, not_cat_counts = self._get_counts()
 		scores = ScaledFScore.get_scores(cat_counts, not_cat_counts)
-		np.testing.assert_almost_equal(scores, [0.30492066677743823, 0.0, 0.30492066677743823, 0.5,
-		                                        1.0, 0.61008397150737204, 0.66492787930123332, 0.5,
-		                                        0.5, 0.67333002208801263])
+		np.testing.assert_almost_equal(scores,
+		                               np.array([0.2689108, 0., 0.2689108, 0.1266617, 1.,
+		                                         0.5, 0.5590517, 0.5, 0.5, 0.5720015]))
 
 	def test_get_scores_zero_all_same(self):
 		cat_counts = np.array([0, 0, 0, 0, 0, 0, 1, 2])

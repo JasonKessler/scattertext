@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.8.2
+# Scattertext 0.0.2.8.4
 
 ### Updates
 
@@ -14,6 +14,10 @@ Rudder Score.  Exposing `whitespace_nlp_with_sentences`.  It's a lightweight
  
 It's not compatible with `word_similarity_explorer` but is compatible with 
  `word_similarity_explorer_gensim'.
+ 
+Tweaked scaled f-score normalization.
+
+Fixed Javascript bug when clicking on '$'. 
 
 **Table of Contents**
 

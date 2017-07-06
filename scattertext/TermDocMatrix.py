@@ -664,20 +664,21 @@ class TermDocMatrix(object):
 		                     self._metadata_idx_store,
 		                     self.get_num_docs()).output()
 
-	def get_scaled_f_scores_vs_background(self, scaler_algo='none'):
+	def get_scaled_f_scores_vs_background(self, scaler_algo='none', beta=1.):
 		'''
 		Parameters
 		----------
 		scaler_algo : str
-			see get_scaled_f_scores
-
+			see get_scaled_f_scores, default 'none'
+		beta : float
+		  default 1.
 		Returns
 		-------
 		pd.DataFrame of scaled_f_score scores compared to background corpus
 		'''
 		df = self.get_term_and_background_counts()
-		df['Scaled f-score'] = self._get_scaled_f_score_from_counts(
-			df['corpus'], df['background'], scaler_algo
+		df['Scaled f-score'] = ScaledFScore.get_scores_for_category(
+			df['corpus'], df['background'], scaler_algo, beta
 		)
 		return df.sort_values(by='Scaled f-score', ascending=False)
 
