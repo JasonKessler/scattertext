@@ -17,11 +17,11 @@ class TestAsianNLP(TestCase):
 		self.assertEqual(len(doc.sents), 11)
 
 	def test_japanese(self):
+		try:
+			__import__('tinysegmenter')
+		except ImportError:
+			return
 		doc = japanese_nlp(self.japanese_text)
-		doc = japanese_nlp(self.japanese_text)
-
 		sent1 = doc.sents[0]
 		self.assertGreater(len(str(sent1)), 10)
 		self.assertEqual(len(doc.sents), 7)
-
-

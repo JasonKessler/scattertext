@@ -72,6 +72,12 @@ def _get_japanese_tokenizer():
 			japanese_tokenizer = tinysegmenter.TinySegmenter().tokenize
 		except:
 			japanese_tokenizer = tinysegmenter.tinysegmenter.tokenize
+	else:
+		import tinysegmenter
+		try:
+			japanese_tokenizer = tinysegmenter.TinySegmenter().tokenize
+		except:
+			japanese_tokenizer = tinysegmenter.tinysegmenter.tokenize
 	return japanese_tokenizer
 
 def _asian_tokenization(doc, entity_type, tag_type, tokenizer):
