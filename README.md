@@ -2,22 +2,12 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.8.4
+# Scattertext 0.0.2.8.5
 
 ### Updates
 
-Added `TermDocMatrix.get_corner_score`, giving an improved version of the 
-Rudder Score.  Exposing `whitespace_nlp_with_sentences`.  It's a lightweight
- bad regex sentence splitter built a top a bad regex tokenizer that somewhat
- apes spaCy's API. Use it if you don't have spaCy and the English model 
- downloaded or if you care more about memory footprint and speed than accuracy.
- 
-It's not compatible with `word_similarity_explorer` but is compatible with 
- `word_similarity_explorer_gensim'.
- 
-Tweaked scaled f-score normalization.
-
-Fixed Javascript bug when clicking on '$'. 
+Now you don't have to install tinysegmenter to use Scattertext.  But you need to
+install it if you want to parse Japanese.
 
 **Table of Contents**
 
@@ -517,6 +507,20 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 
 ## What's new
 
+### 0.0.2.8.1-4
+Added `TermDocMatrix.get_corner_score`, giving an improved version of the 
+Rudder Score.  Exposing `whitespace_nlp_with_sentences`.  It's a lightweight
+ bad regex sentence splitter built a top a bad regex tokenizer that somewhat
+ apes spaCy's API. Use it if you don't have spaCy and the English model 
+ downloaded or if you care more about memory footprint and speed than accuracy.
+ 
+It's not compatible with `word_similarity_explorer` but is compatible with 
+ `word_similarity_explorer_gensim'.
+ 
+Tweaked scaled f-score normalization.
+
+Fixed Javascript bug when clicking on '$'. 
+
 ### 0.0.2.8.0
 Fixed bug in Scaled F-Score computations, and changed computation to better score words that are inversely correlated to category.
 
@@ -562,7 +566,8 @@ for code context.
 ### 0.0.2.7.0
 Fixed a bug in 0.0.2.6.0 that transposed default axis labels.
 
-Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of how to use Japanese.
+Added a Japanese mode to Scattertext.  See `demo_japanese.py` for an example of
+ how to use Japanese.  Please run `pip install tinysegmenter` to parse Japanese.
 
 Also, the `chiense_mode` boolean parameter in 
 `produce_scattertext_explorer` has been renamed to `asian_mode`.

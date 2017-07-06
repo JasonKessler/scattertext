@@ -165,6 +165,7 @@ buildViz = function (d3) {
             }
 
             function buildMatcher(term) {
+
                 var boundary = '\\b';
                 var wordSep = "[^\\w]+";
                 if (asianMode) {
@@ -172,7 +173,8 @@ buildViz = function (d3) {
                     wordSep = ' ';
                 }
                 var regexp = new RegExp(boundary + '('
-                    + term.replace(' ', wordSep, 'gim') + ')' + boundary, 'gim');
+                    + term.replace('$','\\$').replace(' ', wordSep, 'gim')
+                    + ')' + boundary, 'gim');
                 try {
                     regexp.exec('X');
                 } catch (err) {
