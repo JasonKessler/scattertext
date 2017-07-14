@@ -7,7 +7,6 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from scattertext import chinese_nlp
 from scattertext import whitespace_nlp, CorpusFromParsedDocuments, ParsedCorpus
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
 from scattertext.test.test_TermDocMat import get_hamlet_docs, get_hamlet_snippet_binary_category
@@ -107,7 +106,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		        whitespace_nlp('bb aa a.')]
 		df = pd.DataFrame({'category': ['a', 'b'],
 		                   'parsed': docs})
-		#corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')
+		# corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')
 		corpus_fact = CorpusFromParsedDocuments(df, category_col='category', parsed_col='parsed')
 		corpus = corpus_fact.build()
 

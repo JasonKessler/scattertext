@@ -22,6 +22,7 @@ from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams

@@ -2,9 +2,10 @@ import re
 from collections import Counter
 from unittest import TestCase
 
-from scattertext import whitespace_nlp, FeatsFromSpacyDoc
+from scattertext import whitespace_nlp
+from scattertext.WhitespaceNLP import Tok, Doc, _regex_parse_sentence
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
-from scattertext.WhitespaceNLP import Tok, Doc
+from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
 
 
 def bad_whitespace_nlp(doc):
@@ -23,6 +24,21 @@ def bad_whitespace_nlp(doc):
 	return Doc([toks])
 
 
+class Span:
+	def __init__(self, toks):
+		self.text = ' '.join([t.lower_ for t in toks])
+	def __str__(self):
+		return self.text
+
+def whitespace_nlp_with_fake_chunks(doc, entity_type=None, tag_type=None):
+	toks = _regex_parse_sentence(doc, entity_type, tag_type)
+	words = [t for t in toks if t.pos_ == 'WORD']
+	if len(words) < 5:
+		return Doc([toks])
+	else:
+		return Doc([toks], noun_chunks=[Span(words[:2]), Span(words[1:3])])
+
+
 class TestFeatsFromSpacyDoc(TestCase):
 	def test_main(self):
 		doc = whitespace_nlp("A a bb cc.")
@@ -35,6 +51,11 @@ class TestFeatsFromSpacyDoc(TestCase):
 		term_freq = FeatsFromSpacyDoc(use_lemmas=True).get_feats(doc)
 		self.assertEqual(Counter({'a': 2, 'bb': 1, 'a bb': 1, 'dd': 1, 'a a': 1, 'bb dd': 1}),
 		                 term_freq)
+
+	def test_feats_from_spacy_doc_only_chunks(self):
+		doc = whitespace_nlp_with_fake_chunks('This is a fake noun chunk generating sentence.')
+		term_freq = FeatsFromSpacyDocOnlyNounChunks().get_feats(doc)
+		self.assertEqual(term_freq, Counter({'this is': 1, 'is a': 1}))
 
 	def test_empty(self):
 		doc = whitespace_nlp("")

@@ -6,8 +6,14 @@
 
 ### Updates
 
-Now you don't have to install tinysegmenter to use Scattertext.  But you need to
-install it if you want to parse Japanese.
+Added ability to for Scattertext to use noun chunks instead of unigrams and bigrams through the
+`FeatsFromSpacyDocOnlyNounChunks` class. In order to use it, run your favorite `Corpus` or 
+`TermDocMatrix` factory, and pass in an instance of the class as a parameter: 
+```
+st.CorpusFromParsedDocuments(..., feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyNounChunks())
+```
+
+Fixed a bug in corpus construction that occurs when the last document has no features.
 
 **Table of Contents**
 
@@ -506,6 +512,11 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+
+### 0.0.2.8.5
+Now you don't have to install tinysegmenter to use Scattertext.  But you need to
+install it if you want to parse Japanese.  This caused a problem when Scattertext
+was being installed on Windows.
 
 ### 0.0.2.8.1-4
 Added `TermDocMatrix.get_corner_score`, giving an improved version of the 

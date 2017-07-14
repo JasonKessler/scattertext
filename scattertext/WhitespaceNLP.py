@@ -22,7 +22,7 @@ class Tok:
 
 
 class Doc:
-	def __init__(self, sents, raw=None):
+	def __init__(self, sents, raw=None, noun_chunks = []):
 		self.sents = sents
 		if raw is None:
 			self.string = ' '.join(
@@ -31,6 +31,7 @@ class Doc:
 		else:
 			self.string = raw
 		self.text = self.string
+		self.noun_chunks = noun_chunks
 
 	def __str__(self):
 		return self.string
@@ -47,6 +48,8 @@ class Doc:
 def whitespace_nlp(doc, entity_type=None, tag_type=None):
 	toks = _regex_parse_sentence(doc, entity_type, tag_type)
 	return Doc([toks])
+
+
 
 
 def _regex_parse_sentence(doc, entity_type, tag_type):

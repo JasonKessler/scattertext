@@ -25,7 +25,6 @@ class CorpusFromParsedDocuments(object):
 		self._df = df.reset_index()
 		self._category_col = category_col
 		self._parsed_col = parsed_col
-
 		self._category_idx_store = IndexStore()
 		self._X_factory = CSRMatrixFactory()
 		self._mX_factory = CSRMatrixFactory()
@@ -42,8 +41,8 @@ class CorpusFromParsedDocuments(object):
 		'''
 		self._y = self._get_y_and_populate_category_idx_store()
 		self._df.apply(self._add_to_x_factory, axis=1)
-		self._X = self._X_factory.get_csr_matrix()
-		self._mX = self._mX_factory.get_csr_matrix()
+		self._X = self._X_factory.set_last_row_idx(len(self._y)-1).get_csr_matrix()
+		self._mX = self._mX_factory.set_last_row_idx(len(self._y)-1).get_csr_matrix()
 		return ParsedCorpus(self._df,
 		                    self._X,
 		                    self._mX,

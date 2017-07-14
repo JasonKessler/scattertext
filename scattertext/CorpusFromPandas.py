@@ -1,7 +1,7 @@
 import numpy as np
 
-from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.Corpus import Corpus
+from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas, build_sparse_matrices
 
 
 class CorpusFromPandas(TermDocMatrixFromPandas):
@@ -28,7 +28,6 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 		TermDocMatrixFromPandas
 		'''
 
-
 	def _apply_pipeline_and_get_build_instance(self,
 	                                           X_factory,
 	                                           mX_factory,
@@ -39,8 +38,8 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 	                                           metadata_idx_store,
 	                                           y):
 		df.apply(parse_pipeline.parse, axis=1)
-		X = X_factory.get_csr_matrix()
-		mX = mX_factory.get_csr_matrix()
 		y = np.array(y)
+		X, mX = build_sparse_matrices(y, X_factory, mX_factory)
 		raw_texts = df[self._text_col]
-		return Corpus(X, mX, y, term_idx_store, category_idx_store, metadata_idx_store, raw_texts)
+		return Corpus(X, mX, y, term_idx_store, category_idx_store,
+		              metadata_idx_store, raw_texts)

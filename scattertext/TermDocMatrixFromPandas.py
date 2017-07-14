@@ -19,7 +19,8 @@ class ParsePipelineFactory:
 	             y,
 	             term_doc_mat_fact):
 		if nlp == chinese_nlp:
-			raise Exception("Chinese NLP not yet supported.  Preparse chinese documents, and use CorpusFromParsedDocuments or a similar class.")
+			raise Exception(
+				"Chinese NLP not yet supported.  Preparse chinese documents, and use CorpusFromParsedDocuments or a similar class.")
 		self.X_factory, self.mX_factory, self.category_idx_store, self.term_idx_store, self.metadata_idx_store, self.y, self.nlp \
 			= X_factory, mX_factory, category_idx_store, term_idx_store, metadata_idx_store, y, nlp
 		self._term_doc_mat_fact = term_doc_mat_fact
@@ -51,6 +52,11 @@ class ParsePipelineFactory:
 		                                term_idx_store=self.term_idx_store,
 		                                metadata_idx_store=self.metadata_idx_store,
 		                                y=self.y)
+
+
+def build_sparse_matrices(y, X_factory, mX_factory):
+	return X_factory.set_last_row_idx(len(y) - 1).get_csr_matrix(), \
+	       mX_factory.set_last_row_idx(len(y) - 1).get_csr_matrix()
 
 
 class TermDocMatrixFromPandas(TermDocMatrixFactory):
@@ -131,11 +137,13 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 	                                           metadata_idx_store,
 	                                           y):
 		df.apply(parse_pipeline.parse, axis=1)
-		X = X_factory.get_csr_matrix()
-		mX = mX_factory.get_csr_matrix()
 		y = np.array(y)
+		X, mX = self._build_sparse_matrices(y, X_factory, mX_factory)
 		tdm = TermDocMatrix(X, mX, y, term_idx_store, category_idx_store, metadata_idx_store)
 		return tdm
+
+	def _build_sparse_matrices(self, y, X_factory, mX_factory):
+		return build_sparse_matrices(y, X_factory, mX_factory)
 
 	def _init_term_doc_matrix_variables(self):
 		return CorpusFactoryHelper.init_term_doc_matrix_variables()
@@ -158,5 +166,3 @@ class CorpusFactoryHelper(object):
 
 		return X_factory, mX_factory, category_idx_store, \
 		       term_idx_store, metadata_idx_store, y
-
-
