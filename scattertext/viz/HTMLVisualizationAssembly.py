@@ -1,13 +1,12 @@
-import pkgutil
 import json
+import pkgutil
+
+from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
+
 
 class InvalidProtocolException(Exception):
 	pass
 
-DEFAULT_D3_URL \
-	= 'http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js'
-DEFAULT_D3_SCALE_CHROMATIC \
-	= 'http://d3js.org/d3-scale-chromatic.v1.min.js'
 
 class HTMLVisualizationAssembly:
 	def __init__(self,

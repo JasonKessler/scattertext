@@ -15,6 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns
+from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
+	DEFAULT_BACKGROUND_BETA
 from scattertext.FeatureOuput import FeatureLister
 from scattertext.termscoring.CornerScore import CornerScore
 
@@ -315,7 +317,8 @@ class TermDocMatrix(object):
 			np.array
 		'''
 		return CornerScore.get_scores(
-			*self._get_catetgory_and_non_category_word_counts(category))
+			*self._get_catetgory_and_non_category_word_counts(category)
+		)
 
 	def get_rudder_scores(self, category):
 		''' Computes Rudder score.
@@ -445,17 +448,17 @@ class TermDocMatrix(object):
 
 	def get_scaled_f_scores(self,
 	                        category,
-	                        scaler_algo='normcdf',
-	                        beta=1.):
+	                        scaler_algo=DEFAULT_SCALER_ALGO,
+	                        beta=DEFAULT_BETA):
 		''' Computes scaled-fscores
 		Parameters
 		----------
 		category : str
 			category name to score
 		scaler_algo : str
-		  Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default normcdf
+		  Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default.
 		beta : float
-			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Defaults to 1.
+			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Default.
 		Returns
 		-------
 			np.array of harmonic means of scaled P(word|category) and scaled P(category|word)
@@ -466,7 +469,8 @@ class TermDocMatrix(object):
 		scores = self._get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo, beta)
 		return np.array(scores)
 
-	def _get_scaled_f_score_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo, beta=1):
+	def _get_scaled_f_score_from_counts(self, cat_word_counts, not_cat_word_counts, scaler_algo,
+	                                    beta=DEFAULT_BETA):
 		'''
 		scaler = self._get_scaler_function(scaler_algo)
 		p_word_given_category = cat_word_counts.astype(np.float64) / cat_word_counts.sum()
@@ -631,6 +635,7 @@ class TermDocMatrix(object):
 		corpus_freq_df = pd.DataFrame({'corpus': term_freq_df.sum(axis=1)})
 		corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
 		df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
+		del df.index.name
 		return df
 
 	def _get_corpus_unigram_freq(self, corpus_freq_df):
@@ -648,11 +653,12 @@ class TermDocMatrix(object):
 		else:
 			unigram_freq_table_buf = StringIO(pkgutil.get_data('scattertext', 'data/count_1w.txt')
 			                                  .decode('utf-8'))
-		return (pd.read_table(unigram_freq_table_buf,
-		                      names=['word', 'background'])
-		        .sort_values(ascending=False, by='background')
-		        .drop_duplicates(['word'])
-		        .set_index('word'))
+		to_ret = (pd.read_table(unigram_freq_table_buf,
+		                       names=['word', 'background'])
+		         .sort_values(ascending=False, by='background')
+		         .drop_duplicates(['word'])
+		         .set_index('word'))
+		return to_ret
 
 	def list_extra_features(self):
 		'''
@@ -664,7 +670,9 @@ class TermDocMatrix(object):
 		                     self._metadata_idx_store,
 		                     self.get_num_docs()).output()
 
-	def get_scaled_f_scores_vs_background(self, scaler_algo='none', beta=1.):
+	def get_scaled_f_scores_vs_background(self,
+	                                      scaler_algo=DEFAULT_BACKGROUND_SCALER_ALGO,
+	                                      beta=DEFAULT_BACKGROUND_BETA):
 		'''
 		Parameters
 		----------

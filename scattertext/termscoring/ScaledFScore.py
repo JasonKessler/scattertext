@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.stats import norm, rankdata
 
+from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
+
 
 class InvalidScalerException(Exception):
 	pass
@@ -43,16 +45,17 @@ class ScoreBalancer(object):
 
 class ScaledFScore(object):
 	@staticmethod
-	def get_scores(cat_word_counts, not_cat_word_counts, scaler_algo='normcdf', beta=1.):
+	def get_scores(cat_word_counts, not_cat_word_counts,
+	               scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
 		''' Computes scaled-fscores
 		Parameters
 		----------
 		category : str
 			category name to score
 		scaler_algo : str
-			Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default normcdf
+			Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default.
 		beta : float
-			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Defaults to 1.
+			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Default.
 		Returns
 		-------
 			np.array of harmonic means of scaled P(word|category)
@@ -67,7 +70,8 @@ class ScaledFScore(object):
 		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 
 	@staticmethod
-	def get_scores_for_category(cat_word_counts, not_cat_word_counts, scaler_algo='normcdf', beta=1.):
+	def get_scores_for_category(cat_word_counts, not_cat_word_counts,
+	                            scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
 		''' Computes scaled-fscores
 		Parameters
 		----------
@@ -92,7 +96,7 @@ class ScaledFScore(object):
 		return scores
 
 	@staticmethod
-	def _get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo, beta=1.):
+	def _get_scaled_f_score_from_counts(cat_word_counts, not_cat_word_counts, scaler_algo, beta=DEFAULT_BETA):
 		p_word_given_category = cat_word_counts.astype(np.float) / cat_word_counts.sum()
 		p_category_given_word = cat_word_counts * 1. / (cat_word_counts + not_cat_word_counts)
 		scores \

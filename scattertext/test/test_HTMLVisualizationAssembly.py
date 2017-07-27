@@ -1,8 +1,8 @@
 import sys
 from unittest import TestCase
 
-from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly, DEFAULT_D3_URL, \
-	DEFAULT_D3_SCALE_CHROMATIC
+from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
+from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
 from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 
@@ -53,13 +53,19 @@ class TestHTMLVisualizationAssembly(TestCase):
 
 	def test_protocol_is_https(self):
 		html = self.make_assembler().to_html(protocol='https')
-		self.assertTrue('https://' in html)
-		self.assertFalse('http://' in html)
+		self.assertTrue(self._https_script_is_present(html))
+		self.assertFalse(self._http_script_is_present(html))
 
 	def test_protocol_is_http(self):
 		html = self.make_assembler().to_html(protocol='http')
-		self.assertFalse('https://' in html)
-		self.assertTrue('http://' in html)
+		self.assertFalse(self._https_script_is_present(html))
+		self.assertTrue(self._http_script_is_present(html))
+
+	def _http_script_is_present(self, html):
+		return 'src="http://' in html
+
+	def _https_script_is_present(self, html):
+		return 'src="https://' in html
 
 	def test_protocol_default_d3_url(self):
 		html = self.make_assembler().to_html()

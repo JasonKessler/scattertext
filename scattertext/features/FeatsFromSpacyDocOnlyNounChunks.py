@@ -1,6 +1,4 @@
 from collections import Counter
-from functools import partial
-from sys import version_info
 
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
@@ -9,6 +7,7 @@ class FeatsFromSpacyDocOnlyNounChunks(FeatsFromSpacyDoc):
 	'''
 	Just returns noun chunks from spaCy
 	'''
+
 	def get_feats(self, doc):
 		'''
 		Parameters

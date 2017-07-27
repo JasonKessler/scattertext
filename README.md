@@ -2,18 +2,17 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.8.6
+# Scattertext 0.0.2.9.0
 
 ### Updates
 
-Added ability to for Scattertext to use noun chunks instead of unigrams and bigrams through the
-`FeatsFromSpacyDocOnlyNounChunks` class. In order to use it, run your favorite `Corpus` or 
-`TermDocMatrix` factory, and pass in an instance of the class as a parameter: 
-```
-st.CorpusFromParsedDocuments(..., feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyNounChunks())
-```
+Breaking change: `pmi_filter_thresold` has been replaced with `pmi_threshold_coefficient`.
 
-Fixed a bug in corpus construction that occurs when the last document has no features.
+Added Emoji and Tweet analysis. See [Emoji analysis](#emoji-analysis).
+ 
+Fixed top-term calculation for custom scores.
+ 
+Set scaled f-score's default beta to 0.5.
 
 **Table of Contents**
 
@@ -25,6 +24,7 @@ Fixed a bug in corpus construction that occurs when the last document has no fea
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
     - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
     - [Custom term positions](#custom-term-positions)
+    - [Emoji analysis](#emoji-analysis)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [Presentations on Scattertext](#presentations-on-scattertext)
@@ -103,8 +103,9 @@ The inspiration for this visualization came from Dataclysm (Rudder, 2014).
 Scattertext is designed to help you build these graphs and efficiently label points on them. 
 
 The documentation (including this readme) is a work in 
-progress.  Please see the quickstart as well as the accompanying Juypter 
-notebooks (like [this one](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb)), and poking around the code and tests should give you a good idea of how things work. 
+progress.  Please see the tutorial below as well as the [PyData 2017 Tutorial](https://github.com/JasonKessler/Scattertext-PyData).
+
+Poking around the code and tests should give you a good idea of how things work. 
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
 
@@ -332,7 +333,7 @@ Here is the code  to produce such a visualization.
 ...                                 not_category_name='Republican',
 ...                                 target_term='jobs',
 ...                                 minimum_term_frequency=5,
-...                                 pmi_filter_thresold=4,
+...                                 pmi_threshold_coefficient=4,
 ...                                 width_in_pixels=1000,
 ...                                 metadata=convention_df['speaker'],
 ...                                 alpha=0.01,
@@ -382,7 +383,7 @@ html = word_similarity_explorer_gensim(corpus,
                                        not_category_name='Republican',
                                        target_term='jobs',
                                        minimum_term_frequency=5,
-                                       pmi_filter_thresold=4,
+                                       pmi_threshold_coefficient=4,
                                        width_in_pixels=1000,
                                        metadata=convention_df['speaker'],
                                        word2vec=Word2VecFromParsedCorpus(corpus, model).train(),
@@ -407,7 +408,7 @@ We can use Scattertext to visualize alternative types of word scores, and ensure
 ...                        not_category_name='Republican',
 ...                        scores = corpus.get_regression_coefs('democrat', Lasso(max_iter=10000)),
 ...                        minimum_term_frequency=5,
-...                        pmi_filter_thresold=4,
+...                        pmi_threshold_coefficient=4,
 ...                        width_in_pixels=1000,
 ...                        metadata=convention_df['speaker'])
 >>> open('./Convention-Visualization-Sparse.html', 'wb').write(html.encode('utf-8'))
@@ -459,7 +460,7 @@ parameters to store the respective coordinates, the `scores` and `sort_by_dist` 
 ...                                     category_name='Democratic',
 ...                                     not_category_name='Republican',
 ...                                     minimum_term_frequency=5,
-...                                     pmi_filter_thresold=4,
+...                                     pmi_threshold_coefficient=4,
 ...                                     width_in_pixels=1000,
 ...                                     x_coords=frequencies_scaled,
 ...                                     y_coords=scores_scaled,
@@ -471,6 +472,109 @@ parameters to store the respective coordinates, the `scores` and `sort_by_dist` 
 >>> open('demo_custom_coordinates.html', 'wb').write(html.encode('utf-8'))
 ```
 [![demo_custom_coordinates.html](https://jasonkessler.github.io/demo_custom_coordinates.png)](https://jasonkessler.github.io/demo_custom_coordinates.html)
+
+
+### Emoji analysis
+The Emoji analysis capability displays a chart of the category-specific distribution
+of Emoji. Let's look at a new corpus, a set of tweets.  We'll build a visualization
+showing how men and women use emoji differently.
+
+First, we'll load the dataset and parse it using NLTK's tweet tokenizer.  Note, install NLTK
+before running this example.  It will take some time for the dataset to download.
+```python
+import nltk, urllib.request, io, agefromname, zipfile
+import scattertext as st
+import pandas as pd
+
+
+with zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(
+    'http://followthehashtag.com/content/uploads/USA-Geolocated-tweets-free-dataset-Followthehashtag.zip'
+).read())) as zf:
+    df = pd.read_excel(zf.open('dashboard_x_usa_x_filter_nativeretweets.xlsx'))
+
+nlp = st.tweet_tokenzier_factory(nltk.tokenize.TweetTokenizer())
+df['parse'] = df['Tweet content'].apply(nlp)
+
+df.iloc[0]
+'''
+Tweet Id                                                     721318437075685382
+Date                                                                 2016-04-16
+Hour                                                                      12:44
+User Name                                                        Bill Schulhoff
+Nickname                                                          BillSchulhoff
+Bio                           Husband,Dad,GrandDad,Ordained Minister, Umpire...
+Tweet content                 Wind 3.2 mph NNE. Barometer 30.20 in, Rising s...
+Favs                                                                        NaN
+RTs                                                                         NaN
+Latitude                                                                40.7603
+Longitude                                                              -72.9547
+Country                                                                      US
+Place (as appears on Bio)                                    East Patchogue, NY
+Profile picture               http://pbs.twimg.com/profile_images/3788000007...
+Followers                                                                   386
+Following                                                                   705
+Listed                                                                       24
+Tweet language (ISO 639-1)                                                   en
+Tweet Url                     http://www.twitter.com/BillSchulhoff/status/72...
+parse                         Wind 3.2 mph NNE. Barometer 30.20 in, Rising s...
+Name: 0, dtype: object
+'''
+```
+
+Next, we'll use the [AgeFromName](https://github.com/JasonKessler/agefromname) package to find the probabilities of the gender of 
+each user given their first name.  First, we'll find a dataframe indexed on first names 
+that contains the probability that each someone with that first name is male (`male_prob`).
+ 
+```python
+male_prob = agefromname.AgeFromName().get_all_name_male_prob()
+male_prob.iloc[0]
+'''
+hi      1.00000
+lo      0.95741
+prob    1.00000
+Name: aaban, dtype: float64
+'''
+```
+
+Next, we'll extract the first names of each user, and use the `male_prob` data frame 
+to find users whose names indicate there is at least a 90% chance they are either male or female,
+label those users, and create new data frame `df_mf` with only those users.
+
+```python
+df['first_name'] = df['User Name'].apply(lambda x: x.split()[0].lower() if type(x) == str and len(x.split()) > 0 else x)
+df_aug = pd.merge(df, male_prob, left_on='first_name', right_index=True)
+df_aug['gender'] = df_aug['prob'].apply(lambda x: 'm' if x > 0.9 else 'f' if x < 0.1 else '?')
+df_mf = df_aug[df_aug['gender'].isin(['m', 'f'])]
+```
+
+The key to this analysis is to construct a corpus using only the emoji 
+extractor `st.FeatsFromSpacyDocOnlyEmoji` which builds a corpus only from
+ emoji and not from anything else.
+ 
+```python
+corpus = st.CorpusFromParsedDocuments(df_mf, 
+                                      parsed_col='parse', 
+                                      category_col='gender', 
+                                      feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyEmoji()
+                                     ).build()
+```
+
+Next, we'll run this through a standard `produce_scattertext_explorer` visualization
+generation.
+```python
+html = st.produce_scattertext_explorer(corpus, 
+                                       category='f', 
+                                       category_name='Female', 
+                                       not_category_name='Male',
+                                       use_full_doc=True,
+                                       metadata=df_mf['User Name'] + ' (@'+df_mf['Nickname']+') ' + df_mf['Date'].astype(str),
+                                       show_characteristic=False,
+                                       width_in_pixels=1000)
+file_name = "EmojiGender.html"
+open(file_name, 'wb').write(html.encode('utf-8'))
+```
+
+[![EmojiGender.html](https://jasonkessler.github.io/EmojiGender.png)](https://jasonkessler.github.io/EmojiGender.html)
 
 
 ## Examples 
@@ -512,6 +616,16 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 * [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
+
+### 0.0.2.8.6
+Added ability to for Scattertext to use noun chunks instead of unigrams and bigrams through the
+`FeatsFromSpacyDocOnlyNounChunks` class. In order to use it, run your favorite `Corpus` or 
+`TermDocMatrix` factory, and pass in an instance of the class as a parameter: 
+```
+st.CorpusFromParsedDocuments(..., feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyNounChunks())
+```
+
+Fixed a bug in corpus construction that occurs when the last document has no features.
 
 ### 0.0.2.8.5
 Now you don't have to install tinysegmenter to use Scattertext.  But you need to

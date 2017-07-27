@@ -1,8 +1,16 @@
 # Helper functions for loading political convention data set
-import json, sys, re
+import json
+import pkgutil
+import re
+import sys
+
+from scattertext.Common import POLITICAL_DATA_URL
+
 if sys.version_info[0] >= 3:
 	from urllib.request import urlopen
+	from io import StringIO
 else:
+	from StringIO import StringIO
 	from urllib2 import urlopen
 
 import pandas as pd
@@ -30,7 +38,8 @@ class ConventionData2012(object):
 		assert only_speaker_text_re.sub('', 'ANNOUNCER: (Chanting.) USA! USA! USA! USA!') == ''
 		assert only_speaker_text_re.sub('', 'TOM SMITH: (Chanting.) USA! USA! USA! USA!') == 'USA! USA! USA! USA!'
 		assert only_speaker_text_re.sub('', 'DONALD TRUMP: blah blah blah!') == 'blah blah blah!'
-		assert only_speaker_text_re.sub('', 'HILLARY CLINTON: (something parenthetical) blah blah blah!') == 'blah blah blah!'
+		assert only_speaker_text_re.sub('',
+		                                'HILLARY CLINTON: (something parenthetical) blah blah blah!') == 'blah blah blah!'
 		assert only_speaker_text_re.sub \
 			       ('',
 			        'ANNOUNCER: (Chanting.) USA! USA! USA! USA!\nTOM SMITH: (Chanting.) ONLY INCLUDE THIS! ONLY KEEP THIS! \nAUDIENCE MEMBER: (Chanting.) USA! USA! USA! USA!').strip() \
@@ -43,8 +52,12 @@ class ConventionData2012(object):
 
 	@staticmethod
 	def _convention_speech_iter():
-		url = 'https://gitcdn.xyz/repo/JasonKessler/scattertext/master/scattertext/data/political_data.json'
-		return json.loads(urlopen(url).read().decode('utf-8'))
+		try:
+			data_stream = pkgutil.get_data('scattertext', 'data/political_data.json').decode('utf-8')
+		except:
+			url = POLITICAL_DATA_URL
+			data_stream = urlopen(url).read().decode('utf-8')
+		return json.loads(data_stream)
 
 	@staticmethod
 	def _iter_party_speech_pairs():
@@ -66,6 +79,7 @@ class ConventionData2012(object):
 				             'text': cleaned_speech,
 				             'speaker': speaker_name})
 		return pd.DataFrame(data)
+
 
 class PresidentialDebates2016(object):
 	@staticmethod

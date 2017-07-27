@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+
+from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
 from scattertext.termscoring import ScaledFScore
 from scipy.stats import norm
 
@@ -7,7 +9,7 @@ from scattertext.termsignificance.TermSignificance import TermSignificance
 
 
 class ScaledFScoreSignificance(TermSignificance):
-	def __init__(self, scaler_algo = 'normcdf', beta=1.):
+	def __init__(self, scaler_algo = DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
 		'''
 		Parameters
 		----------

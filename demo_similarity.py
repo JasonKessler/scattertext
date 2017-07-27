@@ -17,7 +17,6 @@ def main():
 	                                not_category_name='Republican',
 	                                target_term='jobs',
 	                                minimum_term_frequency=5,
-	                                pmi_filter_thresold=4,
 	                                width_in_pixels=1000,
 	                                metadata=convention_df['speaker'],
 	                                alpha=0.01,

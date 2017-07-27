@@ -24,7 +24,6 @@ html = produce_scattertext_explorer(corpus,
                                     sort_by_dist=False,
                                     grey_zero_scores=True,
                                     minimum_term_frequency=5,
-                                    pmi_filter_thresold=4,
                                     width_in_pixels=1000,
                                     metadata=convention_df['speaker'])
 open('./demo_insignificant_greyed_out.html', 'wb').write(html.encode('utf-8'))

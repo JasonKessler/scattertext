@@ -159,6 +159,15 @@ buildViz = function (d3) {
             return {'contexts': matches, 'info': d};
         }
 
+        // from https://medium.com/reactnative/emojis-in-javascript-f693d0eb79fb
+        var emojiRE = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe23\u20d0-\u20f0]|\ud83c[\udffb-\udfff])?(?:\u200d(?:[^\ud800-\udfff]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe23\u20d0-\u20f0]|\ud83c[\udffb-\udfff])?)*/g;
+
+        function isEmoji(str) {
+            console.log(str);
+            if (str.match(emojiRE)) return true;
+            return false;
+        }
+
         function searchInText(d) {
             function stripNonWordChars(term) {
                 //d.term.replace(" ", "[^\\w]+")
@@ -172,8 +181,12 @@ buildViz = function (d3) {
                     boundary = '( |$|^)';
                     wordSep = ' ';
                 }
+                if (isEmoji(term)) {
+                    boundary = '';
+                    wordSep = '';
+                }
                 var regexp = new RegExp(boundary + '('
-                    + term.replace('$','\\$').replace(' ', wordSep, 'gim')
+                    + term.replace('$', '\\$').replace(' ', wordSep, 'gim')
                     + ')' + boundary, 'gim');
                 try {
                     regexp.exec('X');
@@ -481,21 +494,25 @@ buildViz = function (d3) {
                 curLabel.remove();
             }
 
-            function labelPointsIfPossible(i) {
+            function labelPointsIfPossible(i, useOffset) {
                 var term = data[i].term;
 
                 var configs = [
-                    {'anchor': 'end', 'xoff': -5, 'yoff': -3},
-                    {'anchor': 'end', 'xoff': -5, 'yoff': 10},
-                    {'anchor': 'start', 'xoff': 3, 'yoff': 10},
-                    {'anchor': 'start', 'xoff': 3, 'yoff': -3},
-                    {'anchor': 'start', 'xoff': 5, 'yoff': 10},
-                    {'anchor': 'start', 'xoff': 5, 'yoff': -3},
-                    {'anchor': 'start', 'xoff': 10, 'yoff': 15},
-                    {'anchor': 'start', 'xoff': -10, 'yoff': -15},
-                    {'anchor': 'start', 'xoff': 10, 'yoff': -15},
-                    {'anchor': 'start', 'xoff': -10, 'yoff': 15},
+                    {'anchor': 'end', 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'end', 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'start', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
                 ];
+                /*if(!useOffset) {
+                    configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0,
+                        'alignment-baseline': 'middle'}];
+                }*/
                 var matchedElement = null;
                 for (var configI in configs) {
                     var config = configs[configI];
@@ -507,6 +524,7 @@ buildViz = function (d3) {
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                             .attr('font-size', '10px')
                             .attr("text-anchor", config['anchor'])
+                            .attr("alignment-baseline", config['alignment'])
                             .text(term),
                         term
                     );
@@ -529,7 +547,7 @@ buildViz = function (d3) {
                     }
                 }
 
-                if (!matchedElement || term == 'auto') {
+                if (!matchedElement) {
                     coords[term] = [x1, y1, x2, y2];
                     //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
                     rectHolder.add(new Rectangle(x1, y1, x2, y2));
@@ -588,19 +606,23 @@ buildViz = function (d3) {
 
             function scoreSortForCategory(a, b) {
                 var __ret = arePointsPredictiveOfDifferentCategories(a, b);
-                var aGood = __ret.aGood;
-                var bGood = __ret.bGood;
-                if (aGood && !bGood) return -1;
-                if (!aGood && bGood) return 1;
+                if(sortByDist) {
+                    var aGood = __ret.aGood;
+                    var bGood = __ret.bGood;
+                    if (aGood && !bGood) return -1;
+                    if (!aGood && bGood) return 1;
+                }
                 return b.s - a.s;
             }
 
             function scoreSortForNotCategory(a, b) {
                 var __ret = arePointsPredictiveOfDifferentCategories(a, b);
-                var aGood = __ret.aGood;
-                var bGood = __ret.bGood;
-                if (aGood && !bGood) return 1;
-                if (!aGood && bGood) return -1;
+                if(sortByDist) {
+                    var aGood = __ret.aGood;
+                    var bGood = __ret.bGood;
+                    if (aGood && !bGood) return 1;
+                    if (!aGood && bGood) return -1;
+                }
                 if (reverseSortScoresForNotCategory)
                     return a.s - b.s;
                 else
@@ -809,7 +831,7 @@ buildViz = function (d3) {
 
             var numPointsLabeled = 0;
             for (var i = 0; i < data.length; i++) {
-                if (labelPointsIfPossible(i)) numPointsLabeled++;
+                if (labelPointsIfPossible(i), true) numPointsLabeled++;
             }
             console.log('numPointsLabeled');
             console.log(numPointsLabeled);

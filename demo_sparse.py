@@ -19,7 +19,6 @@ html = sparse_explorer(corpus,
                        not_category_name='Republican',
                        scores = scores,
                        minimum_term_frequency=5,
-                       pmi_filter_thresold=4,
                        width_in_pixels=1000,
                        metadata=convention_df['speaker'])
 open('./demo_sparse.html', 'wb').write(html.encode('utf-8'))

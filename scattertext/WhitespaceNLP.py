@@ -1,5 +1,7 @@
 import re
 
+from scattertext.emojis.ProcessedEmojiStructure import VALID_EMOJIS
+
 '''
 This is a fast but awful partial implementation of Spacy.  It's useful for testing.
 '''
@@ -71,6 +73,39 @@ def _toks_from_sentence(doc, entity_type, tag_type):
 		                ent_type='' if entity_type is None else entity_type.get(tok, ''),
 		                tag='' if tag_type is None else tag_type.get(tok, '')))
 	return toks
+
+
+def tweet_tokenzier_factory(tweet_tokenizer):
+	'''
+	Parameters
+	----------
+	tweet_tokenizer : nltk.tokenize.TweetTokenizer instance
+
+	Returns
+	-------
+	Doc of tweets
+
+	Notes
+	-------
+	Requires NLTK to be installed :(
+	'''
+	def tokenize(text):
+		toks = []
+		for tok in tweet_tokenizer.tokenize(text):
+			pos = 'WORD'
+			if tok.strip() == '':
+				pos = 'SPACE'
+			elif ord(tok[0]) in VALID_EMOJIS:
+				pos = 'EMJOI'
+			elif re.match('^\W+$', tok):
+				pos = 'PUNCT'
+			toks.append(Tok(pos,
+			                tok.lower(),
+			                tok.lower(),
+			                ent_type='',
+			                tag='' ))
+		return Doc([toks], text)
+	return tokenize
 
 
 def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):

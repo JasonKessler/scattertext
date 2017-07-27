@@ -16,7 +16,6 @@ html = produce_scattertext_explorer(corpus,
                                     category_name='Democratic',
                                     not_category_name='Republican',
                                     minimum_term_frequency=5,
-                                    pmi_filter_thresold=4,
                                     width_in_pixels=1000,
                                     metadata=convention_df['speaker'])
 open('./demo.html', 'wb').write(html.encode('utf-8'))

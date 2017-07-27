@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import warnings
+
 import numpy as np
 
 import scattertext.viz
@@ -19,26 +21,27 @@ from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
-from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences
+from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
-from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
+from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
+from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
-
+version = [0,0,2,9]
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
                              category_name,
                              not_category_name,
                              protocol='https',
-                             pmi_filter_thresold=2,
                              minimum_term_frequency=3,
+                             pmi_threshold_coefficient=6,
                              max_terms=None,
                              filter_unigrams=False,
                              height_in_pixels=None,
@@ -60,9 +63,8 @@ def produce_scattertext_html(term_doc_matrix,
 		optional, used prototcol of , http or https
 	minimum_term_frequency : int, optional
 		Minimum number of times word needs to appear to make it into visualization.
-	minimum_not_category_term_frequency : int, optional
-	  If an n-gram does not occur in the category, minimum times it
-	   must been seen to be included. Default is 0.
+	pmi_threshold_coefficient : int, optional
+		Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 6.
 	max_terms : int, optional
 		Maximum number of terms to include in visualization.
 	filter_unigrams : bool
@@ -80,7 +82,7 @@ def produce_scattertext_html(term_doc_matrix,
 	'''
 	scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix,
 	                                  minimum_term_frequency=minimum_term_frequency,
-	                                  pmi_threshold_coefficient=pmi_filter_thresold,
+	                                  pmi_threshold_coefficient=pmi_threshold_coefficient,
 	                                  filter_unigrams=filter_unigrams,
 	                                  max_terms=max_terms,
 	                                  term_ranker=term_ranker) \
@@ -99,7 +101,7 @@ def produce_scattertext_explorer(corpus,
                                  category_name,
                                  not_category_name,
                                  protocol='https',
-                                 pmi_filter_thresold=2,
+                                 pmi_threshold_coefficient=6,
                                  minimum_term_frequency=3,
                                  minimum_not_category_term_frequency=0,
                                  max_terms=None,
@@ -131,7 +133,8 @@ def produce_scattertext_explorer(corpus,
                                  x_label=None,
                                  y_label=None,
                                  d3_url=None,
-                                 d3_scale_chromatic_url=None):
+                                 d3_scale_chromatic_url=None,
+                                 pmi_filter_thresold=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -146,6 +149,8 @@ def produce_scattertext_explorer(corpus,
 		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
 	protocol : str, optional
 		Protocol to use.  Either http or https.  Default is https.
+	pmi_threshold_coefficient : int, optional
+		Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 6
 	minimum_term_frequency : int, optional
 		Minimum number of times word needs to appear to make it into visualization.
 	minimum_not_category_term_frequency : int, optional
@@ -159,20 +164,20 @@ def produce_scattertext_explorer(corpus,
 		Width of viz in pixels, if None, default to JS's choice
 	height_in_pixels : int, optional
 		Height of viz in pixels, if None, default to JS's choice
-  max_snippets : int, optional
-    Maximum number of snippets to show when term is clicked.  If None, all are shown.
-  max_docs_per_category: int, optional
-    Maximum number of documents to store per category.  If None, by default, all are stored.
+	max_snippets : int, optional
+		Maximum number of snippets to show when term is clicked.  If None, all are shown.
+	max_docs_per_category: int, optional
+		Maximum number of documents to store per category.  If None, by default, all are stored.
 	metadata : list, optional
 		list of meta data strings that will be included for each document
 	scores : np.array, optional
 		Array of term scores or None.
 	x_coords : np.array, optional
 		Array of term x-axis positions or None.  Must be in [0,1].
-		If present, y_cords must also be present.
+		If present, y_coords must also be present.
 	y_coords : np.array, optional
-		Array of term x-axis positions or None.  Must be in [0,1].
-		If present, y_cords must also be present.
+		Array of term y-axis positions or None.  Must be in [0,1].
+		If present, x_coords must also be present.
 	singleScoreMode : bool, optional
 		Label terms based on score vs distance from corner.  Good for topic scores. Show only one color.
 	sort_by_dist: bool, optional
@@ -218,6 +223,8 @@ def produce_scattertext_explorer(corpus,
 	d3_scale_chromatic_url, str, None by default.  Overrides `protocol`.
 	  URL of d3 scale chromatic, to be inserted into <script src="..."/>
 	  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
+	pmi_filter_thresold : (DEPRECATED) int, None by default
+	  DEPRECATED.  Use pmi_threshold_coefficient instead.
 	Returns
 	-------
 		str, html of visualization
@@ -233,10 +240,16 @@ def produce_scattertext_explorer(corpus,
 	if term_ranker is None:
 		term_ranker = termranking.AbsoluteFrequencyRanker
 
+	if pmi_filter_thresold is not None:
+		pmi_threshold_coefficient = pmi_filter_thresold
+		warnings.warn(
+			"The argument name 'pmi_filter_thresold' has been deprecated. Use 'pmi_threshold_coefficient' in its place",
+			DeprecationWarning)
+
 	scatter_chart_explorer = ScatterChartExplorer(corpus,
 	                                              minimum_term_frequency=minimum_term_frequency,
 	                                              minimum_not_category_term_frequency=minimum_not_category_term_frequency,
-	                                              pmi_threshold_coefficient=pmi_filter_thresold,
+	                                              pmi_threshold_coefficient=pmi_threshold_coefficient,
 	                                              filter_unigrams=filter_unigrams,
 	                                              jitter=jitter,
 	                                              max_terms=max_terms,
@@ -308,7 +321,7 @@ def word_similarity_explorer_gensim(corpus,
 		max_p_val : float, default = 0.05
 			Max p-val to use find set of terms for similarity calculation
 
-		nlp : spacy.en.English, optional
+		Remaining arguments are from `produce_scattertext_explorer`.
 		Returns
 		-------
 			str, html of visualization
@@ -372,8 +385,7 @@ def word_similarity_explorer(corpus,
 		Uniform dirichlet prior for p-value calculation
 	max_p_val : float, default = 0.05
 		Max p-val to use find set of terms for similarity calculation
-
-	nlp : spacy.en.English, optional
+	Remaining arguments are from `produce_scattertext_explorer`.
 	Returns
 	-------
 		str, html of visualization
@@ -420,6 +432,9 @@ def sparse_explorer(corpus,
 		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
 	scores : np.array
 		Scores to display in visualization.  Zero scores are grey.
+
+	Remaining arguments are from `produce_scattertext_explorer`.
+
 	Returns
 	-------
 		str, html of visualization
