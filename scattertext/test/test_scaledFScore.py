@@ -8,7 +8,7 @@ from scattertext.termscoring.ScaledFScore import ScaledFScore
 class TestScaledFScore(TestCase):
 	def test_get_scores(self):
 		cat_counts, not_cat_counts = self._get_counts()
-		scores = ScaledFScore.get_scores(cat_counts, not_cat_counts)
+		scores = ScaledFScore.get_scores(cat_counts, not_cat_counts, beta=1.)
 		np.testing.assert_almost_equal(scores,
 		                               np.array([0.2689108, 0., 0.2689108, 0.1266617, 1.,
 		                                         0.5, 0.5590517, 0.5, 0.5, 0.5720015]))

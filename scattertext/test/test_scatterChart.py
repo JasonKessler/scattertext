@@ -113,10 +113,10 @@ class TestScatterChart(TestCase):
 		                  minimum_term_frequency=0,
 		                  max_terms=10000)
 		     .to_dict('hamlet'))
-		self.assertEqual(51, len(j['data']))
+		self.assertEqual(58, len(j['data']))
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  max_terms=None)
 		     .to_dict('hamlet'))
-		self.assertEqual(51, len(j['data']))
+		self.assertEqual(58, len(j['data']))

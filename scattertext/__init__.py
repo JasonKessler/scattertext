@@ -1,3 +1,5 @@
+version = [0,0,2,9,1]
+
 from __future__ import print_function
 
 import warnings
@@ -33,7 +35,6 @@ from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
-version = [0,0,2,9]
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
