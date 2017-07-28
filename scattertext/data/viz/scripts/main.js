@@ -590,8 +590,8 @@ buildViz = function (d3) {
             }
 
             function backgroundScoreSort(a, b) {
-                if(b.gb === a.bg)
-                    return (b.cat + b.ncat) - (a.cat + a.ncat)
+                if(b.bg === a.bg)
+                    return (b.cat + b.ncat) - (a.cat + a.ncat);
                 return b.bg - a.bg;
             }
 
