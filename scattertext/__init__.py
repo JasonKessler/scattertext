@@ -34,7 +34,7 @@ from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 
-version = [0,0,2,9,2]
+version = [0,0,2,9,3]
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
