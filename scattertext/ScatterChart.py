@@ -290,7 +290,7 @@ class ScatterChart:
 		category_column_name = category + ' freq'
 		cat_word_counts = df[category_column_name]
 		not_cat_word_counts = self._get_not_category_term_frequency(category_column_name, df)
-		scores = ScaledFScore.get_scores_for_category(cat_word_counts, not_cat_word_counts)
+		scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
 		return scores
 
 	def _term_importance_ranks(self, category, df):

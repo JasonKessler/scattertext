@@ -2,13 +2,16 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.9.3
+# Scattertext 0.0.2.9.4
 
 ### Updates
 
 Breaking change: `pmi_filter_thresold` has been replaced with `pmi_threshold_coefficient`.
 
 Added Emoji and Tweet analysis. See [Emoji analysis](#emoji-analysis).
+
+Characteristic terms falls back ot "Most frequent" if no terms used in the chart are present
+in the background corpus.
  
 Fixed top-term calculation for custom scores.
  
@@ -479,6 +482,8 @@ The Emoji analysis capability displays a chart of the category-specific distribu
 of Emoji. Let's look at a new corpus, a set of tweets.  We'll build a visualization
 showing how men and women use emoji differently.
 
+Note: the following example is implemented in `demo_emoji.py`.
+
 First, we'll load the dataset and parse it using NLTK's tweet tokenizer.  Note, install NLTK
 before running this example.  It will take some time for the dataset to download.
 ```python
@@ -552,26 +557,30 @@ extractor `st.FeatsFromSpacyDocOnlyEmoji` which builds a corpus only from
  emoji and not from anything else.
  
 ```python
-corpus = st.CorpusFromParsedDocuments(df_mf, 
-                                      parsed_col='parse', 
-                                      category_col='gender', 
-                                      feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyEmoji()
-                                     ).build()
-```
+corpus = st.CorpusFromParsedDocuments(
+	df_mf,
+	parsed_col='parse',
+	category_col='gender',
+	feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyEmoji()
+).build()```
 
 Next, we'll run this through a standard `produce_scattertext_explorer` visualization
 generation.
 ```python
-html = st.produce_scattertext_explorer(corpus, 
-                                       category='f', 
-                                       category_name='Female', 
-                                       not_category_name='Male',
-                                       use_full_doc=True,
-                                       metadata=df_mf['User Name'] + ' (@'+df_mf['Nickname']+') ' + df_mf['Date'].astype(str),
-                                       show_characteristic=False,
-                                       width_in_pixels=1000)
-file_name = "EmojiGender.html"
-open(file_name, 'wb').write(html.encode('utf-8'))
+html = st.produce_scattertext_explorer(
+	corpus,
+	category='f',
+	category_name='Female',
+	not_category_name='Male',
+	use_full_doc=True,
+	term_ranker=OncePerDocFrequencyRanker,
+	sort_by_dist=False,
+	metadata=(df_mf['User Name']
+	          + ' (@' + df_mf['Nickname'] + ') '
+	          + df_mf['Date'].astype(str)),
+	width_in_pixels=1000
+)
+open("EmojiGender.html", 'wb').write(html.encode('utf-8'))
 ```
 
 [![EmojiGender.html](https://jasonkessler.github.io/EmojiGender.png)](https://jasonkessler.github.io/EmojiGender.html)
