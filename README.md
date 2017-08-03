@@ -329,7 +329,7 @@ relies the Dirichlet distribution's parameter alpha, a vector, which is uniforml
 Here is the code  to produce such a visualization. 
  
 ```pydocstring
->>> from scattertext word_similarity_explorer
+>>> from scattertext import word_similarity_explorer
 >>> html = word_similarity_explorer(corpus,
 ...                                 category='democrat',
 ...                                 category_name='Democratic',
