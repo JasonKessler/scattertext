@@ -2,8 +2,10 @@ from collections import Counter
 
 import numpy as np
 
+from scattertext.Common import DEFAULT_PMI_THRESHOLD_COEFFICIENT
 
-def filter_bigrams_by_pmis(word_freq_df, threshold_coef=2):
+
+def filter_bigrams_by_pmis(word_freq_df, threshold_coef=DEFAULT_PMI_THRESHOLD_COEFFICIENT):
 	# type: (pd.DataFrame, int) -> pd.DataFrame
 	if len(word_freq_df.index) == 0:
 		return word_freq_df
@@ -51,7 +53,7 @@ class TermDocMatrixFilter:
 	'''
 	Filter out terms below a particular frequency or pmi threshold.
 	'''
-	def __init__(self, pmi_threshold_coef=2, minimum_term_freq=3):
+	def __init__(self, pmi_threshold_coef=DEFAULT_PMI_THRESHOLD_COEFFICIENT, minimum_term_freq=3):
 		'''
 		Parameters
 		----------

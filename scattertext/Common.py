@@ -1,7 +1,8 @@
-
 # Constants for scaled f-score
 DEFAULT_BETA = 0.5
 DEFAULT_SCALER_ALGO = 'normcdf'
+
+DEFAULT_PMI_THRESHOLD_COEFFICIENT = 6
 
 # Constants for background scaled f-score
 DEFAULT_BACKGROUND_BETA = 1

@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.9.5
+# Scattertext 0.0.2.9.6
 
 ### Updates
 
@@ -16,6 +16,8 @@ in the background corpus.
 Fixed top-term calculation for custom scores.
  
 Set scaled f-score's default beta to 0.5.
+
+Added `--spacy_language_model` argument to the CLI. 
 
 **Table of Contents**
 
@@ -130,6 +132,10 @@ Note, the parameter `--minimum_term_frequency=8` omit terms that occur less than
 times, and `--regex_parser` indicates a simple regular expression parser should 
  be used in place of spaCy. The flag `--one_use_per_doc` indicates that term frequency
   should be calculated by only counting no more than one occurrence of a term in a document. 
+  
+If you'd like to parse non-English text, you can use the `--spacy_language_model` argument to configure which
+spaCy language model the tool will use.  The default is 'en' and you can see the others available at 
+[https://spacy.io/docs/api/language-models](https://spacy.io/docs/api/language-models).
 
 ```bash
 $ curl -s https://cdn.rawgit.com/JasonKessler/scattertext/master/scattertext/data/political_data.csv | head -2

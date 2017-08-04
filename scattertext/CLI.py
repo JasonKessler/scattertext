@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 import spacy.en
 
-from scattertext import CorpusFromPandas, produce_scattertext_explorer
+from scattertext import CorpusFromPandas, produce_scattertext_explorer, Common
 from scattertext.WhitespaceNLP import whitespace_nlp_with_sentences
 from scattertext.termranking import OncePerDocFrequencyRanker
 
@@ -39,8 +39,8 @@ def main():
 	                         "be used on the visualization. By default, it will just be the word 'not' "
 	                         "in front of the positive value.")
 	parser.add_argument('--pmi_threshold', action='store',
-	                    dest='pmi_threshold', type=int, default=4,
-	                    help="2 * minimum allowable PMI value.  Default 4.")
+	                    dest='pmi_threshold', type=int,
+	                    help="2 * minimum allowable PMI value.  Default 6.")
 	parser.add_argument('--width_in_pixels', action='store',
 	                    dest='width_in_pixels', type=int, default=1000,
 	                    help="Width of the visualization in pixels.")
@@ -51,6 +51,11 @@ def main():
 	                    dest='regex_parser', default=False,
 	                    help="If present, don't use spaCy for preprocessing.  Instead, "
 	                         "use a simple, dumb, regex.")
+	parser.add_argument('--spacy_language_model', action='store',
+	                    dest='spacy_language_model', default='en',
+	                    help="If present, pick the spaCy language model to use. Default is 'en'. "
+	                         "Other valid values include 'de' and 'fr'. --regex_parser will override."
+	                         "Please see https://spacy.io/docs/api/language-models for moredetails")
 	parser.add_argument('--one_use_per_doc', action='store_true',
 	                    dest='one_use_per_doc', default=False,
 	                    help="Only count one use per document.")
@@ -72,7 +77,7 @@ def main():
 	if args.regex_parser:
 		nlp = whitespace_nlp_with_sentences
 	else:
-		nlp = spacy.en.English()
+		nlp = spacy.load(args.spacy_language_model)
 
 	term_ranker = None
 	if args.one_use_per_doc is True:

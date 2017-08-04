@@ -670,6 +670,7 @@ class TermDocMatrix(object):
 		                     self._metadata_idx_store,
 		                     self.get_num_docs()).output()
 
+
 	def get_scaled_f_scores_vs_background(self,
 	                                      scaler_algo=DEFAULT_BACKGROUND_SCALER_ALGO,
 	                                      beta=DEFAULT_BACKGROUND_BETA):
