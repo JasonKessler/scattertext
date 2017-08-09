@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.9.6
+# Scattertext 0.0.2.9.7
 
 ### Updates
 
@@ -18,6 +18,9 @@ Fixed top-term calculation for custom scores.
 Set scaled f-score's default beta to 0.5.
 
 Added `--spacy_language_model` argument to the CLI. 
+
+Added the `alternative_text_field` option in `produce_scattertext_explorer` to show an 
+alternative text field when showing contexts in the interactive HTML visualization.   
 
 **Table of Contents**
 

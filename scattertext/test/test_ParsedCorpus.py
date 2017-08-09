@@ -1,8 +1,6 @@
 from unittest import TestCase
 
-import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 
 from scattertext import whitespace_nlp, CorpusFromParsedDocuments
 from scattertext.test.test_corpusFromPandas import get_docs_categories
@@ -27,6 +25,10 @@ class TestParsedCorpus(TestCase):
 		                 len(self.documents))
 		self.assertEqual([str(x) for x in self.corpus.get_texts()][0],
 		                 "what art thou that usurp'st this time of night,")
+
+	def test_get_field(self):
+		self.assertEqual(list(self.corpus.get_field('author')),
+		                 list(self.df.author))
 
 	def test_get_parsed_docs(self):
 		doc = [x for x in self.corpus.get_parsed_docs()][0]

@@ -49,6 +49,18 @@ class ParsedCorpus(Corpus):
 			return self._df[self._parsed_col]
 		return self._df[self._parsed_col].apply(str)
 
+	def get_field(self, field):
+		'''
+		Parameters
+		----------
+		field: str, field name
+
+		Returns
+		-------
+		pd.Series, all members of field
+		'''
+		return self._df[field]
+
 	def get_parsed_docs(self):
 		'''
 		Returns

@@ -23,16 +23,32 @@ class ScatterChartExplorer(ScatterChart):
 	            scores=None,
 	            metadata=None,
 	            max_docs_per_category=None,
-	            transform=percentile_alphabetical):
+	            transform=percentile_alphabetical,
+	            alternative_text_field=None):
 		'''
-		:param category: Category to annotate
-		:param category_name: Name of category which will appear on web site.
-		:param not_category_name: Name of non-category axis which will appear on web site.
-		:param scores: Scores to use.  Default to Scaled F-Score.
-		:param metadata: None or array-like.  List of metadata for each document.
-		:param max_docs_per_category: None or int.  Maximum number of documents to store per category.
-		:param transform: Defaults to percentile_lexicographic
-		:return: dictionary {info: {category_name: ..., not_category_name},
+
+		Parameters
+		----------
+		category : str
+			Category to annotate.  Exact value of category.
+		category_name : str, optional
+			Name of category which will appear on web site. Default None is same as category.
+		not_category_name : str, optional
+			Name of ~category which will appear on web site. Default None is same as "not " + category.
+		scores : np.array, optional
+			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+		metadata, None or array-like.
+		  List of metadata for each document.  Defaults to a list of blank strings.
+		max_docs_per_category, None or int, optional
+		  Maximum number of documents to store per category.  Defaults to 4.
+		transform : function, optional
+			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.
+		alternative_text_field : str or None, optional
+			Field in from dataframe used to make corpus to display in place of parsed text. Only
+			can be used if corpus is a ParsedCorpus instance.
+		Returns
+		-------
+		dictionary {info: {category_name: ..., not_category_name},
 												 docs: {'texts': [doc1text, ...],
 												        'labels': [1, 0, ...],
 												        'meta': ['<b>blah</b>', '<b>blah</b>']}
@@ -53,15 +69,18 @@ class ScatterChartExplorer(ScatterChart):
 		                         not_category_name=not_category_name,
 		                         scores=scores,
 		                         transform=transform)
-		docs_getter = self._make_docs_getter(max_docs_per_category)
+		docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
 		j['docs'] = self._get_docs_structure(docs_getter, metadata)
 		return j
 
-	def _make_docs_getter(self, max_docs_per_category):
+	def _make_docs_getter(self, max_docs_per_category, alternative_text_field):
 		if max_docs_per_category is None:
-			docs_getter = DocsAndLabelsFromCorpus(self.term_doc_matrix)
+			docs_getter = DocsAndLabelsFromCorpus(self.term_doc_matrix,
+			                                      alternative_text_field=alternative_text_field)
 		else:
-			docs_getter = DocsAndLabelsFromCorpusSample(self.term_doc_matrix, max_docs_per_category)
+			docs_getter = DocsAndLabelsFromCorpusSample(self.term_doc_matrix,
+			                                            max_docs_per_category,
+			                                            alternative_text_field=alternative_text_field)
 		if self.scatterchartdata.use_non_text_features:
 			docs_getter = docs_getter.use_non_text_features()
 		return docs_getter

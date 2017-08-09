@@ -4,7 +4,8 @@ from unittest import TestCase
 import numpy as np
 
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
-from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus, build_hamlet_jz_corpus_with_meta
+from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus, build_hamlet_jz_corpus_with_meta, \
+	build_hamlet_jz_corpus_with_alt_text
 
 
 class TestScatterChart(TestCase):
@@ -20,7 +21,7 @@ class TestScatterChart(TestCase):
 		                 set(['not_category_name', 'category_name',
 		                      'category_terms', 'not_category_terms', 'category_internal_name']))
 		self.assertEqual(list(j['docs']['labels']),
-		                 [0, 0, 0, 0, 1, 1, 1, 1])
+		                 [0, 0, 0, 0,1, 1, 1, 1])
 		self.assertEqual(list(j['docs']['texts']),
 		                 ["what art thou that usurp'st this time of night,",
 		                  'together with that fair and warlike form',
@@ -72,6 +73,18 @@ class TestScatterChart(TestCase):
 		                            'well, speak up man what is it?',
 		                            'news from the east sire! the best of both worlds has returned!']}
 		                 )
+
+	def test_alternative_text(self):
+		corpus = build_hamlet_jz_corpus_with_alt_text()
+		j = (ScatterChartExplorer(corpus,
+		                          minimum_term_frequency=0)
+		     .to_dict('hamlet', alternative_text_field='alt'))
+		self.assertEqual(j['docs']['texts'][0], j['docs']['texts'][0].upper())
+
+		j = (ScatterChartExplorer(corpus,
+		                          minimum_term_frequency=0)
+		     .to_dict('hamlet'))
+		self.assertNotEqual(j['docs']['texts'][0], j['docs']['texts'][0].upper())
 
 	def test_extra_features(self):
 		corpus = build_hamlet_jz_corpus_with_meta()

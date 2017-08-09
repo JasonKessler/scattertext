@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 9, 6]
+version = [0, 0, 2, 9, 7]
 
 import warnings
 
@@ -135,7 +135,8 @@ def produce_scattertext_explorer(corpus,
                                  y_label=None,
                                  d3_url=None,
                                  d3_scale_chromatic_url=None,
-                                 pmi_filter_thresold=None):
+                                 pmi_filter_thresold=None,
+                                 alternative_text_field=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -226,6 +227,11 @@ def produce_scattertext_explorer(corpus,
 	  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
 	pmi_filter_thresold : (DEPRECATED) int, None by default
 	  DEPRECATED.  Use pmi_threshold_coefficient instead.
+	alternative_text_field : str or None, optional
+		Field in from dataframe used to make corpus to display in place of parsed text. Only
+		can be used if corpus is a ParsedCorpus instance.
+
+
 	Returns
 	-------
 		str, html of visualization
@@ -268,7 +274,8 @@ def produce_scattertext_explorer(corpus,
 	                                                    transform=transform,
 	                                                    scores=scores,
 	                                                    max_docs_per_category=max_docs_per_category,
-	                                                    metadata=metadata)
+	                                                    metadata=metadata,
+	                                                    alternative_text_field=alternative_text_field)
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
 	                                 height_in_pixels=height_in_pixels,

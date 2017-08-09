@@ -47,6 +47,30 @@ def build_hamlet_jz_df():
 	return df
 
 
+
+def build_hamlet_jz_corpus_with_alt_text():
+	# type: () -> Corpus
+	df = build_hamlet_jz_df_with_alt_text()
+	return CorpusFromParsedDocuments(
+		df=df,
+		category_col='category',
+		parsed_col='parsed'
+	).build()
+
+
+def build_hamlet_jz_df_with_alt_text():
+	# type: () -> pd.DataFrame
+	categories, documents = get_docs_categories()
+	clean_function = lambda text: '' if text.startswith('[') else text
+	df = pd.DataFrame({
+		'category': categories,
+		'parsed': [whitespace_nlp(clean_function(doc)) for doc in documents],
+		'alt': [doc.upper() for doc in documents]
+	})
+	df = df[df['parsed'].apply(lambda x: len(str(x).strip()) > 0)]
+	return df
+
+
 def build_hamlet_jz_corpus_with_meta():
 	# type: () -> Corpus
 	def empath_mock(doc, **kwargs):
@@ -67,6 +91,7 @@ def build_hamlet_jz_corpus_with_meta():
 		parsed_col='parsed',
 		feats_from_spacy_doc=FeatsFromSpacyDocAndEmpath(empath_analyze_function=empath_mock)
 	).build()
+
 
 def get_docs_categories():
 	documents = [u"What art thou that usurp'st this time of night,",
