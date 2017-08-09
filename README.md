@@ -2,7 +2,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.9.7
+# Scattertext 0.0.2.9.8
 
 ### Updates
 
@@ -21,6 +21,9 @@ Added `--spacy_language_model` argument to the CLI.
 
 Added the `alternative_text_field` option in `produce_scattertext_explorer` to show an 
 alternative text field when showing contexts in the interactive HTML visualization.   
+
+Updated `ParsedCorpus.get_unigram_corpus` to allow for continued 
+`alternative_text_field` functionality. 
 
 **Table of Contents**
 

@@ -43,3 +43,4 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 		raw_texts = df[self._text_col]
 		return Corpus(X, mX, y, term_idx_store, category_idx_store,
 		              metadata_idx_store, raw_texts)
+

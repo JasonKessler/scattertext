@@ -34,6 +34,13 @@ class TestParsedCorpus(TestCase):
 		doc = [x for x in self.corpus.get_parsed_docs()][0]
 		doc.sents
 
+	def test_get_unigram_corpus(self):
+		unicorp = self.corpus.get_unigram_corpus()
+		self.assertEqual(len([x for x in unicorp.get_texts()]),
+		                 len(self.documents))
+		self.assertEqual([str(x) for x in unicorp.get_texts()][0],
+		                 "what art thou that usurp'st this time of night,")
+
 	def test_search(self):
 		self.assertEqual(len(self.corpus.search('bigram')), 1)
 		df = self.corpus.search('bigram')

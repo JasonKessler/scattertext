@@ -1,5 +1,6 @@
-import pandas as pd
 import sys
+
+import pandas as pd
 
 from scattertext.Corpus import Corpus
 from scattertext.IndexStore import IndexStore
@@ -112,6 +113,18 @@ class ParsedCorpus(Corpus):
 			category_row[category_row == group_idx] = cat_idx
 		catX = self._change_document_type_in_matrix(newX, category_row)
 		return self._term_freq_df_from_matrix(catX)
+
+	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
+		return ParsedCorpus(X=new_X,
+		                    mX=self._mX,
+		                    y=self._y,
+		                    parsed_col=self._parsed_col,
+		                    category_col=self._category_col,
+		                    term_idx_store=new_term_idx_store,
+		                    category_idx_store=self._category_idx_store,
+		                    metadata_idx_store=self._metadata_idx_store,
+		                    df=self._df,
+		                    unigram_frequency_path=self._unigram_frequency_path)
 
 	def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):
 		row_group_cat = X.tocoo().row
