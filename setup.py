@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.2.9.8',
+      version='0.0.2.9.9',
       description='An NLP package to visualize interesting terms in text.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
@@ -9,7 +9,6 @@ setup(name='scattertext',
       license='MIT',
       packages=find_packages(),
       install_requires=[
-	      'nose',
 	      'numpy',
 	      'scipy',
 	      'sklearn',
@@ -28,7 +27,7 @@ setup(name='scattertext',
       },
       test_suite="nose.collector",
       tests_require=['nose'],
-      setup_requires=['nose>=1.0'],
+      #setup_requires=['nose>=1.0'],
       entry_points={
 	      'console_scripts': [
 		      'scattertext = scattertext.CLI:main',
