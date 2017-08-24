@@ -38,7 +38,6 @@ Updated `ParsedCorpus.get_unigram_corpus` to allow for continued
     - [Emoji analysis](#emoji-analysis)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
-- [Presentations on Scattertext](#presentations-on-scattertext)
 - [What's new](#whats-new)
 - [Sources](#sources)
 
@@ -307,6 +306,12 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
+### Understanding Scaled F-Score
+
+![Scaled F-Score Explanation 1](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score1.png)
+
+
+![Scaled F-Score Explanation 2](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score2.png)
 
 ## Advanced uses
 
@@ -574,7 +579,8 @@ corpus = st.CorpusFromParsedDocuments(
 	parsed_col='parse',
 	category_col='gender',
 	feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyEmoji()
-).build()```
+).build()
+```
 
 Next, we'll run this through a standard `produce_scattertext_explorer` visualization
 generation.
@@ -600,14 +606,7 @@ open("EmojiGender.html", 'wb').write(html.encode('utf-8'))
 
 ## Examples 
 
-To how Scattertext can be used for subjectivity lexicon development (and why using log-axis scales are 
-a bad idea) check out the [Subjective vs. Objective](http://nbviewer.jupyter.org/urls/jasonkessler.github.io/Scattertext%20Demo-%20Subjective%20vs%20Objective.ipynb) notebook.  
-
-Scattertext can also be used to visualize **topic models**, analyze how **word vectors** and categories interact, and understand **document classification models**.  You can see examples of all of these applied to [2016 Presidential Debate transcripts](https://bit.ly/scattertext2016debates).     
-
-We use the task of predicting a movie's revenue from the content of its reviews as an example of 
-tuning Scattertext. See the analysis at [Movie Reviews and Revenue](http://nbviewer.jupyter.org/url/jasonkessler.github.io/Movie-Revenue.ipynb). 
-
+Please see the examples in the [PyData 2017 Tutorial](https://github.com/JasonKessler/Scattertext-PyData) on Scattertext.
 
 ## A note on chart layout
 
@@ -628,13 +627,6 @@ And it was called using
 $ python2.7 src/main.py <script file name> --enable-volume-trees \
   --js-class RectangleHolder --enable-hamt --enable-arrays --js rectangle_holder.js
 ```
-
-## Presentations on Scattertext
-
-* [Scattertext: A Tool for Visualizing Differences in Language
-](http://www.slideshare.net/JasonKessler/scattertext-a-tool-for-visualizing-differences-in-language)
-
-* [Turning Unstructured Content into Kernels of Ideas](https://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas) for an introduction to the metrics and algorithms used.
 
 ## What's new
 
