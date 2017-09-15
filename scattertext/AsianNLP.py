@@ -3,6 +3,12 @@ import re
 import sys
 #import jieba
 
+try:
+	import jieba
+except:
+	pass
+
+
 '''
 I don't speak Chinese or Japanese, but implemented a very simple sentence splitter.  Assistance 
 would be greatly appreciated.
@@ -57,7 +63,10 @@ def japanese_nlp(doc, entity_type=None, tag_type=None):
 def _get_chinese_tokenizer():
 	global jieba
 	if 'jieba' not in sys.modules:
-		jieba = __import__('jieba')
+		try:
+			jieba = __import__('jieba')
+		except:
+			raise Exception('The package jieba is needed to perform Chinese text segmentation.')
 	return jieba.cut
 
 def chinese_nlp(doc, entity_type=None, tag_type=None):

@@ -5,6 +5,8 @@ import pandas as pd
 from scattertext import CorpusFromParsedDocuments
 from scattertext import chinese_nlp
 from scattertext import produce_scattertext_explorer
+
+
 # compare chinese translations of tale of two cities and ulysses, from http://www.pku.edu.cn/study/novel/ulysses/cindex.htm
 
 def main():

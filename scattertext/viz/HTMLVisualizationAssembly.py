@@ -23,7 +23,7 @@ class HTMLVisualizationAssembly:
 	             use_non_text_features=False,
 	             show_characteristic=True,
 	             word_vec_use_p_vals=False,
-	             max_p_val=0.05,
+	             max_p_val=0.1,
 	             save_svg_button=False,
 	             p_value_colors=False,
 	             x_label=None,
@@ -59,7 +59,7 @@ class HTMLVisualizationAssembly:
 		word_vec_use_p_vals: bool, default False
 			Use category-associated p-values to determine which terms to give word
 			vec scores.
-		max_p_val : float, default = 0.05
+		max_p_val : float, default = 0.1
 			Max p-val to use find set of terms for similarity calculation, if
 			word_vec_use_p_vals is True.
 		save_svg_button : bool, default False

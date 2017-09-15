@@ -5,7 +5,15 @@ from scipy.stats import norm
 from scattertext.termsignificance.TermSignificance import TermSignificance
 
 
+def z_to_p_val(z_scores):
+	return norm.sf(-z_scores) - 0.5 + 0.5
+
 class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
+	'''
+	Implements the log-odds-ratio with an uninformative dirichlet prior from
+		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
+	'''
+
 	def __init__(self, alpha_w=0.01):
 		'''
 		Parameters
@@ -15,13 +23,8 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		'''
 		self.alpha_w = alpha_w
 
-
-
 	def get_p_vals(self, X):
 		'''
-		Implements the log-odds-ratio with an uninformative dirichlet prior from
-		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
-
 		Parameters
 		----------
 		X : np.array
@@ -33,29 +36,63 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		np.array of p-values
 
 		'''
+		# Eqs 19-22
+		return z_to_p_val(self.get_zeta_i_j(X))
 
-		# Equation 16 of Monroe et al. 2008.
-		lod_odds_ratio = self.get_log_odds_with_prior(X)
+	def get_p_vals_given_separate_counts(self, y_i, y_j):
+		'''
+		Parameters
+		----------
+		y_i, np.array(int)
+			Arrays of word counts of words occurring in positive class
+		y_j, np.array(int)
 
-		# Equation 19
+		Returns
+		np.array of p-values
+		'''
+		return z_to_p_val(self.get_zeta_i_j_given_separate_counts(y_i, y_j))
+
+	def get_zeta_i_j_given_separate_counts(self, y_i, y_j):
+		'''
+		Parameters
+		----------
+		y_i, np.array(int)
+			Arrays of word counts of words occurring in positive class
+		y_j, np.array(int)
+
+		Returns
+		-------
+		np.array of z-scores
+		'''
 		a_w = self.alpha_w
-		n_pos, n_neg = X.sum(axis=0)
-		a_0 = X.shape[0] * a_w
-		std_lod_odds_ratio = (1. / (X[:, 0] + a_w)
-		                      + 1. / (n_pos + a_0 - X[:, 0] - a_w)
-		                      + 1. / (X[:, 1] + a_w)
-		                      + 1. / (n_neg + a_0 - X[:, 1] - a_w))
+		n_i, n_j = y_i.sum(), y_j.sum()
+		a_0 = len(y_i) * a_w
+		delta_i_j = (np.log((y_i + a_w) / (n_i + a_0 - y_i - a_w))
+		             - np.log((y_j + a_w) / (n_j + a_0 - y_j - a_w)))
+		var_delta_i_j = (1. / (y_i + a_w) + 1. / (y_i + a_0 - y_i - a_w)
+		                 + 1. / (y_j + a_w) + 1. / (n_j + a_0 - n_j - a_w))
+		zeta_i_j = delta_i_j / np.sqrt(var_delta_i_j)
+		return zeta_i_j
 
-		# Equation 22
-		z_scores = lod_odds_ratio / np.sqrt(std_lod_odds_ratio)
+	def get_zeta_i_j(self, X):
+		'''
+		Parameters
+		----------
+		X : np.array
+			Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+			positive class, while X[:,1] is the negative class. None by default
 
-		return norm.cdf(z_scores)
-
-	def get_log_odds_with_prior(self, X):
+		Returns
+		-------
+		np.array of z-scores
+		'''
 		a_w = self.alpha_w
-		n_pos, n_neg = X.sum(axis=0)
-		a_0 = X.shape[0] * a_w
-		return (np.log((X[:, 0] + a_w) / (n_pos + a_0 - X[:, 0] - a_w))
-		        - np.log((X[:, 1] + a_w) / (n_neg + a_0 - X[:, 1] - a_w)))
-
-
+		y_i, y_j = X.T[0], X.T[1]
+		n_i, n_j = y_i.sum(), y_j.sum()
+		a_0 = len(y_i) * a_w
+		delta_i_j = (np.log((y_i + a_w) / (n_i + a_0 - y_i - a_w))
+		             - np.log((y_j + a_w) / (n_j + a_0 - y_j - a_w)))
+		var_delta_i_j = (1. / (y_i + a_w) + 1. / (y_i + a_0 - y_i - a_w)
+		                 + 1. / (y_j + a_w) + 1. / (n_j + a_0 - n_j - a_w))
+		zeta_i_j = delta_i_j / np.sqrt(var_delta_i_j)
+		return zeta_i_j

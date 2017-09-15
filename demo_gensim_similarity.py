@@ -39,7 +39,7 @@ def main():
 	                                       width_in_pixels=1000,
 	                                       metadata=convention_df['speaker'],
 	                                       word2vec=Word2VecFromParsedCorpus(corpus, model).train(),
-	                                       max_p_val=0.05,
+	                                       max_p_val=0.1,
 	                                       save_svg_button=True)
 	open('./demo_gensim_similarity.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_gensim_similarity.html in Chrome or Firefox.')

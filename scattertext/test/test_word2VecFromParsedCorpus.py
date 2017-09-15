@@ -2,13 +2,12 @@ from unittest import TestCase
 
 import pandas as pd
 from gensim.models import word2vec
-from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, Word2VecFromParsedCorpusBigrams
 
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 from scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
+	Word2VecFromParsedCorpusBigrams
 from scattertext.test.test_corpusFromPandas import get_docs_categories
-
-
 
 
 class TestWord2VecFromParsedCorpus(TestCase):

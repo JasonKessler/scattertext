@@ -1,29 +1,17 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
+[![Conda Install](https://anaconda.org/ioam/holoviews/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.9.9
+# Scattertext 0.0.2.10.0
 
 ### Updates
 
-Breaking change: `pmi_filter_thresold` has been replaced with `pmi_threshold_coefficient`.
+Fixed bugs in `chinese_nlp` when jieba has already been imported and in p-value
+computation when performing log-odds-ratio w/ prior scoring.  
 
-Added Emoji and Tweet analysis. See [Emoji analysis](#emoji-analysis).
-
-Characteristic terms falls back ot "Most frequent" if no terms used in the chart are present
-in the background corpus.
- 
-Fixed top-term calculation for custom scores.
- 
-Set scaled f-score's default beta to 0.5.
-
-Added `--spacy_language_model` argument to the CLI. 
-
-Added the `alternative_text_field` option in `produce_scattertext_explorer` to show an 
-alternative text field when showing contexts in the interactive HTML visualization.   
-
-Updated `ParsedCorpus.get_unigram_corpus` to allow for continued 
-`alternative_text_field` functionality. 
+Added demo for performing a Monroe et. al (2008) style visualization of 
+log-odds-ratio scores in `demo_log_odds_ratio_prior.py`.   
 
 **Table of Contents**
 
@@ -51,6 +39,10 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 
 ## Installation 
 Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
+
+`$ conda install -c conda-forge scattertext`
+
+If you do not have conda installed, run:
 
 `$ pip install scattertext && python -m spacy.en.download`
 
@@ -629,6 +621,27 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.9.*
+Breaking change: `pmi_filter_thresold` has been replaced with `pmi_threshold_coefficient`.
+
+Added Emoji and Tweet analysis. See [Emoji analysis](#emoji-analysis).
+
+Characteristic terms falls back ot "Most frequent" if no terms used in the chart are present
+in the background corpus.
+ 
+Fixed top-term calculation for custom scores.
+ 
+Set scaled f-score's default beta to 0.5.
+
+Added `--spacy_language_model` argument to the CLI. 
+
+Added the `alternative_text_field` option in `produce_scattertext_explorer` to show an 
+alternative text field when showing contexts in the interactive HTML visualization.   
+
+Updated `ParsedCorpus.get_unigram_corpus` to allow for continued 
+`alternative_text_field` functionality. 
+
 
 ### 0.0.2.8.6
 Added ability to for Scattertext to use noun chunks instead of unigrams and bigrams through the

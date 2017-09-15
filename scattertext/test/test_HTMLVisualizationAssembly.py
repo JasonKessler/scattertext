@@ -9,7 +9,7 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
 		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
-		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.05',
+		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined']
 		for i, val in param_dict.items():
 			params[i] = val

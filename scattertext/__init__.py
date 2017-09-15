@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 9, 9]
+version = [0, 0, 2, 9, 10]
 
 import warnings
 
@@ -127,7 +127,7 @@ def produce_scattertext_explorer(corpus,
                                  use_non_text_features=False,
                                  show_characteristic=True,
                                  word_vec_use_p_vals=False,
-                                 max_p_val=0.05,
+                                 max_p_val=0.1,
                                  p_value_colors=False,
                                  term_significance=None,
                                  save_svg_button=False,
@@ -206,7 +206,7 @@ def produce_scattertext_explorer(corpus,
 		Show characteristic terms on the far left-hand side of the visualization
 	word_vec_use_p_vals: bool, default False
 		Sort by harmonic mean of score and distance.
-	max_p_val : float, default 0.05
+	max_p_val : float, default 0.1
 		If word_vec_use_p_vals, the minimum p val to use.
 	p_value_colors : bool, default False
 	  Color points differently if p val is above 1-max_p_val, below max_p_val, or
@@ -306,7 +306,7 @@ def word_similarity_explorer_gensim(corpus,
                                     target_term,
                                     word2vec=None,
                                     alpha=0.01,
-                                    max_p_val=0.05,
+                                    max_p_val=0.1,
                                     **kwargs):
 	'''
 		Parameters
@@ -326,7 +326,7 @@ def word_similarity_explorer_gensim(corpus,
 		  ne will be trained using Word2VecFromParsedCorpus(corpus).train()
 		alpha : float, default = 0.01
 			Uniform dirichlet prior for p-value calculation
-		max_p_val : float, default = 0.05
+		max_p_val : float, default = 0.1
 			Max p-val to use find set of terms for similarity calculation
 
 		Remaining arguments are from `produce_scattertext_explorer`.
@@ -372,7 +372,7 @@ def word_similarity_explorer(corpus,
                              target_term,
                              nlp=None,
                              alpha=0.01,
-                             max_p_val=0.05,
+                             max_p_val=0.1,
                              **kwargs):
 	'''
 	Parameters
@@ -391,7 +391,7 @@ def word_similarity_explorer(corpus,
 		E.g., spacy.en.English, whitespace_nlp, etc...
 	alpha : float, default = 0.01
 		Uniform dirichlet prior for p-value calculation
-	max_p_val : float, default = 0.05
+	max_p_val : float, default = 0.1
 		Max p-val to use find set of terms for similarity calculation
 	Remaining arguments are from `produce_scattertext_explorer`.
 	Returns

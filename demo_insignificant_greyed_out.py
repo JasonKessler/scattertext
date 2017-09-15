@@ -15,7 +15,7 @@ scores = -(LogOddsUninformativePriorScore
            .get_thresholded_score(term_freq_df['democrat freq'],
                                   term_freq_df['republican freq'],
                                   alpha_w=2.,
-                                  threshold=0.05))
+                                  threshold=0.1))
 html = produce_scattertext_explorer(corpus,
                                     category='democrat',
                                     category_name='Democratic',

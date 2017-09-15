@@ -7,6 +7,12 @@ def scale(vec, terms=None, other_vec=None):
 	return (vec - vec.min()) / (vec.max() - vec.min())
 
 
+def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
+	max_abs = max(vec.max(), -vec.min())
+	return ((((vec > 0).astype(float) * (vec / max_abs)) * 0.5 + 0.5)
+	        + ((vec < 0).astype(float) * (vec / max_abs) * 0.5))
+
+
 def scale_standardize(vec, terms=None, other_vec=None):
 	to_ret = (vec - vec.mean()) / vec.std()
 	to_ret += to_ret.min() + 1
@@ -26,12 +32,15 @@ def sqrt_scale_standardize(vec, terms=None, other_vec=None):
 	vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
 	return _scale_0_to_1(vec_ss)
 
+
 def power_scale_standardize_factory(alpha):
 	def f(vec, terms=None, other_vec=None):
-		vec_ss = np.power(vec, 1./alpha)
+		vec_ss = np.power(vec, 1. / alpha)
 		vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
 		return _scale_0_to_1(vec_ss)
+
 	return f
+
 
 '''
 from statsmodels.distributions import ECDF
@@ -44,14 +53,18 @@ def ecdf_scale_standardize(vec):
 
 def power_scale_factory(alpha):
 	def f(vec, terms=None, other_vec=None):
-		return _scale_0_to_1(np.power(vec, 1./alpha))
+		return _scale_0_to_1(np.power(vec, 1. / alpha))
+
 	return f
+
 
 def sqrt_scale(vec, terms=None, other_vec=None):
 	return _scale_0_to_1(np.sqrt(vec))
 
+
 def log_scale(vec, terms=None, other_vec=None):
 	return _scale_0_to_1(np.log(vec))
+
 
 def percentile(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='average') * (1. / len(vec))

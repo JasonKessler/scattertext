@@ -20,7 +20,7 @@ def main():
 	                                width_in_pixels=1000,
 	                                metadata=convention_df['speaker'],
 	                                alpha=0.01,
-	                                max_p_val=0.05,
+	                                max_p_val=0.1,
 	                                save_svg_button=True)
 	open('./demo_similarity.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_similarlity.html in Chrome or Firefox.')
