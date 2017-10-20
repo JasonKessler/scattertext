@@ -5,6 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from scattertext import SampleCorpora
 from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
+from scattertext.Scalers import scale
 
 nlp = spacy.en.English()
 convention_df = SampleCorpora.ConventionData2012.get_data()

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 9, 10]
+version = [0, 0, 2, 9, 11]
 
 import warnings
 
@@ -35,6 +35,8 @@ from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
+from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -186,7 +188,7 @@ def produce_scattertext_explorer(corpus,
 		Label terms based distance from corner. True by default.  Negated by singleScoreMode.
 	reverse_sort_scores_for_not_category: bool, optional
 		If using a custom score, score the not-category class by
-		lowest-score-as-most-predictive. Turn this off for word vectory
+		lowest-score-as-most-predictive. Turn this off for word vector
 		or topic similarity. Default True.
 	use_full_doc : bool, optional
 		Use the full document in snippets.  False by default.
@@ -201,7 +203,7 @@ def produce_scattertext_explorer(corpus,
 	asian_mode : bool, optional
 		Use a special Javascript regular expression that's specific to chinese or japanese
 	use_non_text_features : bool, optional
-		Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.
+		Show non-bag-of-words features (e.g., Empath) instead of text.  False by default.
 	show_characteristic: bool, default True
 		Show characteristic terms on the far left-hand side of the visualization
 	word_vec_use_p_vals: bool, default False
@@ -211,7 +213,7 @@ def produce_scattertext_explorer(corpus,
 	p_value_colors : bool, default False
 	  Color points differently if p val is above 1-max_p_val, below max_p_val, or
 	   in between.
-	term_significance : TermSignifiance instance or None
+	term_significance : TermSignificance instance or None
 		Way of getting signfiance scores.  If None, p values will not be added.
 	save_svg_button : bool, default False
 		Add a save as SVG button to the page.
@@ -418,6 +420,60 @@ def word_similarity_explorer(corpus,
 	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
 	                                    max_p_val=max_p_val,
 	                                    p_value_colors=True,
+	                                    **kwargs)
+
+
+def produce_fightin_words_explorer(corpus,
+                                   category,
+                                   category_name,
+                                   not_category_name,
+                                   term_ranker=termranking.AbsoluteFrequencyRanker,
+                                   alpha=0.01,
+                                   **kwargs):
+	'''
+	Produces a Monroe et al. style visualization.
+
+	Parameters
+	----------
+	corpus : Corpus
+		Corpus to use.
+	category : str
+		Name of category column as it appears in original data frame.
+	category_name : str
+		Name of category to use.  E.g., "5-star reviews."
+	not_category_name : str
+		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+	term_ranker : TermRanker
+		See
+	alpha : float, default = 0.01
+		Uniform dirichlet prior for p-value calculation
+	Remaining arguments are from `produce_scattertext_explorer`.
+	Returns
+	-------
+		str, html of visualization
+	'''
+	term_freq_df = term_ranker(corpus).get_ranks()
+	frequencies_log_scaled = scale(np.log(term_freq_df.sum(axis=1).values))
+	zeta_i_j = (LogOddsRatioUninformativeDirichletPrior(alpha)
+	            .get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
+	                                                term_freq_df[[c + ' freq'
+	                                                              for c in corpus.get_categories()
+	                                                              if c != category]].sum(axis=1)))
+	zeta_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(zeta_i_j)
+	#kwargs['metadata'] = kwargs.get('metadata', None),
+	return produce_scattertext_explorer(corpus,
+	                                    category=category,
+	                                    category_name=category_name,
+	                                    not_category_name=not_category_name,
+	                                    x_coords=frequencies_log_scaled,
+	                                    y_coords=zeta_scaled_for_charting,
+	                                    scores=zeta_i_j,
+	                                    sort_by_dist=False,
+	                                    term_ranker=term_ranker,
+	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                    p_value_colors=True,
+	                                    #x_label=kwargs.get('x_label', 'Log Frequency'),
+	                                    #y_label=kwargs.get('y_label', 'Z-Score: Log Odds Ratio w/ Prior'),
 	                                    **kwargs)
 
 

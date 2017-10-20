@@ -138,6 +138,11 @@ class TestTermDocMat(TestCase):
 		self.assertNotIn('hello', removed_df.index)
 		self.assertIn('hello', df.index)
 
+	def test_remove_terms_used_less_than_num_docs(self):
+		tdm = make_a_test_term_doc_matrix()
+		tdm2 = tdm.remove_terms_used_in_less_than_num_docs(2)
+		self.assertTrue(all(tdm2.get_term_freq_df().sum(axis=1) >= 2))
+
 	def test_term_scores(self):
 		df = self.tdm.get_term_freq_df()
 		df['posterior ratio'] = self.tdm.get_posterior_mean_ratio_scores('b')

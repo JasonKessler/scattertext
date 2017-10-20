@@ -184,10 +184,11 @@ class TermDocMatrixFactory(object):
 		term_idx_store = IndexStore()
 		category_idx_store = IndexStore()
 		metadata_idx_store = IndexStore()
-		X, mX, y = self._get_features_and_labels_from_documents_and_indexes(category_doc_iter,
-		                                                                    category_idx_store,
-		                                                                    term_idx_store,
-		                                                                    metadata_idx_store)
+		X, mX, y = self._get_features_and_labels_from_documents_and_indexes \
+			(category_doc_iter,
+			 category_idx_store,
+			 term_idx_store,
+			 metadata_idx_store)
 		return TermDocMatrix(X,
 		                     mX,
 		                     y,
@@ -253,10 +254,9 @@ class TermDocMatrixFactory(object):
 			X_factory[doci, word_idx] = freq
 
 	def _get_features_from_parsed_text(self, parsed_text, term_idx_store):
-		return {term_idx_store.getidxstrict(k):v for k, v
+		return {term_idx_store.getidxstrict(k): v for k, v
 		        in self._feats_from_spacy_doc.get_feats(parsed_text).items()
 		        if k in term_idx_store}
-
 
 
 class FeatsFromDoc(TermDocMatrixFactory):
@@ -264,7 +264,7 @@ class FeatsFromDoc(TermDocMatrixFactory):
 	             term_idx_store,
 	             clean_function=lambda x: x,
 	             nlp=None,
-	             feats_from_spacy_doc = None):
+	             feats_from_spacy_doc=None):
 		"""Class for extracting features from a new document.
 
 	   Parameters

@@ -124,8 +124,14 @@ class TermDocMatrix(object):
 	def _get_freq_df_using_idx_store(self, catX, idx_store):
 		d = {'term': idx_store._i2val}
 		for idx, cat in self._category_idx_store.items():
-			d[cat + ' freq'] = catX[idx, :].A[0]
+			try:
+				d[cat + ' freq'] = catX[idx, :].A[0]
+			except IndexError:
+				self._fix_problem_when_final_category_index_has_no_terms(cat, catX, d)
 		return pd.DataFrame(d).set_index('term')
+
+	def _fix_problem_when_final_category_index_has_no_terms(self, cat, catX, d):
+		d[cat + ' freq'] = np.zeros(catX.shape[1])
 
 	def get_metadata_freq_df(self):
 		'''
@@ -281,6 +287,21 @@ class TermDocMatrix(object):
 		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
 		new_X = delete_columns(self._X, idx_to_delete_list)
 		return self._term_doc_matrix_with_new_X(new_X, new_term_idx_store)
+
+	def remove_terms_used_in_less_than_num_docs(self, threshold):
+		'''
+		Parameters
+		----------
+		threshold: int
+			Minimum number of documents term should appear in to be kept
+
+		Returns
+		-------
+		TermDocMatrix, new object with terms removed.
+		'''
+		term_counts = self._X.astype(bool).astype(int).sum(axis=0).A[0]
+		terms_to_remove = np.where(term_counts < threshold)[0]
+		return self.remove_terms_by_indices(terms_to_remove)
 
 	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
 		return TermDocMatrix(X=new_X,

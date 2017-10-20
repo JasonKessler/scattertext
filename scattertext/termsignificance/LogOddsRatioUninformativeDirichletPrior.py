@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy.stats import norm
+from scipy.special import ndtr
 
+from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termsignificance.TermSignificance import TermSignificance
 
 
 def z_to_p_val(z_scores):
-	return norm.sf(-z_scores) - 0.5 + 0.5
+	#return norm.sf(-z_scores) - 0.5 + 0.5
+	return ndtr(z_scores)
 
 class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 	'''
@@ -14,7 +17,7 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
 	'''
 
-	def __init__(self, alpha_w=0.01):
+	def __init__(self, alpha_w=0.01, ranker=AbsoluteFrequencyRanker):
 		'''
 		Parameters
 		----------
@@ -86,13 +89,6 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		-------
 		np.array of z-scores
 		'''
-		a_w = self.alpha_w
 		y_i, y_j = X.T[0], X.T[1]
-		n_i, n_j = y_i.sum(), y_j.sum()
-		a_0 = len(y_i) * a_w
-		delta_i_j = (np.log((y_i + a_w) / (n_i + a_0 - y_i - a_w))
-		             - np.log((y_j + a_w) / (n_j + a_0 - y_j - a_w)))
-		var_delta_i_j = (1. / (y_i + a_w) + 1. / (y_i + a_0 - y_i - a_w)
-		                 + 1. / (y_j + a_w) + 1. / (n_j + a_0 - n_j - a_w))
-		zeta_i_j = delta_i_j / np.sqrt(var_delta_i_j)
-		return zeta_i_j
+		return self.get_zeta_i_j_given_separate_counts(y_i, y_j)
+

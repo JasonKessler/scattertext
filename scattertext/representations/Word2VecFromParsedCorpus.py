@@ -1,20 +1,65 @@
 import itertools
+from collections import Counter
 
+from scattertext.features import FeatsFromSpacyDoc
+
+try:
+	from gensim.models import Phrases
+except:
+	pass
 
 from scattertext.ParsedCorpus import ParsedCorpus
 
 
+class FeatsFromGensim(object):
+	def __init__(self, phrases, gram_size):
+		'''
+		Parameters
+		----------
+		phrases : list[gensim.models.Phrases]
+		gram_size : int, maximum number of words per phrase
+		kwargs : parameters for FeatsFromSpacyDoc.init
+		'''
+		print('xxx')
+		phrases = phrases
+		gram_size = gram_size
+		assert type(phrases) == Phrases
+		self.gram_size = gram_size
+		self.phrases = phrases
+
+	def get_doc_metadata(self, doc):
+		return Counter()
+
+	def get_feats(self, doc):
+		'''
+		Parameters
+		----------
+		doc, Spacy Docs
+
+		Returns
+		-------
+		Counter (unigram, bigram) -> count
+		'''
+		ngram_counter = Counter()
+		for sent in doc.sents:
+			ngrams = self.phrases[str(sent)]
+			for subphrases in self.phrases[1:]:
+				ngrams = subphrases[str(sent)]
+			for ngram in ngrams:
+				ngram_counter[ngram] += 1
+		return ngram_counter
+
+
 class GensimPhraseAdder(object):
-	def __init__(self, max_tokens_per_phrase=3, phrases = None):
+	def __init__(self, max_tokens_per_phrase=3, phrases=None):
 		'''
 		Parameters
 		----------
 		max_tokens_per_phrase: int, must be > 1.  Default 3
 		phrases: Instance of Gensim phrases class, default None
 		'''
-		from gensim.models import Phrases
 		self.max_tokens_per_phrase = max_tokens_per_phrase
-		self.phrases = Phrases() if phrases is None else phrases
+		self.phrases = phrases
 
 	def add_phrases(self, corpus):
 		'''
@@ -27,8 +72,12 @@ class GensimPhraseAdder(object):
 		New ParsedCorpus containing unigrams in corpus and new phrases
 		'''
 		assert isinstance(corpus, ParsedCorpus)
-		#self.phrases.scan_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
+		self.phrases = [Phrases(CorpusAdapterForGensim.get_sentences(corpus), delimiter=' ')]
 
+		for i in range(1, self.max_tokens_per_phrase):
+			self.phrases.append(Phrases(self.phrases[-1][CorpusAdapterForGensim.get_sentences(corpus)]))
+
+		return self
 
 
 class CorpusAdapterForGensim(object):

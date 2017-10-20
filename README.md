@@ -3,15 +3,10 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.10.0
+# Scattertext 0.0.2.11.0
+Added `produce_fightin_words_explorer` function.
 
 ### Updates
-
-Fixed bugs in `chinese_nlp` when jieba has already been imported and in p-value
-computation when performing log-odds-ratio w/ prior scoring.  
-
-Added demo for performing a Monroe et. al (2008) style visualization of 
-log-odds-ratio scores in `demo_log_odds_ratio_prior.py`.   
 
 **Table of Contents**
 
@@ -38,11 +33,7 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 
 
 ## Installation 
-Install Python 3.4.+  I recommend using [Anaconda](https://www.continuum.io/downloads).
-
-`$ conda install -c conda-forge scattertext`
-
-If you do not have conda installed, run:
+Install Python 3.4 or higher and run:
 
 `$ pip install scattertext && python -m spacy.en.download`
 
@@ -621,6 +612,14 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.10
+Fixed bugs in `chinese_nlp` when jieba has already been imported and in p-value
+computation when performing log-odds-ratio w/ prior scoring.  
+
+Added demo for performing a Monroe et. al (2008) style visualization of 
+log-odds-ratio scores in `demo_log_odds_ratio_prior.py`.   
+
 
 ### 0.0.2.9.*
 Breaking change: `pmi_filter_thresold` has been replaced with `pmi_threshold_coefficient`.

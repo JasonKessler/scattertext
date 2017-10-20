@@ -247,7 +247,7 @@ class ScatterChart:
 			self._get_not_category_term_frequency(category_column_name, df)
 		)
 		if self.scatterchartdata.term_significance is not None:
-			df['p'] = get_p_vals(self.term_doc_matrix, category_column_name,
+			df['p'] = get_p_vals(df, category_column_name,
 			                     self.scatterchartdata.term_significance)
 		df['not category score'] = CornerScore.get_scores_for_category(
 			self._get_not_category_term_frequency(category_column_name, df),

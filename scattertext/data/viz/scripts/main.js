@@ -12,7 +12,7 @@ buildViz = function (d3) {
                      wordVecMaxPValue = false,
                      saveSvgButton = false,
                      reverseSortScoresForNotCategory = false,
-                     minPVal = 0.05,
+                     minPVal = 0.1,
                      pValueColors = false,
                      xLabelText = null,
                      yLabelText = null) {
@@ -112,7 +112,7 @@ buildViz = function (d3) {
                 }
             }
             var snippet = (text.slice(sentenceStart, start) + "<b>" + text.slice(start, end)
-            + "</b>" + text.slice(end, sentenceEnd)).trim();
+                + "</b>" + text.slice(end, sentenceEnd)).trim();
             if (sentenceStart == null) {
                 sentenceStart = 0;
             }
@@ -199,7 +199,7 @@ buildViz = function (d3) {
                 var regexp = new RegExp(boundary + '('
                     + removeUnderScoreJoin(
                         term.replace('$', '\\$')
-                        .replace(' ', wordSep, 'gim')
+                            .replace(' ', wordSep, 'gim')
                     )
                     + ')' + boundary, 'gim');
                 try {
@@ -463,9 +463,9 @@ buildViz = function (d3) {
                         return d3.rgb(230, 230, 230);
                     } else if (pValueColors && d.p) {
                         if (d.p >= 1 - minPVal) {
-                            return d3.interpolateYlGnBu(d.s);
+                            return wordVecMaxPValue ? d3.interpolateYlGnBu : color(d.s);
                         } else if (d.p <= minPVal) {
-                            return d3.interpolateYlOrBr(d.s);
+                            return wordVecMaxPValue ? d3.interpolateYlGnBu : color(d.s);
                         } else {
                             return interpolateLightGreys(d.s);
                         }

@@ -47,20 +47,28 @@ class FeatsFromSpacyDoc(object):
 		'''
 		ngram_counter = Counter()
 		for sent in doc.sents:
-			unigrams = []
-			for tok in sent:
-				if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
-					if tok.ent_type_ in self._entity_types_to_censor:
-						unigrams.append('_'+tok.ent_type_)
-					elif tok.tag_ in self._tag_types_to_censor:
-						unigrams.append(tok.tag_)
-					elif self._use_lemmas and tok.lemma_.strip():
-						unigrams.append(self._post_process_term(tok.lemma_.strip()))
-					elif tok.lower_.strip():
-						unigrams.append(self._post_process_term(tok.lower_.strip()))
-			if len(unigrams) > 1:
-				bigrams = map(' '.join, zip(unigrams[:-1], unigrams[1:]))
-			else:
-				bigrams = []
+			unigrams = self._get_unigram_feats(sent)
+			bigrams = self._get_bigram_feats(unigrams)
 			ngram_counter += Counter(chain(unigrams, bigrams))
 		return ngram_counter
+
+	def _get_bigram_feats(self, unigrams):
+		if len(unigrams) > 1:
+			bigrams = map(' '.join, zip(unigrams[:-1], unigrams[1:]))
+		else:
+			bigrams = []
+		return bigrams
+
+	def _get_unigram_feats(self, sent):
+		unigrams = []
+		for tok in sent:
+			if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
+				if tok.ent_type_ in self._entity_types_to_censor:
+					unigrams.append('_' + tok.ent_type_)
+				elif tok.tag_ in self._tag_types_to_censor:
+					unigrams.append(tok.tag_)
+				elif self._use_lemmas and tok.lemma_.strip():
+					unigrams.append(self._post_process_term(tok.lemma_.strip()))
+				elif tok.lower_.strip():
+					unigrams.append(self._post_process_term(tok.lower_.strip()))
+		return unigrams
