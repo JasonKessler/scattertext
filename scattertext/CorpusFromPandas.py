@@ -6,27 +6,26 @@ from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas, build_s
 
 class CorpusFromPandas(TermDocMatrixFromPandas):
 	'''Creates a Corpus from a pandas data frame.  A Corpus is a Term Document Matrix
-	 preserves the original texts.
+	preserves the original texts.
 
-		Parameters
-		----------
-		data_frame : pd.DataFrame
-			The data frame that contains columns for the category of interest
-			and the document text.
-		text_col : str
-			The name of the column which contains the document text.
-		category_col : str
-			The name of the column which contains the category of interest.
-		clean_function : function, optional
-		nlp : function, optional
-		use_lemmas : boolean, optional
-		verbose : boolean, optional
-			If true, prints a message every time a document index % 100 is 0.
+	Parameters
+	----------
+	data_frame : pd.DataFrame
+		The data frame that contains columns for the category of interest
+		and the document text.
+	text_col : str
+		The name of the column which contains the document text.
+	category_col : str
+		The name of the column which contains the category of interest.
+	clean_function : function, optional
+	nlp : function, optional
+	verbose : boolean, optional
+		If true, prints a message every time a document index % 100 is 0.
 
-		See Also
-		--------
-		TermDocMatrixFromPandas
-		'''
+	See Also
+	--------
+	TermDocMatrixFromPandas
+	'''
 
 	def _apply_pipeline_and_get_build_instance(self,
 	                                           X_factory,
