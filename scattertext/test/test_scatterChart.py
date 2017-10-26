@@ -36,6 +36,20 @@ class TestScatterChart(TestCase):
 		self.assertEqual(set(expected.keys()), set(datum.keys()))
 		self.assertEqual(expected['term'], datum['term'])
 
+	def test_title_case_names(self):
+		tdm = build_hamlet_jz_term_doc_mat()
+		j = (ScatterChart(term_doc_matrix=tdm,
+		                  minimum_term_frequency=0)
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
+		self.assertEqual(j['info']['category_name'], 'HAMLET')
+		self.assertEqual(j['info']['not_category_name'], 'NOT HAMLET')
+		tdm = build_hamlet_jz_term_doc_mat()
+		j = (ScatterChart(term_doc_matrix=tdm,
+		                  minimum_term_frequency=0)
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET', title_case_names=True))
+		self.assertEqual(j['info']['category_name'], 'Hamlet')
+		self.assertEqual(j['info']['not_category_name'], 'Not Hamlet')
+
 	def _get_data_example(self, j):
 		return [t for t in j['data'] if t['term'] == 'art'][0]
 

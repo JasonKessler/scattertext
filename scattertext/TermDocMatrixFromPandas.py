@@ -80,6 +80,8 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		category_col : str
 			The name of the column which contains the category of interest.
 		clean_function : function, optional
+			A function that strips invalid characters out of a string, returning
+	    the new string.
 		nlp : function, optional
 		feats_from_spacy_doc : FeatsFromSpacyDoc or None
 		verbose : boolean, optional

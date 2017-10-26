@@ -29,6 +29,8 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'type', 'date', 'time', 'percent', 'money', 'quantity',
                      'ordinal', 'cardinal']
 
+class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
+	pass
 
 class TermDocMatrix(object):
 	'''
@@ -60,6 +62,10 @@ class TermDocMatrix(object):
 		unigram_frequency_path : str or None
 			Path to term frequency file.
 		'''
+		if all(y == y[0]):
+			raise CannotCreateATermDocMatrixWithASignleCategoryException(
+				'Documents must be labeled with more than one category. All documents were labeled '
+				'with category: "' + str(category_idx_store.getval(y[0])) + '"')
 		self._X, self._mX, self._y, self._term_idx_store, self._category_idx_store = \
 			X, mX, y, term_idx_store, category_idx_store
 		self._metadata_idx_store = metadata_idx_store

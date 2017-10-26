@@ -34,8 +34,8 @@ class TermDocMatrixFactory(object):
 	       name, the second the text of a document.  You can also set this
 	       using the function set_category_text_iter.
 	   clean_function : function (default lambda x: x)
-	       A function that takes a unicode document and returns
-	       a cleaned version of that document
+	       A function that strips invalid characters out of a string, returning
+	       the new string.
 	   post_nlp_clean_function : function (default lambda x: x)
 	       A function that takes a spaCy Doc
 	   nlp : spacy.en.English (default None)

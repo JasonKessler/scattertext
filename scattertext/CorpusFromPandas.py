@@ -18,6 +18,8 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 	category_col : str
 		The name of the column which contains the category of interest.
 	clean_function : function, optional
+		A function that strips invalid characters out of a string, returning
+		the new string.
 	nlp : function, optional
 	verbose : boolean, optional
 		If true, prints a message every time a document index % 100 is 0.

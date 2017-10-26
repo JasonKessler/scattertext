@@ -113,7 +113,8 @@ class ScatterChart:
 	            category_name=None,
 	            not_category_name=None,
 	            scores=None,
-	            transform=percentile_alphabetical):
+	            transform=percentile_alphabetical,
+	            title_case_names=False):
 		'''
 
 		Parameters
@@ -128,6 +129,8 @@ class ScatterChart:
 			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
 		transform : function, optional
 			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.
+		title_case_names : bool, default False
+		  Title case category name and no-category name?
 
 		Returns
 		-------
@@ -173,7 +176,10 @@ class ScatterChart:
 			not_category_name = 'Not ' + category_name
 
 		def better_title(x):
-			return ' '.join([t[0].upper() + t[1:].lower() for t in x.split()])
+			if title_case_names:
+				return ' '.join([t[0].upper() + t[1:].lower() for t in x.split()])
+			else:
+				return x
 
 		j = {'info': {'category_name': better_title(category_name),
 		              'not_category_name': better_title(not_category_name),

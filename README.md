@@ -3,9 +3,12 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.12.0
+# Scattertext 0.0.2.13.0
 Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
 `__version__` attribute as mentioned in [#19](https://github.com/JasonKessler/scattertext/issues/19).
+Fixed bug when creating visualizations with more than two possible categories.  Now, by default, 
+category names will not be title-cased in the visualization, but will retain their original case.  
+If you'd still like to do this this, use `ScatterChart (or a descendant).to_dict(..., title_case_names=True)`.
 
 ### Updates
 
@@ -32,6 +35,7 @@ got more fun.
 
 Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
 
+[![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
 ## Installation 
 Install Python 3.4 or higher and run:
@@ -68,9 +72,7 @@ Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 This is a tool that's intended for visualizing what words and phrases
  are more characteristic of a category than others.  
  
-Consider this example: 
-
-[![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
+Consider the example at the top of the page.
 
 Looking at this seem overwhelming.  In fact, it's a relatively simple visualization of word use 
 during the 2012 political convention.  Each dot corresponds to a word or phrase mentioned by Republicans or Democrats

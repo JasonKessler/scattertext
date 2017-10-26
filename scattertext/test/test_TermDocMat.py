@@ -8,7 +8,8 @@ from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas
-from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS
+from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS, \
+	CannotCreateATermDocMatrixWithASignleCategoryException
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
@@ -35,6 +36,8 @@ def get_test_categories_and_documents():
 	]
 
 
+
+
 class TestTermDocMat(TestCase):
 	@classmethod
 	def setUp(cls):
@@ -52,6 +55,17 @@ class TestTermDocMat(TestCase):
 		                      .sort_values('a freq', ascending=False)
 		                      [:3]['a freq']),
 		                 [2, 2, 1])
+
+	def test_single_category_term_doc_matrix_should_error(self):
+		with self.assertRaisesRegex(
+				expected_exception=CannotCreateATermDocMatrixWithASignleCategoryException,
+				expected_regex='Documents must be labeled with more than one category. '
+				               'All documents were labeled with category: "a"'):
+			single_category_tdm = build_from_category_whitespace_delimited_text(
+				[['a', text]
+				 for category, text
+				 in get_test_categories_and_documents()]
+			)
 
 	def test_total_unigram_count(self):
 		self.assertEqual(self.tdm.get_total_unigram_count(), 36)

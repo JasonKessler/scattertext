@@ -24,7 +24,8 @@ class ScatterChartExplorer(ScatterChart):
 	            metadata=None,
 	            max_docs_per_category=None,
 	            transform=percentile_alphabetical,
-	            alternative_text_field=None):
+	            alternative_text_field=None,
+	            title_case_names=False):
 		'''
 
 		Parameters
@@ -46,6 +47,8 @@ class ScatterChartExplorer(ScatterChart):
 		alternative_text_field : str or None, optional
 			Field in from dataframe used to make corpus to display in place of parsed text. Only
 			can be used if corpus is a ParsedCorpus instance.
+		title_case_names : bool, default False
+		  Should the program title-case the category and not-category names?
 		Returns
 		-------
 		dictionary {info: {category_name: ..., not_category_name},
@@ -68,7 +71,8 @@ class ScatterChartExplorer(ScatterChart):
 		                         category_name=category_name,
 		                         not_category_name=not_category_name,
 		                         scores=scores,
-		                         transform=transform)
+		                         transform=transform,
+		                         title_case_names=title_case_names)
 		docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
 		j['docs'] = self._get_docs_structure(docs_getter, metadata)
 		return j
