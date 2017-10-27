@@ -3,14 +3,15 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.13.0
+# Scattertext 0.0.2.13.1
+### Updates
+
 Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
 `__version__` attribute as mentioned in [#19](https://github.com/JasonKessler/scattertext/issues/19).
 Fixed bug when creating visualizations with more than two possible categories.  Now, by default, 
 category names will not be title-cased in the visualization, but will retain their original case.  
 If you'd still like to do this this, use `ScatterChart (or a descendant).to_dict(..., title_case_names=True)`.
-
-### Updates
+Fixed `DocsAndLabelsFromCorpus` for Py 2 compatibility. 
 
 **Table of Contents**
 
@@ -103,7 +104,7 @@ progress.  Please see the tutorial below as well as the [PyData 2017 Tutorial](h
 
 Poking around the code and tests should give you a good idea of how things work. 
 
-The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.  See slides [52](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/52) to [59](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/59) of the [Turning Unstructured Content into Kernels of Ideas](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/) talk for more details.   
+The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.
 
 ## Tutorial
 

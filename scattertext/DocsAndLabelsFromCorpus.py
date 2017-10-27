@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 from scattertext.Corpus import Corpus
 from scattertext.ParsedCorpus import ParsedCorpus
@@ -35,10 +36,16 @@ class DocsAndLabelsFromCorpus:
 		texts = self._get_texts_to_display()
 		to_ret = {'categories': self._corpus.get_categories(),
 		          'labels': self._corpus._y.astype(int).tolist(),
-		          'texts': texts.astype(str).tolist()}
+		          'texts': self._get_list_from_texts(texts)}
 		if self._use_non_text_features:
 			to_ret['extra'] = self._corpus.list_extra_features()
 		return to_ret
+
+	def _get_list_from_texts(self, texts):
+		if sys.version_info[0] == 2:
+			return texts.astype(unicode).tolist()
+		else:
+			return texts.astype(str).tolist()
 
 	def _get_texts_to_display(self):
 		if self._there_are_no_alternative_texts_to_display():

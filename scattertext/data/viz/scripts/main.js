@@ -216,7 +216,7 @@ buildViz = function (d3) {
             var pattern = buildMatcher(d.term);
             if (pattern !== null) {
                 for (var i in fullData.docs.texts) {
-                    if (fullData.docs.labels[i] > 1) continue;
+                    var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
                     var text = removeUnderScoreJoin(fullData.docs.texts[i]);
                     //var pattern = new RegExp("\\b(" + stripNonWordChars(d.term) + ")\\b", "gim");
                     var match;
@@ -250,8 +250,7 @@ buildViz = function (d3) {
                                         '<b>$&</b>')
                             ];
                         }
-                        matches[fullData.docs.labels[i]].push(curMatch);
-
+                        matches[numericLabel].push(curMatch);
                     }
                 }
             }
@@ -267,7 +266,7 @@ buildViz = function (d3) {
             //var categoryNames = [fullData.info.category_name,
             //    fullData.info.not_category_name];
             var catInternalName = fullData.info.category_internal_name;
-            fullData.docs.categories
+            [fullData.info.category_internal_name, fullData.info.not_category_name]
                 .map(
                     function (catName, catIndex) {
                         if (max_snippets != null) {
@@ -319,7 +318,6 @@ buildViz = function (d3) {
             d3.select('#notcathead')
                 .style('fill', color(0))
                 .html(getFrequencyDescription(ncat_name, info.ncat25k, info.ncat));
-            console.log(info);
             if (jump) {
                 if (window.location.hash == '#snippets') {
                     window.location.hash = '#snippetsalt';
@@ -865,22 +863,26 @@ buildViz = function (d3) {
                             .replace(/['";:,.?¿\-!¡]+/g, '')
                             .match(/\S+/g) || []
                     ).length;
-                    wordCounts[x] = wordCounts[x] ? wordCounts[x] + cnt : cnt
-                });
-                fullData.docs.labels.forEach(function (x) {
-                    docCounts[x] = docCounts[x] ? docCounts[x] + 1 : 1
-                });
-                var messages = [];
-                fullData.docs.categories.forEach(function (x, i) {
                     var name = fullData.info.not_category_name;
-                    if (x == fullData.info.category_internal_name) {
+                    if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
                         name = fullData.info.category_name;
                     }
-
-                    messages.push('<b>' + name + '</b> document count: '
-                        + Number(docCounts[i]).toLocaleString('en')
+                    //!!!
+                    wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt
+                });
+                fullData.docs.labels.forEach(function (x) {
+                    var name = fullData.info.not_category_name;
+                    if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
+                        name = fullData.info.category_name;
+                    }
+                    docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
+                });
+                var messages = [];
+                [fullData.info.category_name, fullData.info.not_category_name].forEach(function (x, i) {
+                    messages.push('<b>' + x + '</b> document count: '
+                        + Number(docCounts[x]).toLocaleString('en')
                         + '; word count: '
-                        + Number(wordCounts[i]).toLocaleString('en'));
+                        + Number(wordCounts[x]).toLocaleString('en'));
                 });
 
                 d3.select('#corpus-stats')
@@ -889,22 +891,23 @@ buildViz = function (d3) {
                     .html(messages.join('<br />'));
             };
 
+
             if (fullData.docs) {
                 populateCorpusStats();
             }
 
             if (saveSvgButton) {
-                // from http://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
+                // from https://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
                 var svgElement = document.getElementById("d3-div-1");
 
                 var serializer = new XMLSerializer();
                 var source = serializer.serializeToString(svgElement);
 
                 if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-                    source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    source = source.replace(/^<svg/, '<svg xmlns="https://www.w3.org/2000/svg"');
                 }
                 if (!source.match(/^<svg[^>]+"http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
-                    source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+                    source = source.replace(/^<svg/, '<svg xmlns:xlink="https://www.w3.org/1999/xlink"');
                 }
 
                 source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
