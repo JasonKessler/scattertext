@@ -8,16 +8,6 @@ newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footer
 
 vectorizer = TfidfVectorizer()
 tfidf_X = vectorizer.fit_transform(newsgroups_train.data)
-count_vectorizer = CountVectorizer(vocabulary=vectorizer.vocabulary_)
-
-corpus = st.CorpusFromScikit(
-	X=count_vectorizer.fit_transform(newsgroups_train.data),
-	y=newsgroups_train.target,
-	feature_vocabulary=vectorizer.vocabulary_,
-	category_names=newsgroups_train.target_names,
-	raw_texts=newsgroups_train.data
-).build()
-
 clf = CDClassifier(penalty="l1/l2",
                    loss="squared_hinge",
                    multiclass=True,
@@ -27,12 +17,21 @@ clf = CDClassifier(penalty="l1/l2",
                    tol=1e-3)
 clf.fit(tfidf_X, newsgroups_train.target)
 
+corpus = st.CorpusFromScikit(
+	X=CountVectorizer(vocabulary=vectorizer.vocabulary_).fit_transform(newsgroups_train.data),
+	y=newsgroups_train.target,
+	feature_vocabulary=vectorizer.vocabulary_,
+	category_names=newsgroups_train.target_names,
+	raw_texts=newsgroups_train.data
+).build()
+
 html = st.produce_fightin_words_explorer(
 	corpus,
 	'alt.atheism',
 	scores=clf.coef_[0],
 	use_term_significance=False,
-	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, clf.coef_[0])
+	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, clf.coef_[0]),
+	metadata = ['/'.join(fn.split('/')[-2:]) for fn in newsgroups_train.filenames]
 )
 
 file_name = "demo_sklearn.html"

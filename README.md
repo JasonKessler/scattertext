@@ -678,7 +678,8 @@ html = st.produce_fightin_words_explorer(
 	'alt.atheism',
 	scores=term_scores,
 	use_term_significance=False,
-	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, term_scores, 4000)
+	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, term_scores, 4000),
+	metadata = ['/'.join(fn.split('/')[-2:]) for fn in newsgroups_train.filenames]
 )
 ```
 [![demo_sklearn.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_sklearn.png)](https://jasonkessler.github.io/demo_sklearn.html)
