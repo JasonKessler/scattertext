@@ -13,7 +13,7 @@ The `AutoTermSelector` class to automatically suggest terms to appear in the vis
 This can make it easier to show large data sets, and remove fiddling with the various 
 minimum term frequency parameters. 
 
-For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see 
+For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see demo_sklearn.py
 
 Also, I updated the library and examples to be compatible with spaCy 2.
  
@@ -668,7 +668,9 @@ clf.fit(tfidf_X, newsgroups_train.target)
 term_scores = clf.coef_[0]
 ```
 
-Finally, we can create a Scattertext plot 
+Finally, we can create a Scattertext plot.  We'll use the Monroe-style visualization, and automatically
+select around 4000 terms that encompass the set of frequent terms, terms with high absolute scores,
+and terms that are characteristic of the corpus.  
 
 ```python
 html = st.produce_fightin_words_explorer(
