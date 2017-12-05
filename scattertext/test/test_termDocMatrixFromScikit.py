@@ -20,4 +20,4 @@ class TestTermDocMatrixFromScikit(TestCase):
 		                 .get_term_freq_df()
 		                 .assign(score=term_doc_mat.get_scaled_f_scores('alt.atheism'))
 		                 .sort_values(by='score', ascending=False).index.tolist()[:5],
-		                 ['atheism', 'atheists', 'islam', 'atheist', 'matthew'])
+		                 ['atheism', 'atheists', 'islam', 'atheist', 'belief'])

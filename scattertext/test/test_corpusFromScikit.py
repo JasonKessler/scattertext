@@ -23,5 +23,5 @@ class TestCorpusFromScikit(TestCase):
 		                 .get_term_freq_df()
 		                 .assign(score=corpus.get_scaled_f_scores('alt.atheism'))
 		                 .sort_values(by='score', ascending=False).index.tolist()[:5],
-		                 ['atheism', 'atheists', 'islam', 'atheist', 'matthew'])
+		                 ['atheism', 'atheists', 'islam', 'atheist', 'belief'])
 		self.assertGreater(len(corpus.get_texts()[0]), 5)

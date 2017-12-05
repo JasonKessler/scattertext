@@ -60,7 +60,6 @@ def main():
 	                    dest='one_use_per_doc', default=False,
 	                    help="Only count one use per document.")
 	args = parser.parse_args()
-	import pdb; pdb.set_trace()
 	df = pd.read_csv(args.datafile)
 
 	if args.category_column not in df.columns:
@@ -95,7 +94,6 @@ def main():
 	                          category_col=args.category_column,
 	                          text_col=args.text_column,
 	                          nlp=nlp).build()
-	import pdb; pdb.set_trace()
 	html = produce_scattertext_explorer(corpus,
 	                                    category=args.positive_category,
 	                                    category_name=category_display_name,

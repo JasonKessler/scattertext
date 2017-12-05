@@ -55,12 +55,12 @@ class TestScatterChart(TestCase):
 
 	def test_terms_to_include(self):
 		tdm = build_hamlet_jz_term_doc_mat()
+		terms_to_include = list(sorted(['both worlds', 'thou', 'the', 'of', 'st', 'returned', 'best',]))
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
-		                  terms_to_include=['both worlds', 'thou', 'the', 'of', 'st', 'returned', 'best',])
+		                  terms_to_include=terms_to_include)
 		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
-		self.assertEqual(list(sorted(t['term'] for t in j['data'])),
-		                 list(sorted({'both worlds', 'thou', 'the', 'of', 'st', 'returned', 'best',})))
+		self.assertEqual(list(sorted(t['term'] for t in j['data'])), terms_to_include)
 
 	def test_p_vals(self):
 		tdm = build_hamlet_jz_term_doc_mat()
@@ -118,8 +118,6 @@ class TestScatterChart(TestCase):
 
 	def test_max_terms(self):
 		tdm = build_hamlet_jz_term_doc_mat()
-		# with self.assertRaises(NoWordMeetsTermFrequencyRequirementsError):
-		#	ScatterChart(term_doc_matrix=tdm).to_dict('hamlet')
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  max_terms=2)
@@ -134,12 +132,14 @@ class TestScatterChart(TestCase):
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
+		                  pmi_threshold_coefficient=0,
 		                  max_terms=10000)
 		     .to_dict('hamlet'))
-		self.assertEqual(58, len(j['data']))
+		self.assertEqual(len(tdm.get_term_freq_df()), len(j['data']))
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
+		                  pmi_threshold_coefficient=0,
 		                  max_terms=None)
 		     .to_dict('hamlet'))
-		self.assertEqual(58, len(j['data']))
+		self.assertEqual(len(tdm.get_term_freq_df()), len(j['data']))

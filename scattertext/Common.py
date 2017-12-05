@@ -1,5 +1,5 @@
 # Constants for scaled f-score
-DEFAULT_BETA = 0.5
+DEFAULT_BETA = 2
 DEFAULT_SCALER_ALGO = 'normcdf'
 
 DEFAULT_PMI_THRESHOLD_COEFFICIENT = 6

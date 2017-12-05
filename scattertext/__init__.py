@@ -3,7 +3,7 @@ from __future__ import print_function
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
 
-version = [0, 0, 2, 14]
+version = [0, 0, 2, 14, 1]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings

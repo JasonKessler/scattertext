@@ -64,7 +64,9 @@ class ScaledFScore(object):
 			 0 and 1, with 0.5 indicating a median score.
 		'''
 
-		cat_scores = ScaledFScore.get_scores_for_category(cat_word_counts, not_cat_word_counts, scaler_algo, beta)
+		cat_scores = ScaledFScore.get_scores_for_category(cat_word_counts,
+		                                                  not_cat_word_counts,
+		                                                  scaler_algo, beta)
 		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts, cat_word_counts,
 		                                                      scaler_algo, beta)
 		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)

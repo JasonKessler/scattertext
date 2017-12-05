@@ -302,12 +302,13 @@ class ScatterChart:
 			df[category_column_name]
 		)
 		df['color_scores'] = scores
-		df = self._filter_bigrams_by_minimum_not_category_term_freq(
-			category_column_name, df)
-		df = filter_bigrams_by_pmis(
-			self._filter_by_minimum_term_frequency(all_categories, df),
-			threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
-		)
+		if self.scatterchartdata.terms_to_include is None:
+			df = self._filter_bigrams_by_minimum_not_category_term_freq(
+				category_column_name, df)
+			df = filter_bigrams_by_pmis(
+				self._filter_by_minimum_term_frequency(all_categories, df),
+				threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
+			)
 
 		if self.scatterchartdata.filter_unigrams:
 			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)

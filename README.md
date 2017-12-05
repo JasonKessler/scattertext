@@ -3,9 +3,8 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.14
+# Scattertext 0.0.2.14.1
 ### Updates
-
 Integration with Scikit-Learn's text-analysis pipeline led the creation of the
 `CorpusFromScikit` and `TermDocMatrixFromScikit` classes.
 
@@ -16,7 +15,8 @@ minimum term frequency parameters.
 For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see demo_sklearn.py
 
 Also, I updated the library and examples to be compatible with spaCy 2.
- 
+
+Fixed bug when processing single-word documents, and set the default beta to 2. 
 
 **Table of Contents**
 
