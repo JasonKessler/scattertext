@@ -1,6 +1,9 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 9, 13, 1]
+from scattertext.AutoTermSelector import AutoTermSelector
+from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
+
+version = [0, 0, 2, 14]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -8,14 +11,18 @@ import warnings
 import numpy as np
 
 import scattertext.viz
+from scattertext.Corpus import Corpus
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.CorpusFromPandas import CorpusFromPandas
+from scattertext.CorpusFromScikit import CorpusFromScikit
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext.IndexStore import IndexStore
+from scattertext.indexstore.IndexStore import IndexStore
+from scattertext.indexstore import IndexStoreFromList
+from scattertext.indexstore import IndexStoreFromDict
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.Scalers import percentile_alphabetical
 from scattertext.ScatterChart import ScatterChart
@@ -24,6 +31,7 @@ from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
+from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
@@ -38,14 +46,13 @@ from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 
-
 def produce_scattertext_html(term_doc_matrix,
                              category,
                              category_name,
                              not_category_name,
                              protocol='https',
-                             minimum_term_frequency=3,
-                             pmi_threshold_coefficient=6,
+                             minimum_term_frequency=DEFAULT_MINIMUM_TERM_FREQUENCY,
+                             pmi_threshold_coefficient=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
                              max_terms=None,
                              filter_unigrams=False,
                              height_in_pixels=None,
@@ -105,8 +112,8 @@ def produce_scattertext_explorer(corpus,
                                  category_name,
                                  not_category_name,
                                  protocol='https',
-                                 pmi_threshold_coefficient=6,
-                                 minimum_term_frequency=3,
+                                 pmi_threshold_coefficient=DEFAULT_MINIMUM_TERM_FREQUENCY,
+                                 minimum_term_frequency=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
                                  minimum_not_category_term_frequency=0,
                                  max_terms=None,
                                  filter_unigrams=False,
@@ -118,6 +125,8 @@ def produce_scattertext_explorer(corpus,
                                  scores=None,
                                  x_coords=None,
                                  y_coords=None,
+                                 rescale_x=None,
+                                 rescale_y=None,
                                  singleScoreMode=False,
                                  sort_by_dist=True,
                                  reverse_sort_scores_for_not_category=True,
@@ -139,7 +148,8 @@ def produce_scattertext_explorer(corpus,
                                  d3_url=None,
                                  d3_scale_chromatic_url=None,
                                  pmi_filter_thresold=None,
-                                 alternative_text_field=None):
+                                 alternative_text_field=None,
+                                 terms_to_include=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -183,6 +193,12 @@ def produce_scattertext_explorer(corpus,
 	y_coords : np.array, optional
 		Array of term y-axis positions or None.  Must be in [0,1].
 		If present, x_coords must also be present.
+	rescale_x : lambda list[0,1]: list[0,1], optional
+		Array of term x-axis positions or None.  Must be in [0,1].
+		Rescales x-axis after filtering
+	rescale_y : lambda list[0,1]: list[0,1], optional
+		Array of term y-axis positions or None.  Must be in [0,1].
+		Rescales y-axis after filtering
 	singleScoreMode : bool, optional
 		Label terms based on score vs distance from corner.  Good for topic scores. Show only one color.
 	sort_by_dist: bool, optional
@@ -233,7 +249,8 @@ def produce_scattertext_explorer(corpus,
 	alternative_text_field : str or None, optional
 		Field in from dataframe used to make corpus to display in place of parsed text. Only
 		can be used if corpus is a ParsedCorpus instance.
-
+	terms_to_include : list or None, optional
+		Whitelist of terms to include in visualization.
 
 	Returns
 	-------
@@ -265,12 +282,15 @@ def produce_scattertext_explorer(corpus,
 	                                              max_terms=max_terms,
 	                                              term_ranker=term_ranker,
 	                                              use_non_text_features=use_non_text_features,
-	                                              term_significance=term_significance)
+	                                              term_significance=term_significance,
+	                                              terms_to_include=terms_to_include)
 	if ((x_coords is None and y_coords is not None)
 	    or (y_coords is None and x_coords is not None)):
 		raise Exception("Both x_coords and y_coords need to be passed or both left blank")
 	if x_coords is not None:
-		scatter_chart_explorer.inject_coordinates(x_coords, y_coords)
+		scatter_chart_explorer.inject_coordinates(x_coords, y_coords,
+		                                          rescale_x=rescale_x,
+		                                          rescale_y=rescale_y)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -391,7 +411,7 @@ def word_similarity_explorer(corpus,
 	target_term : str
 		Word or phrase for semantic similarity comparison
 	nlp : spaCy-like parsing function
-		E.g., spacy.en.English, whitespace_nlp, etc...
+		E.g., spacy.load('en'), whitespace_nlp, etc...
 	alpha : float, default = 0.01
 		Uniform dirichlet prior for p-value calculation
 	max_p_val : float, default = 0.1
@@ -404,7 +424,7 @@ def word_similarity_explorer(corpus,
 
 	if nlp is None:
 		import spacy
-		nlp = spacy.en.English()
+		nlp = spacy.load('en')
 
 	base_term = nlp(target_term)
 	scores = np.array([base_term.similarity(nlp(tok))
@@ -426,10 +446,11 @@ def word_similarity_explorer(corpus,
 
 def produce_fightin_words_explorer(corpus,
                                    category,
-                                   category_name,
-                                   not_category_name,
+                                   category_name=None,
+                                   not_category_name=None,
                                    term_ranker=termranking.AbsoluteFrequencyRanker,
                                    alpha=0.01,
+                                   use_term_significance=True,
                                    **kwargs):
 	'''
 	Produces a Monroe et al. style visualization.
@@ -440,41 +461,60 @@ def produce_fightin_words_explorer(corpus,
 		Corpus to use.
 	category : str
 		Name of category column as it appears in original data frame.
-	category_name : str
+	category_name : str or None
 		Name of category to use.  E.g., "5-star reviews."
-	not_category_name : str
+		Defaults to category
+	not_category_name : str or None
 		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+		Defaults to "Not " + category_name
 	term_ranker : TermRanker
-		See
+		TermRanker class for determining term frequency ranks.
 	alpha : float, default = 0.01
 		Uniform dirichlet prior for p-value calculation
+	use_term_significance : bool, True by default
+		Use Log Odds Ratio w/ Uninformative Prior or specified values for significance.
 	Remaining arguments are from `produce_scattertext_explorer`.
 	Returns
 	-------
 		str, html of visualization
 	'''
+	if category_name is None:
+		category_name = category
+	if not_category_name is None:
+		not_category_name = "Not " + category_name
+
 	term_freq_df = term_ranker(corpus).get_ranks()
 	frequencies_log_scaled = scale(np.log(term_freq_df.sum(axis=1).values))
-	zeta_i_j = (LogOddsRatioUninformativeDirichletPrior(alpha)
-	            .get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
-	                                                term_freq_df[[c + ' freq'
-	                                                              for c in corpus.get_categories()
-	                                                              if c != category]].sum(axis=1)))
-	zeta_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(zeta_i_j)
-	#kwargs['metadata'] = kwargs.get('metadata', None),
+
+	if 'scores' not in kwargs:
+		zeta_i_j = (LogOddsRatioUninformativeDirichletPrior(alpha)
+		            .get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
+		                                                term_freq_df[[c + ' freq'
+		                                                              for c in corpus.get_categories()
+		                                                              if c != category]].sum(axis=1)))
+		kwargs['scores'] = kwargs.get('scores', zeta_i_j)
+
+	def y_axis_rescale(coords):
+		return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
+
+	scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
+	# kwargs['metadata'] = kwargs.get('metadata', None),
+	if use_term_significance:
+		kwargs['term_significance'] = LogOddsRatioUninformativeDirichletPrior(alpha)
+
 	return produce_scattertext_explorer(corpus,
 	                                    category=category,
 	                                    category_name=category_name,
 	                                    not_category_name=not_category_name,
 	                                    x_coords=frequencies_log_scaled,
-	                                    y_coords=zeta_scaled_for_charting,
-	                                    scores=zeta_i_j,
+	                                    y_coords=scores_scaled_for_charting,
+	                                    rescale_x=scale,
+	                                    rescale_y=y_axis_rescale,
 	                                    sort_by_dist=False,
 	                                    term_ranker=term_ranker,
-	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
 	                                    p_value_colors=True,
-	                                    #x_label=kwargs.get('x_label', 'Log Frequency'),
-	                                    #y_label=kwargs.get('y_label', 'Z-Score: Log Odds Ratio w/ Prior'),
+	                                    # x_label=kwargs.get('x_label', 'Log Frequency'),
+	                                    # y_label=kwargs.get('y_label', 'Z-Score: Log Odds Ratio w/ Prior'),
 	                                    **kwargs)
 
 
@@ -513,4 +553,5 @@ def sparse_explorer(corpus,
 		scores=scores,
 		sort_by_dist=False,
 		grey_zero_scores=True,
-		**kwargs)
+		**kwargs
+	)

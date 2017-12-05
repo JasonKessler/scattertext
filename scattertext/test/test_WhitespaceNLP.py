@@ -11,7 +11,7 @@ class TestWhitespaceNLP(TestCase):
 		Ha. Ha ha.
 		'''
 		doc = whitespace_nlp(raw)
-		self.assertEqual(len(list(doc)), 73)
+		self.assertEqual(len(list(doc)), 55)
 		self.assertEqual(len(doc.sents), 1)
 		tok = Tok('WORD', 'Jason', 'jason', 'Name', 'NNP')
 		self.assertEqual(len(tok), 5)
@@ -33,3 +33,14 @@ class TestWhitespaceNLP(TestCase):
 		'''
 		self.assertEqual(whitespace_nlp_with_sentences(raw).text, raw)
 		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents), 7)
+
+	def test_whitespace_nlp_with_sentences_singleton(self):
+		raw = 'Blah'
+		self.assertEqual(whitespace_nlp_with_sentences(raw).text, raw)
+		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents), 1)
+		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents[0]), 1)
+
+		raw = 'Blah.'
+		self.assertEqual(whitespace_nlp_with_sentences(raw).text, raw)
+		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents), 1)
+		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents[0]), 2)

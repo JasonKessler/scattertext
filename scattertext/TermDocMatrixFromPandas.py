@@ -3,9 +3,9 @@ import pandas as pd
 
 from scattertext.AsianNLP import chinese_nlp
 from scattertext.CSRMatrixTools import CSRMatrixFactory
-from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.TermDocMatrixFactory import TermDocMatrixFactory
+from scattertext.indexstore.IndexStore import IndexStore
 
 
 class ParsePipelineFactory:

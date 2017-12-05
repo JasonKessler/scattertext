@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from scattertext.IndexStore import IndexStore
+from scattertext.indexstore.IndexStore import IndexStore
+
 
 class TestIndexStore(TestCase):
 	def test_main(self):
@@ -49,6 +50,8 @@ class TestIndexStore(TestCase):
 		self.assertEqual(new_idx_store.getidx('a'), 0)
 		self.assertEqual(new_idx_store.getidx('c'), 2)
 		self.assertEqual(new_idx_store.getidx('e'), 3)
+
+
 
 	def test_batch_delete_extra(self):
 		index_store = IndexStore()

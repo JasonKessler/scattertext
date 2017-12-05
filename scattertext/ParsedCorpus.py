@@ -3,7 +3,7 @@ import sys
 import pandas as pd
 
 from scattertext.Corpus import Corpus
-from scattertext.IndexStore import IndexStore
+from scattertext.indexstore.IndexStore import IndexStore
 
 
 class ParsedCorpus(Corpus):

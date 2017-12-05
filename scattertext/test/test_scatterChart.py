@@ -53,6 +53,15 @@ class TestScatterChart(TestCase):
 	def _get_data_example(self, j):
 		return [t for t in j['data'] if t['term'] == 'art'][0]
 
+	def test_terms_to_include(self):
+		tdm = build_hamlet_jz_term_doc_mat()
+		j = (ScatterChart(term_doc_matrix=tdm,
+		                  minimum_term_frequency=0,
+		                  terms_to_include=['both worlds', 'thou', 'the', 'of', 'st', 'returned', 'best',])
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
+		self.assertEqual(list(sorted(t['term'] for t in j['data'])),
+		                 list(sorted({'both worlds', 'thou', 'the', 'of', 'st', 'returned', 'best',})))
+
 	def test_p_vals(self):
 		tdm = build_hamlet_jz_term_doc_mat()
 		j = (ScatterChart(term_doc_matrix=tdm,

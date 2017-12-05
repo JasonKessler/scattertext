@@ -6,13 +6,13 @@ from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 
 
 def main():
-	nlp = spacy.en.English()
+	nlp = spacy.load('en')
 	convention_df = SampleCorpora.ConventionData2012.get_data()
 	convention_df['parsed'] = convention_df.text.apply(nlp)
 	corpus = CorpusFromParsedDocuments(convention_df,
 	                                   category_col='party',
 	                                   parsed_col='parsed').build()
-	model = word2vec.Word2Vec(size=300,
+	model = word2vec.Word2Vec(size=100,
 	                          alpha=0.025,
 	                          window=5,
 	                          min_count=5,
@@ -25,7 +25,7 @@ def main():
 	                          hs=1,
 	                          negative=0,
 	                          cbow_mean=0,
-	                          iter=1,
+	                          iter=10,
 	                          null_word=0,
 	                          trim_rule=None,
 	                          sorted_vocab=1)
@@ -35,12 +35,13 @@ def main():
 	                                       not_category_name='Republican',
 	                                       target_term='jobs',
 	                                       minimum_term_frequency=5,
-	                                       pmi_filter_thresold=4,
 	                                       width_in_pixels=1000,
 	                                       metadata=convention_df['speaker'],
 	                                       word2vec=Word2VecFromParsedCorpus(corpus, model).train(),
 	                                       max_p_val=0.1,
-	                                       save_svg_button=True)
+	                                       save_svg_button=True,
+	                                       d3_url='scattertext/data/viz/scripts/d3.min.js',
+	                                       d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js')
 	open('./demo_gensim_similarity.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_gensim_similarity.html in Chrome or Firefox.')
 

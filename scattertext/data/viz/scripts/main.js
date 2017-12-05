@@ -61,7 +61,6 @@ buildViz = function (d3) {
         if (color == null) {
             color = d3.interpolateRdYlBu;
         }
-        ;
 
         // Adds the svg canvas
         // var svg = d3.select("body")
@@ -74,6 +73,229 @@ buildViz = function (d3) {
                 "translate(" + margin.left + "," + margin.top + ")");
 
         var lastCircleSelected = null;
+
+        function getCorpusWordCounts() {
+            var binaryLabels = fullData.docs.labels.map(function (label) {
+                return 1 * (fullData.docs.categories[label] != fullData.info.category_internal_name);
+            });
+            var wordCounts = {}; // word -> [cat counts, not-cat-counts]
+            var wordCountSums = [0, 0];
+            fullData.docs.texts.forEach(function (text, i) {
+
+                text.toLowerCase().trim().split(/\W+/).forEach(function (word) {
+                    if (word.trim() !== '') {
+
+                        if (!(word in wordCounts))
+                            wordCounts[word] = [0, 0];
+                        wordCounts[word][binaryLabels[i]]++;
+                        wordCountSums[binaryLabels[i]]++;
+                    }
+                })
+            });
+            return {
+                avgDocLen: (wordCountSums[0] + wordCountSums[1]) / fullData.docs.texts.length,
+                counts: wordCounts,
+                sums: wordCountSums,
+                uniques: [[0, 0]].concat(Object.keys(wordCounts).map(function (key) {
+                    return wordCounts[key];
+                })).reduce(function (a, b) {
+                    return [a[0] + (b[0] > 0), a[1] + (b[1] > 0)]
+                })
+            };
+        }
+
+        function getContextWordCounts(query) {
+            var wordCounts = {};
+            var wordCountSums = [0, 0];
+            var priorCountSums = [0, 0];
+            gatherTermContexts(termDict[query])
+                .contexts
+                .forEach(function (contextSet, categoryIdx) {
+                    contextSet.forEach(function (context) {
+                        context.snippets.forEach(function (snippet) {
+                            var tokens = snippet.toLowerCase().trim().replace('<b>','').replace('</b>','').split(/\W+/);
+                            var matchIndices = [];
+                            tokens.forEach(function (word, i) { if(word === query) matchIndices.push(i)});
+                            tokens.forEach(function (word, i) {
+                                if (word.trim() !== '') {
+                                    var isValid = false;
+                                    for(var matchI in matchIndices) {
+                                        if (Math.abs(i - matchI) < 3) {
+                                            isValid = true;
+                                            break
+                                        }
+                                    }
+                                    if(isValid) {
+                                        //console.log([word, i, matchI, isValid]);
+                                        if (!(word in wordCounts)) {
+                                            var priorCounts = corpusWordCounts.counts[word]
+                                            wordCounts[word] = [0, 0].concat(priorCounts);
+                                            priorCountSums[0] += priorCounts[0];
+                                            priorCountSums[1] += priorCounts[1];
+                                        }
+                                        wordCounts[word][categoryIdx]++;
+                                        wordCountSums[categoryIdx]++;
+                                    }
+                                }
+                            })
+                        })
+                    })
+                });
+            return {
+                counts: wordCounts,
+                priorSums: priorCountSums,
+                sums: wordCountSums,
+                uniques: [[0, 0]].concat(Object.keys(wordCounts).map(function (key) {
+                    return wordCounts[key];
+                })).reduce(function (a, b) {
+                    return [a[0] + (b[0] > 0), a[1] + (b[1] > 0)];
+                })
+            }
+
+        }
+
+
+        function getContextWordLORIPs(query) {
+            var contextWordCounts = getContextWordCounts(query);
+            var ni_k = contextWordCounts.sums[0];
+            var nj_k = contextWordCounts.sums[1];
+            var n = ni_k + nj_k;
+            //var ai_k0 = contextWordCounts.priorSums[0] + contextWordCounts.priorSums[1];
+            //var aj_k0 = contextWordCounts.priorSums[0] + contextWordCounts.priorSums[1];
+            var a0 = 0.00001 //corpusWordCounts.avgDocLen;
+            var a_k0 = Object.keys(contextWordCounts.counts)
+                .map(function (x) {
+                    var counts = contextWordCounts.counts[x];
+                    return a0 * (counts[2] + counts[3]) /
+                        (contextWordCounts.priorSums[0] + contextWordCounts.priorSums[1]);
+                })
+                .reduce(function (a, b) {
+                    return a + b
+                });
+            var ai_k0 = a_k0 / ni_k;
+            var aj_k0 = a_k0 / nj_k;
+            var scores = Object.keys(contextWordCounts.counts).map(
+                function (word) {
+                    var countData = contextWordCounts.counts[word];
+                    var yi = countData[0];
+                    var yj = countData[1];
+                    //var ai = countData[2];
+                    //var aj = countData[3];
+                    //var ai = countData[2] + countData[3];
+                    //var aj = ai;
+                    //var ai = (countData[2] + countData[3]) * a0/ni_k;
+                    //var aj = (countData[2] + countData[3]) * a0/nj_k;
+                    var ai = a0 * (countData[2] + countData[3]) /
+                        (contextWordCounts.priorSums[0] + contextWordCounts.priorSums[1]);
+                    var aj = ai;
+                    var deltahat_i_j =
+                        +Math.log((yi + ai) * 1. / (ni_k + ai_k0 - yi - ai))
+                        - Math.log((yj + aj) * 1. / (nj_k + aj_k0 - yj - aj));
+                    var var_deltahat_i_j = 1. / (yi + ai) + 1. / (ni_k + ai_k0 - yi - ai)
+                        + 1. / (yj + aj) + 1. / (nj_k + aj_k0 - yj - aj);
+                    var zeta_ij = deltahat_i_j / Math.sqrt(var_deltahat_i_j);
+                    return [word, yi, yj, ai, aj, ai_k0, zeta_ij];
+                }
+            ).sort(function (a, b) {
+                return b[5] - a[5];
+            });
+            return scores;
+        }
+
+        function getContextWordSFS(query) {
+            // from https://stackoverflow.com/questions/14846767/std-normal-cdf-normal-cdf-or-error-function
+            function cdf(x, mean, variance) {
+                return 0.5 * (1 + erf((x - mean) / (Math.sqrt(2 * variance))));
+            }
+
+            function erf(x) {
+                // save the sign of x
+                var sign = (x >= 0) ? 1 : -1;
+                x = Math.abs(x);
+
+                // constants
+                var a1 = 0.254829592;
+                var a2 = -0.284496736;
+                var a3 = 1.421413741;
+                var a4 = -1.453152027;
+                var a5 = 1.061405429;
+                var p = 0.3275911;
+
+                // A&S formula 7.1.26
+                var t = 1.0 / (1.0 + p * x);
+                var y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+                return sign * y; // erf(-x) = -erf(x);
+            }
+
+            function scale(a) {
+                return Math.log(a + 0.0000001);
+            }
+
+            var contextWordCounts  = getContextWordCounts(query);
+            var wordList = Object.keys(contextWordCounts.counts).map(function (word) {
+                return contextWordCounts.counts[word].concat([word]);
+            });
+            var cat_freq_xbar = wordList.map(function (x) {
+                return scale(x[0])
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var cat_freq_var = wordList.map(function (x) {
+                return (scale(x[0]) - cat_freq_xbar) ** 2;
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var cat_prec_xbar = wordList.map(function (x) {
+                return scale(x[0] / (x[0] + x[1]));
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var cat_prec_var = wordList.map(function (x) {
+                return (scale(x[0] / (x[0] + x[1])) - cat_prec_xbar) ** 2;
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+
+            var ncat_freq_xbar = wordList.map(function (x) {
+                return scale(x[0])
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var ncat_freq_var = wordList.map(function (x) {
+                return (scale(x[0]) - ncat_freq_xbar) ** 2;
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var ncat_prec_xbar = wordList.map(function (x) {
+                return scale(x[0] / (x[0] + x[1]));
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+            var ncat_prec_var = wordList.map(function (x) {
+                return (scale(x[0] / (x[0] + x[1])) - ncat_prec_xbar) ** 2;
+            }).reduce(function (a, b) {
+                return a + b
+            }) / wordList.length;
+
+            function scaledFScore(cnt, other, freq_xbar, freq_var, prec_xbar, prec_var) {
+                var beta = 1.5;
+                var normFreq = cdf(scale(cnt), freq_xbar, freq_var);
+                var normPrec = cdf(scale(cnt / (cnt + other)), prec_xbar, prec_var);
+                return (1+beta**2) * normFreq * normPrec / ((beta**2)*normFreq + normPrec);
+            }
+
+            var sfs = wordList.map(function (x) {
+                cat_sfs = scaledFScore(x[0], x[1], cat_freq_xbar,
+                    cat_freq_var, cat_prec_xbar, cat_prec_var);
+                ncat_sfs = scaledFScore(x[1], x[0], ncat_freq_xbar,
+                    ncat_freq_var, ncat_prec_xbar, ncat_prec_var);
+                return [cat_sfs > ncat_sfs ? cat_sfs : -ncat_sfs].concat(x);
+
+            }).sort(function (a, b) {
+                return b[0] - a[0];
+            });
+            return sfs;
+        }
 
         function deselectLastCircle() {
             if (lastCircleSelected) {
@@ -163,7 +385,6 @@ buildViz = function (d3) {
         var emojiRE = (/(?:[\u261D\u26F9\u270A-\u270D]|\uD83C[\uDF85\uDFC2-\uDFC4\uDFC7\uDFCA-\uDFCC]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66-\uDC69\uDC6E\uDC70-\uDC78\uDC7C\uDC81-\uDC83\uDC85-\uDC87\uDCAA\uDD74\uDD75\uDD7A\uDD90\uDD95\uDD96\uDE45-\uDE47\uDE4B-\uDE4F\uDEA3\uDEB4-\uDEB6\uDEC0\uDECC]|\uD83E[\uDD18-\uDD1C\uDD1E\uDD1F\uDD26\uDD30-\uDD39\uDD3D\uDD3E\uDDD1-\uDDDD])(?:\uD83C[\uDFFB-\uDFFF])?|(?:[\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55]|\uD83C[\uDC04\uDCCF\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF93\uDFA0-\uDFCA\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF4\uDFF8-\uDFFF]|\uD83D[\uDC00-\uDC3E\uDC40\uDC42-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDD7A\uDD95\uDD96\uDDA4\uDDFB-\uDE4F\uDE80-\uDEC5\uDECC\uDED0-\uDED2\uDEEB\uDEEC\uDEF4-\uDEF8]|\uD83E[\uDD10-\uDD3A\uDD3C-\uDD3E\uDD40-\uDD45\uDD47-\uDD4C\uDD50-\uDD6B\uDD80-\uDD97\uDDC0\uDDD0-\uDDE6])|(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u2660\u2663\u2665\u2666\u2668\u267B\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDEE0-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEF8]|\uD83E[\uDD10-\uDD3A\uDD3C-\uDD3E\uDD40-\uDD45\uDD47-\uDD4C\uDD50-\uDD6B\uDD80-\uDD97\uDDC0\uDDD0-\uDDE6])\uFE0F/g);
 
         function isEmoji(str) {
-            console.log(str);
             if (str.match(emojiRE)) return true;
             return false;
         }
@@ -263,6 +484,9 @@ buildViz = function (d3) {
             if (contexts[0].length == 0 && contexts[1].length == 0) {
                 return null;
             }
+            //!!! Future feature: context words
+            //var contextWords = getContextWordSFS(info.term);
+            //var contextWords = getContextWordLORIPs(info.term);
             //var categoryNames = [fullData.info.category_name,
             //    fullData.info.not_category_name];
             var catInternalName = fullData.info.category_internal_name;
@@ -309,6 +533,18 @@ buildViz = function (d3) {
                 } else {
                     desc += '<u>Some of the ' + count + ' mentions:</u>';
                 }
+                /*
+                desc += '<br><b>Discriminative:</b> ';
+
+                desc += contextWords
+                    .slice(cat_name === name ? 0 : contextWords.length - 3,
+                        cat_name === name ? 3 : contextWords.length)
+                    .filter(function (x) {
+                        //return Math.abs(x[5]) > 1.96;
+                        return true;
+                    })
+                    .map(function (x) {return x.join(', ')}).join('<br>');
+                */
                 return desc;
             }
 
@@ -461,9 +697,9 @@ buildViz = function (d3) {
                         return d3.rgb(230, 230, 230);
                     } else if (pValueColors && d.p) {
                         if (d.p >= 1 - minPVal) {
-                            return wordVecMaxPValue ? d3.interpolateYlGnBu : color(d.s);
+                            return wordVecMaxPValue ? d3.interpolateYlGnBu(d.s) : color(d.s);
                         } else if (d.p <= minPVal) {
-                            return wordVecMaxPValue ? d3.interpolateYlGnBu : color(d.s);
+                            return wordVecMaxPValue ? d3.interpolateYlGnBu(d.s) : color(d.s);
                         } else {
                             return interpolateLightGreys(d.s);
                         }
@@ -925,6 +1161,7 @@ buildViz = function (d3) {
         };
 
         fullData = getDataAndInfo();
+        var corpusWordCounts = getCorpusWordCounts();
         processData(fullData);
 
         // The tool tip is down here in order to make sure it has the highest z-index

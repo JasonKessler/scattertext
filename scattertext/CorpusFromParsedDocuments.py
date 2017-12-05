@@ -1,8 +1,10 @@
-from scattertext.IndexStore import IndexStore
+import numpy as np
+
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
-import numpy as np
+from scattertext.indexstore.IndexStore import IndexStore
+
 
 class CorpusFromParsedDocuments(object):
 	def __init__(self,

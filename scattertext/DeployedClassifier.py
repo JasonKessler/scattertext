@@ -47,7 +47,7 @@ class DeployedClassifierFactory:
 		term_doc_matrix_factory : TermDocMatrixFactory
 		category : str
 			Category name
-		nlp : spacy.en.English
+		nlp : spacy parser
 		'''
 		self._term_doc_matrix = term_doc_matrix
 		self._term_doc_matrix_factory = term_doc_matrix_factory

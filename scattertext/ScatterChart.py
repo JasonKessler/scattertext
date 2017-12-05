@@ -26,7 +26,8 @@ class ScatterChartData(object):
 	             filter_unigrams=False,
 	             term_ranker=AbsoluteFrequencyRanker,
 	             use_non_text_features=False,
-	             term_significance=None):
+	             term_significance=None,
+	             terms_to_include=None):
 		'''
 
 		Parameters
@@ -52,8 +53,10 @@ class ScatterChartData(object):
 			TermRanker class for determining term frequency ranks.
 		use_non_text_features : bool, default = False
 			Use non-BoW features (e.g., Empath) instead of text features
-		term_significance : TermSignifiance instance or None
-			Way of getting signfiance scores.  If None, p values will not be added.
+		term_significance : TermSignificance instance or None
+			Way of getting significance scores.  If None, p values will not be added.
+		terms_to_include : set or None
+			Only annotate these terms in chart
 		'''
 		self.jitter = jitter
 		self.minimum_term_frequency = minimum_term_frequency
@@ -65,6 +68,7 @@ class ScatterChartData(object):
 		self.max_terms = max_terms
 		self.use_non_text_features = use_non_text_features
 		self.term_significance = term_significance
+		self.terms_to_include = terms_to_include
 		np.random.seed(seed)
 
 
@@ -75,19 +79,38 @@ class ScatterChart:
 	def __init__(self,
 	             term_doc_matrix,
 	             **kwargs):
+		'''
+		Parameters
+		----------
+		term_doc_matrix: term document matrix to create chart from
+
+		Remaining parameters are from ScatterChartData
+		'''
 		self.term_doc_matrix = term_doc_matrix
 		self.scatterchartdata = ScatterChartData(**kwargs)
 		self.x_coords = None
 		self.y_coords = None
+		self._rescale_x = None
+		self._rescale_y = None
 
-	def inject_coordinates(self, x_coords, y_coords):
+	def inject_coordinates(self,
+	                       x_coords,
+	                       y_coords,
+	                       rescale_x=None,
+	                       rescale_y=None):
 		'''
 		Inject custom x and y coordinates for each term into chart.
 
 		Parameters
 		----------
-		x_coords: array-like, positions on x-axis \in [0,1]
-		y_coords: array-like, positions on y-axis \in [0,1]
+		x_coords: array-like
+			positions on x-axis \in [0,1]
+		y_coords: array-like
+			positions on y-axis \in [0,1]
+		rescale_x: lambda list[0,1]: list[0,1], default identity
+			Rescales x-axis after filtering
+		rescale_y: lambda list[0,1]: list[0,1], default identity
+			Rescales y-axis after filtering
 
 		Returns
 		-------
@@ -98,6 +121,8 @@ class ScatterChart:
 		self._verify_coordinates(y_coords, 'y')
 		self.x_coords = x_coords
 		self.y_coords = y_coords
+		self._rescale_x = rescale_x
+		self._rescale_y = rescale_y
 
 	def _verify_coordinates(self, coords, name):
 		if len(coords) != self.term_doc_matrix.get_num_terms():
@@ -154,6 +179,7 @@ class ScatterChart:
 		'''
 		all_categories, other_categories = self._get_category_names(category)
 		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
+
 		if self.x_coords is None:
 			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
 				(category, df, other_categories, transform)
@@ -167,6 +193,12 @@ class ScatterChart:
 		json_df['os'] = df['color_scores']
 		if not self.scatterchartdata.use_non_text_features:
 			json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
+
+		self._preform_axis_rescale(json_df, self._rescale_x, 'x')
+		self._preform_axis_rescale(json_df, self._rescale_y, 'y')
+
+		if self.scatterchartdata.terms_to_include is not None:
+			json_df = self._use_only_selected_terms(json_df)
 
 		category_terms = list(json_df.sort_values('s')['term'][:10])
 		not_category_terms = list(json_df.sort_values('s')['term'][:10])
@@ -188,6 +220,16 @@ class ScatterChart:
 		              'category_internal_name': category}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
+
+	def _use_only_selected_terms(self, json_df):
+		term_df = pd.DataFrame({"term": self.scatterchartdata.terms_to_include})
+		return pd.merge(json_df, term_df, on='term', how='inner')
+
+
+	def _preform_axis_rescale(self, json_df, rescaler, variable_to_rescale):
+		if rescaler is not None:
+			json_df[variable_to_rescale] = rescaler(json_df[variable_to_rescale])
+			assert json_df[variable_to_rescale].min() >= 0 and json_df[variable_to_rescale].max() <= 1
 
 	def _get_corpus_characteristic_scores(self, json_df):
 		bg_terms = self.term_doc_matrix.get_scaled_f_scores_vs_background()
@@ -260,7 +302,8 @@ class ScatterChart:
 			df[category_column_name]
 		)
 		df['color_scores'] = scores
-		df = self._filter_bigrams_by_minimum_not_category_term_freq(category_column_name, df)
+		df = self._filter_bigrams_by_minimum_not_category_term_freq(
+			category_column_name, df)
 		df = filter_bigrams_by_pmis(
 			self._filter_by_minimum_term_frequency(all_categories, df),
 			threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
@@ -279,13 +322,19 @@ class ScatterChart:
 		return df
 
 	def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, df):
-		return df[(df[category_column_name] > 0)
-		          | (self._get_not_category_term_frequency(category_column_name, df)
-		             >= self.scatterchartdata.minimum_not_category_term_frequency)]
+		if self.scatterchartdata.terms_to_include is None:
+			return df[(df[category_column_name] > 0)
+			          | (self._get_not_category_term_frequency(category_column_name, df)
+			             >= self.scatterchartdata.minimum_not_category_term_frequency)]
+		else:
+			return df
 
 	def _filter_by_minimum_term_frequency(self, all_categories, df):
-		return df[df[all_categories].sum(axis=1)
-		          > self.scatterchartdata.minimum_term_frequency]
+		if self.scatterchartdata.terms_to_include is None:
+			return df[df[all_categories].sum(axis=1)
+			          > self.scatterchartdata.minimum_term_frequency]
+		else:
+			return df
 
 	def _limit_max_terms(self, category, df):
 		df['score'] = self._term_importance_ranks(category, df)

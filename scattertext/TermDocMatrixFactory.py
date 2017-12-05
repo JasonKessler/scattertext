@@ -4,9 +4,9 @@ from collections import Counter
 import numpy as np
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
-from scattertext.IndexStore import IndexStore
 from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.indexstore.IndexStore import IndexStore
 
 
 class CategoryTextIterNotSetError(Exception):
@@ -38,7 +38,7 @@ class TermDocMatrixFactory(object):
 	       the new string.
 	   post_nlp_clean_function : function (default lambda x: x)
 	       A function that takes a spaCy Doc
-	   nlp : spacy.en.English (default None)
+	   nlp : spacy.load('en') (default None)
 	       The spaCy parser used to parse documents.  If it's None,
 	       the class will go through the expensive operation of
 	       creating one to parse the text
@@ -102,7 +102,7 @@ class TermDocMatrixFactory(object):
 
 	   Paramters
 	   ----------
-	   nlp : spacy.en.English
+	   nlp : spacy model
 
 		 Returns
 		 ----------
@@ -142,8 +142,8 @@ class TermDocMatrixFactory(object):
 	def get_nlp(self):
 		nlp = self._nlp
 		if nlp is None:
-			import spacy.en
-			nlp = spacy.en.English()
+			import spacy
+			nlp = spacy.load('en')
 		return nlp
 
 	def censor_entity_types(self, entity_types):
@@ -247,7 +247,7 @@ class TermDocMatrixFactory(object):
 			X_factory[document_index, term_idx] = count
 		for term, val in self._feats_from_spacy_doc.get_doc_metadata(parsed_text).items():
 			meta_idx = metadata_idx_store.getidx(term)
-			X_factory[document_index, meta_idx] = val
+			mX_factory[document_index, meta_idx] = val
 
 	def _register_document_features_with_X_factory(self, X_factory, doci, term_freq):
 		for word_idx, freq in term_freq.items():
@@ -275,7 +275,7 @@ class FeatsFromDoc(TermDocMatrixFactory):
 	       a cleaned version of that document
 	   post_nlp_clean_function : function (default lambda x: x)
 	       A function that takes a spaCy Doc
-	   nlp : spacy.en.English (default None)
+	   nlp : spacy parser (default None)
 	       The spaCy parser used to parse documents.  If it's None,
 	       the class will go through the expensive operation of
 	       creating one to parse the text

@@ -3,15 +3,20 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.13.1
+# Scattertext 0.0.2.14
 ### Updates
 
-Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
-`__version__` attribute as mentioned in [#19](https://github.com/JasonKessler/scattertext/issues/19).
-Fixed bug when creating visualizations with more than two possible categories.  Now, by default, 
-category names will not be title-cased in the visualization, but will retain their original case.  
-If you'd still like to do this this, use `ScatterChart (or a descendant).to_dict(..., title_case_names=True)`.
-Fixed `DocsAndLabelsFromCorpus` for Py 2 compatibility. 
+Integration with Scikit-Learn's text-analysis pipeline led the creation of the
+`CorpusFromScikit` and `TermDocMatrixFromScikit` classes.
+
+The `AutoTermSelector` class to automatically suggest terms to appear in the visualization.  
+This can make it easier to show large data sets, and remove fiddling with the various 
+minimum term frequency parameters. 
+
+For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see 
+
+Also, I updated the library and examples to be compatible with spaCy 2.
+ 
 
 **Table of Contents**
 
@@ -24,6 +29,7 @@ Fixed `DocsAndLabelsFromCorpus` for Py 2 compatibility.
     - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
     - [Custom term positions](#custom-term-positions)
     - [Emoji analysis](#emoji-analysis)
+    - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -54,7 +60,7 @@ Python 2.7 support is experimental.  Many things will break.
 The HTML outputs look best in Chrome and Safari.
 
 ## Citation
-Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL): System Demonstrations. 2017.
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
 
 Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 
@@ -177,7 +183,7 @@ parameter.  Finally, pass a spaCy model in to the `nlp` argument and call `build
  
 ```pydocstring
 # Turn it into a Scattertext Corpus 
->>> nlp = spacy.en.English()
+>>> nlp = spacy.load('en')
 >>> corpus = st.CorpusFromPandas(convention_df, 
 ...                              category_col='party', 
 ...                              text_col='text',
@@ -591,6 +597,104 @@ open("EmojiGender.html", 'wb').write(html.encode('utf-8'))
 [![EmojiGender.html](https://jasonkessler.github.io/EmojiGender.png)](https://jasonkessler.github.io/EmojiGender.html)
 
 
+### Visualizing scikit-learn text classification weights
+
+Suppose you'd like to audit or better understand 
+weights or importances given to bag-of-words features 
+by a classifier.
+ 
+It's easy to use Scattertext to do, if you use a Scikit-learn-style classifier.
+
+For example the [Lighting](http://contrib.scikit-learn.org/lightning/) package makes available
+high-performance linear classifiers which are have Scikit-compatible interfaces.
+
+First, let's import `sklearn`'s text feature extraction classes, the 20 Newsgroup
+corpus, Lightning's Primal Coordinate Descent classifier, and Scattertext. We'll also
+fetch the training portion of the Newsgroup corpus.
+
+```python
+from lightning.classification import CDClassifier
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+
+import scattertext as st
+
+newsgroups_train = fetch_20newsgroups(
+	subset='train',
+	remove=('headers', 'footers', 'quotes')
+)
+```
+
+Next, we'll tokenize our corpus twice.  Once into tfidf features 
+which will be used to train the classifier, an another time into
+ngram counts that will be used by Scattertext.  It's important that
+both vectorizers share the same vocabulary, since we'll need to apply the 
+weight vector from the model onto our Scattertext Corpus.
+
+```python
+vectorizer = TfidfVectorizer()
+tfidf_X = vectorizer.fit_transform(newsgroups_train.data)
+count_vectorizer = CountVectorizer(vocabulary=vectorizer.vocabulary_)
+```
+
+Next, we use the `CorpusFromScikit` factory to build a Scattertext Corpus object.
+Ensure the `X` parameter is a document-by-feature matrix. The argument to the 
+`y` parameter is an array of class labels.  Each label is an integer representing
+a different news group.  We the `feature_vocabulary` is the vocabulary used by the 
+vectorizers.  The `category_names` are a list of the 20 newsgroup names which
+as a class-label list.  The `raw_texts` is a list of the text of newsgroup texts.
+  
+```python
+corpus = st.CorpusFromScikit(
+	X=count_vectorizer.fit_transform(newsgroups_train.data),
+	y=newsgroups_train.target,
+	feature_vocabulary=vectorizer.vocabulary_,
+	category_names=newsgroups_train.target_names,
+	raw_texts=newsgroups_train.data
+).build()
+```
+
+Now, we can train the model on `tfidf_X` and the categoricla response variable,
+and capture feature weights for category 0 ("alt.atheism").
+```python
+clf = CDClassifier(penalty="l1/l2",
+                   loss="squared_hinge",
+                   multiclass=True,
+                   max_iter=20,
+                   alpha=1e-4,
+                   C=1.0 / tfidf_X.shape[0],
+                   tol=1e-3)
+clf.fit(tfidf_X, newsgroups_train.target)
+term_scores = clf.coef_[0]
+```
+
+Finally, we can create a Scattertext plot 
+
+```python
+html = st.produce_fightin_words_explorer(
+	corpus,
+	'alt.atheism',
+	scores=term_scores,
+	use_term_significance=False,
+	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, term_scores, 4000)
+)
+```
+[![demo_sklearn.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_sklearn.png)](https://jasonkessler.github.io/demo_sklearn.html)
+
+
+Let's take a look at the performance of the classifier:
+
+```python
+newsgroups_test = fetch_20newsgroups(subset='test',
+                                     remove=('headers', 'footers', 'quotes'))
+X_test = vectorizer.transform(newsgroups_test.data)
+pred = clf.predict(X_test)
+f1 = f1_score(pred, newsgroups_test.target, average='micro')
+print("Microaveraged F1 score", f1)
+```
+Microaveraged F1 score 0.662108337759.  Not bad over a ~0.05 baseline.
+
+
 ## Examples 
 
 Please see the examples in the [PyData 2017 Tutorial](https://github.com/JasonKessler/Scattertext-PyData) on Scattertext.
@@ -616,6 +720,15 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.11-13
+Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
+`__version__` attribute as mentioned in [#19](https://github.com/JasonKessler/scattertext/issues/19).
+Fixed bug when creating visualizations with more than two possible categories.  Now, by default, 
+category names will not be title-cased in the visualization, but will retain their original case.  
+If you'd still like to do this this, use `ScatterChart (or a descendant).to_dict(..., title_case_names=True)`.
+Fixed `DocsAndLabelsFromCorpus` for Py 2 compatibility. 
+
 
 ### 0.0.2.10
 Fixed bugs in `chinese_nlp` when jieba has already been imported and in p-value

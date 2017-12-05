@@ -6,7 +6,7 @@ from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 
-nlp = spacy.en.English()
+nlp = spacy.load('en')
 convention_df = SampleCorpora.ConventionData2012.get_data()
 corpus = CorpusFromPandas(convention_df,
                           category_col='party',

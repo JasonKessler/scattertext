@@ -8,7 +8,7 @@ from scattertext import SampleCorpora
 
 
 def main():
-	nlp = spacy.en.English()
+	nlp = spacy.load('en')
 	convention_df = SampleCorpora.ConventionData2012.get_data()
 
 	corpus = CorpusFromParsedDocuments(convention_df,

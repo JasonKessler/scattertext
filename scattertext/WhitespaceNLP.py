@@ -62,16 +62,12 @@ def _regex_parse_sentence(doc, entity_type, tag_type):
 def _toks_from_sentence(doc, entity_type, tag_type):
 	toks = []
 	for tok in re.split(r"(\W)", doc):
-		pos = 'WORD'
-		if tok.strip() == '':
-			pos = 'SPACE'
-		elif re.match('^\W+$', tok):
-			pos = 'PUNCT'
-		toks.append(Tok(pos,
-		                tok[:2].lower(),
-		                tok.lower(),
-		                ent_type='' if entity_type is None else entity_type.get(tok, ''),
-		                tag='' if tag_type is None else tag_type.get(tok, '')))
+		if len(tok) > 0:
+			toks.append(Tok(_get_pos_tag(tok),
+			                tok[:2].lower(),
+			                tok.lower(),
+			                ent_type='' if entity_type is None else entity_type.get(tok, ''),
+			                tag='' if tag_type is None else tag_type.get(tok, '')))
 	return toks
 
 
@@ -92,38 +88,43 @@ def tweet_tokenzier_factory(tweet_tokenizer):
 	def tokenize(text):
 		toks = []
 		for tok in tweet_tokenizer.tokenize(text):
-			pos = 'WORD'
-			if tok.strip() == '':
-				pos = 'SPACE'
-			elif ord(tok[0]) in VALID_EMOJIS:
-				pos = 'EMJOI'
-			elif re.match('^\W+$', tok):
-				pos = 'PUNCT'
-			toks.append(Tok(pos,
-			                tok.lower(),
-			                tok.lower(),
-			                ent_type='',
-			                tag='' ))
+			if len(tok) > 0:
+				toks.append(Tok(_get_pos_tag(tok),
+				                tok.lower(),
+				                tok.lower(),
+				                ent_type='',
+				                tag='' ))
 		return Doc([toks], text)
+
 	return tokenize
 
 
+def _get_pos_tag(tok):
+	pos = 'WORD'
+	if tok.strip() == '':
+		pos = 'SPACE'
+	elif ord(tok[0]) in VALID_EMOJIS:
+		pos = 'EMJOI'
+	elif re.match('^\W+$', tok):
+		pos = 'PUNCT'
+	return pos
+
+
 def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
-	pat = re.compile(r'([A-Z][^\.!?]*[\.!?])', re.M)
+	pat = re.compile(r'([^\.!?]*?[\.!?$])', re.M)
 	sents = []
-	for sent in pat.findall(doc):
+	raw_sents = pat.findall(doc)
+	if len(raw_sents) == 0:
+		raw_sents = [doc]
+	for sent in raw_sents:
 		toks = []
 		for tok in re.split(r"(\W)", sent):
-			pos = 'WORD'
-			if tok.strip() == '':
-				pos = 'SPACE'
-			elif re.match('^\W+$', tok):
-				pos = 'PUNCT'
-			toks.append(Tok(pos,
-			                tok[:2].lower(),
-			                tok.lower(),
-			                ent_type='' if entity_type is None else entity_type.get(tok, ''),
-			                tag='' if tag_type is None else tag_type.get(tok, '')))
+			if len(tok) > 0:
+				toks.append(Tok(_get_pos_tag(tok),
+				                tok[:2].lower(),
+				                tok.lower(),
+				                ent_type='' if entity_type is None else entity_type.get(tok, ''),
+				                tag='' if tag_type is None else tag_type.get(tok, '')))
 		sents.append(toks)
 		toks = []
 	return Doc(sents, doc)

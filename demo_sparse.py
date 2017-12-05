@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from scattertext import SampleCorpora, sparse_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
-nlp = spacy.en.English()
+nlp = spacy.load('en')
 convention_df = SampleCorpora.ConventionData2012.get_data()
 corpus = CorpusFromPandas(convention_df,
                           category_col='party',

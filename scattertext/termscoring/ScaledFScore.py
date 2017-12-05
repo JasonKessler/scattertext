@@ -47,7 +47,7 @@ class ScaledFScore(object):
 	@staticmethod
 	def get_scores(cat_word_counts, not_cat_word_counts,
 	               scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
-		''' Computes scaled-fscores
+		''' Computes balanced scaled f-scores
 		Parameters
 		----------
 		category : str
@@ -72,7 +72,7 @@ class ScaledFScore(object):
 	@staticmethod
 	def get_scores_for_category(cat_word_counts, not_cat_word_counts,
 	                            scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
-		''' Computes scaled-fscores
+		''' Computes unbalanced scaled-fscores
 		Parameters
 		----------
 		category : str

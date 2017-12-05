@@ -164,6 +164,14 @@ class TermDocMatrix(object):
 	def _metadata_freq_df_from_matrix(self, catX):
 		return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
 
+	def get_terms(self):
+		'''
+		Returns
+		-------
+		np.array of unique terms
+		'''
+		return self._term_idx_store._i2val
+
 	def get_category_names_by_row(self):
 		'''
 		Returns

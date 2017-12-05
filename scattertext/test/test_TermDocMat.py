@@ -36,8 +36,6 @@ def get_test_categories_and_documents():
 	]
 
 
-
-
 class TestTermDocMat(TestCase):
 	@classmethod
 	def setUp(cls):
@@ -85,6 +83,19 @@ class TestTermDocMat(TestCase):
 		                 {'??? freq': 2, 'hamlet freq': 0, 'jay-z/r. kelly freq': 1})
 		self.assertEqual(dict(term_df.ix['that']),
 		                 {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 0})
+
+	def test_get_terms(self):
+		tdm = make_a_test_term_doc_matrix()
+
+		self.assertEqual(tdm.get_terms(),
+		                 ['hello', 'my', 'name', 'is', 'joe.', 'hello my', 'my name', 'name is', 'is joe.', "i've", 'got',
+		                  'a', 'wife', 'and', 'three', 'kids', "i'm", 'working.', "i've got", 'got a', 'a wife', 'wife and',
+		                  'and three', 'three kids', 'kids and', "and i'm", "i'm working.", 'in', 'button', 'factory',
+		                  'in a', 'a button', 'button factory', 'this', 'another', 'type', 'of', 'document', 'this is',
+		                  'is another', 'another type', 'type of', 'of document', 'sentence', 'another sentence',
+		                  'sentence in', 'in another', 'another document', "isn't", 'joe', 'here', "name isn't",
+		                  "isn't joe", 'joe here', 'document.', 'another document.', 'blah', 'blah blah']
+		                 )
 
 	def test_get_unigram_corpus(self):
 		tdm = make_a_test_term_doc_matrix()

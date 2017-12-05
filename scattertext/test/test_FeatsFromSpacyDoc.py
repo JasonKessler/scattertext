@@ -3,7 +3,7 @@ from collections import Counter
 from unittest import TestCase
 
 from scattertext import whitespace_nlp
-from scattertext.WhitespaceNLP import Tok, Doc, _regex_parse_sentence
+from scattertext.WhitespaceNLP import Tok, Doc, _regex_parse_sentence, whitespace_nlp_with_sentences
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
 
@@ -44,6 +44,12 @@ class TestFeatsFromSpacyDoc(TestCase):
 		doc = whitespace_nlp("A a bb cc.")
 		term_freq = FeatsFromSpacyDoc().get_feats(doc)
 		self.assertEqual(Counter({'a': 2, 'bb': 1, 'a bb': 1, 'cc': 1, 'a a': 1, 'bb cc': 1}),
+		                 term_freq)
+
+	def test_singleton_with_sentences(self):
+		doc = whitespace_nlp_with_sentences("Blah")
+		term_freq = FeatsFromSpacyDoc().get_feats(doc)
+		self.assertEqual(Counter({'blah': 1}),
 		                 term_freq)
 
 	def test_lemmas(self):
