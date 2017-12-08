@@ -2,8 +2,10 @@ from __future__ import print_function
 
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
+from scattertext.semioticsquare import SemioticSquare
+from scattertext.viz.SemioticSquareViz import SemioticSquareViz
 
-version = [0, 0, 2, 14, 1]
+version = [0, 0, 2, 15]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings

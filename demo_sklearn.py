@@ -38,9 +38,39 @@ file_name = "demo_sklearn.html"
 open(file_name, 'wb').write(html.encode('utf-8'))
 print("open " + file_name)
 
+sfs = (corpus.get_scaled_f_scores('alt.atheism') - 0.5) * 2
+html = st.produce_fightin_words_explorer(
+	corpus,
+	'alt.atheism',
+	scores=sfs,
+	use_term_significance=False,
+	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, sfs),
+	metadata = ['/'.join(fn.split('/')[-2:]) for fn in newsgroups_train.filenames]
+)
+
+file_name = "demo_sklearn_sfs.html"
+open(file_name, 'wb').write(html.encode('utf-8'))
+print("open " + file_name)
+
+sfs = (corpus.get_scaled_f_scores('alt.atheism', beta=1) - 0.5) * 2
+html = st.produce_fightin_words_explorer(
+	corpus,
+	'alt.atheism',
+	scores=sfs,
+	use_term_significance=False,
+	terms_to_include=st.AutoTermSelector.get_selected_terms(corpus, sfs),
+	metadata = ['/'.join(fn.split('/')[-2:]) for fn in newsgroups_train.filenames]
+)
+
+file_name = "demo_sklearn_sfs_beta1.html"
+open(file_name, 'wb').write(html.encode('utf-8'))
+print("open " + file_name)
+
+
 newsgroups_test = fetch_20newsgroups(subset='test',
                                      remove=('headers', 'footers', 'quotes'))
 X_test = vectorizer.transform(newsgroups_test.data)
 pred = clf.predict(X_test)
 f1 = f1_score(pred, newsgroups_test.target, average='micro')
 print("Microaveraged F1 score", f1)
+

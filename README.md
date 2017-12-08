@@ -3,20 +3,16 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.14.1
+# Scattertext 0.0.2.15
 ### Updates
-Integration with Scikit-Learn's text-analysis pipeline led the creation of the
-`CorpusFromScikit` and `TermDocMatrixFromScikit` classes.
 
-The `AutoTermSelector` class to automatically suggest terms to appear in the visualization.  
-This can make it easier to show large data sets, and remove fiddling with the various 
-minimum term frequency parameters. 
+Added a very simple semiotic square creator.
 
-For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see demo_sklearn.py
+The idea to build a semiotic square that contrasts two categories in a Term Document Matrix
+while using other categories as neutral categories.   
 
-Also, I updated the library and examples to be compatible with spaCy 2.
-
-Fixed bug when processing single-word documents, and set the default beta to 2. 
+See [Creating semiotic squares](#creating-semiotic-squares) for an overview on how to 
+use this functionality and semiotic squares.
 
 **Table of Contents**
 
@@ -30,6 +26,7 @@ Fixed bug when processing single-word documents, and set the default beta to 2.
     - [Custom term positions](#custom-term-positions)
     - [Emoji analysis](#emoji-analysis)
     - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
+    - [Creating semiotic squares](#creating-semiotic-squares)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -697,6 +694,60 @@ print("Microaveraged F1 score", f1)
 ```
 Microaveraged F1 score 0.662108337759.  Not bad over a ~0.05 baseline.
 
+### Creating semiotic squares
+
+Please see [Signo](http://www.signosemio.com/greimas/semiotic-square.asp) for an 
+introduction to semiotic squares.
+
+I'll expand this section later, but want to get this idea in circulation.
+
+Suppose we want to contrast the discussion in the 'alt.atheism' newsgroup
+to that in 'soc.religion.christian'.  We could build Scattertext plot
+to compare the two, although we'd miss a number of interesting 
+semantic categories.  For example, we'd miss what the two classes
+had in common relative to other religious, discussion, and what makes
+other religious discussion distinct from these two categories.
+
+We'd also miss how Atheist discussion and miscellaneous religious discussion 
+are distinct from Christian discussion, etc.  Semiotic squares show all permutations 
+of these different semantic-categorical relationships.
+
+Here is some early code to create a simple, non-interactive semiotic square.
+
+A more sophisticated version is coming.
+
+See `demo_semiotic.py` fo ra working version.
+
+```python
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+
+import scattertext as st
+
+newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+
+vectorizer = TfidfVectorizer()
+tfidf_X = vectorizer.fit_transform(newsgroups_train.data)
+
+corpus = st.CorpusFromScikit(
+	X=CountVectorizer(vocabulary=vectorizer.vocabulary_).fit_transform(newsgroups_train.data),
+	y=newsgroups_train.target,
+	feature_vocabulary=vectorizer.vocabulary_,
+	category_names=newsgroups_train.target_names,
+	raw_texts=newsgroups_train.data
+).build()
+
+semiotic_square = st.SemioticSquare(
+	corpus,
+	category_a='alt.atheism',
+	category_b='soc.religion.christian',
+	neutral_categories=['talk.religion.misc']
+)
+
+html = st.SemioticSquareViz(semiotic_square).get_html(num_terms=5)
+```
+
+![semiotic square](https://jasonkessler.github.io/simple_semiotic_square.png)
 
 ## Examples 
 
@@ -723,6 +774,21 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.14
+Integration with Scikit-Learn's text-analysis pipeline led the creation of the
+`CorpusFromScikit` and `TermDocMatrixFromScikit` classes.
+
+The `AutoTermSelector` class to automatically suggest terms to appear in the visualization.  
+This can make it easier to show large data sets, and remove fiddling with the various 
+minimum term frequency parameters. 
+
+For an example of how to use `CorpusFromScikit` and `AutoTermSelector`, please see `demo_sklearn.py`
+
+Also, I updated the library and examples to be compatible with spaCy 2.
+
+Fixed bug when processing single-word documents, and set the default beta to 2. 
+
 
 ### 0.0.2.11-13
 Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
