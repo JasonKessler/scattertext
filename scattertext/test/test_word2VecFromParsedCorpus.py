@@ -37,7 +37,21 @@ class TestWord2VecFromParsedCorpus(TestCase):
 			Word2VecFromParsedCorpus(self.corpus, word2vec.Word2Vec())
 
 	def test_train(self):
-		Word2VecFromParsedCorpus(self.corpus).train()
+		gensim_is_present_and_working = False
+		try:
+			from gensim.models import word2vec
+			gensim_is_present_and_working = True
+		except:
+			pass
+		if gensim_is_present_and_working:
+			Word2VecFromParsedCorpus(self.corpus).train()
 
 	def test_bigrams(self):
-		Word2VecFromParsedCorpusBigrams(self.corpus).train()
+		gensim_is_present_and_working = False
+		try:
+			from gensim.models import word2vec
+			gensim_is_present_and_working = True
+		except:
+			pass
+		if gensim_is_present_and_working:
+			Word2VecFromParsedCorpusBigrams(self.corpus).train()
