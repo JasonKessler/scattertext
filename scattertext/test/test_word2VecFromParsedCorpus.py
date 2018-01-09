@@ -24,9 +24,6 @@ class TestWord2VecFromParsedCorpus(TestCase):
 		cls.corpus = CorpusFromParsedDocuments(cls.df, 'category', 'parsed').build()
 
 	def test_make(self):
-		with self.assertRaises(Exception):
-			Word2VecFromParsedCorpus(3)
-		Word2VecFromParsedCorpus(self.corpus)
 		gensim_is_present_and_working = False
 		try:
 			from gensim.models import word2vec
@@ -34,6 +31,9 @@ class TestWord2VecFromParsedCorpus(TestCase):
 		except:
 			pass
 		if gensim_is_present_and_working:
+			with self.assertRaises(Exception):
+				Word2VecFromParsedCorpus(3)
+			Word2VecFromParsedCorpus(self.corpus)
 			Word2VecFromParsedCorpus(self.corpus, word2vec.Word2Vec())
 
 	def test_train(self):
