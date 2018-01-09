@@ -43,22 +43,68 @@ class ScoreBalancer(object):
 		return (ar - ar.min()) / (ar.max() - ar.min())
 
 
+class ScaledFScorePresets(object):
+	def __init__(self, scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
+		self.scaler_algo_ = scaler_algo
+		self.beta_ = beta
+
+	@staticmethod
+	def get_default_score():
+		return 0.5
+
+	def get_scores(self, cat_word_counts, not_cat_word_counts):
+		'''
+		Parameters
+		----------
+		cat_word_counts : np.array
+			category counts
+		not_cat_word_counts : np.array
+			not category counts
+
+		Returns
+		-------
+		np.array
+			scores
+		'''
+		return ScaledFScore.get_scores(cat_word_counts,
+		                               not_cat_word_counts,
+		                               scaler_algo=self.scaler_algo_,
+		                               beta=self.beta_)
+
+
+class ScaledFZScore(ScaledFScorePresets):
+	@staticmethod
+	def get_default_score():
+		return 0
+
+	def get_scores(self, cat_word_counts, not_cat_word_counts):
+		sfs = ScaledFScorePresets.get_scores(self, cat_word_counts, not_cat_word_counts)
+		return (sfs - 0.5)/np.std(sfs - 0.5)
+
+
 class ScaledFScore(object):
+	@staticmethod
+	def get_default_score():
+		return 0.5
+
 	@staticmethod
 	def get_scores(cat_word_counts, not_cat_word_counts,
 	               scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
 		''' Computes balanced scaled f-scores
 		Parameters
 		----------
-		category : str
-			category name to score
+		cat_word_counts : np.array
+			category counts
+		not_cat_word_counts : np.array
+			not category counts
 		scaler_algo : str
 			Function that scales an array to a range \in [0 and 1]. Use 'percentile', 'normcdf'. Default.
 		beta : float
 			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Default.
 		Returns
 		-------
-			np.array of harmonic means of scaled P(word|category)
+			np.array
+			Harmonic means of scaled P(word|category)
 			 and scaled P(category|word) for >median half of scores.  Low scores are harmonic means
 			 of scaled P(word|~category) and scaled P(~category|word).  Array is squashed to between
 			 0 and 1, with 0.5 indicating a median score.
@@ -70,6 +116,8 @@ class ScaledFScore(object):
 		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts, cat_word_counts,
 		                                                      scaler_algo, beta)
 		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
+
+
 
 	@staticmethod
 	def get_scores_for_category(cat_word_counts, not_cat_word_counts,
@@ -93,7 +141,7 @@ class ScaledFScore(object):
 		precision_normcdf = ScaledFScore._safe_scaler(scaler_algo, precision)
 		recall_normcdf = ScaledFScore._safe_scaler(scaler_algo, recall)
 		scores = (1 + beta ** 2) * (precision_normcdf * recall_normcdf) \
-		       / ((beta ** 2) * precision_normcdf + recall_normcdf)
+		         / ((beta ** 2) * precision_normcdf + recall_normcdf)
 		scores[np.isnan(scores)] = 0.
 		return scores
 

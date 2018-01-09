@@ -27,12 +27,19 @@ def get_docs_categories_semiotic():
 	categories = ['hamlet'] * 4 + ['jay-z/r. kelly'] * 5 + ['swift'] * 4
 	return categories, documents
 
-def get_test_semiotic_square():
+
+
+def get_test_corpus():
 	df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
 	                  columns=['category', 'text'])
 	corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
+	return corpus
+
+def get_test_semiotic_square():
+	corpus = get_test_corpus()
 	semsq = SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', ['swift'])
 	return semsq
+
 
 class TestSemioticSquare(TestCase):
 	def test_constructor(self):
@@ -74,6 +81,12 @@ class TestSemioticSquare(TestCase):
 		for category in self.categories():
 			self.assertIn(category, lexicons)
 			self.assertEqual(len(lexicons[category]), 5)
+
+	def test_get_axes(self):
+		semsq = get_test_semiotic_square()
+		ax = semsq.get_axes()
+		self.assertEqual(list(sorted(ax.index)),
+		                 list(sorted(semsq.term_doc_matrix_.get_terms())))
 
 	def categories(self):
 		return ['category_b_vs_a_words',

@@ -1,10 +1,12 @@
 # Helper functions for loading political convention data set
+import bz2
+import io
 import json
 import pkgutil
 import re
 import sys
 
-from scattertext.Common import POLITICAL_DATA_URL
+from scattertext.Common import POLITICAL_DATA_URL, ROTTEN_TOMATOES_DATA_URL
 
 if sys.version_info[0] >= 3:
 	from urllib.request import urlopen
@@ -81,7 +83,31 @@ class ConventionData2012(object):
 		return pd.DataFrame(data)
 
 
-class PresidentialDebates2016(object):
+class RottenTomatoes(object):
+	'''
+	Derived from the sentiment polarity/subjectivity datasets from
+	http://www.cs.cornell.edu/people/pabo/movie-review-data/
+
+	Bo Pang and Lillian Lee. ``A Sentimental Education: Sentiment Analysis Using Subjectivity
+	 Summarization Based on Minimum Cuts'', Proceedings of the ACL, 2004.
+	'''
 	@staticmethod
 	def get_data():
-		return pd.DataFrame(data)
+		'''
+		Returns
+		-------
+		pd.DataFrame
+
+		I.e.,
+		>>> df.iloc[0]
+		category                                                    plot
+		filename                 subjectivity_html/obj/2002/Abandon.html
+		text           A senior at an elite college (Katie Holmes), a...
+		movie_name                                               abandon
+		'''
+		try:
+			data_stream = pkgutil.get_data('scattertext', 'data/rotten_tomatoes_corpus.csv.bz2')
+		except:
+			url = ROTTEN_TOMATOES_DATA_URL
+			data_stream = urlopen(url).read()
+		return pd.read_csv(io.BytesIO(bz2.decompress(data_stream)))

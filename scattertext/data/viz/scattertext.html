@@ -156,14 +156,14 @@ input:focus {
 color: darkblue;
 }
 
-.left_contexts {
+.contexts {
   width: 45%;
   float: left;
 }
 
-.right_contexts {
-  width: 45%;
-  float: left;
+.neut_display {
+  display: none;
+  float: left
 }
 
 .scattertext {
@@ -191,10 +191,18 @@ color: darkblue;
 #notcat {
 }
 
+#neut {
+}
+
+#neutcol {
+  display: none;
+}
+
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
 <script src="<!--D3SCALECHROMATIC-->" charset="utf-8"></script>
 <!-- EXTRA LIBS -->
+<!-- INSERT SEMIOTIC SQUARE -->
 
 <span id="title-div"></span>
 <div class="scattertext" id="d3-div-1"> </div>
@@ -208,12 +216,19 @@ color: darkblue;
 <a name="snippetsalt"></a>
 <div id="termstats"></div>
 <div id="d3-div-2">
- <div class="snippet_header left_contexts" id="cathead"></div>
- <div class="snippet_header right_contexts" id="notcathead"></div>
- <div class="snippet left_contexts" id="cat"></div>
- <div class="snippet right_contexts" id="notcat"></div>
+  <div class="contexts">
+    <div class="snippet_header" id="cathead"></div>
+    <div class="snippet" id="cat"></div>
+  </div>
+  <div class="contexts">
+    <div class="snippet_header" id="notcathead"></div>
+    <div class="snippet" id="notcat"></div>
+  </div>
+  <div id="neutcol" class="contexts">
+   <div class="snippet_header" id="neuthead"></div>
+   <div class="snippet" id="neut"></div>
+  </div>
 </div>
 <script charset="utf-8">
   <!-- INSERT SCRIPT -->
 </script>
-

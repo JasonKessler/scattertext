@@ -1,30 +1,33 @@
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-
 import scattertext as st
 
-newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+movie_df = st.SampleCorpora.RottenTomatoes.get_data()
 
-vectorizer = TfidfVectorizer()
-tfidf_X = vectorizer.fit_transform(newsgroups_train.data)
-
-corpus = st.CorpusFromScikit(
-	X=CountVectorizer(vocabulary=vectorizer.vocabulary_).fit_transform(newsgroups_train.data),
-	y=newsgroups_train.target,
-	feature_vocabulary=vectorizer.vocabulary_,
-	category_names=newsgroups_train.target_names,
-	raw_texts=newsgroups_train.data
-).build()
+corpus = st.CorpusFromPandas(
+	movie_df,
+	category_col='category',
+	text_col='text',
+	nlp=st.whitespace_nlp_with_sentences
+).build().get_unigram_corpus()
 
 semiotic_square = st.SemioticSquare(
 	corpus,
-	category_a='alt.atheism',
-	category_b='soc.religion.christian',
-	neutral_categories=['talk.religion.misc']
+	category_a='fresh',
+	category_b='rotten',
+	neutral_categories=['plot'],
+	scorer=st.LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001)
 )
 
-html = st.SemioticSquareViz(semiotic_square).get_html(num_terms=5)
+html = st.produce_semiotic_square_explorer(semiotic_square,
+                                           jitter=0.01,
+                                           category_name='Fresh',
+                                           not_category_name='Rotten',
+                                           x_label='Rotten-Fresh',
+                                           y_label='Plot-Review',
+                                           neutral_category_name='Plot Description',
+                                           metadata=movie_df['movie_name'],
+                                           x_axis_values=[-2.58, -1.96, 0, 1.96, 2.58],
+                                           y_axis_values=[-2.58, -1.96, 0, 1.96, 2.58])
 
-fn = 'demo_semiotic_square_atheism_christianity.html'
+fn = 'demo_semiotic.html'
 open(fn, 'wb').write(html.encode('utf-8'))
 print('Open ' + fn + ' in Chrome or Firefox.')

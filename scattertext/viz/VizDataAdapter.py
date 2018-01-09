@@ -44,9 +44,8 @@ class VizDataAdapter:
 		del self._word_dict
 
 	def to_javascript(self):
-		starter = 'function getDataAndInfo() { return'
-		#import pdb;
-		#pdb.set_trace()
+		return 'function getDataAndInfo() { return' + self.to_json() + '; }'
+
+	def to_json(self):
 		word_dict_json = json.dumps(self.word_dict, cls=MyEncoder)
-		ender = '; }'
-		return starter + word_dict_json + ender
+		return word_dict_json

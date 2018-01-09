@@ -1,3 +1,3 @@
 from .HTMLVisualizationAssembly import HTMLVisualizationAssembly
 from .VizDataAdapter import VizDataAdapter
-from .SemioticSquareViz import SemioticSquareViz
+from .HTMLSemioticSquareViz import HTMLSemioticSquareViz

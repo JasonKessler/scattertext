@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.15
+# Scattertext 0.0.2.16
 ### Updates
 
 Added a very simple semiotic square creator.
@@ -13,6 +13,21 @@ while using other categories as neutral categories.
 
 See [Creating semiotic squares](#creating-semiotic-squares) for an overview on how to 
 use this functionality and semiotic squares.
+
+Added a parameter to disable the display of the top-terms sidebar, e.g.,
+`produce_scattertext_explorer(..., show_top_terms=False, ...)`.
+
+An interface to part of the subjectivity/sentiment dataset from 
+Bo Pang and Lillian Lee. ``A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization 
+Based on Minimum Cuts''. ACL. 2004. See `SampleCorpora.RottenTomatoes`.
+
+Fixed bug that caused tooltip placement to be off after scrolling.   
+
+Made `category_name` and `not_category_name` optional in `produce_scattertext_explorer` etc.
+
+Created the ability to customize tooltips via the `get_tooltip_content` argument to
+ `produce_scattertext_explorer` etc., control axes labels via `x_axis_values` 
+ and `y_axis_values`, an d
 
 **Table of Contents**
 
@@ -26,7 +41,7 @@ use this functionality and semiotic squares.
     - [Custom term positions](#custom-term-positions)
     - [Emoji analysis](#emoji-analysis)
     - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
-    - [Creating semiotic squares](#creating-semiotic-squares)
+    - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -694,60 +709,81 @@ print("Microaveraged F1 score", f1)
 ```
 Microaveraged F1 score 0.662108337759.  Not bad over a ~0.05 baseline.
 
-### Creating semiotic squares
+### Creating lexicalized semiotic squares
 
 Please see [Signo](http://www.signosemio.com/greimas/semiotic-square.asp) for an 
 introduction to semiotic squares.
 
-I'll expand this section later, but want to get this idea in circulation.
+The idea behind the semiotic square is to express the relationship between two opposing 
+concepts and concepts things within a larger domain of a discourse. 
+Examples of opposed concepts life or death, male or female, or, in our example, positive or negative sentiment. 
+Semiotics squares are comprised of four "corners": the upper two corners are the opposing concepts,
+while the bottom corners are the negation of the concepts.  
 
-Suppose we want to contrast the discussion in the 'alt.atheism' newsgroup
-to that in 'soc.religion.christian'.  We could build Scattertext plot
-to compare the two, although we'd miss a number of interesting 
-semantic categories.  For example, we'd miss what the two classes
-had in common relative to other religious, discussion, and what makes
-other religious discussion distinct from these two categories.
+Circumscribing the negation of a concept involves finding everything in the 
+domain of discourse that isn't associated with the concept.  For example, in the 
+life-death opposition, one can consider the universe of discourse to be all
+animate beings, real and hypothetical. The not-alive category will cover dead things,
+but also hypothetical entities like fictional characters or sentient AIs.
 
-We'd also miss how Atheist discussion and miscellaneous religious discussion 
-are distinct from Christian discussion, etc.  Semiotic squares show all permutations 
-of these different semantic-categorical relationships.
+In building lexicalized semiotic squares, we consider concepts to be documents labeled
+in a corpus.  Documents, in this setting, can belong to one of three categories: two labels corresponding
+to the opposing concepts, a neutral category, indicating a document is in the same domain as
+the opposition, but cannot fall into one of opposing categories. 
 
-Here is some early code to create a simple, non-interactive semiotic square.
+In the example below positive and negative movie reviews are treated as the opposing categories,
+while plot descriptions of the same movies are treated as the neutral category.
 
-A more sophisticated version is coming.
+Terms associated with one of the two opposing categories (relative only to the other) are
+listed as being associated with that category.  Terms associated with a netural category 
+(e.g., not positive) are terms which are associated with the disjunction of the opposite 
+category and the neutral category. For example, not-positive terms are those most associated 
+with the set of negative reviews and plot descriptions vs. positive reviews.
 
-See `demo_semiotic.py` fo ra working version.
+Common terms among adjacent corners of the square are also listed.
+
+An HTML-rendered square is accompanied by a scatterplot.  Points on the plot are terms.
+The x-axis is the Z-score of the association to one of the opposed concepts. The y-axis
+is the Z-score how associated a term is with the neutral set of documents relative to the
+opposed set.  A point's red-blue color indicate the term's opposed-association, while
+the more desaturated a term is, the more it is associated with the neutral set of documents.       
+
+I'll expand this section later, but want to get this idea in circulation.s
 
 ```python
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-
 import scattertext as st
 
-newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+movie_df = st.SampleCorpora.RottenTomatoes.get_data()
 
-vectorizer = TfidfVectorizer()
-tfidf_X = vectorizer.fit_transform(newsgroups_train.data)
-
-corpus = st.CorpusFromScikit(
-	X=CountVectorizer(vocabulary=vectorizer.vocabulary_).fit_transform(newsgroups_train.data),
-	y=newsgroups_train.target,
-	feature_vocabulary=vectorizer.vocabulary_,
-	category_names=newsgroups_train.target_names,
-	raw_texts=newsgroups_train.data
-).build()
+corpus = st.CorpusFromPandas(
+	movie_df,
+	category_col='category',
+	text_col='text',
+	nlp=st.whitespace_nlp_with_sentences
+).build().get_unigram_corpus()
 
 semiotic_square = st.SemioticSquare(
 	corpus,
-	category_a='alt.atheism',
-	category_b='soc.religion.christian',
-	neutral_categories=['talk.religion.misc']
+	category_a='fresh',
+	category_b='rotten',
+	neutral_categories=['plot'],
+	scorer=st.LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001)
 )
 
-html = st.SemioticSquareViz(semiotic_square).get_html(num_terms=5)
+html = st.produce_semiotic_square_explorer(semiotic_square,
+                                           category_name='Fresh',
+                                           not_category_name='Rotten',
+                                           neutral_category_name='Plot Description',
+                                           x_label='Rotten-Fresh',
+                                           y_label='Plot-Review',
+                                           metadata=movie_df['movie_name'],
+                                           x_axis_values=[-2.58, -1.96, 0, 1.96, 2.58],
+                                           y_axis_values=[-2.58, -1.96, 0, 1.96, 2.58])
+
+open('demo_semiotic.html', 'wb').write(html.encode('utf-8'))
 ```
 
-![semiotic square](https://jasonkessler.github.io/simple_semiotic_square.png)
+[![semiotic square](https://jasonkessler.github.io/semiotic_square_plot.png)](https://jasonkessler.github.io/demo_semiotic.html)
 
 ## Examples 
 
@@ -1012,3 +1048,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Loncaric, Calvin. "Cozy: synthesizing collection data structures." Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering. ACM, 2016.
 * Fast, Ethan, Binbin Chen, and Michael S. Bernstein. "Empath: Understanding topic signals in large-scale text." Proceedings of the 2016 CHI Conference on Human Factors in Computing Systems. ACM, 2016.
 * Burt L. Monroe, Michael P. Colaresi, and Kevin M. Quinn. 2008. Fightin’ words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis.
+* Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.

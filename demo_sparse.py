@@ -15,9 +15,9 @@ scores = corpus.get_logreg_coefs('democrat',
                                  LogisticRegression(penalty='l1', C=10, max_iter=10000, n_jobs=-1))
 html = sparse_explorer(corpus,
                        category='democrat',
+                       scores=scores,
                        category_name='Democratic',
                        not_category_name='Republican',
-                       scores = scores,
                        minimum_term_frequency=5,
                        width_in_pixels=1000,
                        metadata=convention_df['speaker'])

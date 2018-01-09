@@ -1,6 +1,8 @@
 import sys
 from unittest import TestCase
 
+from scattertext import HTMLSemioticSquareViz
+from scattertext.test.test_semioticSquare import get_test_semiotic_square
 from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
 from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
 from scattertext.viz.VizDataAdapter import VizDataAdapter
@@ -10,10 +12,11 @@ class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
 		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
-		          'false', 'undefined', 'undefined']
+		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
+		          'null', 'null', 'null', 'null']
 		for i, val in param_dict.items():
 			params[i] = val
-		return 'buildViz(' + ','.join(params) + ');'
+		return 'plotInterface = buildViz(' + ','.join(params) + ');'
 
 	def make_assembler(self):
 		visualization_data = self.make_adapter()
@@ -38,6 +41,21 @@ class TestHTMLVisualizationAssembly(TestCase):
 		else:
 			self.assertEqual(type(html), str)
 		self.assertFalse('<!-- EXTRA LIBS -->' in html)
+		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
+		self.assertTrue('<!-- INSERT SEMIOTIC SQUARE -->' in html)
+		self.assertTrue('Republican' in html)
+
+	def test_semiotic_square(self):
+		semsq = get_test_semiotic_square()
+		assembler = self.make_assembler()
+		html = assembler.to_html(
+			semiotic_square_html= HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
+		if sys.version_info.major == 2:
+			self.assertEqual(type(html), unicode)
+		else:
+			self.assertEqual(type(html), str)
+		self.assertFalse('<!-- EXTRA LIBS -->' in html)
+		self.assertFalse('<!-- INSERT SEMIOTIC SQUARE -->' in html)
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 		self.assertTrue('Republican' in html)
 
@@ -217,3 +235,67 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            y_label='y label')
 		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({0: '1000', 1: '60', 16: '"y label"'}))
+
+	def test_full_data(self):
+		visualization_data = self.make_adapter()
+		full_data = "customFullDataFunction()"
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            full_data=full_data)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({17: full_data}))
+
+	def test_show_top_terms(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            show_top_terms=False)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({18: 'false'}))
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            show_top_terms=True)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({18: 'true'}))
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data)
+		                  ._call_build_visualization_in_javascript()),
+		                 self.get_params({18: 'true'}))
+
+	def test_show_neutral(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({19: 'false'}))
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data, show_neutral=True)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({19: 'true'}))
+
+
+	def test_get_tooltip_content(self):
+		visualization_data = self.make_adapter()
+		f = '''(function(x) {return 'Original X: ' + x.ox;})'''
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            get_tooltip_content=f)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({20: f}))
+
+	def test_x_axis_labels(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            x_axis_values=[1, 2, 3])
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({21: "[1, 2, 3]"}))
+
+	def test_x_axis_labels(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            y_axis_values=[4, 5, 6])
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({22: "[4, 5, 6]"}))
+
+
+	def test_color_func(self):
+		visualization_data = self.make_adapter()
+		color_func = 'function colorFunc(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y;	return c;}'
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            color_func=color_func)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({23: color_func}))

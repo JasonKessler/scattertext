@@ -3,9 +3,10 @@ from __future__ import print_function
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
 from scattertext.semioticsquare import SemioticSquare
-from scattertext.viz.SemioticSquareViz import SemioticSquareViz
+from scattertext.termsignificance.TermSignificance import TermSignificance
+from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
 
-version = [0, 0, 2, 15]
+version = [0, 0, 2, 16]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -43,10 +44,12 @@ from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyD
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams
 from scattertext.termranking import OncePerDocFrequencyRanker
-from scattertext.termscoring.ScaledFScore import InvalidScalerException
+from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFZScore
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
+from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -111,8 +114,8 @@ def produce_scattertext_html(term_doc_matrix,
 
 def produce_scattertext_explorer(corpus,
                                  category,
-                                 category_name,
-                                 not_category_name,
+                                 category_name=None,
+                                 not_category_name=None,
                                  protocol='https',
                                  pmi_threshold_coefficient=DEFAULT_MINIMUM_TERM_FREQUENCY,
                                  minimum_term_frequency=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
@@ -127,6 +130,8 @@ def produce_scattertext_explorer(corpus,
                                  scores=None,
                                  x_coords=None,
                                  y_coords=None,
+                                 original_x=None,
+                                 original_y=None,
                                  rescale_x=None,
                                  rescale_y=None,
                                  singleScoreMode=False,
@@ -139,6 +144,7 @@ def produce_scattertext_explorer(corpus,
                                  term_ranker=None,
                                  asian_mode=False,
                                  use_non_text_features=False,
+                                 show_top_terms=True,
                                  show_characteristic=True,
                                  word_vec_use_p_vals=False,
                                  max_p_val=0.1,
@@ -151,7 +157,16 @@ def produce_scattertext_explorer(corpus,
                                  d3_scale_chromatic_url=None,
                                  pmi_filter_thresold=None,
                                  alternative_text_field=None,
-                                 terms_to_include=None):
+                                 terms_to_include=None,
+                                 semiotic_square=None,
+                                 num_terms_semiotic_square=None,
+                                 not_categories=None,
+                                 show_neutral=False,
+                                 neutral_category_name=None,
+                                 get_tooltip_content=None,
+                                 x_axis_values=None,
+                                 y_axis_values=None,
+                                 color_func=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -162,8 +177,11 @@ def produce_scattertext_explorer(corpus,
 		Name of category column as it appears in original data frame.
 	category_name : str
 		Name of category to use.  E.g., "5-star reviews."
+		Optional, defaults to category name.
 	not_category_name : str
 		Name of everything that isn't in category.  E.g., "Below 5-star reviews".
+		Optional defaults to "N(n)ot " + category_name, with the case of the 'n' dependent
+		on the case of the first letter in category_name.
 	protocol : str, optional
 		Protocol to use.  Either http or https.  Default is https.
 	pmi_threshold_coefficient : int, optional
@@ -195,6 +213,10 @@ def produce_scattertext_explorer(corpus,
 	y_coords : np.array, optional
 		Array of term y-axis positions or None.  Must be in [0,1].
 		If present, x_coords must also be present.
+	original_x : array-like
+		Original, unscaled x-values.  Defaults to x_coords
+	original_y : array-like
+		Original, unscaled y-values.  Defaults to y_coords
 	rescale_x : lambda list[0,1]: list[0,1], optional
 		Array of term x-axis positions or None.  Must be in [0,1].
 		Rescales x-axis after filtering
@@ -223,6 +245,8 @@ def produce_scattertext_explorer(corpus,
 		Use a special Javascript regular expression that's specific to chinese or japanese
 	use_non_text_features : bool, optional
 		Show non-bag-of-words features (e.g., Empath) instead of text.  False by default.
+	show_top_terms : bool, default True
+		Show top terms on the left-hand side of the visualization
 	show_characteristic: bool, default True
 		Show characteristic terms on the far left-hand side of the visualization
 	word_vec_use_p_vals: bool, default False
@@ -253,10 +277,37 @@ def produce_scattertext_explorer(corpus,
 		can be used if corpus is a ParsedCorpus instance.
 	terms_to_include : list or None, optional
 		Whitelist of terms to include in visualization.
+	semiotic_square : SemioticSquare
+		None by default.  SemioticSquare based on corpus.  Includes square above visualization.
+	num_terms_semiotic_square : int
+		10 by default. Number of terms to show in semiotic square.
+		Only active if semiotic square is present.
+	not_categories : list
+		All categories other than category by default.  Documents labeled
+		with remaining category.
+	show_neutral : bool
+		False by default.  Show a third column listing contexts in the
+		neutral categories.
+	neutral_category_name : str
+		"Neutral" by default. Only active if show_neutral is True.  Name of the neutral
+		column.
+	get_tooltip_content : str
+		Javascript function to control content of tooltip.  Function takes a parameter
+		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+		returns a string.
+	x_axis_values : list, default None
+		Value-labels to show on x-axis. Low, medium, high are defaults.
+	y_axis_values : list, default None
+		Value-labels to show on y-axis. Low, medium, high are defaults.
+	color_func : str, default None
+		Javascript function to control color of a point.  Function takes a parameter
+		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+		returns a string.
 
 	Returns
 	-------
-		str, html of visualization
+	str
+	html of visualization
 
 	'''
 	color = None
@@ -268,6 +319,11 @@ def produce_scattertext_explorer(corpus,
 		sort_by_dist = True
 	if term_ranker is None:
 		term_ranker = termranking.AbsoluteFrequencyRanker
+
+	if category_name is None:
+		category_name = category
+	if not_category_name is None:
+		not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
 
 	if pmi_filter_thresold is not None:
 		pmi_threshold_coefficient = pmi_filter_thresold
@@ -287,20 +343,25 @@ def produce_scattertext_explorer(corpus,
 	                                              term_significance=term_significance,
 	                                              terms_to_include=terms_to_include)
 	if ((x_coords is None and y_coords is not None)
-	    or (y_coords is None and x_coords is not None)):
+			or (y_coords is None and x_coords is not None)):
 		raise Exception("Both x_coords and y_coords need to be passed or both left blank")
 	if x_coords is not None:
-		scatter_chart_explorer.inject_coordinates(x_coords, y_coords,
+		scatter_chart_explorer.inject_coordinates(x_coords,
+		                                          y_coords,
 		                                          rescale_x=rescale_x,
-		                                          rescale_y=rescale_y)
+		                                          rescale_y=rescale_y,
+		                                          original_x=original_x,
+		                                          original_y=original_y)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
+	                                                    not_categories=not_categories,
 	                                                    transform=transform,
 	                                                    scores=scores,
 	                                                    max_docs_per_category=max_docs_per_category,
 	                                                    metadata=metadata,
-	                                                    alternative_text_field=alternative_text_field)
+	                                                    alternative_text_field=alternative_text_field,
+	                                                    neutral_category_name=neutral_category_name)
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
 	                                 height_in_pixels=height_in_pixels,
@@ -313,25 +374,45 @@ def produce_scattertext_explorer(corpus,
 	                                 asian_mode=asian_mode,
 	                                 use_non_text_features=use_non_text_features,
 	                                 show_characteristic=show_characteristic,
+	                                 show_top_terms=show_top_terms,
 	                                 word_vec_use_p_vals=word_vec_use_p_vals,
 	                                 max_p_val=max_p_val,
 	                                 save_svg_button=save_svg_button,
 	                                 p_value_colors=p_value_colors,
 	                                 x_label=x_label,
-	                                 y_label=y_label) \
+	                                 y_label=y_label,
+	                                 show_neutral=show_neutral,
+	                                 get_tooltip_content=get_tooltip_content,
+	                                 x_axis_values=x_axis_values,
+	                                 y_axis_values=y_axis_values,
+	                                 color_func=color_func) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
-	           d3_scale_chromatic_url=d3_scale_chromatic_url)
+	           d3_scale_chromatic_url=d3_scale_chromatic_url,
+	           semiotic_square_html=get_semiotic_square_html(num_terms_semiotic_square,
+	                                                         semiotic_square))
+
+
+def get_semiotic_square_html(num_terms_semiotic_square, semiotic_square):
+	semiotic_square_html = None
+	if semiotic_square:
+		semiotic_square_viz = HTMLSemioticSquareViz(semiotic_square)
+		if num_terms_semiotic_square:
+			semiotic_square_html = semiotic_square_viz.get_html(num_terms_semiotic_square)
+		else:
+			semiotic_square_html = semiotic_square_viz.get_html()
+	return semiotic_square_html
 
 
 def word_similarity_explorer_gensim(corpus,
                                     category,
-                                    category_name,
-                                    not_category_name,
                                     target_term,
+                                    category_name=None,
+                                    not_category_name=None,
                                     word2vec=None,
                                     alpha=0.01,
                                     max_p_val=0.1,
+                                    term_significance=None,
                                     **kwargs):
 	'''
 		Parameters
@@ -353,6 +434,8 @@ def word_similarity_explorer_gensim(corpus,
 			Uniform dirichlet prior for p-value calculation
 		max_p_val : float, default = 0.1
 			Max p-val to use find set of terms for similarity calculation
+		term_significance : TermSignificance
+			Significance finder
 
 		Remaining arguments are from `produce_scattertext_explorer`.
 		Returns
@@ -362,6 +445,10 @@ def word_similarity_explorer_gensim(corpus,
 
 	if word2vec is None:
 		word2vec = Word2VecFromParsedCorpus(corpus).train()
+
+	if term_significance is None:
+		term_significance = LogOddsRatioUninformativeDirichletPrior(alpha)
+	assert issubclass(type(term_significance), TermSignificance)
 
 	scores = []
 
@@ -384,7 +471,7 @@ def word_similarity_explorer_gensim(corpus,
 	                                    sort_by_dist=False,
 	                                    reverse_sort_scores_for_not_category=False,
 	                                    word_vec_use_p_vals=True,
-	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                    term_significance=term_significance,
 	                                    max_p_val=max_p_val,
 	                                    p_value_colors=True,
 	                                    **kwargs)
@@ -432,18 +519,18 @@ def word_similarity_explorer(corpus,
 	scores = np.array([base_term.similarity(nlp(tok))
 	                   for tok
 	                   in corpus._term_idx_store._i2val])
-	return produce_scattertext_explorer(corpus,
-	                                    category,
-	                                    category_name,
-	                                    not_category_name,
-	                                    scores=scores,
-	                                    sort_by_dist=False,
-	                                    reverse_sort_scores_for_not_category=False,
-	                                    word_vec_use_p_vals=True,
-	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
-	                                    max_p_val=max_p_val,
-	                                    p_value_colors=True,
-	                                    **kwargs)
+	return produce_fightin_words_explorer(corpus,
+	                                      category,
+	                                      category_name,
+	                                      not_category_name,
+	                                      scores=scores,
+	                                      sort_by_dist=False,
+	                                      reverse_sort_scores_for_not_category=False,
+	                                      word_vec_use_p_vals=True,
+	                                      term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                      max_p_val=max_p_val,
+	                                      p_value_colors=True,
+	                                      **kwargs)
 
 
 def produce_fightin_words_explorer(corpus,
@@ -453,6 +540,7 @@ def produce_fightin_words_explorer(corpus,
                                    term_ranker=termranking.AbsoluteFrequencyRanker,
                                    alpha=0.01,
                                    use_term_significance=True,
+                                   term_scorer=None,
                                    **kwargs):
 	'''
 	Produces a Monroe et al. style visualization.
@@ -474,26 +562,26 @@ def produce_fightin_words_explorer(corpus,
 	alpha : float, default = 0.01
 		Uniform dirichlet prior for p-value calculation
 	use_term_significance : bool, True by default
-		Use Log Odds Ratio w/ Uninformative Prior or specified values for significance.
+		Use term scorer
+	term_scorer : TermSignificance
+		Subclass of TermSignificance to use as for scores and significance
 	Remaining arguments are from `produce_scattertext_explorer`.
 	Returns
 	-------
 		str, html of visualization
 	'''
-	if category_name is None:
-		category_name = category
-	if not_category_name is None:
-		not_category_name = "Not " + category_name
-
 	term_freq_df = term_ranker(corpus).get_ranks()
 	frequencies_log_scaled = scale(np.log(term_freq_df.sum(axis=1).values))
 
+	if term_scorer is None:
+		term_scorer = LogOddsRatioUninformativeDirichletPrior(alpha)
+
 	if 'scores' not in kwargs:
-		zeta_i_j = (LogOddsRatioUninformativeDirichletPrior(alpha)
-		            .get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
-		                                                term_freq_df[[c + ' freq'
-		                                                              for c in corpus.get_categories()
-		                                                              if c != category]].sum(axis=1)))
+		zeta_i_j = (term_scorer
+			.get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
+		                                      term_freq_df[[c + ' freq'
+		                                                    for c in corpus.get_categories()
+		                                                    if c != category]].sum(axis=1)))
 		kwargs['scores'] = kwargs.get('scores', zeta_i_j)
 
 	def y_axis_rescale(coords):
@@ -502,7 +590,7 @@ def produce_fightin_words_explorer(corpus,
 	scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
 	# kwargs['metadata'] = kwargs.get('metadata', None),
 	if use_term_significance:
-		kwargs['term_significance'] = LogOddsRatioUninformativeDirichletPrior(alpha)
+		kwargs['term_significance'] = term_scorer
 
 	return produce_scattertext_explorer(corpus,
 	                                    category=category,
@@ -520,11 +608,102 @@ def produce_fightin_words_explorer(corpus,
 	                                    **kwargs)
 
 
+def produce_semiotic_square_explorer(semiotic_square,
+                                     x_label,
+                                     y_label,
+                                     category_name=None,
+                                     not_category_name=None,
+                                     neutral_category_name=None,
+                                     num_terms_semiotic_square=None,
+                                     get_tooltip_content=None,
+                                     x_axis_values = None,
+                                     y_axis_values = None,
+                                     color_func = None,
+                                     **kwargs):
+	'''
+	Produces a semiotic square visualization.
+
+	Parameters
+	----------
+	semiotic_square : SemioticSquare
+		The basis of the visualization
+	x_label : str
+		The x-axis label in the scatter plot.  Relationship between `category_a` and `category_b`.
+	y_label
+		The y-axis label in the scatter plot.  Relationship neutral term and complex term.
+	category_name : str or None
+		Name of category to use.  Defaults to category_a.
+	not_category_name : str or None
+		Name of everything that isn't in category.  Defaults to category_b.
+	neutral_category_name : str or None
+		Name of neutral set of data.  Defaults to "Neutral".
+	num_terms_semiotic_square : int or None
+		10 by default. Number of terms to show in semiotic square.
+	get_tooltip_content : str or None
+		Defaults to tooltip showing z-scores on both axes.
+	x_axis_values : list, default None
+		Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	y_axis_values : list, default None
+		Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	color_func : str, default None
+		Javascript function to control color of a point.  Function takes a parameter
+		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+		returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.
+
+	Remaining arguments are from `produce_scattertext_explorer`.
+
+	Returns
+	-------
+		str, html of visualization
+	'''
+	if category_name is None:
+		category_name = semiotic_square.category_a_
+	if not_category_name is None:
+		not_category_name = semiotic_square.category_b_
+	if x_axis_values is None:
+		x_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
+
+	if y_axis_values is None:
+		y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
+
+	if get_tooltip_content is None:
+		get_tooltip_content = '''(function(d) {return "%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
+		                      % (x_label, y_label)
+	if color_func is None:
+		color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+
+	axes = semiotic_square.get_axes()
+	return produce_scattertext_explorer(semiotic_square.term_doc_matrix_,
+	                                    category=semiotic_square.category_a_,
+	                                    category_name=category_name,
+	                                    not_category_name=not_category_name,
+	                                    not_categories=[semiotic_square.category_b_],
+	                                    scores=axes['x'],
+	                                    sort_by_dist=False,
+	                                    x_coords=scale_neg_1_to_1_with_zero_mean_abs_max(axes['x']),
+	                                    y_coords=scale_neg_1_to_1_with_zero_mean_abs_max(axes['y']),
+	                                    original_x=axes['x'],
+	                                    original_y=axes['y'],
+	                                    show_characteristic=False,
+	                                    show_top_terms=False,
+	                                    x_label=x_label + ' Z-Score',
+	                                    y_label=y_label + ' Z-Score',
+	                                    semiotic_square=semiotic_square,
+	                                    show_neutral=True,
+	                                    neutral_category_name=neutral_category_name,
+	                                    num_terms_semiotic_square=num_terms_semiotic_square,
+	                                    get_tooltip_content=get_tooltip_content,
+	                                    x_axis_values=x_axis_values,
+	                                    y_axis_values=y_axis_values,
+	                                    color_func=color_func,
+	                                    **kwargs)
+
+
 def sparse_explorer(corpus,
                     category,
-                    category_name,
-                    not_category_name,
                     scores,
+                    category_name=None,
+                    not_category_name=None,
                     **kwargs):
 	'''
 	Parameters

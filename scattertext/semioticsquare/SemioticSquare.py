@@ -1,6 +1,7 @@
-from scipy.stats import hmean
+import numpy as np
+from scipy.stats import gmean
 
-from scattertext.termscoring import ScaledFScore
+from scattertext.termscoring import LogOddsRatioUninformativeDirichletPrior
 
 
 class EmptyNeutralCategoriesError(Exception): pass
@@ -26,7 +27,12 @@ class SemioticSquare(object):
 	... 	category_b = 'soc.religion.christian',
 	... 	neutral_categories = ['talk.religion.misc']
 	... )
+	>>> # A simple HTML table
 	>>> html = SemioticSquareViz(semseq).to_html()
+	>>> # The table with an interactive scatterplot below it
+	>>> html = st.produce_semiotic_square_explorer(semiotic_square,
+	...                                            x_label='More Atheism, Less Xtnity',
+	...                                            y_label='General Religious Talk')
 	'''
 
 	def __init__(self,
@@ -44,7 +50,7 @@ class SemioticSquare(object):
 		neutral_categories : list[str]
 			List of category names that A and B will be contrasted to.  Should be in same domain.
 		scorer : termscoring class, optional
-			Term scoring class for lexicon mining
+			Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`
 		'''
 		self.term_doc_matrix_ = term_doc_matrix
 		assert category_a in term_doc_matrix.get_categories()
@@ -56,8 +62,38 @@ class SemioticSquare(object):
 		self.category_a_ = category_a
 		self.category_b_ = category_b
 		self.neutral_categories_ = neutral_categories
-		self.scorer = ScaledFScore if scorer is None else scorer
+		self.scorer = LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001) \
+			if scorer is None else scorer
 		self._build_lexicons()
+
+	def get_axes(self, scorer=None):
+		'''
+		Returns
+		-------
+		pd.DataFrame
+		'''
+		if scorer is None:
+			scorer = self.scorer
+
+		tdf = self._get_term_doc_count_df()
+		counts = tdf.sum(axis=1)
+		tdf['x'] = scorer.get_scores(
+			tdf[self.category_a_ + ' freq'],
+			tdf[self.category_b_ + ' freq']
+		)
+		tdf['x'][np.isnan(tdf['x'])] = self.scorer.get_default_score()
+
+		tdf['y'] = scorer.get_scores(
+			tdf[[t + ' freq' for t in [self.category_a_, self.category_b_]]].sum(axis=1),
+			tdf[[t + ' freq' for t in self.neutral_categories_]].sum(axis=1)
+		)
+		tdf['counts'] = counts
+		return tdf[['x', 'y', 'counts']]
+
+	def _get_term_doc_count_df(self):
+		return (self.term_doc_matrix_.get_term_doc_count_df()
+		[[t + ' freq'
+		  for t in [self.category_a_, self.category_b_] + self.neutral_categories_]])
 
 	def get_lexicons(self, num_terms=10):
 		'''
@@ -92,21 +128,33 @@ class SemioticSquare(object):
 		}
 
 	def _build_lexicons(self):
-		tdf = (self.term_doc_matrix_.get_term_doc_count_df()
-		       [[t + ' freq' for t
-		         in [self.category_a_, self.category_b_] + self.neutral_categories_]])
+		tdf = self._get_term_doc_count_df()
 		tdf = tdf[tdf.sum(axis=1) > 0]
+		self.build_lexicons_from_term_freq_df(tdf)
+
+	def build_lexicons_from_term_freq_df(self, tdf):
+		'''
+
+		Parameters
+		----------
+		tdf
+
+		Returns
+		-------
+
+		'''
+
 		self._find_a_vs_b_and_b_vs_a(tdf)
 		tdf[self.category_a_ + ' scores'] = self.scorer.get_scores(
 			tdf[self.category_a_ + ' freq'],
-			tdf[[t for t in tdf.columns if t != self.category_a_ + ' freq']].sum(axis=1))
+			tdf[[t for t in tdf.columns if t != self.category_a_ + ' freq']].sum(axis=1)
+		)
 		tdf[self.category_b_ + ' scores'] = self.scorer.get_scores(
 			tdf[self.category_b_ + ' freq'],
 			tdf[[t for t in tdf.columns if t != self.category_b_ + ' freq']].sum(axis=1))
 		tdf[self.category_a_ + ' + ' + self.category_b_ + ' scores'] = tdf[
 			[t + ' scores' for t in [self.category_a_, self.category_b_]]].apply(
-			lambda x: hmean(x) if min(x) > 0 else 0, axis=1)
-
+			lambda x: gmean(x) if min(x) > 0 else 0, axis=1)
 		tdf["not " + self.category_a_ + ' scores'] = self.scorer.get_scores(
 			tdf[[t for t in tdf.columns if t != self.category_a_ + ' freq']].sum(axis=1),
 			tdf[self.category_a_ + ' freq'])
@@ -115,12 +163,11 @@ class SemioticSquare(object):
 			tdf[self.category_b_ + ' freq'])
 		tdf["not " + self.category_a_ + ' + ' + self.category_b_ + ' scores'] = tdf[
 			['not ' + t + ' scores' for t in [self.category_a_, self.category_b_]]].apply(
-			lambda x: hmean(x) if min(x) > 0 else 0, axis=1)
-
+			lambda x: gmean(x) if min(x) > 0 else 0, axis=1)
 		self.category_a_words_ = list(tdf.sort_values(by=self.category_a_ + ' scores',
-		                                          ascending=False).index)
+		                                              ascending=False).index)
 		self.category_b_words_ = list(tdf.sort_values(by=self.category_b_ + ' scores',
-		                                          ascending=False).index)
+		                                              ascending=False).index)
 		self.category_a_and_b_words_ = list(
 			tdf.sort_values(by=self.category_a_ + ' + ' + self.category_b_ + ' scores',
 			                ascending=False).index)
@@ -144,6 +191,6 @@ class SemioticSquare(object):
 			term_tdf[self.category_b_ + ' freq'],
 			term_tdf[self.category_a_ + ' freq'])
 		self.category_a_vs_b_words_ = list(term_tdf.sort_values(by=self.category_a_ + ' scores',
-		                                                    ascending=False).index)
+		                                                        ascending=False).index)
 		self.category_b_vs_a_words_ = list(term_tdf.sort_values(by=self.category_b_ + ' scores',
-		                                                    ascending=False).index)
+		                                                        ascending=False).index)

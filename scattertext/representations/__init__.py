@@ -1,1 +1,1 @@
-from .Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, Word2VecFromParsedCorpusBigrams
+from .Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, Word2VecFromParsedCorpusBigrams, CorpusAdapterForGensim

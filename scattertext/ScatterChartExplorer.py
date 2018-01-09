@@ -25,7 +25,9 @@ class ScatterChartExplorer(ScatterChart):
 	            max_docs_per_category=None,
 	            transform=percentile_alphabetical,
 	            alternative_text_field=None,
-	            title_case_names=False):
+	            title_case_names=False,
+	            not_categories=None,
+	            neutral_category_name=None):
 		'''
 
 		Parameters
@@ -49,6 +51,12 @@ class ScatterChartExplorer(ScatterChart):
 			can be used if corpus is a ParsedCorpus instance.
 		title_case_names : bool, default False
 		  Should the program title-case the category and not-category names?
+		not_categories : list, optional
+			List of categories to use as "not category".  Defaults to all others.
+		neutral_category_name : str
+			"Neutral" by default. Only active if show_neutral is True.  Name of the neutral
+			column.
+
 		Returns
 		-------
 		dictionary {info: {category_name: ..., not_category_name},
@@ -72,9 +80,13 @@ class ScatterChartExplorer(ScatterChart):
 		                         not_category_name=not_category_name,
 		                         scores=scores,
 		                         transform=transform,
-		                         title_case_names=title_case_names)
+		                         title_case_names=title_case_names,
+		                         not_categories=not_categories)
 		docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
+		if neutral_category_name is None:
+			neutral_category_name = 'Neutral'
 		j['docs'] = self._get_docs_structure(docs_getter, metadata)
+		j['info']['neutral_category_name'] = neutral_category_name
 		return j
 
 	def _make_docs_getter(self, max_docs_per_category, alternative_text_field):

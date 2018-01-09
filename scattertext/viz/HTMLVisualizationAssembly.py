@@ -8,7 +8,7 @@ class InvalidProtocolException(Exception):
 	pass
 
 
-class HTMLVisualizationAssembly:
+class HTMLVisualizationAssembly(object):
 	def __init__(self,
 	             visualization_data,
 	             width_in_pixels=None,
@@ -27,7 +27,15 @@ class HTMLVisualizationAssembly:
 	             save_svg_button=False,
 	             p_value_colors=False,
 	             x_label=None,
-	             y_label=None):
+	             y_label=None,
+	             full_data=None,
+	             show_top_terms=True,
+	             show_neutral=False,
+	             get_tooltip_content=None,
+	             x_axis_values=None,
+	             y_axis_values=None,
+	             color_func = None
+	             ):
 		'''
 
 		Parameters
@@ -71,6 +79,24 @@ class HTMLVisualizationAssembly:
 			If present, use as the x-axis label
 		y_label : str, default None
 			If present, use as the y-axis label
+		full_data : str, default None
+			Data used to create chart. By default "getDataAndInfo()".
+		show_top_terms : bool, default True
+			Show the top terms sidebar
+		show_neutral : bool, default False
+			Show a third column for matches in neutral documents
+		get_tooltip_content : str, default None
+			Javascript function to control content of tooltip.  Function takes a parameter
+			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+			returns a string.
+		x_axis_values : list, default None
+			Value-labels to show on x-axis. Low, medium, high are defaults.
+		y_axis_values : list, default None
+			Value-labels to show on y-axis. Low, medium, high are defaults.
+		color_func : str, default None
+			Javascript function to control color of a point.  Function takes a parameter
+			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+			returns a string.
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels
@@ -90,21 +116,34 @@ class HTMLVisualizationAssembly:
 		self._p_value_colors = p_value_colors
 		self._x_label = x_label
 		self._y_label = y_label
+		self._full_data = full_data
+		self._show_top_terms = show_top_terms
+		self._show_neutral = show_neutral
+		self._get_tooltip_content = get_tooltip_content
+		self._x_axis_values = x_axis_values
+		self._y_axis_values = y_axis_values
+		self._color_func = color_func
 
 	def to_html(self,
 	            protocol='http',
-	            d3_url = None,
-	            d3_scale_chromatic_url = None):
+	            d3_url=None,
+	            d3_scale_chromatic_url=None,
+	            semiotic_square_html=None):
 		'''
 		Parameters
 		----------
-		protocol, 'http' or 'https' for including external urls
-		d3_url, str, None by default.  The url (or path) of d3.
-			URL of d3, to be inserted into <script src="..."/>
+		protocol : str
+		 'http' or 'https' for including external urls
+		d3_url, str
+		  None by default.  The url (or path) of
+		  d3, to be inserted into <script src="..."/>
 		  By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
-		d3_scale_chromatic_url, str, None by default.
+		d3_scale_chromatic_url : str
+		  None by default.
 		  URL of d3_scale_chromatic_url, to be inserted into <script src="..."/>
 		  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
+		semiotic_square_html : str
+			None by default.  HTML of semiotic square to be inserted above plot.
 
 		Returns
 		-------
@@ -131,6 +170,10 @@ class HTMLVisualizationAssembly:
 		             .replace('<!--D3SCALECHROMATIC-->', d3_scale_chromatic_url)
 		             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
 		             )
+
+		if semiotic_square_html is not None:
+			html_file = html_file.replace('<!-- INSERT SEMIOTIC SQUARE -->',
+			                              semiotic_square_html)
 
 		extra_libs = ''
 		if self._save_svg_button:
@@ -179,6 +222,9 @@ class HTMLVisualizationAssembly:
 		def js_float(x):
 			return str(float(x))
 
+		def js_default_full_data(full_data):
+			return full_data if full_data is not None else "getDataAndInfo()"
+
 		arguments = [js_default_value(self._width_in_pixels),
 		             js_default_value(self._height_in_pixels),
 		             js_default_value_to_null(self._max_snippets),
@@ -195,5 +241,13 @@ class HTMLVisualizationAssembly:
 		             js_float(self._max_p_val),
 		             js_bool(self._p_value_colors),
 		             js_default_string(self._x_label),
-		             js_default_string(self._y_label)]
-		return 'buildViz(' + ','.join(arguments) + ');'
+		             js_default_string(self._y_label),
+		             js_default_full_data(self._full_data),
+		             js_bool(self._show_top_terms),
+		             js_bool(self._show_neutral),
+		             js_default_value_to_null(self._get_tooltip_content),
+		             js_default_value_to_null(self._x_axis_values),
+		             js_default_value_to_null(self._y_axis_values),
+		             js_default_value_to_null(self._color_func)]
+		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'
+

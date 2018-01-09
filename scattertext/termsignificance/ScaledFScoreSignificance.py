@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+from scattertext import ScaledFZScore
 from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
 from scattertext.termscoring import ScaledFScore
 from scipy.stats import norm
@@ -21,6 +22,22 @@ class ScaledFScoreSignificance(TermSignificance):
 		self.scaler_algo = scaler_algo
 		self.beta = beta
 
+	def get_zeta_i_j_given_separate_counts(self, cat, ncat):
+		'''
+		Parameters
+		----------
+		cat : np.array
+			In category word counts
+		ncat : np.array
+			Out of category word counts
+
+		Returns
+		-------
+		np.array
+			Z-scores
+		'''
+		return ScaledFZScore(self.scaler_algo, self.beta).get_scores(cat, ncat)
+
 	def get_p_vals(self, X):
 		'''
 		Imputes p-values from the Z-scores of `ScaledFScore` scores.  Assuming incorrectly
@@ -37,8 +54,7 @@ class ScaledFScoreSignificance(TermSignificance):
 		np.array of p-values
 
 		'''
-		f_scores = ScaledFScore.get_scores(X[:,0], X[:,1], self.scaler_algo, self.beta)
-		z_scores = (f_scores - np.mean(f_scores))/(np.std(f_scores)/np.sqrt(len(f_scores)))
+		z_scores = ScaledFZScore(self.scaler_algo, self.beta).get_scores(X[:,0], X[:,1])
 		return norm.cdf(z_scores)
 
 

@@ -1,5 +1,5 @@
 buildViz = function (d3) {
-    return function (widthInPixels = 800,
+    return function (widthInPixels = 1000,
                      heightInPixels = 600,
                      max_snippets = null,
                      color = null,
@@ -15,7 +15,14 @@ buildViz = function (d3) {
                      minPVal = 0.1,
                      pValueColors = false,
                      xLabelText = null,
-                     yLabelText = null) {
+                     yLabelText = null,
+                     fullData = null,
+                     showTopTerms = true,
+                     showNeutral = false,
+                     getTooltipContent = null,
+                     xAxisValues = null,
+                     yAxisValues = null,
+                     colorFunc = null) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -27,14 +34,19 @@ buildViz = function (d3) {
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
 
-        console.log('X Label');
-        console.log(xLabelText);
-        console.log('Y Label');
-        console.log(yLabelText);
-        console.log(yLabelText == null);
-        console.log(yLabelText != null);
-        console.log(yLabelText === undefined);
-        console.log(yLabelText !== undefined);
+        if (showNeutral) {
+
+            document.querySelectorAll('#neutcol')
+                .forEach(function (x) {
+                    x.style.display = 'inline'
+                });
+            document.querySelectorAll('.contexts')
+                .forEach(function (x) {
+                    x.style.width = '30%'
+                });
+        }
+        var yAxis = null;
+        var xAxis = null;
 
         function axisLabelerFactory(axis) {
             if ((axis == "x" && xLabelText == null)
@@ -48,14 +60,81 @@ buildViz = function (d3) {
             }
         }
 
-        var xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
-        var yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabelerFactory('y'));
+
+        function bs(ar, x) {
+            function bsa(s, e) {
+                var mid = Math.floor((s + e) / 2);
+                var midval = ar[mid];
+                if (s == e) {
+                    return s;
+                }
+                if (midval == x) {
+                    return mid;
+                } else if (midval < x) {
+                    return bsa(mid + 1, e);
+                } else {
+                    return bsa(s, mid);
+                }
+            }
+
+            return bsa(0, ar.length);
+        }
+
+
+        var sortedX = fullData.data.sort(function (a, b) {
+            return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
+        }).map(function (x) {
+            return x.x
+        });
+
+        var sortedOx = fullData.data.sort(function (a, b) {
+            return a.ox < b.ox ? -1 : (a.ox == b.ox ? 0 : 1);
+        }).map(function (x) {
+            return x.ox
+        });
+
+        var sortedY = fullData.data.sort(function (a, b) {
+            return a.y < b.y ? -1 : (a.y == b.y ? 0 : 1);
+        }).map(function (x) {
+            return x.y
+        });
+
+        var sortedOy = fullData.data.sort(function (a, b) {
+            return a.oy < b.oy ? -1 : (a.oy == b.oy ? 0 : 1);
+        }).map(function (x) {
+            return x.oy
+        });
+
+
+        function labelWithZScore(axis, axisName, tickPoints) {
+            var myVals = axisName === 'x' ? sortedOx : sortedOy;
+            var myPlotedVals = axisName === 'x' ? sortedX : sortedY;
+            var ticks = tickPoints.map(function (x) {
+                return myPlotedVals[bs(myVals, x)]
+            });
+            return axis.tickValues(ticks).tickFormat(
+                function (d, i) {
+                    return tickPoints[i];
+                })
+        }
+
+        if (xAxisValues) {
+            xAxis = labelWithZScore(d3.axisBottom(x), 'x', xAxisValues);
+        } else {
+            xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
+        }
+        if (yAxisValues) {
+            yAxis = labelWithZScore(d3.axisLeft(y), 'y', yAxisValues);
+        } else {
+            yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabelerFactory('y'));
+        }
 
         // var label = d3.select("body").append("div")
         var label = d3.select('#' + divName).append("div")
             .attr("class", "label");
 
-        var interpolateLightGreys = d3.interpolate(d3.rgb(230, 230, 230), d3.rgb(130, 130, 130));
+        var interpolateLightGreys = d3.interpolate(d3.rgb(230, 230, 230),
+            d3.rgb(130, 130, 130));
         // setup fill color
         //var color = d3.interpolateRdYlBu;
         if (color == null) {
@@ -71,7 +150,8 @@ buildViz = function (d3) {
             .append("g")
             .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
-
+        origSVGLeft = svg.node().getBoundingClientRect().left;
+        origSVGTop = svg.node().getBoundingClientRect().top;
         var lastCircleSelected = null;
 
         function getCorpusWordCounts() {
@@ -113,19 +193,21 @@ buildViz = function (d3) {
                 .forEach(function (contextSet, categoryIdx) {
                     contextSet.forEach(function (context) {
                         context.snippets.forEach(function (snippet) {
-                            var tokens = snippet.toLowerCase().trim().replace('<b>','').replace('</b>','').split(/\W+/);
+                            var tokens = snippet.toLowerCase().trim().replace('<b>', '').replace('</b>', '').split(/\W+/);
                             var matchIndices = [];
-                            tokens.forEach(function (word, i) { if(word === query) matchIndices.push(i)});
+                            tokens.forEach(function (word, i) {
+                                if (word === query) matchIndices.push(i)
+                            });
                             tokens.forEach(function (word, i) {
                                 if (word.trim() !== '') {
                                     var isValid = false;
-                                    for(var matchI in matchIndices) {
+                                    for (var matchI in matchIndices) {
                                         if (Math.abs(i - matchI) < 3) {
                                             isValid = true;
                                             break
                                         }
                                     }
-                                    if(isValid) {
+                                    if (isValid) {
                                         //console.log([word, i, matchI, isValid]);
                                         if (!(word in wordCounts)) {
                                             var priorCounts = corpusWordCounts.counts[word]
@@ -231,7 +313,7 @@ buildViz = function (d3) {
                 return Math.log(a + 0.0000001);
             }
 
-            var contextWordCounts  = getContextWordCounts(query);
+            var contextWordCounts = getContextWordCounts(query);
             var wordList = Object.keys(contextWordCounts.counts).map(function (word) {
                 return contextWordCounts.counts[word].concat([word]);
             });
@@ -241,7 +323,7 @@ buildViz = function (d3) {
                 return a + b
             }) / wordList.length;
             var cat_freq_var = wordList.map(function (x) {
-                return (scale(x[0]) - cat_freq_xbar) ** 2;
+                return Math.pow((scale(x[0]) - cat_freq_xbar), 2);
             }).reduce(function (a, b) {
                 return a + b
             }) / wordList.length;
@@ -251,7 +333,7 @@ buildViz = function (d3) {
                 return a + b
             }) / wordList.length;
             var cat_prec_var = wordList.map(function (x) {
-                return (scale(x[0] / (x[0] + x[1])) - cat_prec_xbar) ** 2;
+                return Math.pow((scale(x[0] / (x[0] + x[1])) - cat_prec_xbar), 2);
             }).reduce(function (a, b) {
                 return a + b
             }) / wordList.length;
@@ -262,7 +344,7 @@ buildViz = function (d3) {
                 return a + b
             }) / wordList.length;
             var ncat_freq_var = wordList.map(function (x) {
-                return (scale(x[0]) - ncat_freq_xbar) ** 2;
+                return Math.pow((scale(x[0]) - ncat_freq_xbar), 2);
             }).reduce(function (a, b) {
                 return a + b
             }) / wordList.length;
@@ -272,7 +354,7 @@ buildViz = function (d3) {
                 return a + b
             }) / wordList.length;
             var ncat_prec_var = wordList.map(function (x) {
-                return (scale(x[0] / (x[0] + x[1])) - ncat_prec_xbar) ** 2;
+                return Math.pow((scale(x[0] / (x[0] + x[1])) - ncat_prec_xbar), 2);
             }).reduce(function (a, b) {
                 return a + b
             }) / wordList.length;
@@ -281,7 +363,7 @@ buildViz = function (d3) {
                 var beta = 1.5;
                 var normFreq = cdf(scale(cnt), freq_xbar, freq_var);
                 var normPrec = cdf(scale(cnt / (cnt + other)), prec_xbar, prec_var);
-                return (1+beta**2) * normFreq * normPrec / ((beta**2)*normFreq + normPrec);
+                return (1 + Math.pow(beta, 2)) * normFreq * normPrec / (Math.pow(beta, 2) * normFreq + normPrec);
             }
 
             var sfs = wordList.map(function (x) {
@@ -344,7 +426,9 @@ buildViz = function (d3) {
         function gatherTermContexts(d) {
             var category_name = fullData['info']['category_name'];
             var not_category_name = fullData['info']['not_category_name'];
-            var matches = [[], []];
+            var matches = [[], [], []];
+            console.log("searching")
+
             if (fullData.docs === undefined) return matches;
             if (!nonTextFeaturesMode) {
                 return searchInText(d);
@@ -354,10 +438,20 @@ buildViz = function (d3) {
         }
 
         function searchInExtraFeatures(d) {
-            var matches = [[], []];
+            var matches = [[], [], []];
             var term = d.term;
-            for (var i in fullData.docs.extra) {
+            var categoryNum = fullData.docs.categories.indexOf(fullData.info.category_internal_name);
+            var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
 
+            for (var i in fullData.docs.extra) {
                 if (term in fullData.docs.extra[i]) {
                     var strength = fullData.docs.extra[i][term] /
                         Object.values(fullData.docs.extra[i]).reduce(
@@ -370,7 +464,14 @@ buildViz = function (d3) {
                     var curMatch = {'id': i, 'snippets': [text], 'strength': strength};
 
                     curMatch['meta'] = fullData.docs.meta[i];
-                    matches[fullData.docs.labels[i]].push(curMatch);
+                    var docLabel = fullData.docs.labels[i];
+                    var numericLabel = 2;
+                    if (docLabel == categoryNum) {
+                        numericLabel = 0;
+                    } else if (notCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 1;
+                    }
+                    matches[numericLabel].push(curMatch);
                 }
             }
             for (var i in [0, 1]) {
@@ -387,6 +488,181 @@ buildViz = function (d3) {
         function isEmoji(str) {
             if (str.match(emojiRE)) return true;
             return false;
+        }
+
+        function displayTermContexts(termInfo, jump=true) {
+            var contexts = termInfo.contexts;
+            var info = termInfo.info;
+            if (contexts[0].length == 0 && contexts[1].length == 0) {
+                return null;
+            }
+            //!!! Future feature: context words
+            //var contextWords = getContextWordSFS(info.term);
+            //var contextWords = getContextWordLORIPs(info.term);
+            //var categoryNames = [fullData.info.category_name,
+            //    fullData.info.not_category_name];
+            var catInternalName = fullData.info.category_internal_name;
+            var contextCoulumns = [
+                fullData.info.category_internal_name,
+                fullData.info.not_category_name
+            ];
+            if (showNeutral) {
+                if ('neutral_category_name' in fullData.info) {
+                    contextCoulumns.push(fullData.info.neutral_category_name)
+                } else {
+                    contextCoulumns.push("Neutral")
+                }
+            }
+            contextCoulumns.map(
+                function (catName, catIndex) {
+                    if (max_snippets != null) {
+                        var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
+                    }
+
+                    //var divId = catName == catInternalName ? '#cat' : '#notcat';
+                    var divId = '#neut';
+                    if (catName == fullData.info.category_internal_name) {
+                        divId = '#cat'
+                    } else if (catName == fullData.info.not_category_name) {
+                        divId = '#notcat'
+                    }
+                    var temp = d3.select(divId)
+                        .selectAll("div").remove();
+                    contexts[catIndex].forEach(function (context) {
+                        var meta = context.meta ? context.meta : '&nbsp;';
+                        d3.select(divId)
+                            .append("div")
+                            .attr('class', 'snippet_meta')
+                            .html(meta);
+                        context.snippets.forEach(function (snippet) {
+                            d3.select(divId)
+                                .append("div")
+                                .attr('class', 'snippet')
+                                .html(snippet);
+                        })
+
+                    });
+                });
+            d3.select('#termstats')
+                .selectAll("div")
+                .remove();
+            d3.select('#termstats')
+                .append('div')
+                .attr("class", "snippet_header")
+                .html('Term: <b>' + info.term + '</b>');
+            var message = '';
+            var cat_name = fullData.info.category_name;
+            var ncat_name = fullData.info.not_category_name;
+
+            var numCatDocs = fullData.docs.labels
+                .map(function (x) {
+                    return (x == fullData.docs.categories.indexOf(
+                        fullData.info.category_internal_name)) + 0
+                })
+                .reduce(function (a, b) {
+                    return a + b;
+                })
+
+            var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
+
+
+            var numNCatDocs = fullData.docs.labels
+                .map(function (x) {
+                    return notCategoryNumList.indexOf(x) > -1
+                })
+                .reduce(function (a, b) {
+                    return a + b;
+                });
+
+            function getFrequencyDescription(name, count25k, count, ndocs) {
+                var desc = name + ' frequency: <div class=text_subhead>' + count25k
+                    + ' per 25,000 terms</div><div class=text_subhead>' + Math.round(ndocs)
+                    + ' per 1,000 docs</div>';
+                if (count == 0) {
+                    desc += '<u>Not found in any ' + name + ' documents.</u>';
+                } else {
+                    desc += '<u>Some of the ' + count + ' mentions:</u>';
+                }
+                /*
+                desc += '<br><b>Discriminative:</b> ';
+
+                desc += contextWords
+                    .slice(cat_name === name ? 0 : contextWords.length - 3,
+                        cat_name === name ? 3 : contextWords.length)
+                    .filter(function (x) {
+                        //return Math.abs(x[5]) > 1.96;
+                        return true;
+                    })
+                    .map(function (x) {return x.join(', ')}).join('<br>');
+                */
+                return desc;
+            }
+
+            d3.select('#cathead')
+                .style('fill', color(1))
+                .html(
+                    getFrequencyDescription(cat_name,
+                        info.cat25k,
+                        info.cat,
+                        termInfo.contexts[0].length * 1000 / numCatDocs
+                    )
+                );
+            d3.select('#notcathead')
+                .style('fill', color(0))
+                .html(
+                    getFrequencyDescription(ncat_name,
+                        info.ncat25k,
+                        info.ncat,
+                        termInfo.contexts[1].length * 1000 / numNCatDocs)
+                );
+            console.log("TermINfo")
+            console.log(termInfo);
+            console.log(info)
+            if (showNeutral) {
+                console.log("NEUTRAL")
+                var neutralNumList = fullData.docs.categories.map(function (x, i) {
+                    if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
+                        return -1;
+                    } else if (x == fullData.docs.categories.indexOf(fullData.info.category_internal_name)) {
+                        return -1;
+                    } else {
+                        return i;
+                    }
+                }).filter(function (x) {
+                    return x > -1
+                });
+                var numNeutDocs = fullData.docs.labels
+                    .map(function (x) {
+                        return neutralNumList.indexOf(x) > -1
+                    })
+                    .reduce(function (a, b) {
+                        return a + b;
+                    });
+                d3.select('#neuthead')
+                    .style('fill', color(0))
+                    .html(
+                        getFrequencyDescription(fullData.info.neutral_category_name,
+                            info.neut25k,
+                            info.neut,
+                            termInfo.contexts[2].length * 1000 / numNCatDocs)
+                    );
+
+            }
+            if (jump) {
+                if (window.location.hash == '#snippets') {
+                    window.location.hash = '#snippetsalt';
+                } else {
+                    window.location.hash = '#snippets';
+                }
+            }
         }
 
         function searchInText(d) {
@@ -433,11 +709,29 @@ buildViz = function (d3) {
                 return regexp;
             }
 
-            var matches = [[], []];
+            var matches = [[], [], []];
             var pattern = buildMatcher(d.term);
+            var categoryNum = fullData.docs.categories.indexOf(fullData.info.category_internal_name);
+            var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
+
             if (pattern !== null) {
                 for (var i in fullData.docs.texts) {
-                    var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
+                    //var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
+                    var docLabel = fullData.docs.labels[i];
+                    var numericLabel = 2;
+                    if (docLabel == categoryNum) {
+                        numericLabel = 0;
+                    } else if (notCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 1;
+                    }
                     var text = removeUnderScoreJoin(fullData.docs.texts[i]);
                     //var pattern = new RegExp("\\b(" + stripNonWordChars(d.term) + ")\\b", "gim");
                     var match;
@@ -475,113 +769,42 @@ buildViz = function (d3) {
                     }
                 }
             }
-            return {'contexts': matches, 'info': d};
+            var toRet = {'contexts': matches, 'info': d};
+            return toRet;
         }
 
-        function displayTermContexts(termInfo, jump=true) {
-            var contexts = termInfo.contexts;
-            var info = termInfo.info;
-            if (contexts[0].length == 0 && contexts[1].length == 0) {
-                return null;
-            }
-            //!!! Future feature: context words
-            //var contextWords = getContextWordSFS(info.term);
-            //var contextWords = getContextWordLORIPs(info.term);
-            //var categoryNames = [fullData.info.category_name,
-            //    fullData.info.not_category_name];
-            var catInternalName = fullData.info.category_internal_name;
-            [fullData.info.category_internal_name, fullData.info.not_category_name]
-                .map(
-                    function (catName, catIndex) {
-                        if (max_snippets != null) {
-                            var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
-                        }
-                        var divId = catName == catInternalName ? '#cat' : '#notcat';
-                        var temp = d3.select(divId)
-                            .selectAll("div").remove();
-                        contexts[catIndex].forEach(function (context) {
-                            var meta = context.meta ? context.meta : '&nbsp;';
-                            d3.select(divId)
-                                .append("div")
-                                .attr('class', 'snippet_meta')
-                                .html(meta);
-                            context.snippets.forEach(function (snippet) {
-                                d3.select(divId)
-                                    .append("div")
-                                    .attr('class', 'snippet')
-                                    .html(snippet);
-                            })
+        function getDefaultTooltipContent(d) {
+            var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
+            message += '<br/>score: ' + d.os.toFixed(5);
+            return message;
+        }
 
-                        });
-                    });
-            d3.select('#termstats')
-                .selectAll("div")
-                .remove();
-            d3.select('#termstats')
-                .append('div')
-                .attr("class", "snippet_header")
-                .html('Term: <b>' + info.term + '</b>');
-            var message = '';
-            var cat_name = fullData.info.category_name;
-            var ncat_name = fullData.info.not_category_name;
-
-            function getFrequencyDescription(name, count25k, count) {
-                var desc = name + ' frequency: <div class=text_subhead>' + count25k
-                    + ' per 25,000 terms</div>';
-                if (count == 0) {
-                    desc += '<u>Not found in any ' + name + ' documents.</u>';
-                } else {
-                    desc += '<u>Some of the ' + count + ' mentions:</u>';
-                }
-                /*
-                desc += '<br><b>Discriminative:</b> ';
-
-                desc += contextWords
-                    .slice(cat_name === name ? 0 : contextWords.length - 3,
-                        cat_name === name ? 3 : contextWords.length)
-                    .filter(function (x) {
-                        //return Math.abs(x[5]) > 1.96;
-                        return true;
-                    })
-                    .map(function (x) {return x.join(', ')}).join('<br>');
-                */
-                return desc;
-            }
-
-            d3.select('#cathead')
-                .style('fill', color(1))
-                .html(getFrequencyDescription(cat_name, info.cat25k, info.cat));
-            d3.select('#notcathead')
-                .style('fill', color(0))
-                .html(getFrequencyDescription(ncat_name, info.ncat25k, info.ncat));
-            if (jump) {
-                if (window.location.hash == '#snippets') {
-                    window.location.hash = '#snippetsalt';
-                } else {
-                    window.location.hash = '#snippets';
-                }
-            }
+        function getDefaultTooltipContentWithoutScore(d) {
+            var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
+            return message;
         }
 
         function showTooltip(d, pageX, pageY) {
             deselectLastCircle();
-            var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
-            if (!sortByDist) {
-                message += '<br/>score: ' + d.os.toFixed(5);
+            var message = '';
+            if (getTooltipContent !== null) {
+                message = getTooltipContent(d);
+            } else {
+                message = getDefaultTooltipContent(d);
+                if (!sortByDist) {
+                    message = getDefaultTooltipContentWithoutScore(d);
+                }
             }
-            /*
-             if (d.p) {
-             message += ';  (p:' + d.p.toFixed(5) +')';
-             }*/
 
+            pageX -= (svg.node().getBoundingClientRect().left);
+            pageY -= (svg.node().getBoundingClientRect().top) - origSVGTop;
             tooltip.transition()
                 .duration(0)
                 .style("opacity", 1)
                 .style("z-index", 10000000);
             tooltip.html(message)
-                .style("left", (pageX) + "px")
-                .style("top", (pageY - 28) + "px");
-
+                .style("left", (pageX - 40) + "px")
+                .style("top", (pageY - 70) + "px");
             tooltip.on('click', function () {
                 tooltip.transition()
                     .style('opacity', 0)
@@ -612,12 +835,21 @@ buildViz = function (d3) {
             } else {
                 d3.select("#alertMessage").text("");
                 var circle = mysvg._groups[0][searchTermInfo.i];
+
+
                 var mySVGMatrix = circle.getScreenCTM()
                     .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
                 var pageX = mySVGMatrix.e;
                 var pageY = mySVGMatrix.f;
                 circle.style["stroke"] = "black";
-                showTooltip(searchTermInfo, pageX, pageY);
+                //var circlePos = circle.position();
+                //var el = circle.node()
+                //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
+                showTooltip(searchTermInfo,
+                    pageX,
+                    pageY
+                );
+
                 lastCircleSelected = circle;
 
             }
@@ -655,7 +887,6 @@ buildViz = function (d3) {
                 termDict[x.term].i = i;
             });
 
-            console.log(data);
             // Scale the range of the data.  Add some space on either end.
             x.domain([-0.1, d3.max(data, function (d) {
                 return d.x;
@@ -693,7 +924,9 @@ buildViz = function (d3) {
                 })
                 .style("fill", function (d) {
                     //.attr("fill", function (d) {
-                    if (greyZeroScores && d.os == 0) {
+                    if (colorFunc) {
+                        return colorFunc(d);
+                    } else if (greyZeroScores && d.os == 0) {
                         return d3.rgb(230, 230, 230);
                     } else if (pValueColors && d.p) {
                         if (d.p >= 1 - minPVal) {
@@ -708,7 +941,17 @@ buildViz = function (d3) {
                     }
                 })
                 .on("mouseover", function (d) {
-                    showTooltip(d, d3.event.pageX, d3.event.pageY);
+                    /*var mySVGMatrix = circle.getScreenCTM()n
+                        .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+                    var pageX = mySVGMatrix.e;
+                    var pageY = mySVGMatrix.f;*/
+
+                    /*showTooltip(
+                        d,
+                        d3.event.pageX,
+                        d3.event.pageY
+                    );*/
+                    showToolTipForTerm(d.term);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("click", function (d) {
@@ -915,16 +1158,27 @@ buildViz = function (d3) {
 
             //rangeTree = registerFigureBBox(xLabel);
             // Add the Y Axis
-            var myYAxis = svg.append("g")
-                .attr("class", "y axis")
-                .call(yAxis)
-                .selectAll("text")
-                .style("text-anchor", "end")
-                .attr("dx", "30px")
-                .attr("dy", "-13px")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '10px')
-                .attr("transform", "rotate(-90)");
+
+            if (!yAxisValues) {
+                var myYAxis = svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("dx", "30px")
+                    .attr("dy", "-13px")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '10px')
+                    .attr("transform", "rotate(-90)");
+            } else {
+                var myYAxis = svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '10px');
+            }
             registerFigureBBox(myYAxis);
 
             function getLabelText(axis) {
@@ -951,18 +1205,6 @@ buildViz = function (d3) {
                 .attr('font-size', '10px')
                 .text(getLabelText('y'));
             registerFigureBBox(yLabel);
-
-            var catHeader = svg.append("text")
-                .attr("text-anchor", "start")
-                .attr("x", width)
-                .attr("dy", "6px")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bolder')
-                .attr('font-decoration', 'underline')
-                .text("Top " + fullData['info']['category_name']);
-            registerFigureBBox(catHeader);
-            console.log(catHeader);
 
             function showWordList(word, termDataList) {
                 var maxWidth = word.node().getBBox().width;
@@ -1028,25 +1270,44 @@ buildViz = function (d3) {
 
             }
 
-            var wordListData = showAssociatedWordList(catHeader, true);
-            var word = wordListData.word;
-            var maxWidth = wordListData.maxWidth;
 
-            catHeader = svg.append("text")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bolder')
-                .attr('font-decoration', 'underline')
-                .attr("text-anchor", "start")
-                .attr("x", width)
-                .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
-                .text("Top " + fullData['info']['not_category_name']);
+            var characteristicXOffset = width;
+            if (showTopTerms) {
+                var catHeader = svg.append("text")
+                    .attr("text-anchor", "start")
+                    .attr("x", width)
+                    .attr("dy", "6px")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bolder')
+                    .attr('font-decoration', 'underline')
+                    .text("Top " + fullData['info']['category_name']);
+                registerFigureBBox(catHeader);
+                console.log(catHeader);
 
 
-            wordListData = showAssociatedWordList(catHeader, false);
-            word = wordListData.word;
-            if (wordListData.maxWidth > maxWidth) {
-                maxWidth = wordListData.maxWidth;
+                var wordListData = showAssociatedWordList(catHeader, true);
+                var word = wordListData.word;
+                var maxWidth = wordListData.maxWidth;
+
+                catHeader = svg.append("text")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bolder')
+                    .attr('font-decoration', 'underline')
+                    .attr("text-anchor", "start")
+                    .attr("x", width)
+                    .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
+                    .text("Top " + fullData['info']['not_category_name']);
+
+                characteristicXOffset = catHeader.node().getBBox().x + maxWidth + 10;
+
+                wordListData = showAssociatedWordList(catHeader, false);
+                word = wordListData.word;
+                if (wordListData.maxWidth > maxWidth) {
+                    maxWidth = wordListData.maxWidth;
+                }
+
             }
 
 
@@ -1067,7 +1328,7 @@ buildViz = function (d3) {
                     .attr('font-size', '12px')
                     .attr('font-weight', 'bolder')
                     .attr('font-decoration', 'underline')
-                    .attr("x", catHeader.node().getBBox().x + maxWidth + 10)
+                    .attr("x", characteristicXOffset)
                     .attr("dy", "6px")
                     .text(title);
 
@@ -1160,14 +1421,20 @@ buildViz = function (d3) {
 
         };
 
-        fullData = getDataAndInfo();
+        //fullData = getDataAndInfo();
         var corpusWordCounts = getCorpusWordCounts();
         processData(fullData);
 
         // The tool tip is down here in order to make sure it has the highest z-index
         var tooltip = d3.select('#' + divName)
             .append("div")
-            .attr("class", sortByDist ? "tooltip" : "tooltipscore")
+            .attr("class", getTooltipContent == null && !sortByDist ? "tooltip" : "tooltipscore")
             .style("opacity", 0);
+        var plotInterface = Object();
+        plotInterface.displayTermContexts = displayTermContexts;
+        plotInterface.gatherTermContexts = gatherTermContexts;
+        plotInterface.termDict = termDict;
+        plotInterface.showToolTipForTerm = showToolTipForTerm;
+        return plotInterface
     };
 }(d3);

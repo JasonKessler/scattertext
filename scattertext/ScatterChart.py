@@ -90,14 +90,19 @@ class ScatterChart:
 		self.scatterchartdata = ScatterChartData(**kwargs)
 		self.x_coords = None
 		self.y_coords = None
+		self.original_x = None
+		self.original_y = None
 		self._rescale_x = None
 		self._rescale_y = None
+		self.used = False
 
 	def inject_coordinates(self,
 	                       x_coords,
 	                       y_coords,
 	                       rescale_x=None,
-	                       rescale_y=None):
+	                       rescale_y=None,
+	                       original_x=None,
+	                       original_y=None):
 		'''
 		Inject custom x and y coordinates for each term into chart.
 
@@ -111,7 +116,10 @@ class ScatterChart:
 			Rescales x-axis after filtering
 		rescale_y: lambda list[0,1]: list[0,1], default identity
 			Rescales y-axis after filtering
-
+		original_x : array-like, optional
+			Original, unscaled x-values.  Defaults to x_coords
+		original_y : array-like, optional
+			Original, unscaled y-values.  Defaults to y_coords
 		Returns
 		-------
 		self: ScatterChart
@@ -123,6 +131,8 @@ class ScatterChart:
 		self.y_coords = y_coords
 		self._rescale_x = rescale_x
 		self._rescale_y = rescale_y
+		self.original_x = x_coords if original_x is None else original_x
+		self.original_y = y_coords if original_y is None else original_y
 
 	def _verify_coordinates(self, coords, name):
 		if len(coords) != self.term_doc_matrix.get_num_terms():
@@ -139,7 +149,8 @@ class ScatterChart:
 	            not_category_name=None,
 	            scores=None,
 	            transform=percentile_alphabetical,
-	            title_case_names=False):
+	            title_case_names=False,
+	            not_categories=None):
 		'''
 
 		Parameters
@@ -156,6 +167,8 @@ class ScatterChart:
 			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.
 		title_case_names : bool, default False
 		  Title case category name and no-category name?
+		not_categories : list, optional
+			List of categories to use as "not category".  Defaults to all others.
 
 		Returns
 		-------
@@ -166,6 +179,8 @@ class ScatterChart:
 		  data: [{term:,
 		          x:frequency [0-1],
 		          y:frequency [0-1],
+		          ox: score,
+		          oy: score,
               s: score,
               os: original score,
               p: p-val,
@@ -177,15 +192,29 @@ class ScatterChart:
               ncat25k: freq per 25k in non-category}, ...]}}
 
 		'''
+		if self.used:
+			raise Exception("Cannot reuse a ScatterChart constructer")
+		self.used = True
 		all_categories, other_categories = self._get_category_names(category)
+		neutral_categories = []
+		if not_categories is not None:
+			assert set(not_categories) - set(c[:-5] for c in other_categories) == set()
+			other_categories = [c + ' freq' for c in not_categories]
+			neutral_categories = [c[:-5] for c in all_categories
+			                      if c != category + ' freq' and c not in other_categories]
 		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
 
 		if self.x_coords is None:
 			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
 				(category, df, other_categories, transform)
 			df['x'], df['y'] = self.x_coords, self.y_coords
+			df['ox'], df['oy'] = self.x_coords, self.y_coords
+
 		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
-		json_df = df[['x', 'y', 'term']]
+		if neutral_categories != []:
+			df['neut cat freq'] = df[[x + ' freq' for x in neutral_categories]].sum(axis=1).fillna(0)
+		json_df = df[['x', 'y', 'ox', 'oy', 'term']]
+
 		if self.scatterchartdata.term_significance:
 			json_df['p'] = df['p']
 		self._add_term_freq_to_json_df(json_df, df, category)
@@ -217,7 +246,9 @@ class ScatterChart:
 		              'not_category_name': better_title(not_category_name),
 		              'category_terms': category_terms,
 		              'not_category_terms': not_category_terms,
-		              'category_internal_name': category}}
+		              'category_internal_name': category,
+		              'not_category_internal_names': [c[:-5] for c in other_categories],
+		              'categories': self.term_doc_matrix.get_categories()}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
@@ -247,6 +278,14 @@ class ScatterChart:
 		json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
 		                        / term_freq_df['not cat freq'].sum()) * 25000)
 		                      .apply(np.round).astype(np.int))
+		if 'neut cat freq' in term_freq_df:
+			json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
+			                        / term_freq_df['neut cat freq'].sum()) * 25000)
+				.apply(np.round).astype(np.int))
+			json_df['neut'] = term_freq_df['neut cat freq']
+		else:
+			json_df['neut25k'] = 0
+			json_df['neut'] = 0
 
 	def _get_category_names(self, category):
 		other_categories = [val + ' freq' for _, val \
@@ -285,6 +324,13 @@ class ScatterChart:
 		if self.x_coords is not None:
 			df['x'] = self.x_coords
 			df['y'] = self.y_coords
+
+		if not self.original_x is None:
+			df['ox'] = self.original_x.values
+
+		if not self.original_y is None:
+			df['oy'] = self.original_y.values
+
 		if scores is None:
 			scores = self._get_default_scores(category, df)
 		# np.array(self.term_doc_matrix.get_rudder_scores(category))

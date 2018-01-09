@@ -103,8 +103,10 @@ class Word2VecFromParsedCorpus(object):
 		'''
 		Parameters
 		----------
-		corpus: ParsedCorpus from which to build word2vec model
-		word2vec_model: Gensim word2vec.Word2Vec instance to be used to train word2vec model
+		corpus: ParsedCorpus
+		  from which to build word2vec model
+		word2vec_model: word2vec.Word2Vec
+			Gensim instance to be used to train word2vec model
 		'''
 		from gensim.models import word2vec
 		assert isinstance(corpus, ParsedCorpus)
@@ -112,11 +114,14 @@ class Word2VecFromParsedCorpus(object):
 		self.corpus = corpus
 		self.model = self._get_word2vec_model(word2vec_model)
 
-	def train(self, epochs=2000):
+	def train(self, epochs=2000, training_iterations=5):
 		'''
 		Parameters
 		----------
-		epochs int, number of epochs to train for.  Default is 2000.
+		epochs : int
+		  Number of epochs to train for.  Default is 2000.
+		training_iterations : int
+			Number of times to repeat training process. Default is training_iterations.
 
 		Returns
 		-------
@@ -124,9 +129,21 @@ class Word2VecFromParsedCorpus(object):
 		'''
 
 		self._scan_and_build_vocab()
+		for _ in range(training_iterations):
+			self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
+			                 total_examples=self.model.corpus_count,
+			                 epochs=epochs)
+		'''
 		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
 		                 total_examples=self.model.corpus_count,
 		                 epochs=epochs)
+		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
+		                 total_examples=self.model.corpus_count,
+		                 epochs=epochs)
+		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
+		                 total_examples=self.model.corpus_count,
+		                 epochs=epochs)
+		'''
 		return self.model
 
 	def _get_word2vec_model(self, word2vec_model):
@@ -136,10 +153,23 @@ class Word2VecFromParsedCorpus(object):
 
 	def _default_word2vec_model(self):
 		from gensim.models import word2vec
-		return word2vec.Word2Vec(size=100, alpha=0.025, window=5, min_count=5,
-		                         max_vocab_size=None, sample=0, seed=1, workers=1, min_alpha=0.0001,
-		                         sg=1, hs=1, negative=0, cbow_mean=0, iter=1, null_word=0,
-		                         trim_rule=None, sorted_vocab=1)
+		return word2vec.Word2Vec(size=100,
+		                         alpha=0.025,
+		                         window=5,
+		                         min_count=5,
+		                         max_vocab_size=None,
+		                         sample=0,
+		                         seed=1,
+		                         workers=1,
+		                         min_alpha=0.0001,
+		                         sg=1,
+		                         hs=1,
+		                         negative=0,
+		                         cbow_mean=0,
+		                         iter=1,
+		                         null_word=0,
+		                         trim_rule=None,
+		                         sorted_vocab=1)
 
 	def _scan_and_build_vocab(self):
 		self.model.scan_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))

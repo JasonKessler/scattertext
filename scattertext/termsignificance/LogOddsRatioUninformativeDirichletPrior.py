@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy.stats import norm
 from scipy.special import ndtr
 
+from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termsignificance.TermSignificance import TermSignificance
 
 
 def z_to_p_val(z_scores):
-	#return norm.sf(-z_scores) - 0.5 + 0.5
+	# return norm.sf(-z_scores) - 0.5 + 0.5
 	return ndtr(z_scores)
+
 
 class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 	'''
@@ -17,7 +18,7 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
 	'''
 
-	def __init__(self, alpha_w=0.01, ranker=AbsoluteFrequencyRanker):
+	def __init__(self, alpha_w=0.001, ranker=AbsoluteFrequencyRanker):
 		'''
 		Parameters
 		----------
@@ -92,3 +93,23 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		y_i, y_j = X.T[0], X.T[1]
 		return self.get_zeta_i_j_given_separate_counts(y_i, y_j)
 
+	def get_default_score(self):
+		return 0
+
+	def get_scores(self, y_i, y_j):
+		'''
+		Same function as get_zeta_i_j_given_separate_counts
+
+		Parameters
+		----------
+		y_i, np.array(int)
+			Arrays of word counts of words occurring in positive class
+		y_j, np.array(int)
+
+		Returns
+		-------
+		np.array of z-scores
+		'''
+		z_scores = self.get_zeta_i_j_given_separate_counts(y_i, y_j)
+		#scaled_scores = scale_neg_1_to_1_with_zero_mean_abs_max(z_scores)
+		return z_scores

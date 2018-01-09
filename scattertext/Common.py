@@ -2,7 +2,7 @@
 DEFAULT_BETA = 2
 DEFAULT_SCALER_ALGO = 'normcdf'
 
-DEFAULT_PMI_THRESHOLD_COEFFICIENT = 6
+DEFAULT_PMI_THRESHOLD_COEFFICIENT = 8
 
 DEFAULT_MINIMUM_TERM_FREQUENCY = 3
 
@@ -12,6 +12,7 @@ DEFAULT_BACKGROUND_SCALER_ALGO = 'none'
 
 # For sample corpus
 POLITICAL_DATA_URL = 'https://gitcdn.xyz/repo/JasonKessler/scattertext/master/scattertext/data/political_data.json'
+ROTTEN_TOMATOES_DATA_URL = 'https://gitcdn.xyz/repo/JasonKessler/scattertext/master/scattertext/data/rotten_tomatoes_corpus.csv.bz2'
 
 # For sample corpus
 DEFAULT_D3_URL \

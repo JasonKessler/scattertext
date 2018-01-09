@@ -1,17 +1,21 @@
 import spacy
 from gensim.models import word2vec
-
+from scattertext import whitespace_nlp_with_sentences
 from scattertext import SampleCorpora, word_similarity_explorer_gensim, Word2VecFromParsedCorpus
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
+from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 
 
 def main():
 	nlp = spacy.load('en')
+	#nlp = whitespace_nlp_with_sentences
 	convention_df = SampleCorpora.ConventionData2012.get_data()
 	convention_df['parsed'] = convention_df.text.apply(nlp)
-	corpus = CorpusFromParsedDocuments(convention_df,
+	corpus = (CorpusFromParsedDocuments(convention_df,
 	                                   category_col='party',
-	                                   parsed_col='parsed').build()
+	                                   parsed_col='parsed')
+	          .build()
+	          .get_unigram_corpus())
 	model = word2vec.Word2Vec(size=100,
 	                          alpha=0.025,
 	                          window=5,
@@ -31,14 +35,15 @@ def main():
 	                          sorted_vocab=1)
 	html = word_similarity_explorer_gensim(corpus,
 	                                       category='democrat',
+	                                       target_term='jobs',
 	                                       category_name='Democratic',
 	                                       not_category_name='Republican',
-	                                       target_term='jobs',
 	                                       minimum_term_frequency=5,
 	                                       width_in_pixels=1000,
 	                                       metadata=convention_df['speaker'],
 	                                       word2vec=Word2VecFromParsedCorpus(corpus, model).train(),
-	                                       max_p_val=0.1,
+	                                       term_significance=ScaledFScoreSignificance(),
+	                                       max_p_val=0.05,
 	                                       save_svg_button=True,
 	                                       d3_url='scattertext/data/viz/scripts/d3.min.js',
 	                                       d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js')

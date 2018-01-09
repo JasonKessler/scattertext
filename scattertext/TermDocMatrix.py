@@ -124,6 +124,17 @@ class TermDocMatrix(object):
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
 		return self._term_freq_df_from_matrix(newX)
 
+	def get_term_doc_count_df(self):
+		'''
+
+		Returns
+		-------
+		pd.DataFrame indexed on terms, with columns the number of documents each term appeared in
+		'''
+		row = self._row_category_ids()
+		newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
+		return self._term_freq_df_from_matrix(newX)
+
 	def _term_freq_df_from_matrix(self, catX):
 		return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
 
