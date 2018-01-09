@@ -6,7 +6,7 @@ from scattertext.semioticsquare import SemioticSquare
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
 
-version = [0, 0, 2, 16]
+version = [0, 0, 2, 16, 1]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings

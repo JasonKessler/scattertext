@@ -2,12 +2,6 @@ import itertools
 from collections import Counter
 
 from scattertext.features import FeatsFromSpacyDoc
-
-try:
-	from gensim.models import Phrases
-except:
-	pass
-
 from scattertext.ParsedCorpus import ParsedCorpus
 
 
@@ -20,7 +14,8 @@ class FeatsFromGensim(object):
 		gram_size : int, maximum number of words per phrase
 		kwargs : parameters for FeatsFromSpacyDoc.init
 		'''
-		print('xxx')
+		from gensim.models import Phrases
+
 		phrases = phrases
 		gram_size = gram_size
 		assert type(phrases) == Phrases
@@ -71,6 +66,8 @@ class GensimPhraseAdder(object):
 		-------
 		New ParsedCorpus containing unigrams in corpus and new phrases
 		'''
+		from gensim.models import Phrases
+
 		assert isinstance(corpus, ParsedCorpus)
 		self.phrases = [Phrases(CorpusAdapterForGensim.get_sentences(corpus), delimiter=' ')]
 
@@ -93,7 +90,8 @@ class CorpusAdapterForGensim(object):
 		iter: [sentence1word1, ...], [sentence2word1, ...]
 		'''
 		assert isinstance(corpus, ParsedCorpus)
-		return itertools.chain(*[[[t.lower_ for t in sent if not t.is_punct]
+		valid_terms = set(corpus.get_terms())
+		return itertools.chain(*[[[t.lower_ for t in sent if not t.is_punct and t.lower_ in valid_terms]
 		                          for sent in doc.sents]
 		                         for doc in corpus.get_parsed_docs()])
 

@@ -1,7 +1,6 @@
 from unittest import TestCase
 
 import pandas as pd
-from gensim.models import word2vec
 
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 from scattertext.WhitespaceNLP import whitespace_nlp
@@ -28,7 +27,14 @@ class TestWord2VecFromParsedCorpus(TestCase):
 		with self.assertRaises(Exception):
 			Word2VecFromParsedCorpus(3)
 		Word2VecFromParsedCorpus(self.corpus)
-		Word2VecFromParsedCorpus(self.corpus, word2vec.Word2Vec())
+		gensim_is_present_and_working = False
+		try:
+			from gensim.models import word2vec
+			gensim_is_present_and_working = True
+		except:
+			pass
+		if gensim_is_present_and_working:
+			Word2VecFromParsedCorpus(self.corpus, word2vec.Word2Vec())
 
 	def test_train(self):
 		Word2VecFromParsedCorpus(self.corpus).train()
