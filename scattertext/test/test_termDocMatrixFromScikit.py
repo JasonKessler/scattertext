@@ -13,7 +13,6 @@ class TestTermDocMatrixFromScikit(TestCase):
 		categories, docs = get_docs_categories_semiotic()
 		idx_store = IndexStore()
 		y = np.array([idx_store.getidx(c) for c in categories])
-		print(categories, y)
 		count_vectorizer = CountVectorizer()
 		X_counts = count_vectorizer.fit_transform(docs)
 		term_doc_mat = TermDocMatrixFromScikit(
