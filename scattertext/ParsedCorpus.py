@@ -114,16 +114,23 @@ class ParsedCorpus(Corpus):
 		catX = self._change_document_type_in_matrix(newX, category_row)
 		return self._term_freq_df_from_matrix(catX)
 
-	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
+	def _make_new_term_doc_matrix(self,
+	                              new_X,
+	                              new_mX,
+	                              new_y,
+	                              new_term_idx_store,
+	                              new_category_idx_store,
+	                              new_metadata_idx_store,
+	                              new_y_mask):
 		return ParsedCorpus(X=new_X,
-		                    mX=self._mX,
-		                    y=self._y,
+		                    mX=new_mX,
+		                    y=new_y,
 		                    parsed_col=self._parsed_col,
 		                    category_col=self._category_col,
 		                    term_idx_store=new_term_idx_store,
-		                    category_idx_store=self._category_idx_store,
-		                    metadata_idx_store=self._metadata_idx_store,
-		                    df=self._df,
+		                    category_idx_store=new_category_idx_store,
+		                    metadata_idx_store=new_metadata_idx_store,
+		                    df=self._df[new_y_mask],
 		                    unigram_frequency_path=self._unigram_frequency_path)
 
 	def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):

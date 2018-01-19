@@ -71,6 +71,25 @@ class ScaledFScorePresets(object):
 		                               scaler_algo=self.scaler_algo_,
 		                               beta=self.beta_)
 
+	def get_scores_for_category(self, cat_word_counts, not_cat_word_counts):
+		'''
+		Parameters
+		----------
+		cat_word_counts : np.array
+			category counts
+		not_cat_word_counts : np.array
+			not category counts
+
+		Returns
+		-------
+		np.array
+			scores
+		'''
+		return ScaledFScore.get_scores_for_category(cat_word_counts,
+		                                            not_cat_word_counts,
+		                                            self.scaler_algo_,
+		                                            self.beta_, )
+
 
 class ScaledFZScore(ScaledFScorePresets):
 	@staticmethod
@@ -79,7 +98,17 @@ class ScaledFZScore(ScaledFScorePresets):
 
 	def get_scores(self, cat_word_counts, not_cat_word_counts):
 		sfs = ScaledFScorePresets.get_scores(self, cat_word_counts, not_cat_word_counts)
-		return (sfs - 0.5)/np.std(sfs - 0.5)
+		#sfs = self.get_score_deltas(cat_word_counts, not_cat_word_counts)
+		#import pdb; pdb.set_trace()
+		#return (sfs - 0.5) / np.std(sfs - 0.5)
+		return (sfs - sfs.mean()) / np.std(sfs)
+
+	def get_score_deltas(self, cat_word_counts, not_cat_word_counts):
+		cat_scores = ScaledFScorePresets.get_scores_for_category(
+			self, cat_word_counts, not_cat_word_counts)
+		not_cat_scores = ScaledFScorePresets.get_scores_for_category(
+			self, not_cat_word_counts, cat_word_counts)
+		return np.log(cat_scores) - np.log(not_cat_scores)
 
 
 class ScaledFScore(object):
@@ -112,12 +141,11 @@ class ScaledFScore(object):
 
 		cat_scores = ScaledFScore.get_scores_for_category(cat_word_counts,
 		                                                  not_cat_word_counts,
-		                                                  scaler_algo, beta)
+		                                                  scaler_algo,
+		                                                  beta)
 		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts, cat_word_counts,
 		                                                      scaler_algo, beta)
 		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
-
-
 
 	@staticmethod
 	def get_scores_for_category(cat_word_counts, not_cat_word_counts,
@@ -168,8 +196,12 @@ class ScaledFScore(object):
 		scaler = None
 		if scaler_algo == 'normcdf':
 			scaler = lambda x: norm.cdf(x, x.mean(), x.std())
+		elif scaler_algo == 'lognormcdf':
+			scaler = lambda x: norm.cdf(np.log(x), np.log(x).mean(), np.log(x).std())
 		elif scaler_algo == 'percentile':
 			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
+		elif scaler_algo == 'percentiledense':
+			scaler = lambda x: rankdata(x, method='dense').astype(np.float64) / len(x)
 		elif scaler_algo == 'none':
 			scaler = lambda x: x
 		else:

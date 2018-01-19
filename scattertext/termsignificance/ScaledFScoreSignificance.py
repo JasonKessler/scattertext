@@ -22,6 +22,9 @@ class ScaledFScoreSignificance(TermSignificance):
 		self.scaler_algo = scaler_algo
 		self.beta = beta
 
+	def get_name(self):
+		return "Scaled F-Score"
+
 	def get_zeta_i_j_given_separate_counts(self, cat, ncat):
 		'''
 		Parameters

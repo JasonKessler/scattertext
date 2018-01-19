@@ -3,31 +3,11 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.16.1
+# Scattertext 0.0.2.17
 ### Updates
+Incorporated the [General Inquirer](http://www.wjh.harvard.edu/~inquirer/homecat.htm) 
+lexicon. SEe  
 
-Added a very simple semiotic square creator.
-
-The idea to build a semiotic square that contrasts two categories in a Term Document Matrix
-while using other categories as neutral categories.   
-
-See [Creating semiotic squares](#creating-semiotic-squares) for an overview on how to 
-use this functionality and semiotic squares.
-
-Added a parameter to disable the display of the top-terms sidebar, e.g.,
-`produce_scattertext_explorer(..., show_top_terms=False, ...)`.
-
-An interface to part of the subjectivity/sentiment dataset from 
-Bo Pang and Lillian Lee. ``A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization 
-Based on Minimum Cuts''. ACL. 2004. See `SampleCorpora.RottenTomatoes`.
-
-Fixed bug that caused tooltip placement to be off after scrolling.   
-
-Made `category_name` and `not_category_name` optional in `produce_scattertext_explorer` etc.
-
-Created the ability to customize tooltips via the `get_tooltip_content` argument to
- `produce_scattertext_explorer` etc., control axes labels via `x_axis_values` 
- and `y_axis_values`, an d
 
 **Table of Contents**
 
@@ -810,6 +790,32 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.15-16
+Added a very semiotic square creator.
+
+The idea to build a semiotic square that contrasts two categories in a Term Document Matrix
+while using other categories as neutral categories.   
+
+See [Creating semiotic squares](#creating-semiotic-squares) for an overview on how to 
+use this functionality and semiotic squares.
+
+Added a parameter to disable the display of the top-terms sidebar, e.g.,
+`produce_scattertext_explorer(..., show_top_terms=False, ...)`.
+
+An interface to part of the subjectivity/sentiment dataset from 
+Bo Pang and Lillian Lee. ``A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization 
+Based on Minimum Cuts''. ACL. 2004. See `SampleCorpora.RottenTomatoes`.
+
+Fixed bug that caused tooltip placement to be off after scrolling.   
+
+Made `category_name` and `not_category_name` optional in `produce_scattertext_explorer` etc.
+
+Created the ability to customize tooltips via the `get_tooltip_content` argument to
+ `produce_scattertext_explorer` etc., control axes labels via `x_axis_values` 
+ and `y_axis_values`.  The `color_func` parameter is a Javascript function to control color of a point.  Function takes a parameter
+ which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and returns a string.
+
 
 ### 0.0.2.14
 Integration with Scikit-Learn's text-analysis pipeline led the creation of the

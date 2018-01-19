@@ -1,4 +1,5 @@
 import scattertext as st
+from scattertext import ScaledFZScore
 
 movie_df = st.SampleCorpora.RottenTomatoes.get_data()
 
@@ -9,12 +10,23 @@ corpus = st.CorpusFromPandas(
 	nlp=st.whitespace_nlp_with_sentences
 ).build().get_unigram_corpus()
 
+term_scorer = (st.LORIDPFactory(corpus,
+                                category='fresh',
+                                starting_count=100,
+                                alpha=10,
+                                term_freq_df_func=lambda x: x.get_term_freq_df())
+	.use_general_term_frequencies()
+	.use_all_categories()
+	.get_term_scorer())
+
 semiotic_square = st.SemioticSquare(
 	corpus,
 	category_a='fresh',
 	category_b='rotten',
 	neutral_categories=['plot'],
-	scorer=st.LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001)
+	term_freq_func=lambda x: x.get_term_freq_df(),
+	scorer=ScaledFZScore(beta=1)
+	#term_scorer#st.LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001)
 )
 
 html = st.produce_semiotic_square_explorer(semiotic_square,

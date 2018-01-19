@@ -37,6 +37,7 @@ class SemioticSquare(object):
 
 	def __init__(self,
 	             term_doc_matrix, category_a, category_b, neutral_categories,
+	             term_freq_func=lambda x: x.get_term_doc_count_df(),
 	             scorer=None):
 		'''
 		Parameters
@@ -49,6 +50,8 @@ class SemioticSquare(object):
 			Category name for term B (in opposition to A)
 		neutral_categories : list[str]
 			List of category names that A and B will be contrasted to.  Should be in same domain.
+		term_freq_func : lambda
+			Function that takes a term_doc_matrix and returns a term frequency df type df
 		scorer : termscoring class, optional
 			Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`
 		'''
@@ -60,6 +63,7 @@ class SemioticSquare(object):
 		if len(neutral_categories) == 0:
 			raise EmptyNeutralCategoriesError()
 		self.category_a_ = category_a
+		self.term_freq_func=term_freq_func
 		self.category_b_ = category_b
 		self.neutral_categories_ = neutral_categories
 		self.scorer = LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001) \
@@ -91,7 +95,7 @@ class SemioticSquare(object):
 		return tdf[['x', 'y', 'counts']]
 
 	def _get_term_doc_count_df(self):
-		return (self.term_doc_matrix_.get_term_doc_count_df()
+		return (self.term_freq_func(self.term_doc_matrix_)
 		[[t + ' freq'
 		  for t in [self.category_a_, self.category_b_] + self.neutral_categories_]])
 

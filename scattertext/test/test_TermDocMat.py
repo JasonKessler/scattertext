@@ -8,12 +8,14 @@ from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas
+from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS, \
 	CannotCreateATermDocMatrixWithASignleCategoryException
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.test.test_corpusFromPandas import get_docs_categories
+from scattertext.test.test_semioticSquare import get_docs_categories_semiotic
 
 
 def make_a_test_term_doc_matrix():
@@ -215,6 +217,27 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
+	def test_remove_categories(self):
+		df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+		                  columns=['category', 'text'])
+		corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
+		swiftless = corpus.remove_categories(['swift'])
+
+		swiftless_constructed = CorpusFromPandas(df[df['category'] != 'swift'],
+		                                         'category',
+		                                         'text',
+		                                         nlp=whitespace_nlp).build()
+		np.testing.assert_equal(
+			[i for i in corpus._y if i != corpus.get_categories().index('swift')],
+			swiftless._y
+		)
+		self.assertEqual(swiftless._y.shape[0], swiftless._X.shape[0])
+		self.assertEqual(swiftless_constructed._X.shape, swiftless._X.shape)
+		self.assertEqual(set(swiftless_constructed.get_terms()),
+		                 set(swiftless.get_terms()))
+		np.testing.assert_equal(swiftless_constructed.get_texts(),
+		                        swiftless.get_texts())
+
 	def test_get_category_names_by_row(self):
 		hamlet = get_hamlet_term_doc_matrix()
 		returned = hamlet.get_category_names_by_row()
@@ -267,7 +290,8 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
 		                 ['the', 'starts', 'incorporal'])
 
-	# ['hamlet', 'hamlet,', 'the'])
+
+# ['hamlet', 'hamlet,', 'the'])
 
 
 def get_hamlet_term_doc_matrix():

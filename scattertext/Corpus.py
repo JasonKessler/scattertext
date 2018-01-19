@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from numpy import nonzero
 
@@ -84,12 +85,19 @@ class Corpus(TermDocMatrix):
 		mask = (self._X[:, idx] > 0).todense().A1
 		return mask
 
-	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
+	def _make_new_term_doc_matrix(self,
+	                              new_X,
+	                              new_mX,
+	                              new_y,
+	                              new_term_idx_store,
+	                              new_category_idx_store,
+	                              new_metadata_idx_store,
+	                              new_y_mask):
 		return Corpus(X=new_X,
-		              mX=self._mX,
-		              y=self._y,
+		              mX=new_mX,
+		              y=new_y,
 		              term_idx_store=new_term_idx_store,
-		              category_idx_store=self._category_idx_store,
-		              metadata_idx_store=self._metadata_idx_store,
-		              raw_texts=self.get_texts(),
+		              category_idx_store=new_category_idx_store,
+		              metadata_idx_store=new_metadata_idx_store,
+		              raw_texts=np.array(self.get_texts())[new_y_mask],
 		              unigram_frequency_path=self._unigram_frequency_path)

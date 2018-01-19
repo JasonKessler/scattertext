@@ -29,8 +29,10 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'type', 'date', 'time', 'percent', 'money', 'quantity',
                      'ordinal', 'cardinal']
 
+
 class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
 	pass
+
 
 class TermDocMatrix(object):
 	'''
@@ -308,10 +310,63 @@ class TermDocMatrix(object):
 			idx_to_delete_list.append(self._term_idx_store.getidx(term))
 		return self.remove_terms_by_indices(idx_to_delete_list)
 
+	def remove_categories(self, categories, ignore_absences=False):
+		'''
+		Non destructive term removal.
+
+		Parameters
+		----------
+		categories : list
+			list of categories to remove
+		ignore_absences : bool, False by default
+			if categories does not appear, don't raise an error, just move on.
+
+		Returns
+		-------
+		TermDocMatrix, new object with categories removed.
+		'''
+
+		idx_to_delete_list = []
+		existing_categories = set(self.get_categories())
+		for category in categories:
+			if category not in existing_categories:
+				if not ignore_absences:
+					raise KeyError('Category %s not found' % (category))
+				continue
+			idx_to_delete_list.append(self._category_idx_store.getidx(category))
+		new_category_idx_store = self._category_idx_store.batch_delete_idx(idx_to_delete_list)
+
+		columns_to_delete = np.nonzero(np.isin(self._y, idx_to_delete_list))
+		new_X = delete_columns(self._X.T, columns_to_delete).T
+		new_mX = delete_columns(self._mX.T, columns_to_delete).T
+		new_y = self._y[~np.isin(self._y, idx_to_delete_list)]
+
+		new_metadata_idx_store = self._metadata_idx_store
+		if len(self._metadata_idx_store):
+			meta_idx_to_delete = np.nonzero(new_mX.sum(axis=0).A1 == 0)[0]
+			new_metadata_idx_store = self._metadata_idx_store.batch_delete_idx(meta_idx_to_delete)
+
+		term_idx_to_delete = np.nonzero(new_X.sum(axis=0).A1 == 0)[0]
+		new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
+		new_X = delete_columns(new_X, term_idx_to_delete)
+		return self._make_new_term_doc_matrix(new_X,
+		                                      new_mX,
+		                                      new_y,
+		                                      new_term_idx_store,
+		                                      new_category_idx_store,
+		                                      new_metadata_idx_store,
+		                                      ~np.isin(self._y, idx_to_delete_list))
+
 	def remove_terms_by_indices(self, idx_to_delete_list):
 		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
 		new_X = delete_columns(self._X, idx_to_delete_list)
-		return self._term_doc_matrix_with_new_X(new_X, new_term_idx_store)
+		return self._make_new_term_doc_matrix(new_X,
+		                                      self._mX,
+		                                      self._y,
+		                                      new_term_idx_store,
+		                                      self._category_idx_store,
+		                                      self._metadata_idx_store,
+		                                      self._y == self._y)
 
 	def remove_terms_used_in_less_than_num_docs(self, threshold):
 		'''
@@ -328,13 +383,20 @@ class TermDocMatrix(object):
 		terms_to_remove = np.where(term_counts < threshold)[0]
 		return self.remove_terms_by_indices(terms_to_remove)
 
-	def _term_doc_matrix_with_new_X(self, new_X, new_term_idx_store):
+	def _make_new_term_doc_matrix(self,
+	                              new_X,
+	                              new_mX,
+	                              new_y,
+	                              new_term_idx_store,
+	                              new_category_idx_store,
+	                              new_metadata_idx_store,
+	                              new_y_mask):
 		return TermDocMatrix(X=new_X,
-		                     mX=self._mX,
-		                     y=self._y,
+		                     mX=new_mX,
+		                     y=new_y,
 		                     term_idx_store=new_term_idx_store,
-		                     category_idx_store=self._category_idx_store,
-		                     metadata_idx_store=self._metadata_idx_store,
+		                     category_idx_store=new_category_idx_store,
+		                     metadata_idx_store=new_metadata_idx_store,
 		                     unigram_frequency_path=self._unigram_frequency_path)
 
 	def get_posterior_mean_ratio_scores(self, category):
@@ -700,10 +762,10 @@ class TermDocMatrix(object):
 			unigram_freq_table_buf = StringIO(pkgutil.get_data('scattertext', 'data/count_1w.txt')
 			                                  .decode('utf-8'))
 		to_ret = (pd.read_table(unigram_freq_table_buf,
-		                       names=['word', 'background'])
-		         .sort_values(ascending=False, by='background')
-		         .drop_duplicates(['word'])
-		         .set_index('word'))
+		                        names=['word', 'background'])
+			.sort_values(ascending=False, by='background')
+			.drop_duplicates(['word'])
+			.set_index('word'))
 		return to_ret
 
 	def list_extra_features(self):
@@ -715,7 +777,6 @@ class TermDocMatrix(object):
 		return FeatureLister(self._mX,
 		                     self._metadata_idx_store,
 		                     self.get_num_docs()).output()
-
 
 	def get_scaled_f_scores_vs_background(self,
 	                                      scaler_algo=DEFAULT_BACKGROUND_SCALER_ALGO,

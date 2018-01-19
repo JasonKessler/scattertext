@@ -1,14 +1,11 @@
 from __future__ import print_function
 
-import spacy
-
 from scattertext import CorpusFromParsedDocuments, produce_scattertext_explorer
 from scattertext import FeatsFromOnlyEmpath
 from scattertext import SampleCorpora
 
 
 def main():
-	nlp = spacy.load('en')
 	convention_df = SampleCorpora.ConventionData2012.get_data()
 
 	corpus = CorpusFromParsedDocuments(convention_df,

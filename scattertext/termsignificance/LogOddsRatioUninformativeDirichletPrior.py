@@ -2,7 +2,6 @@
 import numpy as np
 from scipy.special import ndtr
 
-from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termsignificance.TermSignificance import TermSignificance
 
@@ -26,6 +25,9 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 			The constant prior.
 		'''
 		self.alpha_w = alpha_w
+
+	def get_name(self):
+		return "Log-Odds-Ratio w/ Uninformative Prior"
 
 	def get_p_vals(self, X):
 		'''
@@ -68,13 +70,16 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		-------
 		np.array of z-scores
 		'''
-		a_w = self.alpha_w
-		n_i, n_j = y_i.sum(), y_j.sum()
-		a_0 = len(y_i) * a_w
-		delta_i_j = (np.log((y_i + a_w) / (n_i + a_0 - y_i - a_w))
-		             - np.log((y_j + a_w) / (n_j + a_0 - y_j - a_w)))
-		var_delta_i_j = (1. / (y_i + a_w) + 1. / (y_i + a_0 - y_i - a_w)
-		                 + 1. / (y_j + a_w) + 1. / (n_j + a_0 - n_j - a_w))
+		yp_i = y_i + self.alpha_w
+		yp_j = y_j + self.alpha_w
+		np_i = np.sum(yp_i)
+		np_j = np.sum(yp_j)
+
+		delta_i_j = np.log(yp_i / (np_i - yp_i)) - np.log(yp_j / (np_j - yp_j))
+		var_delta_i_j = (1. / (yp_i)
+		                 + 1. / (np_i - yp_i)
+		                 + 1. / (yp_j)
+		                 + 1. / (np_j - yp_j))
 		zeta_i_j = delta_i_j / np.sqrt(var_delta_i_j)
 		return zeta_i_j
 
@@ -111,5 +116,5 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		np.array of z-scores
 		'''
 		z_scores = self.get_zeta_i_j_given_separate_counts(y_i, y_j)
-		#scaled_scores = scale_neg_1_to_1_with_zero_mean_abs_max(z_scores)
+		# scaled_scores = scale_neg_1_to_1_with_zero_mean_abs_max(z_scores)
 		return z_scores

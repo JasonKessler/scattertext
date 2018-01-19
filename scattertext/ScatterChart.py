@@ -193,16 +193,17 @@ class ScatterChart:
 
 		'''
 		if self.used:
-			raise Exception("Cannot reuse a ScatterChart constructer")
+			raise Exception("Cannot reuse a ScatterChart constructor")
 		self.used = True
 		all_categories, other_categories = self._get_category_names(category)
 		neutral_categories = []
 		if not_categories is not None:
 			assert set(not_categories) - set(c[:-5] for c in other_categories) == set()
 			other_categories = [c + ' freq' for c in not_categories]
+			print(not_categories, other_categories)
 			neutral_categories = [c[:-5] for c in all_categories
 			                      if c != category + ' freq' and c not in other_categories]
-		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
+		df = self._term_rank_score_and_frequency_df(all_categories, category, other_categories, scores)
 
 		if self.x_coords is None:
 			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
@@ -316,7 +317,7 @@ class ScatterChart:
 			return vec
 		return vec + np.random.rand(1, len(vec))[0] * self.scatterchartdata.jitter
 
-	def _term_rank_score_and_frequency_df(self, all_categories, category, scores):
+	def _term_rank_score_and_frequency_df(self, all_categories, category, other_categories, scores):
 		term_ranker = self.scatterchartdata.term_ranker(self.term_doc_matrix)
 		if self.scatterchartdata.use_non_text_features:
 			term_ranker.use_non_text_features()
@@ -326,31 +327,38 @@ class ScatterChart:
 			df['y'] = self.y_coords
 
 		if not self.original_x is None:
-			df['ox'] = self.original_x.values
+			try:
+				df['ox'] = self.original_x.values
+			except AttributeError:
+				df['ox'] = self.original_x
+
 
 		if not self.original_y is None:
-			df['oy'] = self.original_y.values
+			try:
+				df['oy'] = self.original_y.values
+			except AttributeError:
+				df['oy'] = self.original_y
 
 		if scores is None:
-			scores = self._get_default_scores(category, df)
+			scores = self._get_default_scores(category, other_categories, df)
 		# np.array(self.term_doc_matrix.get_rudder_scores(category))
 		# df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		category_column_name = category + ' freq'
 		df['category score'] = CornerScore.get_scores_for_category(
 			df[category_column_name],
-			self._get_not_category_term_frequency(category_column_name, df)
+			self._get_not_category_term_frequency(other_categories, df)
 		)
 		if self.scatterchartdata.term_significance is not None:
 			df['p'] = get_p_vals(df, category_column_name,
 			                     self.scatterchartdata.term_significance)
 		df['not category score'] = CornerScore.get_scores_for_category(
-			self._get_not_category_term_frequency(category_column_name, df),
+			self._get_not_category_term_frequency(other_categories, df),
 			df[category_column_name]
 		)
 		df['color_scores'] = scores
 		if self.scatterchartdata.terms_to_include is None:
 			df = self._filter_bigrams_by_minimum_not_category_term_freq(
-				category_column_name, df)
+				category_column_name, other_categories, df)
 			df = filter_bigrams_by_pmis(
 				self._filter_by_minimum_term_frequency(all_categories, df),
 				threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
@@ -368,10 +376,10 @@ class ScatterChart:
 		df = df.reset_index()
 		return df
 
-	def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, df):
+	def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, other_categories, df):
 		if self.scatterchartdata.terms_to_include is None:
 			return df[(df[category_column_name] > 0)
-			          | (self._get_not_category_term_frequency(category_column_name, df)
+			          | (self._get_not_category_term_frequency(other_categories, df)
 			             >= self.scatterchartdata.minimum_not_category_term_frequency)]
 		else:
 			return df
@@ -388,18 +396,18 @@ class ScatterChart:
 		df = df.ix[df.sort_values('score').iloc[:self.scatterchartdata.max_terms].index]
 		return df[[c for c in df.columns if c != 'score']]
 
-	def _get_default_scores(self, category, df):
+	def _get_default_scores(self, category, other_categories, df):
 		category_column_name = category + ' freq'
 		cat_word_counts = df[category_column_name]
-		not_cat_word_counts = self._get_not_category_term_frequency(category_column_name, df)
+		not_cat_word_counts = self._get_not_category_term_frequency(other_categories, df)
 		scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
 		return scores
 
 	def _term_importance_ranks(self, category, df):
 		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
 
-	def _get_not_category_term_frequency(self, category_column_name, df):
-		return df[[c for c in df.columns if c != category_column_name]].sum(axis=1)
+	def _get_not_category_term_frequency(self, other_categories, df):
+		return df[other_categories].sum(axis=1)
 
 	def draw(self,
 	         category,
@@ -430,7 +438,7 @@ class ScatterChart:
 		except:
 			raise Exception("mpld3 need to be installed to use this function.")
 		all_categories, other_categories = self._get_category_names(category)
-		df = self._term_rank_score_and_frequency_df(all_categories, category, scores)
+		df = self._term_rank_score_and_frequency_df(all_categories, category, other_categories, scores)
 		if self.x_coords is None:
 			df['x'], df['y'] = self._get_coordinates_from_transform_and_jitter_frequencies \
 				(category, df, other_categories, transform)

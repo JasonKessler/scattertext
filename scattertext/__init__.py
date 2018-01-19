@@ -2,7 +2,10 @@ from __future__ import print_function
 
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
+from scattertext.Formatter import large_int_format, round_downer
+from scattertext.LORIDPFactory import LORIDPFactory
 from scattertext.semioticsquare import SemioticSquare
+from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror import LogOddsRatioInformativeDirichletPrior
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
 
@@ -36,6 +39,8 @@ from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
+
+from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
@@ -49,7 +54,6 @@ from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import
 from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
-
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -519,18 +523,18 @@ def word_similarity_explorer(corpus,
 	scores = np.array([base_term.similarity(nlp(tok))
 	                   for tok
 	                   in corpus._term_idx_store._i2val])
-	return produce_fightin_words_explorer(corpus,
-	                                      category,
-	                                      category_name,
-	                                      not_category_name,
-	                                      scores=scores,
-	                                      sort_by_dist=False,
-	                                      reverse_sort_scores_for_not_category=False,
-	                                      word_vec_use_p_vals=True,
-	                                      term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
-	                                      max_p_val=max_p_val,
-	                                      p_value_colors=True,
-	                                      **kwargs)
+	return produce_scattertext_explorer(corpus,
+	                                    category,
+	                                    category_name,
+	                                    not_category_name,
+	                                    scores=scores,
+	                                    sort_by_dist=False,
+	                                    reverse_sort_scores_for_not_category=False,
+	                                    word_vec_use_p_vals=True,
+	                                    term_significance=LogOddsRatioUninformativeDirichletPrior(alpha),
+	                                    max_p_val=max_p_val,
+	                                    p_value_colors=True,
+	                                    **kwargs)
 
 
 def produce_fightin_words_explorer(corpus,
@@ -541,6 +545,7 @@ def produce_fightin_words_explorer(corpus,
                                    alpha=0.01,
                                    use_term_significance=True,
                                    term_scorer=None,
+                                   not_categories=None,
                                    **kwargs):
 	'''
 	Produces a Monroe et al. style visualization.
@@ -565,23 +570,31 @@ def produce_fightin_words_explorer(corpus,
 		Use term scorer
 	term_scorer : TermSignificance
 		Subclass of TermSignificance to use as for scores and significance
+	not_categories : list
+		All categories other than category by default.  Documents labeled
+		with remaining category.
 	Remaining arguments are from `produce_scattertext_explorer`.
 	Returns
 	-------
 		str, html of visualization
 	'''
 	term_freq_df = term_ranker(corpus).get_ranks()
-	frequencies_log_scaled = scale(np.log(term_freq_df.sum(axis=1).values))
+	freqs = term_freq_df.sum(axis=1).values
+	x_axis_values = [round_downer(10 ** x) for x in np.linspace(1, np.log(freqs.max()) / np.log(10), 5)]
+	print(x_axis_values)
+	y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
+	frequencies_log_scaled = scale(np.log(freqs))
 
+	if not_categories is None:
+		not_categories = [c for c in corpus.get_categories() if c != category]
 	if term_scorer is None:
 		term_scorer = LogOddsRatioUninformativeDirichletPrior(alpha)
 
 	if 'scores' not in kwargs:
-		zeta_i_j = (term_scorer
-			.get_zeta_i_j_given_separate_counts(term_freq_df[category + ' freq'],
-		                                      term_freq_df[[c + ' freq'
-		                                                    for c in corpus.get_categories()
-		                                                    if c != category]].sum(axis=1)))
+		zeta_i_j = term_scorer.get_scores(
+			term_freq_df[category + ' freq'],
+			term_freq_df[[c + ' freq' for c in not_categories]].sum(axis=1)
+		)
 		kwargs['scores'] = kwargs.get('scores', zeta_i_j)
 
 	def y_axis_rescale(coords):
@@ -598,13 +611,19 @@ def produce_fightin_words_explorer(corpus,
 	                                    not_category_name=not_category_name,
 	                                    x_coords=frequencies_log_scaled,
 	                                    y_coords=scores_scaled_for_charting,
+	                                    original_x=freqs,
+	                                    original_y=kwargs['scores'],
+	                                    max_p_val=0.05,
+	                                    x_axis_values=x_axis_values,
+	                                    y_axis_values=y_axis_values,
 	                                    rescale_x=scale,
 	                                    rescale_y=y_axis_rescale,
 	                                    sort_by_dist=False,
 	                                    term_ranker=term_ranker,
 	                                    p_value_colors=True,
-	                                    # x_label=kwargs.get('x_label', 'Log Frequency'),
-	                                    # y_label=kwargs.get('y_label', 'Z-Score: Log Odds Ratio w/ Prior'),
+	                                    not_categories=not_categories,
+	                                    x_label=kwargs.get('x_label', 'Log Frequency'),
+	                                    y_label=kwargs.get('y_label', term_scorer.get_name() + ' Z-Score'),
 	                                    **kwargs)
 
 
@@ -616,9 +635,9 @@ def produce_semiotic_square_explorer(semiotic_square,
                                      neutral_category_name=None,
                                      num_terms_semiotic_square=None,
                                      get_tooltip_content=None,
-                                     x_axis_values = None,
-                                     y_axis_values = None,
-                                     color_func = None,
+                                     x_axis_values=None,
+                                     y_axis_values=None,
+                                     color_func=None,
                                      **kwargs):
 	'''
 	Produces a semiotic square visualization.
@@ -667,7 +686,7 @@ def produce_semiotic_square_explorer(semiotic_square,
 		y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
 
 	if get_tooltip_content is None:
-		get_tooltip_content = '''(function(d) {return "%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
+		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
 		                      % (x_label, y_label)
 	if color_func is None:
 		color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
