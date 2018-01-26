@@ -6,7 +6,11 @@
 # Scattertext 0.0.2.17
 ### Updates
 Incorporated the [General Inquirer](http://www.wjh.harvard.edu/~inquirer/homecat.htm) 
-lexicon. SEe  
+lexicon. For non-commercial use only. The lexicon is downloaded from their homepage at the start of each 
+use. See `demo_general_inquierer.py`.
+
+Incorporated Phrasemachine from [AbeHandler](https://github.com/AbeHandler) (Handler et al. 2016). For the license, 
+please see `PhraseMachineLicense.txt`.  For an example, please see `demo_phrase_machine.py`.
 
 
 **Table of Contents**
@@ -728,39 +732,36 @@ is the Z-score how associated a term is with the neutral set of documents relati
 opposed set.  A point's red-blue color indicate the term's opposed-association, while
 the more desaturated a term is, the more it is associated with the neutral set of documents.       
 
-I'll expand this section later, but want to get this idea in circulation.s
+I'll expand this section later, but want to get this idea in circulation.
 
 ```python
 import scattertext as st
-
 movie_df = st.SampleCorpora.RottenTomatoes.get_data()
-
+movie_df.category = movie_df.category.apply\
+	(lambda x: {'rotten': 'Negative', 'fresh': 'Positive', 'plot': 'Plot'}[x])
 corpus = st.CorpusFromPandas(
 	movie_df,
 	category_col='category',
 	text_col='text',
 	nlp=st.whitespace_nlp_with_sentences
-).build().get_unigram_corpus()
+).build()
+corpus = corpus.get_unigram_corpus()
 
 semiotic_square = st.SemioticSquare(
 	corpus,
-	category_a='fresh',
-	category_b='rotten',
-	neutral_categories=['plot'],
-	scorer=st.LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001)
+	category_a='Positive',
+	category_b='Negative',
+	neutral_categories=['Plot'],
+	scorer=st.RankDifference()
 )
 
 html = st.produce_semiotic_square_explorer(semiotic_square,
-                                           category_name='Fresh',
-                                           not_category_name='Rotten',
-                                           neutral_category_name='Plot Description',
-                                           x_label='Rotten-Fresh',
+                                           category_name='Positive',
+                                           not_category_name='Negative',
+                                           x_label='Fresh-Rotten',
                                            y_label='Plot-Review',
-                                           metadata=movie_df['movie_name'],
-                                           x_axis_values=[-2.58, -1.96, 0, 1.96, 2.58],
-                                           y_axis_values=[-2.58, -1.96, 0, 1.96, 2.58])
-
-open('demo_semiotic.html', 'wb').write(html.encode('utf-8'))
+                                           neutral_category_name='Plot Description',
+                                           metadata=movie_df['movie_name'])
 ```
 
 [![semiotic square](https://jasonkessler.github.io/semiotic_square_plot.png)](https://jasonkessler.github.io/demo_semiotic.html)
@@ -1055,3 +1056,5 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Fast, Ethan, Binbin Chen, and Michael S. Bernstein. "Empath: Understanding topic signals in large-scale text." Proceedings of the 2016 CHI Conference on Human Factors in Computing Systems. ACM, 2016.
 * Burt L. Monroe, Michael P. Colaresi, and Kevin M. Quinn. 2008. Fightin’ words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis.
 * Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.
+* Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
+

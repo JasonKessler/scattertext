@@ -27,7 +27,7 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 		self.alpha_w = alpha_w
 
 	def get_name(self):
-		return "Log-Odds-Ratio w/ Uninformative Prior"
+		return "Log-Odds-Ratio w/ Uninformative Prior Z-Score"
 
 	def get_p_vals(self, X):
 		'''
@@ -100,6 +100,9 @@ class LogOddsRatioUninformativeDirichletPrior(TermSignificance):
 
 	def get_default_score(self):
 		return 0
+
+	def get_p_values_from_counts(self, y_i, y_j):
+		return ndtr(self.get_zeta_i_j_given_separate_counts(y_i, y_j))
 
 	def get_scores(self, y_i, y_j):
 		'''

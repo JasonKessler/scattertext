@@ -1,36 +1,28 @@
 from __future__ import print_function
 
-from scattertext.AutoTermSelector import AutoTermSelector
-from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
-from scattertext.Formatter import large_int_format, round_downer
-from scattertext.LORIDPFactory import LORIDPFactory
-from scattertext.semioticsquare import SemioticSquare
-from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror import LogOddsRatioInformativeDirichletPrior
-from scattertext.termsignificance.TermSignificance import TermSignificance
-from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
+from scattertext.external.phrasemachine import phrasemachine
+from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases
 
-version = [0, 0, 2, 16, 1]
+version = [0, 0, 2, 17]
 __version__ = '.'.join([str(e) for e in version])
 
-import warnings
-
-import numpy as np
-
 import scattertext.viz
-from scattertext.Corpus import Corpus
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
+from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.CSRMatrixTools import CSRMatrixFactory
+from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
+from scattertext.Corpus import Corpus
 from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.CorpusFromScikit import CorpusFromScikit
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext.indexstore.IndexStore import IndexStore
-from scattertext.indexstore import IndexStoreFromList
-from scattertext.indexstore import IndexStoreFromDict
+from scattertext.CorpusFromScikit import CorpusFromScikit
+from scattertext.Formatter import large_int_format, round_downer
 from scattertext.ParsedCorpus import ParsedCorpus
-from scattertext.Scalers import percentile_alphabetical
+from scattertext.PriorFactory import PriorFactory
+from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max
+from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 from scattertext.ScatterChart import ScatterChart
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
 from scattertext.TermDocMatrix import TermDocMatrix
@@ -39,21 +31,33 @@ from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
-
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
+from scattertext.indexstore import IndexStoreFromDict
+from scattertext.indexstore import IndexStoreFromList
+from scattertext.indexstore.IndexStore import IndexStore
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams
+from scattertext.semioticsquare import SemioticSquare
 from scattertext.termranking import OncePerDocFrequencyRanker
-from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFZScore
+from scattertext.termscoring.RankDifference import RankDifference
+from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFZScore, \
+	ScaledFZScorePrior
+from scattertext.termsignificance.LogOddsRatioAddOne import LogOddsRatioAddOne
+from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror import LogOddsRatioInformativeDirichletPrior
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
 from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
+from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
-from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
+from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
+import warnings
+
+import numpy as np
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -144,7 +148,7 @@ def produce_scattertext_explorer(corpus,
                                  use_full_doc=False,
                                  transform=percentile_alphabetical,
                                  jitter=0,
-                                 grey_zero_scores=False,
+                                 gray_zero_scores=False,
                                  term_ranker=None,
                                  asian_mode=False,
                                  use_non_text_features=False,
@@ -170,7 +174,9 @@ def produce_scattertext_explorer(corpus,
                                  get_tooltip_content=None,
                                  x_axis_values=None,
                                  y_axis_values=None,
-                                 color_func=None):
+                                 color_func=None,
+                                 term_scorer=None,
+                                 show_axes=True):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -241,7 +247,7 @@ def produce_scattertext_explorer(corpus,
 		not recommended for editing.  change the way terms are ranked.  default is st.Scalers.percentile_ordinal
 	jitter : float, optional
 		percentage of axis to jitter each point.  default is 0.
-	grey_zero_scores : bool, optional
+	gray_zero_scores : bool, optional
 		If True, color points with zero-scores a light shade of grey.  False by default.
 	term_ranker : TermRanker, optional
 		TermRanker class for determining term frequency ranks.
@@ -307,7 +313,11 @@ def produce_scattertext_explorer(corpus,
 		Javascript function to control color of a point.  Function takes a parameter
 		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
 		returns a string.
-
+	term_scorer : Object, default None
+		In lieu of scores, object with a get_scores(a,b) function that returns a set of scores,
+		where a and b are term counts.  Scorer optionally has a get_term_freqs function.
+	show_axes : bool, default True
+		Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
 	Returns
 	-------
 	str
@@ -326,8 +336,22 @@ def produce_scattertext_explorer(corpus,
 
 	if category_name is None:
 		category_name = category
+
 	if not_category_name is None:
-		not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
+		if not_categories is not None and len(not_categories) == 1:
+			not_category_name = not_categories[0]
+		else:
+			not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
+
+	if term_scorer:
+		tdf = term_ranker(corpus).get_ranks()
+		cat_freqs = tdf[category + ' freq']
+		if not_categories:
+			not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
+		else:
+			not_cat_freqs = tdf.sum(axis=1) - tdf[category]
+		scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
+
 
 	if pmi_filter_thresold is not None:
 		pmi_threshold_coefficient = pmi_filter_thresold
@@ -356,6 +380,10 @@ def produce_scattertext_explorer(corpus,
 		                                          rescale_y=rescale_y,
 		                                          original_x=original_x,
 		                                          original_y=original_y)
+	html_base = None
+	if semiotic_square:
+		html_base = get_semiotic_square_html(num_terms_semiotic_square,
+	                                              semiotic_square)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -371,7 +399,7 @@ def produce_scattertext_explorer(corpus,
 	                                 height_in_pixels=height_in_pixels,
 	                                 max_snippets=max_snippets,
 	                                 color=color,
-	                                 grey_zero_scores=grey_zero_scores,
+	                                 grey_zero_scores=gray_zero_scores,
 	                                 sort_by_dist=sort_by_dist,
 	                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
 	                                 use_full_doc=use_full_doc,
@@ -389,12 +417,12 @@ def produce_scattertext_explorer(corpus,
 	                                 get_tooltip_content=get_tooltip_content,
 	                                 x_axis_values=x_axis_values,
 	                                 y_axis_values=y_axis_values,
-	                                 color_func=color_func) \
+	                                 color_func=color_func,
+	                                 show_axes=show_axes) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,
-	           semiotic_square_html=get_semiotic_square_html(num_terms_semiotic_square,
-	                                                         semiotic_square))
+	           html_base=html_base)
 
 
 def get_semiotic_square_html(num_terms_semiotic_square, semiotic_square):
@@ -543,9 +571,11 @@ def produce_fightin_words_explorer(corpus,
                                    not_category_name=None,
                                    term_ranker=termranking.AbsoluteFrequencyRanker,
                                    alpha=0.01,
-                                   use_term_significance=True,
+                                   use_term_significance=False,
                                    term_scorer=None,
                                    not_categories=None,
+                                   grey_threshold=1.96,
+                                   y_axis_values=None,
                                    **kwargs):
 	'''
 	Produces a Monroe et al. style visualization.
@@ -573,22 +603,27 @@ def produce_fightin_words_explorer(corpus,
 	not_categories : list
 		All categories other than category by default.  Documents labeled
 		with remaining category.
-	Remaining arguments are from `produce_scattertext_explorer`.
+	grey_threshold : float
+		Score to grey points. Default is 1.96
+	y_axis_values : list
+		Custom y-axis values. Defaults to linspace
+	Remaining arguments are from `produce_scattertext_explorer`.'
 	Returns
 	-------
 		str, html of visualization
 	'''
-	term_freq_df = term_ranker(corpus).get_ranks()
-	freqs = term_freq_df.sum(axis=1).values
-	x_axis_values = [round_downer(10 ** x) for x in np.linspace(1, np.log(freqs.max()) / np.log(10), 5)]
-	print(x_axis_values)
-	y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
-	frequencies_log_scaled = scale(np.log(freqs))
 
 	if not_categories is None:
 		not_categories = [c for c in corpus.get_categories() if c != category]
 	if term_scorer is None:
 		term_scorer = LogOddsRatioUninformativeDirichletPrior(alpha)
+
+	term_freq_df = term_ranker(corpus).get_ranks() + 1
+	freqs = term_freq_df[[c + ' freq' for c in [category] + not_categories]].sum(axis=1).values
+	x_axis_values = [round_downer(10 ** x) for x
+	                 in np.linspace(0, np.log(freqs.max()) / np.log(10), 5)]
+	# y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
+	frequencies_log_scaled = scale(np.log(freqs) - np.log(1))
 
 	if 'scores' not in kwargs:
 		zeta_i_j = term_scorer.get_scores(
@@ -600,10 +635,27 @@ def produce_fightin_words_explorer(corpus,
 	def y_axis_rescale(coords):
 		return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
 
+	# from https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
+	def round_to_1(x):
+		if x == 0:
+			return 0
+		return round(x, -int(np.floor(np.log10(abs(x)))))
+
+	if y_axis_values is None:
+		y_axis_values = [round_to_1(x) for x
+		                 in sorted(set(-np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
+		                           | set(np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
+		                           | {0})]
 	scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
 	# kwargs['metadata'] = kwargs.get('metadata', None),
 	if use_term_significance:
 		kwargs['term_significance'] = term_scorer
+
+	color_func = '''(function(d) {
+	return (Math.abs(d.os) < %s) 
+	 ? d3.interpolate(d3.rgb(230, 230, 230), d3.rgb(130, 130, 130))(Math.abs(d.os)/%s) 
+	 : d3.interpolateRdYlBu(d.y);
+	})''' % (grey_threshold, grey_threshold)
 
 	return produce_scattertext_explorer(corpus,
 	                                    category=category,
@@ -613,17 +665,16 @@ def produce_fightin_words_explorer(corpus,
 	                                    y_coords=scores_scaled_for_charting,
 	                                    original_x=freqs,
 	                                    original_y=kwargs['scores'],
-	                                    max_p_val=0.05,
 	                                    x_axis_values=x_axis_values,
 	                                    y_axis_values=y_axis_values,
 	                                    rescale_x=scale,
 	                                    rescale_y=y_axis_rescale,
 	                                    sort_by_dist=False,
 	                                    term_ranker=term_ranker,
-	                                    p_value_colors=True,
+	                                    color_func=color_func,
 	                                    not_categories=not_categories,
 	                                    x_label=kwargs.get('x_label', 'Log Frequency'),
-	                                    y_label=kwargs.get('y_label', term_scorer.get_name() + ' Z-Score'),
+	                                    y_label=kwargs.get('y_label', term_scorer.get_name()),
 	                                    **kwargs)
 
 
@@ -638,6 +689,7 @@ def produce_semiotic_square_explorer(semiotic_square,
                                      x_axis_values=None,
                                      y_axis_values=None,
                                      color_func=None,
+                                     foveate=False,
                                      **kwargs):
 	'''
 	Produces a semiotic square visualization.
@@ -668,7 +720,8 @@ def produce_semiotic_square_explorer(semiotic_square,
 		Javascript function to control color of a point.  Function takes a parameter
 		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
 		returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.
-
+	foveate : bool, default False
+		Focuses on inside of square
 	Remaining arguments are from `produce_scattertext_explorer`.
 
 	Returns
@@ -689,7 +742,12 @@ def produce_semiotic_square_explorer(semiotic_square,
 		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
 		                      % (x_label, y_label)
 	if color_func is None:
-		color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+		# this desaturates
+		#color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+		color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+	my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
+	if foveate:
+		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
 
 	axes = semiotic_square.get_axes()
 	return produce_scattertext_explorer(semiotic_square.term_doc_matrix_,
@@ -697,16 +755,16 @@ def produce_semiotic_square_explorer(semiotic_square,
 	                                    category_name=category_name,
 	                                    not_category_name=not_category_name,
 	                                    not_categories=[semiotic_square.category_b_],
-	                                    scores=axes['x'],
+	                                    scores=-axes['x'],
 	                                    sort_by_dist=False,
-	                                    x_coords=scale_neg_1_to_1_with_zero_mean_abs_max(axes['x']),
-	                                    y_coords=scale_neg_1_to_1_with_zero_mean_abs_max(axes['y']),
-	                                    original_x=axes['x'],
+	                                    x_coords=my_scaler(-axes['x']),
+	                                    y_coords=my_scaler(axes['y']),
+	                                    original_x=-axes['x'],
 	                                    original_y=axes['y'],
 	                                    show_characteristic=False,
 	                                    show_top_terms=False,
-	                                    x_label=x_label + ' Z-Score',
-	                                    y_label=y_label + ' Z-Score',
+	                                    x_label=x_label,
+	                                    y_label=y_label,
 	                                    semiotic_square=semiotic_square,
 	                                    show_neutral=True,
 	                                    neutral_category_name=neutral_category_name,
@@ -715,6 +773,7 @@ def produce_semiotic_square_explorer(semiotic_square,
 	                                    x_axis_values=x_axis_values,
 	                                    y_axis_values=y_axis_values,
 	                                    color_func=color_func,
+	                                    show_axes=False,
 	                                    **kwargs)
 
 
@@ -752,6 +811,6 @@ def sparse_explorer(corpus,
 		not_category_name,
 		scores=scores,
 		sort_by_dist=False,
-		grey_zero_scores=True,
+		gray_zero_scores=True,
 		**kwargs
 	)

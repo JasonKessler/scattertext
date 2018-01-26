@@ -12,7 +12,8 @@ class TestLogOddsUninformativePriorScore(TestCase):
 		scores = LogOddsUninformativePriorScore.get_score(cat_counts, not_cat_counts)
 		np.testing.assert_almost_equal(
 			scores,
-			np.array([ 0.0590679,  0.1006782,  0.0590679, -0.1475645])
+			#np.array([ 0.0590679,  0.1006782,  0.0590679, -0.1475645])
+			np.array([ 0.4447054,  0.9433088,  0.4447054, -0.9971462])
 		)
 
 	'''
@@ -24,13 +25,13 @@ class TestLogOddsUninformativePriorScore(TestCase):
 	'''
 
 	def test_get_score_threshold(self):
-		cat_counts = np.array(    [1,        5,   200000,  510,   1000000000])
-		not_cat_counts = np.array([200000, 510,   1,       5,     1000000000])
+		cat_counts = np.array(    [1,  5,   2,      7,   10])
+		not_cat_counts = np.array([10, 10,   1,    5,     10])
 		scores = LogOddsUninformativePriorScore\
 			.get_thresholded_score(cat_counts, not_cat_counts, alpha_w=0.01, threshold=0.1)
 		np.testing.assert_almost_equal(
 			scores,
-			np.array([0.9123622, 0., -0.9123622, -0., -0.])
+			np.array([-0.9593012, -0.       ,  0.       ,  0.8197493,  0.       ])
 		)
 
 	def test__turn_pvals_into_scores(self):

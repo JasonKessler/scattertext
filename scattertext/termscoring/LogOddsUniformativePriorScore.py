@@ -30,11 +30,11 @@ class LogOddsUninformativePriorScore:
 	def get_thresholded_score(cat_word_counts, not_cat_word_counts,
 	                          alpha_w=0.01,
 	                          threshold=0.1):
-		scores = (LogOddsUninformativePriorScore
-		          .get_score(cat_word_counts, not_cat_word_counts, alpha_w))
+		scores = (LogOddsRatioUninformativeDirichletPrior(alpha_w)
+		          .get_p_values_from_counts(cat_word_counts, not_cat_word_counts)) * 2 - 1
 		# scores = (np.min(np.array([1 - scores, scores]), axis=0) <= threshold) * scores
-		return scores * ((scores < -(1 - (threshold * 2)))
-		                 | (scores > (1 - (threshold * 2))))
+		return scores * ((scores < - (1. - (threshold * 2)))
+		                 | (scores > (1. - (threshold * 2))))
 
 	@staticmethod
 	def _turn_counts_into_matrix(cat_word_counts, not_cat_word_counts):

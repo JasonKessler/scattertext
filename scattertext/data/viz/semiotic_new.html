@@ -1,0 +1,352 @@
+<!-- some code adapted from www.degeneratestate.org/static/metal_lyrics/metal_line.html -->
+<!-- <!DOCTYPE html>
+<meta content="utf-8"> -->
+<style> /* set the CSS */
+
+body {
+  font: 12px Arial;
+}
+
+svg {
+  font: 12px Helvetica;
+}
+
+path {
+  stroke: steelblue;
+  stroke-width: 2;
+  fill: none;
+}
+
+.grid line {
+  stroke: lightgrey;
+  stroke-opacity: 0.4;
+  shape-rendering: crispEdges;
+}
+
+.grid path {
+  stroke-width: 0;
+}
+
+.axis path,
+.axis lineper {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 150px;
+  height: 28px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+div.tooltipscore {
+  position: absolute;
+  text-align: center;
+  width: 150px;
+  height: 50px;
+  padding: 2px;
+  font: 10px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.category_header {
+  font: 12px sans-serif;
+  font-weight: bolder;
+  text-decoration: underline;
+}
+
+div.label {
+  color: rgb(252, 251, 253);
+  color: rgb(63, 0, 125);
+  color: rgb(158, 155, 201);
+
+  position: absolute;
+  text-align: left;
+  padding: 1px;
+  border-spacing: 1px;
+  font: 10px sans-serif;
+  font-family: Sans-Serif;
+  border: 0;
+  pointer-events: none;
+}
+
+input {
+  border: 1px dotted #ccc;
+  background: white;
+  font-family: monospace;
+  padding: 10px 20px;
+  font-size: 14px;
+  margin: 20px 10px 30px 0;
+  color: darkred;
+}
+
+.alert {
+  font-family: monospace;
+  padding: 10px 20px;
+  font-size: 14px;
+  margin: 20px 10px 30px 0;
+  color: darkred;
+}
+
+ul.top_terms li {
+  padding-right: 20px;
+  font-size: 30pt;
+  color: red;
+}
+
+input:focus {
+  background-color: lightyellow;
+  outline: none;
+}
+
+.snippet {
+  padding-bottom: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+  white-space: pre-wrap;
+}
+
+.snippet_header {
+  font-size: 20px;
+  font-family: Helvetica, Arial, Sans-Serif;
+  font-weight: bolder;
+  #text-decoration: underline;
+  text-align: center;
+  border-bottom-width: 10px;
+  border-bottom-color: #888888;
+  padding-bottom: 10px;
+}
+
+#title-div {
+  font-size: 20px;
+  font-family: Helvetica, Arial, Sans-Serif;
+  text-align: center;
+}
+
+.text_header {
+  font: 18px sans-serif;
+  font-size: 18px;
+  font-family: Helvetica, Arial, Sans-Serif;
+
+  font-weight: bolder;
+  text-decoration: underline;
+  text-align: center;
+  color: darkblue;
+  padding-bottom: 10px;
+}
+
+.text_subheader {
+  font-size: 14px;
+  font-family: Helvetica, Arial, Sans-Serif;
+
+  text-align: center;
+}
+
+.snippet_meta {
+  border-top: 3px solid #4588ba;
+  font-size: 12px;
+  font-family: Helvetica, Arial, Sans-Serif;
+  color: darkblue;
+}
+
+.contexts {
+  width: 45%;
+  float: left;
+}
+
+.neut_display {
+  display: none;
+  float: left
+}
+
+.scattertext {
+  font-size: 10px;
+  font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.label {
+  font-size: 10px;
+  font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.obscured {
+  /*font-size: 14px;
+  font-weight: normal;
+  color: dimgrey;
+  font-family: Helvetica;*/
+  text-align: center;
+}
+
+.small_label {
+  font-size: 10px;
+}
+
+.pos {
+  background-color: rgb(254, 221, 144);
+  font-size: 16;
+}
+
+.neg {
+   background-color: rgb(220, 241, 236);
+  font-size: 16;
+}
+
+.neut {
+  background-color: rgb(250, 248, 193);
+  font-size: 16;
+}
+
+#corpus-stats {
+  text-align: center;
+}
+
+#cat {
+}
+
+#notcat {
+}
+
+#neut {
+}
+
+#neutcol {
+  display: none;
+}
+
+</style>
+<script src="<!--D3URL-->" charset="utf-8"></script>
+<script src="<!--D3SCALECHROMATIC-->" charset="utf-8"></script>
+<!-- EXTRA LIBS -->
+<!-- INSERT SEMIOTIC SQUARE -->
+
+<span id="title-div"></span>
+<table border="0" cellspacing=0 cellpadding=0>
+  <tr style="background: #FFF">
+    <td style="text-align: right; vertical-align: bottom;"><b class="pos">{category_a}</b>
+      <div class="pos" style="width: 200px">{a}</div>
+    </td>
+    <td style="text-align: center; vertical-align: bottom;">
+      <span class="neut"  style="text-align: center;  width: 200px"><b>{category_a} + {category_b}</b><br />{a_and_b}</span>
+    </td>
+    <td style="text-align: left; vertical-align: bottom;"><b class="neg">{category_b}</b>
+      <div class="neg" style="width: 200px">{b}</div>
+    </td>
+  </tr>
+  <tr style="background: #FFF">
+    <td style="text-align: right"><b class="pos">{category_a} + Not {category_b}</b>
+      <div class="pos" style="width: 200px">{a_and_not_b}</div>
+    </td>
+    <td width="{width}" style="height: {height}"><div class="scattertext" id="d3-div-1"></div></td>
+    <td style="text-align: left"><b class="neg">{category_b} + Not {category_a}</b>
+      <div class="neg" style="width: 200px">{b_and_not_a}</div>
+    </td>
+  </tr>
+  <tr style="background: #FFF">
+    <td style="text-align: right; vertical-align: top;">
+      <b class="pos">Not {category_b}</b>
+      <div class="pos" style="width: 200px">{not_b}</div>
+    </td>
+    <td style="text-align: center; vertical-align: top;"><b class="neut">Not {category_a} + Not {category_b}</b><br />
+      <span class="neut"  style="text-align: center;  width: 200px">{not_a_and_not_b}</span>
+    </td>
+    <td style="text-align: left; vertical-align: top;">
+      <b class="neg">Not {category_a}</b>
+      <div style="width: 200px" class="neg">{not_a}</div>
+    </td>
+  </tr>
+<!--
+  <tr style="background: #FFF">
+    <td></td>
+    <td></td>
+    <td style="text-align: center"><b>{category_a} + {category_b}</b>
+      <div style="width: 200px">{a_and_b}</div>
+    </td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr style="background: #FFF">
+    <td></td>
+    <td style="border-top: solid; border-left: solid; text-align: left; vertical-align: top"><b>{category_a}</b>
+      <div style="width: 200px">{a}</div>
+    </td>
+    <td style="border-top: solid"></td>
+    <td style="border-top: solid; border-right: solid; text-align: right; vertical-align: top"><b>{category_b}</b>
+      <div style="width: 200px">{b}</div>
+    </td>
+    <td></td>
+  </tr>
+  <tr style="background: #FFF">
+    <td style="text-align: right"><b>{category_a} + Not {category_b}</b>
+      <div style="width: 200px">{a_and_not_b}</div>
+    </td>
+    <td style="border-left: solid"></td>
+    <td width="{width}" style="height: {height}"><div class="scattertext" id="d3-div-1"></div></td>
+    <td style="border-right: solid"></td>
+    <td style="text-align: left"><b>{category_b} + Not {category_a}</b>
+      <div style="width: 200px">{b_and_not_a}</div>
+    </td>
+  </tr>
+  <tr style="background: #FFF">
+    <td></td>
+    <td style="border-bottom: solid; border-left: solid; text-align: left">
+      <b>Not {category_b}</b>
+      <div style="width: 200px">{not_b}</div>
+    </td>
+    <td style="border-bottom: solid;"></td>
+    <td style="border-bottom: solid; border-right: solid; text-align: right">
+      <b>Not {category_a}</b>
+      <div style="width: 200px">{not_a}</div>
+    </td>
+    <td></td>
+  </tr>
+  <tr style="background: #FFF">
+    <td></td>
+    <td></td>
+    <td style="text-align: center"><b>Not {category_a} + Not {category_b}</b>
+      <div style="width: 200px">{not_a_and_not_b}</div>
+    </td>
+    <td></td>
+    <td></td>
+  </tr>
+-->
+</table>
+<div id="corpus-stats"></div>
+<div id="overlapped-terms"></div>
+<form name="termForm" onSubmit="handleSearch(); return false;">
+  <input name="Submit" type="submit" value="Search for term">
+  <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
+  <span id="alertMessage" class="alert"></span>
+</form>
+<a name="snippets"></a>
+<a name="snippetsalt"></a>
+<div id="termstats"></div>
+<div id="overlapped-terms-clicked"></div>
+<div id="d3-div-2">
+  <div class="contexts">
+    <div class="snippet_header" id="cathead"></div>
+    <div class="snippet" id="cat"></div>
+  </div>
+  <div class="contexts">
+    <div class="snippet_header" id="notcathead"></div>
+    <div class="snippet" id="notcat"></div>
+  </div>
+  <div id="neutcol" class="contexts">
+    <div class="snippet_header" id="neuthead"></div>
+    <div class="snippet" id="neut"></div>
+  </div>
+</div>
+<script charset="utf-8">
+    <!-- INSERT SCRIPT -->
+</script>

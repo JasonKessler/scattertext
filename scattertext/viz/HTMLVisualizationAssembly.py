@@ -34,7 +34,8 @@ class HTMLVisualizationAssembly(object):
 	             get_tooltip_content=None,
 	             x_axis_values=None,
 	             y_axis_values=None,
-	             color_func = None
+	             color_func=None,
+	             show_axes=True
 	             ):
 		'''
 
@@ -43,9 +44,9 @@ class HTMLVisualizationAssembly(object):
 		visualization_data : dict
 			From ScatterChart or a descendant
 		width_in_pixels : int, optional
-			width of viz in pixels, if None, default to JS's choice
+			width of viz in pixels, if None, default to 1000
 		height_in_pixels : int, optional
-			height of viz in pixels, if None, default to JS's choice
+			height of viz in pixels, if None, default to 600
 		max_snippets : int, optional
 			max snippets to snow when temr is clicked, Defaults to show all
 		color : str, optional
@@ -97,10 +98,12 @@ class HTMLVisualizationAssembly(object):
 			Javascript function to control color of a point.  Function takes a parameter
 			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
 			returns a string.
+		show_axes : bool, default True
+			Show x and y axes
 		'''
 		self._visualization_data = visualization_data
-		self._width_in_pixels = width_in_pixels
-		self._height_in_pixels = height_in_pixels
+		self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
+		self._height_in_pixels = height_in_pixels if height_in_pixels is not None else 600
 		self._max_snippets = max_snippets
 		self._color = color
 		self._sort_by_dist = sort_by_dist
@@ -123,12 +126,13 @@ class HTMLVisualizationAssembly(object):
 		self._x_axis_values = x_axis_values
 		self._y_axis_values = y_axis_values
 		self._color_func = color_func
+		self._show_axes = show_axes
 
 	def to_html(self,
 	            protocol='http',
 	            d3_url=None,
 	            d3_scale_chromatic_url=None,
-	            semiotic_square_html=None):
+	            html_base=None):
 		'''
 		Parameters
 		----------
@@ -142,7 +146,7 @@ class HTMLVisualizationAssembly(object):
 		  None by default.
 		  URL of d3_scale_chromatic_url, to be inserted into <script src="..."/>
 		  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
-		semiotic_square_html : str
+		html_base : str
 			None by default.  HTML of semiotic square to be inserted above plot.
 
 		Returns
@@ -163,26 +167,32 @@ class HTMLVisualizationAssembly(object):
 		if d3_scale_chromatic_url is None:
 			d3_scale_chromatic_url = DEFAULT_D3_SCALE_CHROMATIC
 
-
-		html_file = (self._full_content_of_html_file()
-		             .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
-		             .replace('<!--D3URL-->', d3_url, 1)
-		             .replace('<!--D3SCALECHROMATIC-->', d3_scale_chromatic_url)
-		             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
-		             )
-
-		if semiotic_square_html is not None:
+		html_content = ((
+			self._full_content_of_html_file()
+			if html_base is None
+			else self._format_html_base(html_base))
+			.replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
+			.replace('<!--D3URL-->', d3_url, 1)
+			.replace('<!--D3SCALECHROMATIC-->', d3_scale_chromatic_url)
+			# .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
+			)
+		'''
+		if html_base is not None:
 			html_file = html_file.replace('<!-- INSERT SEMIOTIC SQUARE -->',
-			                              semiotic_square_html)
+			                              html_base)
+		'''
 
 		extra_libs = ''
 		if self._save_svg_button:
 			# extra_libs = '<script src="https://cdn.rawgit.com/edeno/d3-save-svg/gh-pages/assets/d3-save-svg.min.js" charset="utf-8"></script>'
 			extra_libs = ''
-		html_file = (html_file
-		             .replace('<!-- EXTRA LIBS -->', extra_libs, 1)
-		             .replace('http://', protocol + '://'))
-		return html_file
+		html_content = (html_content
+			.replace('<!-- EXTRA LIBS -->', extra_libs, 1)
+			.replace('http://', protocol + '://'))
+		return html_content
+
+	def _format_html_base(self, html_base):
+		return html_base.replace('{width}', str(self._width_in_pixels)).replace('{height}', str(self._height_in_pixels))
 
 	def _ensure_valid_protocol(self, protocol):
 		if protocol not in ('https', 'http'):
@@ -196,8 +206,8 @@ class HTMLVisualizationAssembly(object):
 	def _full_content_of_javascript_files(self):
 		return '; \n \n '.join([self._get_packaged_file_content(script_name)
 		                        for script_name in [
-			                        #'d3.min.js',
-			                        #'d3-scale-chromatic.v1.min.js',
+			                        # 'd3.min.js',
+			                        # 'd3-scale-chromatic.v1.min.js',
 			                        'rectangle-holder.js',  # 'range-tree.js',
 			                        'main.js',
 		                        ]])
@@ -248,6 +258,6 @@ class HTMLVisualizationAssembly(object):
 		             js_default_value_to_null(self._get_tooltip_content),
 		             js_default_value_to_null(self._x_axis_values),
 		             js_default_value_to_null(self._y_axis_values),
-		             js_default_value_to_null(self._color_func)]
+		             js_default_value_to_null(self._color_func),
+		             js_bool(self._show_axes)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'
-

@@ -200,7 +200,6 @@ class ScatterChart:
 		if not_categories is not None:
 			assert set(not_categories) - set(c[:-5] for c in other_categories) == set()
 			other_categories = [c + ' freq' for c in not_categories]
-			print(not_categories, other_categories)
 			neutral_categories = [c[:-5] for c in all_categories
 			                      if c != category + ' freq' and c not in other_categories]
 		df = self._term_rank_score_and_frequency_df(all_categories, category, other_categories, scores)

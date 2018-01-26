@@ -26,8 +26,7 @@ class HTMLSemioticSquareViz(object):
                 height: auto ;
                 line-height: normal;
                 text-align: right;
-                text-size-adjust:100%
-                ;
+                text-size-adjust:100% ;
                 //white-space:
                 //normal
                 //;
@@ -40,12 +39,14 @@ class HTMLSemioticSquareViz(object):
 	def _get_table(self, num_terms):
 		lexicons = self.semiotic_square_.get_lexicons(num_terms=num_terms)
 		template = self._get_template()
-		html = template.format(category_a=self.semiotic_square_.category_a_,
-		                       category_b=self.semiotic_square_.category_b_,
-		                       **{category: self._lexicon_to_html(lexicon)
-		                          for category, lexicon
-		                          in lexicons.items()})
-		return html
+		formaters = {category: self._lexicon_to_html(lexicon)
+		    for category, lexicon
+		    in lexicons.items()}
+		formaters['category_a'] = self.semiotic_square_.category_a_
+		formaters['category_b'] = self.semiotic_square_.category_b_
+		for k,v in formaters.items():
+			template = template.replace('{' + k + '}', v)
+		return template
 
 	def _lexicon_to_html(self, lexicon):
 		onclick_js = ('plotInterface.displayTermContexts('
@@ -59,4 +60,4 @@ class HTMLSemioticSquareViz(object):
 
 	def _get_template(self):
 		return pkgutil.get_data('scattertext',
-		                        'data/viz/semiotic.html').decode('utf-8')
+		                        'data/viz/semiotic_new.html').decode('utf-8')

@@ -10,9 +10,7 @@ from scattertext.Common import POLITICAL_DATA_URL, ROTTEN_TOMATOES_DATA_URL
 
 if sys.version_info[0] >= 3:
 	from urllib.request import urlopen
-	from io import StringIO
 else:
-	from StringIO import StringIO
 	from urllib2 import urlopen
 
 import pandas as pd
@@ -91,6 +89,7 @@ class RottenTomatoes(object):
 	Bo Pang and Lillian Lee. ``A Sentimental Education: Sentiment Analysis Using Subjectivity
 	 Summarization Based on Minimum Cuts'', Proceedings of the ACL, 2004.
 	'''
+
 	@staticmethod
 	def get_data():
 		'''
@@ -107,6 +106,30 @@ class RottenTomatoes(object):
 		'''
 		try:
 			data_stream = pkgutil.get_data('scattertext', 'data/rotten_tomatoes_corpus.csv.bz2')
+		except:
+			url = ROTTEN_TOMATOES_DATA_URL
+			data_stream = urlopen(url).read()
+		return pd.read_csv(io.BytesIO(bz2.decompress(data_stream)))
+
+	@staticmethod
+	def get_full_data():
+		'''
+		Returns all plots and reviews, not just the ones that appear in movies with both plot descriptions and reviews.
+
+		Returns
+		-------
+		pd.DataFrame
+
+		I.e.,
+		>>> df.iloc[0]
+		category                                                             plot
+		text                    Vijay Singh Rajput (Amitabh Bachchan) is a qui...
+		movie_name                                                        aankhen
+		has_plot_and_reviews                                                False
+		Name: 0, dtype: object
+		'''
+		try:
+			data_stream = pkgutil.get_data('scattertext', 'data/rotten_tomatoes_corpus_full.csv.bz2')
 		except:
 			url = ROTTEN_TOMATOES_DATA_URL
 			data_stream = urlopen(url).read()

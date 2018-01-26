@@ -38,9 +38,12 @@ def get_low_pmi_bigrams(threshold_coef, word_freq_df):
 	unigram_prob = unigram_freq / unigram_freq.sum()
 
 	def get_pmi(bigram):
-		return np.log(
-			bigram_prob[bigram] / np.product([unigram_prob[word] for word in bigram.split(' ')])
-		) / np.log(2)
+		try:
+			return np.log(
+				bigram_prob[bigram] / np.product([unigram_prob[word] for word in bigram.split(' ')])
+			) / np.log(2)
+		except:
+			return 0
 
 	low_pmi_bigrams = bigram_prob[bigram_prob.index.map(get_pmi) < threshold_coef * 2]
 	return low_pmi_bigrams

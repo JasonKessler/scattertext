@@ -67,9 +67,8 @@ class LogOddsRatioAddOne(TermSignificance):
 		np.array of z-scores
 		'''
 		n_i, n_j = y_i.sum(), y_j.sum()
-		alpha = self.alpha_w
-		delta_i_j = (np.log((y_i + alpha) / (alpha + n_i - y_i))
-		             - np.log((y_j + alpha) / (alpha + n_j - y_j)))
+		delta_i_j = (np.log((y_i + 1) / (1. + n_i - y_i))
+		             - np.log((y_j + 1) / (1. + n_j - y_j)))
 		return delta_i_j
 
 	def get_zeta_i_j(self, X):

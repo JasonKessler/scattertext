@@ -22,11 +22,16 @@ buildViz = function (d3) {
                      getTooltipContent = null,
                      xAxisValues = null,
                      yAxisValues = null,
-                     colorFunc = null) {
+                     colorFunc = null,
+                     showAxes = true) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
-        var margin = {top: 30, right: 20, bottom: 30, left: 50},
+        var padding = {top: 30, right: 20, bottom: 30, left: 50};
+        if(!showAxes) {
+            padding = {top: 15, right: 10, bottom: 10, left: 10};
+        }
+        var margin = padding,
             width = widthInPixels - margin.left - margin.right,
             height = heightInPixels - margin.top - margin.bottom;
 
@@ -141,11 +146,16 @@ buildViz = function (d3) {
             color = d3.interpolateRdYlBu;
         }
 
+        var pixelsToAddToWidth = 200;
+        if (!showTopTerms && !showCharacteristic) {
+            pixelsToAddToWidth = 0;
+        }
+
         // Adds the svg canvas
         // var svg = d3.select("body")
         svg = d3.select('#' + divName)
             .append("svg")
-            .attr("width", width + margin.left + margin.right + 200)
+            .attr("width", width + margin.left + margin.right + pixelsToAddToWidth)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform",
@@ -490,6 +500,35 @@ buildViz = function (d3) {
             return false;
         }
 
+        function displayObscuredTerms(obscuredTerms, term, div='#overlapped-terms') {
+            d3.select('#overlapped-terms')
+                .selectAll('div')
+                .remove();
+            d3.select(div)
+                .selectAll('div')
+                .remove();
+            if (obscuredTerms.length > 1) {
+                var obscuredDiv = d3.select(div)
+                    .append('div')
+                    .attr("class", "obscured")
+                    .style('align', 'center')
+                    .style('text-align', 'center')
+                    .html("<b>\"" + term + "\" obstructs</b>: ");
+                obscuredTerms.map(
+                    function (term, i) {
+                        makeWordInteractive(
+                            obscuredDiv.append("text").text(term),
+                            term,
+                            false
+                        );
+                        if (i < obscuredTerms.length - 1) {
+                            obscuredDiv.append("text").text(", ");
+                        }
+                    }
+                )
+            }
+        }
+
         function displayTermContexts(termInfo, jump=true) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
@@ -513,6 +552,7 @@ buildViz = function (d3) {
                     contextCoulumns.push("Neutral")
                 }
             }
+
             contextCoulumns.map(
                 function (catName, catIndex) {
                     if (max_snippets != null) {
@@ -543,6 +583,9 @@ buildViz = function (d3) {
 
                     });
                 });
+            var obscuredTerms = getObscuredTerms(termInfo.info);
+            displayObscuredTerms(obscuredTerms, info.term, '#overlapped-terms-clicked');
+
             d3.select('#termstats')
                 .selectAll("div")
                 .remove();
@@ -652,7 +695,7 @@ buildViz = function (d3) {
                         getFrequencyDescription(fullData.info.neutral_category_name,
                             info.neut25k,
                             info.neut,
-                            termInfo.contexts[2].length * 1000 / numNCatDocs)
+                            termInfo.contexts[2].length * 1000 / numNeutDocs)
                     );
 
             }
@@ -784,19 +827,34 @@ buildViz = function (d3) {
             return message;
         }
 
-        function showTooltip(d, pageX, pageY) {
+        function getObscuredTerms(d) {
+            var matches = (data.filter(function (term) {
+                    return term.x === d.x && term.y === d.y;
+                }).map(function (term) {
+                    return term.term
+                }).sort()
+            );
+            return matches;
+        }
+
+        function showTooltip(d, pageX, pageY, showObscured=true) {
             deselectLastCircle();
+
+            var obscuredTerms = getObscuredTerms(d);
             var message = '';
+            if (obscuredTerms.length > 1 && showObscured)
+                displayObscuredTerms(obscuredTerms, d.term);
             if (getTooltipContent !== null) {
-                message = getTooltipContent(d);
+                message += getTooltipContent(d);
             } else {
-                message = getDefaultTooltipContent(d);
-                if (!sortByDist) {
-                    message = getDefaultTooltipContentWithoutScore(d);
+                if (sortByDist) {
+                    message += getDefaultTooltipContentWithoutScore(d);
+                } else {
+                    message += getDefaultTooltipContent(d);
                 }
             }
 
-            pageX -= (svg.node().getBoundingClientRect().left);
+            pageX -= (svg.node().getBoundingClientRect().left) - origSVGLeft;
             pageY -= (svg.node().getBoundingClientRect().top) - origSVGTop;
             tooltip.transition()
                 .duration(0)
@@ -804,7 +862,7 @@ buildViz = function (d3) {
                 .style("z-index", 10000000);
             tooltip.html(message)
                 .style("left", (pageX - 40) + "px")
-                .style("top", (pageY - 70) + "px");
+                .style("top", (pageY - 85) + "px");
             tooltip.on('click', function () {
                 tooltip.transition()
                     .style('opacity', 0)
@@ -827,7 +885,7 @@ buildViz = function (d3) {
             return false;
         };
 
-        function showToolTipForTerm(searchTerm) {
+        function showToolTipForTerm(searchTerm, showObscured=true) {
             var searchTermInfo = termDict[searchTerm];
             if (searchTermInfo === undefined) {
                 d3.select("#alertMessage")
@@ -845,9 +903,11 @@ buildViz = function (d3) {
                 //var circlePos = circle.position();
                 //var el = circle.node()
                 //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
-                showTooltip(searchTermInfo,
+                showTooltip(
+                    searchTermInfo,
                     pageX,
-                    pageY
+                    pageY,
+                    showObscured
                 );
 
                 lastCircleSelected = circle;
@@ -855,10 +915,10 @@ buildViz = function (d3) {
             }
         };
 
-        function makeWordInteractive(domObj, term) {
+        function makeWordInteractive(domObj, term, showObscured=true) {
             return domObj
                 .on("mouseover", function (d) {
-                    showToolTipForTerm(term);
+                    showToolTipForTerm(term, showObscured);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("mouseout", function (d) {
@@ -866,6 +926,11 @@ buildViz = function (d3) {
                         .duration(0)
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
+                    if (showObscured) {
+                        d3.select('#overlapped-terms')
+                            .selectAll('div')
+                            .remove();
+                    }
                 })
                 .on("click", function (d) {
                     displayTermContexts(gatherTermContexts(termDict[term]));
@@ -887,13 +952,18 @@ buildViz = function (d3) {
                 termDict[x.term].i = i;
             });
 
+            var padding = 0;
+            if (showAxes) {
+                padding = 0.1;
+            }
+
             // Scale the range of the data.  Add some space on either end.
-            x.domain([-0.1, d3.max(data, function (d) {
+            x.domain([-1 * padding, d3.max(data, function (d) {
                 return d.x;
-            }) + 0.1]);
-            y.domain([-0.1, d3.max(data, function (d) {
+            }) + padding]);
+            y.domain([-1 * padding, d3.max(data, function (d) {
                 return d.y;
-            }) + 0.1]);
+            }) + padding]);
 
             /*
              data.sort(function (a, b) {
@@ -951,7 +1021,7 @@ buildViz = function (d3) {
                         d3.event.pageX,
                         d3.event.pageY
                     );*/
-                    showToolTipForTerm(d.term);
+                    showToolTipForTerm(d.term, true);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("click", function (d) {
@@ -962,9 +1032,14 @@ buildViz = function (d3) {
                         .duration(0)
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
+                    d3.select('#overlapped-terms')
+                        .selectAll('div')
+                        .remove();
                 });
 
             coords = Object();
+
+            var pointStore = [];
 
             function censorPoints(datum) {
                 var term = datum.term;
@@ -981,7 +1056,10 @@ buildViz = function (d3) {
                     y2 = bbox.y + bbox.height - borderToRemove;
                 //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
                 rectHolder.add(new Rectangle(x1, y1, x2, y2));
-
+                pointStore.push([x1, y1]);
+                pointStore.push([x2, y1]);
+                pointStore.push([x1, y2]);
+                pointStore.push([x2, y2]);
                 curLabel.remove();
             }
 
@@ -1042,8 +1120,11 @@ buildViz = function (d3) {
                     coords[term] = [x1, y1, x2, y2];
                     //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
                     rectHolder.add(new Rectangle(x1, y1, x2, y2));
+                    pointStore.push([x1, y1]);
+                    pointStore.push([x2, y1]);
+                    pointStore.push([x1, y2]);
+                    pointStore.push([x2, y2]);
                     return true;
-
                 } else {
                     //curLabel.remove();
                     return false;
@@ -1127,10 +1208,6 @@ buildViz = function (d3) {
             console.log(data);
             data.forEach(censorPoints);
 
-            var myXAxis = svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
 
             function registerFigureBBox(curLabel) {
                 var bbox = curLabel.node().getBBox();
@@ -1143,68 +1220,99 @@ buildViz = function (d3) {
                 //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
             }
 
-            //rangeTree = registerFigureBBox(myXAxis);
-            var xLabel = svg.append("text")
-                .attr("class", "x label")
-                .attr("text-anchor", "end")
-                .attr("x", width)
-                .attr("y", height - 6)
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '10px')
-                .text(getLabelText('x'));
+            if (showAxes) {
 
-            //console.log('xLabel');
-            //console.log(xLabel);
+                var myXAxis = svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
 
-            //rangeTree = registerFigureBBox(xLabel);
-            // Add the Y Axis
-
-            if (!yAxisValues) {
-                var myYAxis = svg.append("g")
-                    .attr("class", "y axis")
-                    .call(yAxis)
-                    .selectAll("text")
-                    .style("text-anchor", "end")
-                    .attr("dx", "30px")
-                    .attr("dy", "-13px")
+                //rangeTree = registerFigureBBox(myXAxis);
+                var xLabel = svg.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "end")
+                    .attr("x", width)
+                    .attr("y", height - 6)
                     .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                     .attr('font-size', '10px')
-                    .attr("transform", "rotate(-90)");
-            } else {
-                var myYAxis = svg.append("g")
-                    .attr("class", "y axis")
-                    .call(yAxis)
-                    .selectAll("text")
-                    .style("text-anchor", "end")
-                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                    .attr('font-size', '10px');
-            }
-            registerFigureBBox(myYAxis);
+                    .text(getLabelText('x'));
 
-            function getLabelText(axis) {
-                if (axis == 'y') {
-                    if (yLabelText == null)
-                        return modelInfo['category_name'] + " Frequency";
-                    else
-                        return yLabelText;
+                //console.log('xLabel');
+                //console.log(xLabel);
+
+                //rangeTree = registerFigureBBox(xLabel);
+                // Add the Y Axis
+
+                if (!yAxisValues) {
+                    var myYAxis = svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis)
+                        .selectAll("text")
+                        .style("text-anchor", "end")
+                        .attr("dx", "30px")
+                        .attr("dy", "-13px")
+                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                        .attr('font-size', '10px')
+                        .attr("transform", "rotate(-90)");
                 } else {
-                    if (xLabelText == null)
-                        return modelInfo['not_category_name'] + " Frequency";
-                    else
-                        return xLabelText;
+                    var myYAxis = svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis)
+                        .selectAll("text")
+                        .style("text-anchor", "end")
+                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                        .attr('font-size', '10px');
                 }
-            }
+                registerFigureBBox(myYAxis);
 
-            var yLabel = svg.append("text")
-                .attr("class", "y label")
-                .attr("text-anchor", "end")
-                .attr("y", 6)
-                .attr("dy", ".75em")
-                .attr("transform", "rotate(-90)")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '10px')
-                .text(getLabelText('y'));
-            registerFigureBBox(yLabel);
+                function getLabelText(axis) {
+                    if (axis == 'y') {
+                        if (yLabelText == null)
+                            return modelInfo['category_name'] + " Frequency";
+                        else
+                            return yLabelText;
+                    } else {
+                        if (xLabelText == null)
+                            return modelInfo['not_category_name'] + " Frequency";
+                        else
+                            return xLabelText;
+                    }
+                }
+
+                var yLabel = svg.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 6)
+                    .attr("dy", ".75em")
+                    .attr("transform", "rotate(-90)")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '10px')
+                    .text(getLabelText('y'));
+                registerFigureBBox(yLabel);
+            } else {
+                d3.selection.prototype.moveToBack = function () {
+                    return this.each(function () {
+                        var firstChild = this.parentNode.firstChild;
+                        if (firstChild) {
+                            this.parentNode.insertBefore(this, firstChild);
+                        }
+                    });
+                };
+                var x_line = svg.append("g")
+                    .attr("transform", "translate(0, " + y(0.5) + ")")
+                    .append("line")
+                    .attr("x2", width)
+                    .style("stroke", "#cccccc")
+                    .style("stroke-width", "1px")
+                    .moveToBack();
+                var y_line = svg.append("g")
+                    .attr("transform", "translate(" + x(0.5) + ", 0)")
+                    .append("line")
+                    .attr("y2", height)
+                    .style("stroke", "#cccccc")
+                    .style("stroke-width", "1px")
+                    .moveToBack();
+            }
 
             function showWordList(word, termDataList) {
                 var maxWidth = word.node().getBBox().width;
@@ -1348,7 +1456,77 @@ buildViz = function (d3) {
             }
             console.log('numPointsLabeled');
             console.log(numPointsLabeled);
+            /*
+            // pointset has to be sorted by X
+            function convex(pointset) {
+                function _cross(o, a, b) {
+                    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+                }
 
+                function _upperTangent(pointset) {
+                    var lower = [];
+                    for (var l = 0; l < pointset.length; l++) {
+                        while (lower.length >= 2 && (_cross(lower[lower.length - 2], lower[lower.length - 1], pointset[l]) <= 0)) {
+                            lower.pop();
+                        }
+                        lower.push(pointset[l]);
+                    }
+                    lower.pop();
+                    return lower;
+                }
+
+                function _lowerTangent(pointset) {
+                    var reversed = pointset.reverse(),
+                        upper = [];
+                    for (var u = 0; u < reversed.length; u++) {
+                        while (upper.length >= 2 && (_cross(upper[upper.length - 2], upper[upper.length - 1], reversed[u]) <= 0)) {
+                            upper.pop();
+                        }
+                        upper.push(reversed[u]);
+                    }
+                    upper.pop();
+                    return upper;
+                }
+
+                var convex,
+                    upper = _upperTangent(pointset),
+                    lower = _lowerTangent(pointset);
+                convex = lower.concat(upper);
+                convex.push(pointset[0]);
+                return convex;
+            }
+
+            console.log("POINTSTORE")
+            console.log(pointStore);
+            pointStore.sort();
+            var convexHull = convex(pointStore);
+            var minX = convexHull.sort(function (a,b) {
+                return a[0] < b[0] ? -1 : 1;
+            })[0][0];
+            var minY = convexHull.sort(function (a,b) {
+                return a[1] < b[1] ? -1 : 1;
+            })[0][0];
+            //svg.append("text").text("BLAH BLAH").attr("text-anchor", "middle").attr("cx", x(0)).attr("y", minY);
+            console.log("POINTSTORE")
+            console.log(pointStore);
+            console.log(convexHull);
+            for (i in convexHull) {
+                var i = parseInt(i);
+                if (i + 1 == convexHull.length) {
+                    var nextI = 0;
+                } else {
+                    var nextI = i + 1;
+                }
+                console.log(i, ',', nextI);
+                svg.append("line")
+                    .attr("x2", width)
+                    .style("stroke", "#cc0000")
+                    .style("stroke-width", "1px")
+                    .attr("x1", convexHull[i][0])     // x position of the first end of the line
+                    .attr("y1", convexHull[i][1])      // y position of the first end of the line
+                    .attr("x2", convexHull[nextI][0])     // x position of the second end of the line
+                    .attr("y2", convexHull[nextI][1]);    // y position of the second end of the line
+            }*/
 
             function populateCorpusStats() {
                 var wordCounts = {};
@@ -1375,7 +1553,8 @@ buildViz = function (d3) {
                     docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
                 });
                 var messages = [];
-                [fullData.info.category_name, fullData.info.not_category_name].forEach(function (x, i) {
+                var categoriesToShow = [fullData.info.category_name, fullData.info.not_category_name];
+                categoriesToShow.forEach(function (x, i) {
                     messages.push('<b>' + x + '</b> document count: '
                         + Number(docCounts[x]).toLocaleString('en')
                         + '; word count: '
@@ -1428,7 +1607,8 @@ buildViz = function (d3) {
         // The tool tip is down here in order to make sure it has the highest z-index
         var tooltip = d3.select('#' + divName)
             .append("div")
-            .attr("class", getTooltipContent == null && !sortByDist ? "tooltip" : "tooltipscore")
+            //.attr("class", getTooltipContent == null && sortByDist ? "tooltip" : "tooltipscore")
+            .attr("class", "tooltipscore")
             .style("opacity", 0);
         var plotInterface = Object();
         plotInterface.displayTermContexts = displayTermContexts;

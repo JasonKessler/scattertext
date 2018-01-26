@@ -56,31 +56,18 @@ class TestSemioticSquare(TestCase):
 		with self.assertRaises(EmptyNeutralCategoriesError):
 			SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', [])
 
-	def test_lexicon_building(self):
-		semsq = get_test_semiotic_square()
-		self.assertEqual(semsq.category_a_, 'hamlet')
-		self.assertEqual(semsq.category_b_, 'jay-z/r. kelly')
-		self.assertEqual(semsq.neutral_categories_, ['swift'])
-		self.assertNotEqual(semsq.category_a_words_, [])
-		self.assertNotEqual(semsq.category_b_words_, [])
-		self.assertNotEqual(semsq.not_category_a_and_b_words_, [])
-		self.assertNotEqual(semsq.not_category_a_words_, [])
-		self.assertNotEqual(semsq.not_category_b_words_, [])
-		self.assertNotEqual(semsq.category_a_and_b_words_, [])
-		self.assertNotEqual(semsq.category_a_vs_b_words_, [])
-		self.assertNotEqual(semsq.category_b_vs_a_words_, [])
 
 	def test_get_lexicons(self):
 		semsq = get_test_semiotic_square()
 		lexicons = semsq.get_lexicons()
 		for category in self.categories():
 			self.assertIn(category, lexicons)
-			self.assertEqual(len(lexicons[category]), 10)
+			self.assertLessEqual(len(lexicons[category]), 10)
 
-		lexicons = semsq.get_lexicons(num_terms=5)
+		lexicons = semsq.get_lexicons(5)
 		for category in self.categories():
 			self.assertIn(category, lexicons)
-			self.assertEqual(len(lexicons[category]), 5)
+			self.assertLessEqual(len(lexicons[category]), 5)
 
 	def test_get_axes(self):
 		semsq = get_test_semiotic_square()
@@ -89,13 +76,13 @@ class TestSemioticSquare(TestCase):
 		                 list(sorted(semsq.term_doc_matrix_.get_terms())))
 
 	def categories(self):
-		return ['category_b_vs_a_words',
-		        'category_b_words',
-		        'not_category_a_words',
-		        'not_category_a_and_b_words',
-		        'category_a_vs_b_words',
-		        'category_a_and_b_words',
-		        'not_category_b_words',
-		        'category_a_words']
+		return ['a',
+		        'b',
+		        'not_a',
+		        'not_b',
+		        'a_and_not_b',
+		        'b_and_not_a',
+		        'a_and_b',
+		        'not_a_and_not_b']
 
 

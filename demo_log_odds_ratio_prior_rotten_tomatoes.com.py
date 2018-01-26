@@ -1,4 +1,5 @@
 import scattertext as st
+from scattertext import LogOddsRatioInformativeDirichletPrior
 
 fn = 'rotten_fresh2.html'
 df = st.SampleCorpora.RottenTomatoes.get_data()
@@ -7,15 +8,13 @@ corpus = (st.CorpusFromPandas(df,
                               text_col='text',
                               nlp=st.whitespace_nlp_with_sentences)
 	.build())
-term_scorer = (st.LORIDPFactory(corpus,
-                                category='fresh',
-                                not_categories=['rotten'],
-                                starting_count=1,
-                                alpha=10)
+priors = (st.PriorFactory(corpus,
+                          category='fresh',
+                          not_categories=['rotten'],
+                          starting_count=1)
 	.use_general_term_frequencies()
 	.use_all_categories()
-	.get_term_scorer())
-tdf = corpus.get_term_freq_df()
+	.get_priors())
 (open(fn, 'wb')
 	.write(
 	st.produce_fightin_words_explorer(
@@ -23,8 +22,7 @@ tdf = corpus.get_term_freq_df()
 		category='fresh',
 		not_categories=['rotten'],
 		metadata=df['movie_name'],
-		term_scorer=term_scorer,
-		transform=st.Scalers.percentile_dense)
-		.encode('utf-8'))
+		term_scorer=LogOddsRatioInformativeDirichletPrior(priors, alpha_w=10),
+	).encode('utf-8'))
 )
 print(fn)

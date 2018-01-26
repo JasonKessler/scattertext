@@ -13,6 +13,46 @@ def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
 	        + ((vec < 0).astype(float) * (vec / max_abs) * 0.5))
 
 
+def scale_neg_1_to_1_with_zero_mean_rank_abs_max(v):
+	rankv = v * 2 - 1
+	pos_v = rankv[rankv > 0]
+	pos_v = rankdata(pos_v, 'dense')
+	pos_v = pos_v / pos_v.max()
+	neg_v = rankv[rankv < 0]
+	neg_v = rankdata(neg_v, 'dense')
+	neg_v = neg_v / neg_v.max()
+	rankv[rankv > 0] = pos_v
+	rankv[rankv < 0] = - (neg_v.max() - neg_v)
+
+	return scale_neg_1_to_1_with_zero_mean_abs_max(rankv)
+
+
+def scale_neg_1_to_1_with_zero_mean_log_abs_max(v):
+	'''
+	!!! not working
+	'''
+	df = pd.DataFrame({'v':v,
+	                   'sign': (v > 0) * 2 - 1})
+	df['lg'] = np.log(np.abs(v)) / np.log(1.96)
+	df['exclude'] = (np.isinf(df.lg) | np.isneginf(df.lg))
+	for mask in [(df['sign'] == -1) & (df['exclude'] == False),
+	             (df['sign'] == 1) & (df['exclude'] == False)]:
+		df[mask]['lg'] = df[mask]['lg'].max() - df[mask]['lg']
+	df['lg'] *= df['sign']
+	df['lg'] = df['lg'].fillna(0)
+	print(df[df['exclude']]['lg'].values)
+	#to_rescale = df['lg'].reindex(v.index)
+	df['to_out'] =  scale_neg_1_to_1_with_zero_mean_abs_max(df['lg'])
+	print('right')
+	print(df.sort_values(by='lg').iloc[:5])
+	print(df.sort_values(by='lg').iloc[-5:])
+	print('to_out')
+	print(df.sort_values(by='to_out').iloc[:5])
+	print(df.sort_values(by='to_out').iloc[-5:])
+	print(len(df), len(df.dropna()))
+	return df['to_out']
+
+
 def scale_standardize(vec, terms=None, other_vec=None):
 	to_ret = (vec - vec.mean()) / vec.std()
 	to_ret += to_ret.min() + 1
@@ -70,9 +110,11 @@ def percentile(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='average') * (1. / len(vec))
 	return _scale_0_to_1(vec_ss)
 
+
 def percentile_dense(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='dense') * (1. / len(vec))
 	return _scale_0_to_1(vec_ss)
+
 
 def percentile_ordinal(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='ordinal') * (1. / len(vec))
@@ -91,11 +133,11 @@ def percentile_alphabetical(vec, terms, other_vec=None):
 	else:
 		scale_df['others'] = 0
 	vec_ss = (scale_df
-	          .sort_values(by=['scores', 'terms', 'others'],
-	                       ascending=[True, True, False])
-	          .reset_index()
-	          .sort_values(by='index')
-	          .index)
+		.sort_values(by=['scores', 'terms', 'others'],
+	               ascending=[True, True, False])
+		.reset_index()
+		.sort_values(by='index')
+		.index)
 	return _scale_0_to_1(vec_ss)
 
 

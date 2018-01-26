@@ -46,7 +46,6 @@ class LogOddsRatioInformativeDirichletPrior(LogOddsRatioUninformativeDirichletPr
 		'''
 		# a_w = self.alpha_w
 		# prior_coef = 10
-
 		n_i, n_j = y_i.sum(), y_j.sum()
 		prior_scale_i = ((n_i) * self.alpha_w * 1. / np.sum(self._priors))
 		# prior_scale_i = (self.alpha_w * 1. / np.sum(self._priors))
@@ -57,8 +56,8 @@ class LogOddsRatioInformativeDirichletPrior(LogOddsRatioUninformativeDirichletPr
 		# prior_scale_j = (self.alpha_w * 1. / np.sum(self._priors))
 		a_wj = self._priors * prior_scale_j
 		a_0j = np.sum(a_wj)
-
 		# a_0 = len(y_i) * a_w
+
 		delta_i_j = (np.log((y_i + a_wi) / (n_i + a_0i - y_i - a_wi))
 		             - np.log((y_j + a_wj) / (n_j + a_0j - y_j - a_wj)))
 		var_delta_i_j = (1. / (y_i + a_wi)

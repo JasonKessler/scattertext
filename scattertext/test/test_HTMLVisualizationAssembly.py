@@ -10,10 +10,10 @@ from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 class TestHTMLVisualizationAssembly(TestCase):
 	def get_params(self, param_dict={}):
-		params = ['undefined', 'undefined', 'null', 'null', 'true', 'false',
+		params = ['1000', '600', 'null', 'null', 'true', 'false',
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
-		          'null', 'null', 'null', 'null']
+		          'null', 'null', 'null', 'null', 'true']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -49,13 +49,13 @@ class TestHTMLVisualizationAssembly(TestCase):
 		semsq = get_test_semiotic_square()
 		assembler = self.make_assembler()
 		html = assembler.to_html(
-			semiotic_square_html= HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
+			html_base= HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
 		if sys.version_info.major == 2:
 			self.assertEqual(type(html), unicode)
 		else:
 			self.assertEqual(type(html), str)
 		self.assertFalse('<!-- EXTRA LIBS -->' in html)
-		self.assertFalse('<!-- INSERT SEMIOTIC SQUARE -->' in html)
+		#self.assertFalse('<!-- INSERT SEMIOTIC SQUARE -->' in html)
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 		self.assertTrue('Republican' in html)
 
@@ -299,3 +299,10 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            color_func=color_func)
 			._call_build_visualization_in_javascript()),
 		                 self.get_params({23: color_func}))
+
+	def test_show_axes(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            show_axes=False)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({24: 'false'}))
