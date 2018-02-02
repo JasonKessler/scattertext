@@ -3,8 +3,10 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.17
+# Scattertext 0.0.2.18
 ### Updates
+Semiotic Squares now look better, and have customizable labels. 
+
 Incorporated the [General Inquirer](http://www.wjh.harvard.edu/~inquirer/homecat.htm) 
 lexicon. For non-commercial use only. The lexicon is downloaded from their homepage at the start of each 
 use. See `demo_general_inquierer.py`.
@@ -726,13 +728,13 @@ with the set of negative reviews and plot descriptions vs. positive reviews.
 
 Common terms among adjacent corners of the square are also listed.
 
-An HTML-rendered square is accompanied by a scatterplot.  Points on the plot are terms.
+An HTML-rendered square is accompanied by a scatter plot.  Points on the plot are terms.
 The x-axis is the Z-score of the association to one of the opposed concepts. The y-axis
 is the Z-score how associated a term is with the neutral set of documents relative to the
 opposed set.  A point's red-blue color indicate the term's opposed-association, while
 the more desaturated a term is, the more it is associated with the neutral set of documents.       
 
-I'll expand this section later, but want to get this idea in circulation.
+
 
 ```python
 import scattertext as st
@@ -752,7 +754,8 @@ semiotic_square = st.SemioticSquare(
 	category_a='Positive',
 	category_b='Negative',
 	neutral_categories=['Plot'],
-	scorer=st.RankDifference()
+	scorer=st.RankDifference(),
+	labels={'not_a_and_not_b': 'Plot Descriptions', 'a_and_b': 'Reviews'}
 )
 
 html = st.produce_semiotic_square_explorer(semiotic_square,

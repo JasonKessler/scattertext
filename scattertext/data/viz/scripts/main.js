@@ -28,8 +28,8 @@ buildViz = function (d3) {
 
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
-        if(!showAxes) {
-            padding = {top: 15, right: 10, bottom: 10, left: 10};
+        if (!showAxes) {
+            padding = {top: 30, right: 20, bottom: 30, left: 50};
         }
         var margin = padding,
             width = widthInPixels - margin.left - margin.right,
@@ -84,7 +84,7 @@ buildViz = function (d3) {
 
             return bsa(0, ar.length);
         }
-
+        console.log("fullData"); console.log(fullData);
 
         var sortedX = fullData.data.sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
@@ -160,6 +160,7 @@ buildViz = function (d3) {
             .append("g")
             .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
+
         origSVGLeft = svg.node().getBoundingClientRect().left;
         origSVGTop = svg.node().getBoundingClientRect().top;
         var lastCircleSelected = null;
@@ -461,6 +462,7 @@ buildViz = function (d3) {
                 return x > -1
             });
 
+
             for (var i in fullData.docs.extra) {
                 if (term in fullData.docs.extra[i]) {
                     var strength = fullData.docs.extra[i][term] /
@@ -532,8 +534,13 @@ buildViz = function (d3) {
         function displayTermContexts(termInfo, jump=true) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
-            if (contexts[0].length == 0 && contexts[1].length == 0) {
-                return null;
+            if (contexts[0].length == 0 && contexts[1].length == 0 ) {
+                if(contexts.length >= 2) {
+                    if(contexts[2].length == 0) {
+                        return null;
+                    }
+                }
+
             }
             //!!! Future feature: context words
             //var contextWords = getContextWordSFS(info.term);
@@ -764,7 +771,9 @@ buildViz = function (d3) {
             }).filter(function (x) {
                 return x > -1
             });
-
+            console.log("categoryNum");
+            console.log(categoryNum);
+            console.log("categoryNum");
             if (pattern !== null) {
                 for (var i in fullData.docs.texts) {
                     //var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
@@ -1035,17 +1044,18 @@ buildViz = function (d3) {
                     d3.select('#overlapped-terms')
                         .selectAll('div')
                         .remove();
-                });
+                })
 
             coords = Object();
 
             var pointStore = [];
+            var pointRects = []
 
-            function censorPoints(datum) {
+            function censorPoints(datum, getX, getY) {
                 var term = datum.term;
                 var curLabel = svg.append("text")
-                    .attr("x", x(datum.x))
-                    .attr("y", y(datum.y) + 3)
+                    .attr("x", x(getX(datum)))
+                    .attr("y", y(getY(datum)) + 3)
                     .attr("text-anchor", "middle")
                     .text("x");
                 var bbox = curLabel.node().getBBox();
@@ -1055,7 +1065,9 @@ buildViz = function (d3) {
                     x2 = bbox.x + bbox.width - borderToRemove,
                     y2 = bbox.y + bbox.height - borderToRemove;
                 //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
-                rectHolder.add(new Rectangle(x1, y1, x2, y2));
+                var pointRect = new Rectangle(x1, y1, x2, y2);
+                pointRects.push(pointRect);
+                rectHolder.add(pointRect);
                 pointStore.push([x1, y1]);
                 pointStore.push([x2, y1]);
                 pointStore.push([x1, y2]);
@@ -1063,7 +1075,7 @@ buildViz = function (d3) {
                 curLabel.remove();
             }
 
-            function labelPointsIfPossible(i, useOffset) {
+            function labelPointsIfPossible(i, myX, myY) {
                 var term = data[i].term;
 
                 var configs = [
@@ -1087,9 +1099,12 @@ buildViz = function (d3) {
                     var config = configs[configI];
                     var curLabel = makeWordInteractive(
                         svg.append("text")
-                            .attr("x", x(data[i].x) + config['xoff'])
-                            .attr("y", y(data[i].y) + config['yoff'])
+                        //.attr("x", x(data[i].x) + config['xoff'])
+                        //.attr("y", y(data[i].y) + config['yoff'])
+                            .attr("x", x(myX) + config['xoff'])
+                            .attr("y", y(myY) + config['yoff'])
                             .attr('class', 'label')
+                            .attr('class', 'pointlabel')
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                             .attr('font-size', '10px')
                             .attr("text-anchor", config['anchor'])
@@ -1119,12 +1134,13 @@ buildViz = function (d3) {
                 if (!matchedElement) {
                     coords[term] = [x1, y1, x2, y2];
                     //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, term);
-                    rectHolder.add(new Rectangle(x1, y1, x2, y2));
+                    var labelRect = new Rectangle(x1, y1, x2, y2)
+                    rectHolder.add(labelRect);
                     pointStore.push([x1, y1]);
                     pointStore.push([x2, y1]);
                     pointStore.push([x1, y2]);
                     pointStore.push([x2, y2]);
-                    return true;
+                    return {label: curLabel, rect: labelRect};
                 } else {
                     //curLabel.remove();
                     return false;
@@ -1206,7 +1222,18 @@ buildViz = function (d3) {
             data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
             console.log("Sorted Data:");
             console.log(data);
-            data.forEach(censorPoints);
+            for (var i in data) {
+                var d = data[i];
+                censorPoints(
+                    d,
+                    function (d) {
+                        return d.x
+                    },
+                    function (d) {
+                        return d.y
+                    }
+                );
+            }
 
 
             function registerFigureBBox(curLabel) {
@@ -1450,12 +1477,72 @@ buildViz = function (d3) {
                 svg.attr('width', word.node().getBBox().x + 3 * maxWidth + 10);
             }
 
-            var numPointsLabeled = 0;
-            for (var i = 0; i < data.length; i++) {
-                if (labelPointsIfPossible(i), true) numPointsLabeled++;
+            function performPartialLabeling(existingLabels, getX, getY) {
+                for (i in existingLabels) {
+                    rectHolder.remove(existingLabels[i].rect);
+                    existingLabels[i].label.remove();
+                }
+
+                var labeledPoints = [];
+                for (var i = 0; i < data.length; i++) {
+                    var label = labelPointsIfPossible(i, getX(data[i]), getY(data[i]));
+                    if (label !== false) {
+                        labeledPoints.push(label)
+                    }
+                    //if (labelPointsIfPossible(i), true) numPointsLabeled++;
+                }
+                console.log('numPointsLabeled');
+                console.log(labeledPoints.length);
+                return labeledPoints;
             }
-            console.log('numPointsLabeled');
-            console.log(numPointsLabeled);
+
+            //var labeledPoints = performPartialLabeling();
+            labeledPoints = [];
+            labeledPoints = performPartialLabeling(labeledPoints,
+                function (d) {
+                    return d.x
+                },
+                function (d) {
+                    return d.y
+                });
+            console.log("labeledPoints");
+            console.log(labeledPoints);
+            var redrawPoints = function (n, getX, getY, relabel=false) {
+                labeledPoints.forEach(function (p) {
+                    p.label.remove();
+                    rectHolder.remove(p.rect);
+                });
+                pointRects.forEach(function (rect) {
+                    rectHolder.remove(rect);
+                });
+                pointRects = []
+
+                var newCoords = {};
+                for (i in fullData['data']) {
+                    var d = fullData['data'][i];
+                    newCoords[d.term] = {x: getX(d), y: getY(d)};
+                    censorPoints(d, getX, getY);
+                }
+
+                d3.selectAll('circle').transition().duration(1000).attr("cy", function (d) {
+                    return y(newCoords[d.term].y)
+                }).attr("cx", function (d) {
+                    return x(newCoords[d.term].x)
+                }).duration(1000);
+                labeledPoints = [];
+                if (relabel) {
+                    labeledPoints = performPartialLabeling(labeledPoints, function (d) {
+                            return newCoords[d.term].x
+                        },
+                        function (d) {
+                            return newCoords[d.term].y
+                        });
+                    console.log("labeledPoints");
+                    console.log(labeledPoints);
+                }
+            };
+
+
             /*
             // pointset has to be sorted by X
             function convex(pointset) {
@@ -1597,12 +1684,14 @@ buildViz = function (d3) {
                 document.body.appendChild(downloadLink);
 
             }
-
+            //return [performPartialLabeling, labeledPoints];
+            return redrawPoints;
         };
 
         //fullData = getDataAndInfo();
         var corpusWordCounts = getCorpusWordCounts();
-        processData(fullData);
+        var redrawPoints = processData(fullData);
+
 
         // The tool tip is down here in order to make sure it has the highest z-index
         var tooltip = d3.select('#' + divName)
@@ -1615,6 +1704,16 @@ buildViz = function (d3) {
         plotInterface.gatherTermContexts = gatherTermContexts;
         plotInterface.termDict = termDict;
         plotInterface.showToolTipForTerm = showToolTipForTerm;
+        plotInterface.redrawPoints = redrawPoints;
+
+        function drawFightinWords() {
+            plotInterface.redrawPoints(0.1, function (d) {
+                    return Math.log(d.ncat + d.cat) / maxFreq
+                }, function (d) {
+                    return d.s
+                }, true
+            )
+        };
         return plotInterface
     };
 }(d3);

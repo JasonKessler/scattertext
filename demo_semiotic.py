@@ -1,7 +1,7 @@
 import scattertext as st
 
 movie_df = st.SampleCorpora.RottenTomatoes.get_data()
-movie_df.category = movie_df.category.apply\
+movie_df.category = movie_df.category.apply \
 	(lambda x: {'rotten': 'Negative', 'fresh': 'Positive', 'plot': 'Plot'}[x])
 corpus = st.CorpusFromPandas(
 	movie_df,
@@ -16,7 +16,8 @@ semiotic_square = st.SemioticSquare(
 	category_a='Positive',
 	category_b='Negative',
 	neutral_categories=['Plot'],
-	scorer=st.RankDifference()
+	scorer=st.RankDifference(),
+	labels={'not_a_and_not_b': 'Plot Descriptions', 'a_and_b': 'Reviews'}
 )
 
 html = st.produce_semiotic_square_explorer(semiotic_square,
@@ -24,6 +25,7 @@ html = st.produce_semiotic_square_explorer(semiotic_square,
                                            not_category_name='Negative',
                                            x_label='Fresh-Rotten',
                                            y_label='Plot-Review',
+                                           num_terms_semiotic_square=20,
                                            neutral_category_name='Plot Description',
                                            metadata=movie_df['movie_name'])
 

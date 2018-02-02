@@ -27,10 +27,6 @@ class HTMLSemioticSquareViz(object):
                 line-height: normal;
                 text-align: right;
                 text-size-adjust:100% ;
-                //white-space:
-                //normal
-                //;
-                //width: auto;
                 -webkit-border-horizontal-spacing: 0px;
                 -webkit-border-vertical-spacing:0px;
 		}
@@ -39,12 +35,13 @@ class HTMLSemioticSquareViz(object):
 	def _get_table(self, num_terms):
 		lexicons = self.semiotic_square_.get_lexicons(num_terms=num_terms)
 		template = self._get_template()
-		formaters = {category: self._lexicon_to_html(lexicon)
-		    for category, lexicon
-		    in lexicons.items()}
-		formaters['category_a'] = self.semiotic_square_.category_a_
-		formaters['category_b'] = self.semiotic_square_.category_b_
-		for k,v in formaters.items():
+		formatters = {category: self._lexicon_to_html(lexicon)
+		             for category, lexicon
+		             in lexicons.items()}
+		formatters.update(self.semiotic_square_.get_labels())
+		#formatters['category_a'] = self.semiotic_square_.category_a_
+		#formatters['category_b'] = self.semiotic_square_.category_b_
+		for k, v in formatters.items():
 			template = template.replace('{' + k + '}', v)
 		return template
 
@@ -54,7 +51,7 @@ class HTMLSemioticSquareViz(object):
 		              + "plotInterface.termDict['{term}']));")
 		onmouseover_js = ("plotInterface.showToolTipForTerm('{term}')")
 		template = ('<span onclick="' + onclick_js + '"'
-		            +' onmouseover="' + onmouseover_js + '"'
+		            + ' onmouseover="' + onmouseover_js + '"'
 		            + '>{term}</span>')
 		return ', '.join(template.format(term=term) for term in lexicon)
 

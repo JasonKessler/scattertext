@@ -3,7 +3,7 @@ from __future__ import print_function
 from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases
 
-version = [0, 0, 2, 17]
+version = [0, 0, 2, 18]
 __version__ = '.'.join([str(e) for e in version])
 
 import scattertext.viz
@@ -21,7 +21,8 @@ from scattertext.CorpusFromScikit import CorpusFromScikit
 from scattertext.Formatter import large_int_format, round_downer
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.PriorFactory import PriorFactory
-from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max
+from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max, \
+	scale_neg_1_to_1_with_zero_mean
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 from scattertext.ScatterChart import ScatterChart
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
@@ -349,7 +350,7 @@ def produce_scattertext_explorer(corpus,
 		if not_categories:
 			not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
 		else:
-			not_cat_freqs = tdf.sum(axis=1) - tdf[category]
+			not_cat_freqs = tdf.sum(axis=1) - tdf[category + ' freq']
 		scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
 
 
@@ -689,7 +690,7 @@ def produce_semiotic_square_explorer(semiotic_square,
                                      x_axis_values=None,
                                      y_axis_values=None,
                                      color_func=None,
-                                     foveate=False,
+                                     axis_scaler=scale_neg_1_to_1_with_zero_mean,
                                      **kwargs):
 	'''
 	Produces a semiotic square visualization.
@@ -720,8 +721,8 @@ def produce_semiotic_square_explorer(semiotic_square,
 		Javascript function to control color of a point.  Function takes a parameter
 		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
 		returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.
-	foveate : bool, default False
-		Focuses on inside of square
+	axis_scaler : lambda, default scale_neg_1_to_1_with_zero_mean_abs_max
+		Scale values to fit axis
 	Remaining arguments are from `produce_scattertext_explorer`.
 
 	Returns
@@ -732,11 +733,6 @@ def produce_semiotic_square_explorer(semiotic_square,
 		category_name = semiotic_square.category_a_
 	if not_category_name is None:
 		not_category_name = semiotic_square.category_b_
-	if x_axis_values is None:
-		x_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
-
-	if y_axis_values is None:
-		y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
 
 	if get_tooltip_content is None:
 		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
@@ -745,10 +741,11 @@ def produce_semiotic_square_explorer(semiotic_square,
 		# this desaturates
 		#color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
 		color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+	'''
 	my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
 	if foveate:
 		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
-
+	'''
 	axes = semiotic_square.get_axes()
 	return produce_scattertext_explorer(semiotic_square.term_doc_matrix_,
 	                                    category=semiotic_square.category_a_,
@@ -757,8 +754,8 @@ def produce_semiotic_square_explorer(semiotic_square,
 	                                    not_categories=[semiotic_square.category_b_],
 	                                    scores=-axes['x'],
 	                                    sort_by_dist=False,
-	                                    x_coords=my_scaler(-axes['x']),
-	                                    y_coords=my_scaler(axes['y']),
+	                                    x_coords=axis_scaler(-axes['x']),
+	                                    y_coords=axis_scaler(axes['y']),
 	                                    original_x=-axes['x'],
 	                                    original_y=axes['y'],
 	                                    show_characteristic=False,

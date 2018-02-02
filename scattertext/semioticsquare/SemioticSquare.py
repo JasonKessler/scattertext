@@ -1,8 +1,7 @@
 import numpy as np
-from scipy.stats import gmean
+from scattertext.termscoring.ScaledFScore import ScaledFScorePresets
 
 from scattertext.termranking import AbsoluteFrequencyRanker
-from scattertext.termscoring import LogOddsRatioUninformativeDirichletPrior
 
 
 class EmptyNeutralCategoriesError(Exception): pass
@@ -37,8 +36,11 @@ class SemioticSquare(object):
 	'''
 
 	def __init__(self,
-	             term_doc_matrix, category_a, category_b, neutral_categories,
-	             # term_freq_func=lambda x: x.get_term_doc_count_df(),
+	             term_doc_matrix,
+	             category_a,
+	             category_b,
+	             neutral_categories,
+	             labels=None,
 	             term_ranker=AbsoluteFrequencyRanker,
 	             scorer=None):
 		'''
@@ -52,6 +54,9 @@ class SemioticSquare(object):
 			Category name for term B (in opposition to A)
 		neutral_categories : list[str]
 			List of category names that A and B will be contrasted to.  Should be in same domain.
+		labels : dict
+			None by default. Labels are dictionary of {'a_and_b': 'A and B', ...} to be shown
+			above each category.
 		term_ranker : TermRanker
 			Class for returning a term-frequency df
 		scorer : termscoring class, optional
@@ -68,10 +73,11 @@ class SemioticSquare(object):
 		self.term_ranker = term_ranker(term_doc_matrix)
 		self.category_b_ = category_b
 		self.neutral_categories_ = neutral_categories
-		self.scorer = LogOddsRatioUninformativeDirichletPrior(alpha_w=0.001) \
+		self.scorer = ScaledFScorePresets() \
 			if scorer is None else scorer
 		self.axes = self._build_axes(scorer)
-		self._build_lexicons()
+		self.lexicons = self._build_lexicons()
+		self._labels = labels
 
 	def get_axes(self, scorer=None):
 		'''
@@ -82,6 +88,36 @@ class SemioticSquare(object):
 		if scorer:
 			return self._build_axes(scorer)
 		return self.axes
+
+	def get_lexicons(self, num_terms=10):
+		'''
+		Parameters
+		----------
+		num_terms, int
+
+		Returns
+		-------
+		dict
+		'''
+		return {k: v.index[:num_terms]
+		        for k, v in self.lexicons.items()}
+
+	def get_labels(self):
+		a = self.category_a_
+		b = self.category_b_
+		default_labels = {'a': a,
+		                  'not_a': 'Not ' + a,
+		                  'b': b,
+		                  'not_b': 'Not ' + b,
+		                  'a_and_b': a + ' + ' + b,
+		                  'not_a_and_not_b': 'Not ' + a + ' + Not ' + b,
+		                  'a_and_not_b': a + ' + Not ' + b,
+		                  'b_and_not_a': 'Not ' + a + ' + ' + b}
+		labels = self._labels
+		if labels is None:
+			labels = {}
+		return {name+'_label': labels.get(name, default_labels[name])
+		        for name in default_labels}
 
 	def _build_axes(self, scorer):
 		if scorer is None:
@@ -104,38 +140,6 @@ class SemioticSquare(object):
 		return (self.term_ranker.get_ranks()
 		[[t + ' freq'
 		  for t in [self.category_a_, self.category_b_] + self.neutral_categories_]])
-
-	def old_get_lexicons(self, num_terms=10):
-		'''
-		Parameters
-		----------
-		num_terms : int, default 10
-			Number of terms to return in each lexicon
-
-		Returns
-		-------
-			dict
-			 Contains the following keys, with values
-			 as lists of num_terms strings
-			 - category_a_words
-			 - category_b_words
-			 - not_category_a_and_b_words
-			 - not_category_a_words
-			 - not_category_b_words
-			 - category_a_and_b_words
-			 - category_a_vs_b_words
-			 - category_b_vs_a_words
-		'''
-		return {
-			'category_a_words': self.category_a_words_[:num_terms],
-			'category_b_words': self.category_b_words_[:num_terms],
-			'not_category_a_and_b_words': self.not_category_a_and_b_words_[:num_terms],
-			'not_category_a_words': self.not_category_a_words_[:num_terms],
-			'not_category_b_words': self.not_category_b_words_[:num_terms],
-			'category_a_and_b_words': self.category_a_and_b_words_[:num_terms],
-			'category_a_vs_b_words': self.category_a_vs_b_words_[:num_terms],
-			'category_b_vs_a_words': self.category_b_vs_a_words_[:num_terms]
-		}
 
 	def _build_lexicons(self):
 		self.lexicons = {}
@@ -163,118 +167,3 @@ class SemioticSquare(object):
 		self.lexicons['b_and_not_a'] = dist(ax[(ax['x'] < baseline)], x_min, baseline)
 
 		return self.lexicons
-		if False:
-			tdf = self._get_term_doc_count_df()
-			tdf.columns = [c.replace(' freq', '') for c in tdf.columns]
-			d = {}
-			d['a'] = self.scorer.get_scores(tdf[self.category_a_], tdf[self.category_b_])
-			import pdb;
-			pdb.set_trace()
-			d['b'] = -1 * d['a']
-			d['not_a'] = self.scorer.get_scores(
-				tdf[[self.category_b_] + self.neutral_categories_].sum(axis=1),
-				tdf[self.category_a_])
-			d['not_b'] = self.scorer.get_scores(
-				tdf[[self.category_a_] + self.neutral_categories_].sum(axis=1),
-				tdf[self.category_b_])
-			d['a_and_b'] = self.scorer.get_scores(
-				tdf[[self.category_a_, self.category_b_]].sum(axis=1),
-				tdf[self.neutral_categories_].sum(axis=1))
-			d['not_a_and_not_b'] = -1 * d['a_and_b']
-			d['a_and_not_b'] = -1 * d['not_a']
-			d['b_and_not_a'] = -1 * d['not_b']
-		self.lexicons = d
-
-	def _build_lexicons_old2(self):
-		tdf = self._get_term_doc_count_df()
-		tdf.columns = [c.replace(' freq', '') for c in tdf.columns]
-		d = {}
-		d['a'] = self.scorer.get_scores(tdf[self.category_a_], tdf[self.category_b_])
-		import pdb;
-		pdb.set_trace()
-		d['b'] = -1 * d['a']
-		d['not_a'] = self.scorer.get_scores(
-			tdf[[self.category_b_] + self.neutral_categories_].sum(axis=1),
-			tdf[self.category_a_])
-		d['not_b'] = self.scorer.get_scores(
-			tdf[[self.category_a_] + self.neutral_categories_].sum(axis=1),
-			tdf[self.category_b_])
-		d['a_and_b'] = self.scorer.get_scores(
-			tdf[[self.category_a_, self.category_b_]].sum(axis=1),
-			tdf[self.neutral_categories_].sum(axis=1))
-		d['not_a_and_not_b'] = -1 * d['a_and_b']
-		d['a_and_not_b'] = -1 * d['not_a']
-		d['b_and_not_a'] = -1 * d['not_b']
-		self.lexicons = d
-
-	def get_lexicons(self, num_terms=10):
-		return {k: v.index[:num_terms]
-		        for k, v in self.lexicons.items()}
-
-	def old_build_lexicons(self):
-		tdf = self._get_term_doc_count_df()
-		tdf = tdf[tdf.sum(axis=1) > 0]
-		self._build_lexicons_from_term_freq_df(tdf)
-
-	def _build_lexicons_from_term_freq_df(self, tdf):
-		'''
-
-		Parameters
-		----------
-		tdf
-
-		Returns
-		-------
-
-		'''
-
-		self._find_a_vs_b_and_b_vs_a(tdf)
-		tdf[self.category_a_ + ' scores'] = self.scorer.get_scores(
-			tdf[self.category_a_ + ' freq'],
-			tdf[[t for t in tdf.columns if t != self.category_a_ + ' freq']].sum(axis=1)
-		)
-		tdf[self.category_b_ + ' scores'] = self.scorer.get_scores(
-			tdf[self.category_b_ + ' freq'],
-			tdf[[t for t in tdf.columns if t != self.category_b_ + ' freq']].sum(axis=1))
-		tdf[self.category_a_ + ' + ' + self.category_b_ + ' scores'] = tdf[
-			[t + ' scores' for t in [self.category_a_, self.category_b_]]].apply(
-			lambda x: gmean(x) if min(x) > 0 else 0, axis=1)
-		tdf["not " + self.category_a_ + ' scores'] = self.scorer.get_scores(
-			tdf[[t for t in tdf.columns if t != self.category_a_ + ' freq']].sum(axis=1),
-			tdf[self.category_a_ + ' freq'])
-		tdf["not " + self.category_b_ + ' scores'] = self.scorer.get_scores(
-			tdf[[t for t in tdf.columns if t != self.category_b_ + ' freq']].sum(axis=1),
-			tdf[self.category_b_ + ' freq'])
-		tdf["not " + self.category_a_ + ' + ' + self.category_b_ + ' scores'] = tdf[
-			['not ' + t + ' scores' for t in [self.category_a_, self.category_b_]]].apply(
-			lambda x: gmean(x) if min(x) > 0 else 0, axis=1)
-		self.category_a_words_ = list(tdf.sort_values(by=self.category_a_ + ' scores',
-		                                              ascending=False).index)
-		self.category_b_words_ = list(tdf.sort_values(by=self.category_b_ + ' scores',
-		                                              ascending=False).index)
-		self.category_a_and_b_words_ = list(
-			tdf.sort_values(by=self.category_a_ + ' + ' + self.category_b_ + ' scores',
-			                ascending=False).index)
-		self.not_category_a_words_ = list(
-			tdf.sort_values(by='not ' + self.category_a_ + ' scores',
-			                ascending=False).index)
-		self.not_category_b_words_ = list(
-			tdf.sort_values(by='not ' + self.category_b_ + ' scores',
-			                ascending=False).index)
-		self.not_category_a_and_b_words_ = list(
-			tdf.sort_values(by='not ' + self.category_a_ + ' + ' + self.category_b_ + ' scores',
-			                ascending=False).index)
-
-	def _find_a_vs_b_and_b_vs_a(self, tdf):
-		term_tdf = tdf[[self.category_a_ + ' freq', self.category_b_ + ' freq']]
-		term_tdf = term_tdf[term_tdf.sum(axis=1) > 0]
-		term_tdf[self.category_a_ + ' scores'] = self.scorer.get_scores(
-			term_tdf[self.category_a_ + ' freq'],
-			term_tdf[self.category_b_ + ' freq'])
-		term_tdf[self.category_b_ + ' scores'] = self.scorer.get_scores(
-			term_tdf[self.category_b_ + ' freq'],
-			term_tdf[self.category_a_ + ' freq'])
-		self.category_a_vs_b_words_ = list(term_tdf.sort_values(by=self.category_a_ + ' scores',
-		                                                        ascending=False).index)
-		self.category_b_vs_a_words_ = list(term_tdf.sort_values(by=self.category_b_ + ' scores',
-		                                                        ascending=False).index)

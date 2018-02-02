@@ -12,6 +12,11 @@ def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
 	return ((((vec > 0).astype(float) * (vec / max_abs)) * 0.5 + 0.5)
 	        + ((vec < 0).astype(float) * (vec / max_abs) * 0.5))
 
+def scale_neg_1_to_1_with_zero_mean(vec):
+	return ((((vec > 0).astype(float) * (vec / vec.max())) * 0.5 + 0.5)
+	        + ((vec < 0).astype(float) * (vec / (-vec.min())) * 0.5))
+
+
 
 def scale_neg_1_to_1_with_zero_mean_rank_abs_max(v):
 	rankv = v * 2 - 1

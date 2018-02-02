@@ -199,7 +199,8 @@ class ScaledFScore(object):
 		                                                  not_cat_word_counts,
 		                                                  scaler_algo,
 		                                                  beta)
-		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts, cat_word_counts,
+		not_cat_scores = ScaledFScore.get_scores_for_category(not_cat_word_counts,
+		                                                      cat_word_counts,
 		                                                      scaler_algo, beta)
 		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 

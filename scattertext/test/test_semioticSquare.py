@@ -1,4 +1,3 @@
-from pprint import pprint
 from unittest import TestCase
 
 import pandas as pd
@@ -28,12 +27,12 @@ def get_docs_categories_semiotic():
 	return categories, documents
 
 
-
 def get_test_corpus():
 	df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
 	                  columns=['category', 'text'])
 	corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
 	return corpus
+
 
 def get_test_semiotic_square():
 	corpus = get_test_corpus()
@@ -56,6 +55,31 @@ class TestSemioticSquare(TestCase):
 		with self.assertRaises(EmptyNeutralCategoriesError):
 			SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', [])
 
+	def test_get_labels(self):
+		corpus = get_test_corpus()
+		semsq = SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', ['swift'])
+		a, b = 'hamlet', 'jay-z/r. kelly'
+		default_labels = {'a': a,
+		                  'not_a': 'Not ' + a,
+		                  'b': b,
+		                  'not_b': 'Not ' + b,
+		                  'a_and_b': a + ' + ' + b,
+		                  'not_a_and_not_b': 'Not ' + a + ' + Not ' + b,
+		                  'a_and_not_b': a + ' + Not ' + b,
+		                  'b_and_not_a': 'Not ' + a + ' + ' + b}
+		labels = semsq.get_labels()
+		for name,default_label in default_labels.items():
+			self.assertTrue(name + '_label' in labels)
+			self.assertEqual(labels[name + '_label'], default_label)
+
+		semsq = SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', ['swift'], labels={'a':'AAA'})
+		labels = semsq.get_labels()
+		for name,default_label in default_labels.items():
+			if name == 'a':
+				self.assertEqual(labels[name + '_label'], 'AAA')
+			else:
+				self.assertTrue(name + '_label' in labels)
+				self.assertEqual(labels[name + '_label'], default_label)
 
 	def test_get_lexicons(self):
 		semsq = get_test_semiotic_square()
@@ -84,5 +108,3 @@ class TestSemioticSquare(TestCase):
 		        'b_and_not_a',
 		        'a_and_b',
 		        'not_a_and_not_b']
-
-
