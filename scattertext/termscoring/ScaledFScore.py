@@ -49,6 +49,9 @@ class ScaledFScorePresets(object):
 		self.scaler_algo_ = scaler_algo
 		self.beta_ = beta
 
+	def get_name(self):
+		return 'Scaled F-Score'
+
 	@staticmethod
 	def get_default_score():
 		return 0.5
@@ -91,6 +94,15 @@ class ScaledFScorePresets(object):
 		                                            self.scaler_algo_,
 		                                            self.beta_, )
 
+
+class ScaledFScorePresetsNeg1To1(ScaledFScorePresets):
+	@staticmethod
+	def get_default_score():
+		return 0
+
+	def get_scores(self, cat_word_counts, not_cat_word_counts):
+		scores = ScaledFScorePresets.get_scores(self, cat_word_counts, not_cat_word_counts)
+		return scores * 2 - 1
 
 class ScaledFZScore(ScaledFScorePresets):
 	@staticmethod

@@ -16,16 +16,19 @@ class TestScatterChartExplorer(TestCase):
 		corpus = build_hamlet_jz_corpus()
 		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
-		     .to_dict('hamlet'))
+			.to_dict('hamlet'))
 		self.assertEqual(set(j.keys()), set(['info', 'data', 'docs']))
 		self.assertEqual(set(j['info'].keys()),
 		                 set(['not_category_name', 'category_name',
 		                      'category_terms', 'not_category_internal_names',
 		                      'not_category_terms', 'category_internal_name',
-		                      'categories', 'neutral_category_name']))
+		                      'categories', 'neutral_category_name',
+		                      'extra_category_name',
+		                      'neutral_category_internal_names',
+		                      'extra_category_internal_names']))
 
 		self.assertEqual(list(j['docs']['labels']),
-		                 [0, 0, 0, 0,1, 1, 1, 1])
+		                 [0, 0, 0, 0, 1, 1, 1, 1])
 		self.assertEqual(list(j['docs']['texts']),
 		                 ["what art thou that usurp'st this time of night,",
 		                  'together with that fair and warlike form',
@@ -35,7 +38,7 @@ class TestScatterChartExplorer(TestCase):
 		                  'well, speak up man what is it?',
 		                  'news from the east sire! the best of both worlds has returned!'])
 		expected = {'y': 0.5, 'ncat': 0, 'ncat25k': 0, 'bg': 5,
-		            'cat': 1, 's': 0.5, 'term': 'art', 'os': 0.5192,
+		            'cat': 1, 's': 0.5, 'term': 'art', 'os': 0.5192, 'extra': 0, 'extra25k': 0,
 		            'cat25k': 758, 'x': 0.06, 'neut': 0, 'neut25k': 0, 'ox': 5, 'oy': 3}
 
 		actual = [t for t in j['data'] if t['term'] == 'art'][0]
@@ -52,9 +55,9 @@ class TestScatterChartExplorer(TestCase):
 
 	def test_multi_categories(self):
 		corpus = get_test_corpus()
-		j_vs_all = ScatterChartExplorer(corpus=corpus, minimum_term_frequency=0)\
+		j_vs_all = ScatterChartExplorer(corpus=corpus, minimum_term_frequency=0) \
 			.to_dict('hamlet')
-		j_vs_swift = ScatterChartExplorer(corpus=corpus, minimum_term_frequency=0)\
+		j_vs_swift = ScatterChartExplorer(corpus=corpus, minimum_term_frequency=0) \
 			.to_dict('hamlet', not_categories=['swift'])
 		self.assertNotEqual(set(j_vs_all['info']['not_category_internal_names']),
 		                    set(j_vs_swift['info']['not_category_internal_names']))
@@ -66,7 +69,7 @@ class TestScatterChartExplorer(TestCase):
 		meta = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
 		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
-		     .to_dict('hamlet', metadata=meta))
+			.to_dict('hamlet', metadata=meta))
 		self.maxDiff = None
 		self.assertEqual(j['docs'],
 		                 {'labels': [0, 0, 0, 0, 1, 1, 1, 1],
@@ -93,12 +96,12 @@ class TestScatterChartExplorer(TestCase):
 		corpus = build_hamlet_jz_corpus_with_alt_text()
 		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
-		     .to_dict('hamlet', alternative_text_field='alt'))
+			.to_dict('hamlet', alternative_text_field='alt'))
 		self.assertEqual(j['docs']['texts'][0], j['docs']['texts'][0].upper())
 
 		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0)
-		     .to_dict('hamlet'))
+			.to_dict('hamlet'))
 		self.assertNotEqual(j['docs']['texts'][0], j['docs']['texts'][0].upper())
 
 	def test_extra_features(self):
@@ -107,7 +110,7 @@ class TestScatterChartExplorer(TestCase):
 		j = (ScatterChartExplorer(corpus,
 		                          minimum_term_frequency=0,
 		                          use_non_text_features=True)
-		     .to_dict('hamlet', metadata=meta))
+			.to_dict('hamlet', metadata=meta))
 		extras = [{'cat3': 1, 'cat4': 2},
 		          {'cat4': 2},
 		          {'cat3': 2, 'cat5': 1},

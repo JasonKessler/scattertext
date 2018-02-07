@@ -217,6 +217,17 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.index[:3]),
 		                 ['hamlet', 'horatio', 'claudius'])
 
+	def test_keep_only_these_categories(self):
+		df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+		                  columns=['category', 'text'])
+		corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
+		hamlet_swift_corpus = corpus.keep_only_these_categories(['hamlet', 'swift'])
+		self.assertEqual(hamlet_swift_corpus.get_categories(), ['hamlet', 'swift'])
+		self.assertGreater(len(corpus.get_terms()), len(hamlet_swift_corpus.get_terms()))
+		with self.assertRaises(AssertionError):
+			corpus.keep_only_these_categories(['hamlet', 'swift', 'asdjklasfd'])
+		corpus.keep_only_these_categories(['hamlet', 'swift', 'asdjklasfd'], True)
+
 	def test_remove_categories(self):
 		df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
 		                  columns=['category', 'text'])

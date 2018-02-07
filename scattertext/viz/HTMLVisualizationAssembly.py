@@ -35,7 +35,8 @@ class HTMLVisualizationAssembly(object):
 	             x_axis_values=None,
 	             y_axis_values=None,
 	             color_func=None,
-	             show_axes=True
+	             show_axes=True,
+	             show_extra=False,
 	             ):
 		'''
 
@@ -100,6 +101,8 @@ class HTMLVisualizationAssembly(object):
 			returns a string.
 		show_axes : bool, default True
 			Show x and y axes
+		show_extra : bool, default Bool
+			Show extra fourth column
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -127,6 +130,7 @@ class HTMLVisualizationAssembly(object):
 		self._y_axis_values = y_axis_values
 		self._color_func = color_func
 		self._show_axes = show_axes
+		self._show_extra = show_extra
 
 	def to_html(self,
 	            protocol='http',
@@ -259,5 +263,6 @@ class HTMLVisualizationAssembly(object):
 		             js_default_value_to_null(self._x_axis_values),
 		             js_default_value_to_null(self._y_axis_values),
 		             js_default_value_to_null(self._color_func),
-		             js_bool(self._show_axes)]
+		             js_bool(self._show_axes),
+		             js_bool(self._show_extra)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

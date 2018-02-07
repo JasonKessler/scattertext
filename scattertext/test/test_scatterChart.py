@@ -27,6 +27,8 @@ class TestScatterChart(TestCase):
 		                      'not_category_terms',
 		                      'category_internal_name',
 		                      'not_category_internal_names',
+		                      'neutral_category_internal_names',
+		                      'extra_category_internal_names',
 		                      'categories']))
 		expected = {"x": 0.0,
 		            "y": 0.42,
@@ -37,6 +39,8 @@ class TestScatterChart(TestCase):
 		            "ncat25k": 0,
 		            "neut25k": 0,
 		            'neut': 0,
+		            "extra25k": 0,
+		            'extra': 0,
 		            's': 0.5,
 		            'os': 3,
 		            'bg': 3}
@@ -136,7 +140,7 @@ class TestScatterChart(TestCase):
 		scatter_chart.inject_coordinates(x / x.max(), y / y.max(), original_x=x, original_y=y)
 		j = scatter_chart.to_dict('hamlet')
 		self.assertEqual(j['data'][0].keys(),
-		                 {'x', 'os', 'y', 'ncat25k', 'neut', 'cat25k', 'ox', 'neut25k', 'oy', 'term', 's', 'bg'})
+		                 {'x', 'os', 'y', 'ncat25k', 'neut', 'cat25k', 'ox', 'neut25k', 'extra25k', 'extra', 'oy', 'term', 's', 'bg'})
 		and_term = [t for t in j['data'] if t['term'] == 'and'][0]
 		self.assertEqual(and_term['ox'], 0)
 		self.assertEqual(and_term['oy'], 1)
@@ -157,6 +161,8 @@ class TestScatterChart(TestCase):
 		                      'not_category_terms',
 		                      'category_internal_name',
 		                      'not_category_internal_names',
+		                      'extra_category_internal_names',
+		                      'neutral_category_internal_names',
 		                      'categories']))
 		self.assertEqual({t['term'] for t in j['data']}, {'cat1'}
 		                 # {'cat4', 'cat9', 'cat5', 'cat0', 'cat3', 'cat2', 'cat1'}

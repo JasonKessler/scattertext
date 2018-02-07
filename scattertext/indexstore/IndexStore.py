@@ -16,6 +16,9 @@ class IndexStore:
 	def _hasval(self, val):
 		return val in self._val2i
 
+	def getidxstrictbatch(self, vals):
+		return [self._val2i[t] for t in vals]
+
 	def getidx(self, val):
 		try:
 			return self._val2i[val]

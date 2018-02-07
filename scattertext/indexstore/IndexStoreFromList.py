@@ -14,7 +14,7 @@ class IndexStoreFromList(object):
 		IndexStore
 		'''
 		idxstore = IndexStore()
-		idxstore._i2val = values
+		idxstore._i2val = list(values)
 		idxstore._val2i = {term:i for i,term in enumerate(values)}
 		idxstore._next_i = len(values)
 		return idxstore

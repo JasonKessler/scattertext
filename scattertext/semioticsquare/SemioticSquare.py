@@ -1,7 +1,7 @@
 import numpy as np
-from scattertext.termscoring.ScaledFScore import ScaledFScorePresets
 
 from scattertext.termranking import AbsoluteFrequencyRanker
+from scattertext.termscoring.ScaledFScore import ScaledFScorePresetsNeg1To1
 
 
 class EmptyNeutralCategoriesError(Exception): pass
@@ -62,7 +62,6 @@ class SemioticSquare(object):
 		scorer : termscoring class, optional
 			Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`
 		'''
-		self.term_doc_matrix_ = term_doc_matrix
 		assert category_a in term_doc_matrix.get_categories()
 		assert category_b in term_doc_matrix.get_categories()
 		for category in neutral_categories:
@@ -70,10 +69,14 @@ class SemioticSquare(object):
 		if len(neutral_categories) == 0:
 			raise EmptyNeutralCategoriesError()
 		self.category_a_ = category_a
-		self.term_ranker = term_ranker(term_doc_matrix)
 		self.category_b_ = category_b
 		self.neutral_categories_ = neutral_categories
-		self.scorer = ScaledFScorePresets() \
+		self._build_square(term_doc_matrix, term_ranker, labels, scorer)
+
+	def _build_square(self, term_doc_matrix, term_ranker, labels, scorer):
+		self.term_doc_matrix_ = term_doc_matrix
+		self.term_ranker = term_ranker(term_doc_matrix)
+		self.scorer = ScaledFScorePresetsNeg1To1() \
 			if scorer is None else scorer
 		self.axes = self._build_axes(scorer)
 		self.lexicons = self._build_lexicons()
@@ -103,8 +106,8 @@ class SemioticSquare(object):
 		        for k, v in self.lexicons.items()}
 
 	def get_labels(self):
-		a = self.category_a_
-		b = self.category_b_
+		a = self._get_default_a_label()
+		b = self._get_default_b_label()
 		default_labels = {'a': a,
 		                  'not_a': 'Not ' + a,
 		                  'b': b,
@@ -116,30 +119,45 @@ class SemioticSquare(object):
 		labels = self._labels
 		if labels is None:
 			labels = {}
-		return {name+'_label': labels.get(name, default_labels[name])
+		return {name + '_label': labels.get(name, default_labels[name])
 		        for name in default_labels}
+
+	def _get_default_b_label(self):
+		return self.category_b_
+
+	def _get_default_a_label(self):
+		return self.category_a_
 
 	def _build_axes(self, scorer):
 		if scorer is None:
 			scorer = self.scorer
 		tdf = self._get_term_doc_count_df()
 		counts = tdf.sum(axis=1)
-		tdf['x'] = scorer.get_scores(
-			tdf[self.category_a_ + ' freq'],
-			tdf[self.category_b_ + ' freq']
-		)
+		tdf['x'] = self._get_x_axis(scorer, tdf)
 		tdf['x'][np.isnan(tdf['x'])] = self.scorer.get_default_score()
-		tdf['y'] = scorer.get_scores(
-			tdf[[t + ' freq' for t in [self.category_a_, self.category_b_]]].sum(axis=1),
-			tdf[[t + ' freq' for t in self.neutral_categories_]].sum(axis=1)
-		)
+		tdf['y'] = self._get_y_axis(scorer, tdf)
+		tdf['y'][np.isnan(tdf['y'])] = self.scorer.get_default_score()
 		tdf['counts'] = counts
 		return tdf[['x', 'y', 'counts']]
 
+	def _get_x_axis(self, scorer, tdf):
+		return scorer.get_scores(
+			tdf[self.category_a_ + ' freq'],
+			tdf[self.category_b_ + ' freq']
+		)
+
+	def _get_y_axis(self, scorer, tdf):
+		return scorer.get_scores(
+			tdf[[t + ' freq' for t in [self.category_a_, self.category_b_]]].sum(axis=1),
+			tdf[[t + ' freq' for t in self.neutral_categories_]].sum(axis=1)
+		)
+
 	def _get_term_doc_count_df(self):
 		return (self.term_ranker.get_ranks()
-		[[t + ' freq'
-		  for t in [self.category_a_, self.category_b_] + self.neutral_categories_]])
+		[[t + ' freq' for t in self._get_all_categories()]])
+
+	def _get_all_categories(self):
+		return [self.category_a_, self.category_b_] + self.neutral_categories_
 
 	def _build_lexicons(self):
 		self.lexicons = {}

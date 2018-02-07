@@ -150,7 +150,9 @@ class ScatterChart:
 	            scores=None,
 	            transform=percentile_alphabetical,
 	            title_case_names=False,
-	            not_categories=None):
+	            not_categories=None,
+	            neutral_categories=None,
+	            extra_categories=None):
 		'''
 
 		Parameters
@@ -169,6 +171,10 @@ class ScatterChart:
 		  Title case category name and no-category name?
 		not_categories : list, optional
 			List of categories to use as "not category".  Defaults to all others.
+		neutral_categories : list, optional
+			List of categories to use as neutral.  Defaults [].
+		extra_categories : list, optional
+			List of categories to use as extra.  Defaults [].
 
 		Returns
 		-------
@@ -194,25 +200,95 @@ class ScatterChart:
 		'''
 		if self.used:
 			raise Exception("Cannot reuse a ScatterChart constructor")
-		self.used = True
-		all_categories, other_categories = self._get_category_names(category)
-		neutral_categories = []
-		if not_categories is not None:
-			assert set(not_categories) - set(c[:-5] for c in other_categories) == set()
-			other_categories = [c + ' freq' for c in not_categories]
-			neutral_categories = [c[:-5] for c in all_categories
-			                      if c != category + ' freq' and c not in other_categories]
-		df = self._term_rank_score_and_frequency_df(all_categories, category, other_categories, scores)
+
+		all_categories = self.term_doc_matrix.get_categories()
+		assert category in all_categories
+
+		if not_categories is None:
+			not_categories = [c for c in all_categories if c != category]
+			neutral_categories = []
+			extra_categories = []
+		elif neutral_categories is None:
+			neutral_categories = [c for c in all_categories
+			                      if c not in [category] + not_categories]
+			extra_categories = []
+		elif extra_categories is None:
+			extra_categories = [c for c in all_categories
+			                    if c not in [category] + not_categories + neutral_categories]
+		all_categories = [category] + not_categories + neutral_categories + extra_categories
+
+		term_ranker = self.scatterchartdata.term_ranker(self.term_doc_matrix)
+		if self.scatterchartdata.use_non_text_features:
+			term_ranker.use_non_text_features()
+
+		df = term_ranker.get_ranks()
+		if self.x_coords is not None:
+			df['x'] = self.x_coords
+			df['y'] = self.y_coords
+
+		if not self.original_x is None:
+			try:
+				df['ox'] = self.original_x.values
+			except AttributeError:
+				df['ox'] = self.original_x
+
+		if not self.original_y is None:
+			try:
+				df['oy'] = self.original_y.values
+			except AttributeError:
+				df['oy'] = self.original_y
+
+		if scores is None:
+			scores = self._get_default_scores(category, not_categories, df)
+		# np.array(self.term_doc_matrix.get_rudder_scores(category))
+		# df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		category_column_name = category + ' freq'
+		df['category score'] = CornerScore.get_scores_for_category(
+			df[category_column_name],
+			df[[c+' freq' for c in not_categories]].sum(axis=1)
+		)
+		if self.scatterchartdata.term_significance is not None:
+			df['p'] = get_p_vals(df, category_column_name,
+			                     self.scatterchartdata.term_significance)
+		df['not category score'] = CornerScore.get_scores_for_category(
+			df[[c+' freq' for c in not_categories]].sum(axis=1),
+			df[category_column_name]
+		)
+		df['color_scores'] = scores
+		if self.scatterchartdata.terms_to_include is None:
+			df = self._filter_bigrams_by_minimum_not_category_term_freq(
+				category_column_name, not_categories, df)
+			df = filter_bigrams_by_pmis(
+				self._filter_by_minimum_term_frequency(all_categories, df),
+				threshold_coef=self.scatterchartdata.pmi_threshold_coefficient
+			)
+
+		if self.scatterchartdata.filter_unigrams:
+			df = filter_out_unigrams_that_only_occur_in_one_bigram(df)
+		if len(df) == 0:
+			raise NoWordMeetsTermFrequencyRequirementsError()
+		df['category score rank'] = rankdata(df['category score'], method='ordinal')
+		df['not category score rank'] = rankdata(df['not category score'], method='ordinal')
+		if self.scatterchartdata.max_terms and self.scatterchartdata.max_terms < len(df):
+			assert self.scatterchartdata.max_terms > 0
+			df = self._limit_max_terms(category, df)
+		df = df.reset_index()
+
+
 
 		if self.x_coords is None:
 			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
-				(category, df, other_categories, transform)
+				(category, df, not_categories, transform)
 			df['x'], df['y'] = self.x_coords, self.y_coords
 			df['ox'], df['oy'] = self.x_coords, self.y_coords
 
-		df['not cat freq'] = df[[x for x in other_categories]].sum(axis=1)
+		df['not cat freq'] = df[[x + ' freq' for x in not_categories]].sum(axis=1)
 		if neutral_categories != []:
 			df['neut cat freq'] = df[[x + ' freq' for x in neutral_categories]].sum(axis=1).fillna(0)
+		if extra_categories != []:
+			df['extra cat freq'] = df[[x + ' freq' for x in extra_categories]].sum(axis=1).fillna(0)
+
+
 		json_df = df[['x', 'y', 'ox', 'oy', 'term']]
 
 		if self.scatterchartdata.term_significance:
@@ -247,15 +323,16 @@ class ScatterChart:
 		              'category_terms': category_terms,
 		              'not_category_terms': not_category_terms,
 		              'category_internal_name': category,
-		              'not_category_internal_names': [c[:-5] for c in other_categories],
-		              'categories': self.term_doc_matrix.get_categories()}}
+		              'not_category_internal_names': not_categories,
+		              'categories': self.term_doc_matrix.get_categories(),
+		              'neutral_category_internal_names': neutral_categories,
+		              'extra_category_internal_names': extra_categories}}
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
 	def _use_only_selected_terms(self, json_df):
 		term_df = pd.DataFrame({"term": self.scatterchartdata.terms_to_include})
 		return pd.merge(json_df, term_df, on='term', how='inner')
-
 
 	def _preform_axis_rescale(self, json_df, rescaler, variable_to_rescale):
 		if rescaler is not None:
@@ -274,10 +351,10 @@ class ScatterChart:
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
 		json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
 		                       / term_freq_df[category + ' freq'].sum()) * 25000)
-		                     .apply(np.round).astype(np.int))
+			.apply(np.round).astype(np.int))
 		json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
 		                        / term_freq_df['not cat freq'].sum()) * 25000)
-		                      .apply(np.round).astype(np.int))
+			.apply(np.round).astype(np.int))
 		if 'neut cat freq' in term_freq_df:
 			json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
 			                        / term_freq_df['neut cat freq'].sum()) * 25000)
@@ -286,6 +363,14 @@ class ScatterChart:
 		else:
 			json_df['neut25k'] = 0
 			json_df['neut'] = 0
+		if 'extra cat freq' in term_freq_df:
+			json_df['extra25k'] = (((term_freq_df['extra cat freq'] * 1.
+			                         / term_freq_df['extra cat freq'].sum()) * 25000)
+				.apply(np.round).astype(np.int))
+			json_df['extra'] = term_freq_df['extra cat freq']
+		else:
+			json_df['extra25k'] = 0
+			json_df['extra'] = 0
 
 	def _get_category_names(self, category):
 		other_categories = [val + ' freq' for _, val \
@@ -299,7 +384,7 @@ class ScatterChart:
 	                                                           df,
 	                                                           other_categories,
 	                                                           transform):
-		not_counts = df[other_categories].sum(axis=1)
+		not_counts = df[[c + ' freq'  for c in other_categories]].sum(axis=1)
 		counts = df[category + ' freq']
 		x_data_raw = transform(not_counts, df.index, counts)
 		y_data_raw = transform(counts, df.index, not_counts)
@@ -331,7 +416,6 @@ class ScatterChart:
 			except AttributeError:
 				df['ox'] = self.original_x
 
-
 		if not self.original_y is None:
 			try:
 				df['oy'] = self.original_y.values
@@ -345,13 +429,13 @@ class ScatterChart:
 		category_column_name = category + ' freq'
 		df['category score'] = CornerScore.get_scores_for_category(
 			df[category_column_name],
-			self._get_not_category_term_frequency(other_categories, df)
+			df[[c + ' freq' for c in other_categories]].sum(axis=1)
 		)
 		if self.scatterchartdata.term_significance is not None:
 			df['p'] = get_p_vals(df, category_column_name,
 			                     self.scatterchartdata.term_significance)
 		df['not category score'] = CornerScore.get_scores_for_category(
-			self._get_not_category_term_frequency(other_categories, df),
+			df[[c + ' freq' for c in other_categories]].sum(axis=1),
 			df[category_column_name]
 		)
 		df['color_scores'] = scores
@@ -378,14 +462,14 @@ class ScatterChart:
 	def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, other_categories, df):
 		if self.scatterchartdata.terms_to_include is None:
 			return df[(df[category_column_name] > 0)
-			          | (self._get_not_category_term_frequency(other_categories, df)
+			          | (df[[c + ' freq' for c in other_categories]].sum(axis=1)
 			             >= self.scatterchartdata.minimum_not_category_term_frequency)]
 		else:
 			return df
 
 	def _filter_by_minimum_term_frequency(self, all_categories, df):
 		if self.scatterchartdata.terms_to_include is None:
-			return df[df[all_categories].sum(axis=1)
+			return df[df[[c + ' freq' for c in all_categories]].sum(axis=1)
 			          > self.scatterchartdata.minimum_term_frequency]
 		else:
 			return df
@@ -398,15 +482,13 @@ class ScatterChart:
 	def _get_default_scores(self, category, other_categories, df):
 		category_column_name = category + ' freq'
 		cat_word_counts = df[category_column_name]
-		not_cat_word_counts = self._get_not_category_term_frequency(other_categories, df)
+		not_cat_word_counts = df[[c + ' freq' for c in other_categories]].sum(axis=1)
 		scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
 		return scores
 
 	def _term_importance_ranks(self, category, df):
 		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
 
-	def _get_not_category_term_frequency(self, other_categories, df):
-		return df[other_categories].sum(axis=1)
 
 	def draw(self,
 	         category,

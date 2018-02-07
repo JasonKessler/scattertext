@@ -27,7 +27,10 @@ class ScatterChartExplorer(ScatterChart):
 	            alternative_text_field=None,
 	            title_case_names=False,
 	            not_categories=None,
-	            neutral_category_name=None):
+	            neutral_categories=None,
+	            extra_categories=None,
+	            neutral_category_name=None,
+	            extra_category_name=None):
 		'''
 
 		Parameters
@@ -53,9 +56,16 @@ class ScatterChartExplorer(ScatterChart):
 		  Should the program title-case the category and not-category names?
 		not_categories : list, optional
 			List of categories to use as "not category".  Defaults to all others.
+		neutral_categories : list, optional
+			List of categories to use as neutral.  Defaults [].
+		extra_categories : list, optional
+			List of categories to use as extra.  Defaults [].
 		neutral_category_name : str
 			"Neutral" by default. Only active if show_neutral is True.  Name of the neutral
 			column.
+		extra_category_name : str
+			"Extra" by default. Only active if show_neutral and show_extra are true. Name of the
+			extra column.
 
 		Returns
 		-------
@@ -81,12 +91,18 @@ class ScatterChartExplorer(ScatterChart):
 		                         scores=scores,
 		                         transform=transform,
 		                         title_case_names=title_case_names,
-		                         not_categories=not_categories)
+		                         not_categories=not_categories,
+		                         neutral_categories=neutral_categories,
+		                         extra_categories=extra_categories
+		                         )
 		docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
 		if neutral_category_name is None:
 			neutral_category_name = 'Neutral'
+		if extra_category_name is None:
+			extra_category_name = 'Extra'
 		j['docs'] = self._get_docs_structure(docs_getter, metadata)
 		j['info']['neutral_category_name'] = neutral_category_name
+		j['info']['extra_category_name'] = extra_category_name
 		return j
 
 	def _make_docs_getter(self, max_docs_per_category, alternative_text_field):

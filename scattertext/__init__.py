@@ -1,10 +1,14 @@
 from __future__ import print_function
 
-from scattertext.external.phrasemachine import phrasemachine
-from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases
+from scattertext.termcompaction.TermCompaction import CompactTerms
 
-version = [0, 0, 2, 18]
+version = [0, 0, 2, 19]
 __version__ = '.'.join([str(e) for e in version])
+
+
+import warnings
+
+import numpy as np
 
 import scattertext.viz
 from scattertext import SampleCorpora
@@ -32,22 +36,25 @@ from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
+from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
+from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases
 from scattertext.indexstore import IndexStoreFromDict
 from scattertext.indexstore import IndexStoreFromList
 from scattertext.indexstore.IndexStore import IndexStore
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams
 from scattertext.semioticsquare import SemioticSquare
+from scattertext.semioticsquare.FourSquare import FourSquare
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFZScore, \
-	ScaledFZScorePrior
+	ScaledFZScorePrior, ScaledFScorePresetsNeg1To1
 from scattertext.termsignificance.LogOddsRatioAddOne import LogOddsRatioAddOne
 from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror import LogOddsRatioInformativeDirichletPrior
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
@@ -55,9 +62,6 @@ from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSi
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
-import warnings
-
-import numpy as np
 
 
 def produce_scattertext_html(term_doc_matrix,
@@ -170,6 +174,8 @@ def produce_scattertext_explorer(corpus,
                                  semiotic_square=None,
                                  num_terms_semiotic_square=None,
                                  not_categories=None,
+                                 neutral_categories=[],
+                                 extra_categories=[],
                                  show_neutral=False,
                                  neutral_category_name=None,
                                  get_tooltip_content=None,
@@ -177,7 +183,9 @@ def produce_scattertext_explorer(corpus,
                                  y_axis_values=None,
                                  color_func=None,
                                  term_scorer=None,
-                                 show_axes=True):
+                                 show_axes=True,
+                                 show_extra=False,
+                                 extra_category_name=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -296,6 +304,10 @@ def produce_scattertext_explorer(corpus,
 	not_categories : list
 		All categories other than category by default.  Documents labeled
 		with remaining category.
+	neutral_categories : list
+		[] by default.  Documents labeled neutral.
+	extra_categories : list
+		[] by default.  Documents labeled extra.
 	show_neutral : bool
 		False by default.  Show a third column listing contexts in the
 		neutral categories.
@@ -319,6 +331,13 @@ def produce_scattertext_explorer(corpus,
 		where a and b are term counts.  Scorer optionally has a get_term_freqs function.
 	show_axes : bool, default True
 		Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
+	show_extra : bool
+		False by default.  Show a fourth column listing contexts in the
+		extra categories.
+	extra_category_name : str, default None
+		"Extra" by default. Only active if show_neutral is True and show_extra is True.  Name
+		of the extra column.
+
 	Returns
 	-------
 	str
@@ -344,6 +363,9 @@ def produce_scattertext_explorer(corpus,
 		else:
 			not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
 
+	if not_categories is None:
+		not_categories = [c for c in corpus.get_categories() if c != category]
+
 	if term_scorer:
 		tdf = term_ranker(corpus).get_ranks()
 		cat_freqs = tdf[category + ' freq']
@@ -352,7 +374,6 @@ def produce_scattertext_explorer(corpus,
 		else:
 			not_cat_freqs = tdf.sum(axis=1) - tdf[category + ' freq']
 		scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
-
 
 	if pmi_filter_thresold is not None:
 		pmi_threshold_coefficient = pmi_filter_thresold
@@ -384,7 +405,7 @@ def produce_scattertext_explorer(corpus,
 	html_base = None
 	if semiotic_square:
 		html_base = get_semiotic_square_html(num_terms_semiotic_square,
-	                                              semiotic_square)
+		                                     semiotic_square)
 	scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
 	                                                    category_name=category_name,
 	                                                    not_category_name=not_category_name,
@@ -394,7 +415,10 @@ def produce_scattertext_explorer(corpus,
 	                                                    max_docs_per_category=max_docs_per_category,
 	                                                    metadata=metadata,
 	                                                    alternative_text_field=alternative_text_field,
-	                                                    neutral_category_name=neutral_category_name)
+	                                                    neutral_category_name=neutral_category_name,
+	                                                    extra_category_name=extra_category_name,
+	                                                    neutral_categories =neutral_categories,
+	                                                    extra_categories=extra_categories)
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
 	                                 height_in_pixels=height_in_pixels,
@@ -419,7 +443,8 @@ def produce_scattertext_explorer(corpus,
 	                                 x_axis_values=x_axis_values,
 	                                 y_axis_values=y_axis_values,
 	                                 color_func=color_func,
-	                                 show_axes=show_axes) \
+	                                 show_axes=show_axes,
+	                                 show_extra=show_extra) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,
@@ -739,7 +764,7 @@ def produce_semiotic_square_explorer(semiotic_square,
 		                      % (x_label, y_label)
 	if color_func is None:
 		# this desaturates
-		#color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+		# color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
 		color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
 	'''
 	my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
@@ -772,6 +797,118 @@ def produce_semiotic_square_explorer(semiotic_square,
 	                                    color_func=color_func,
 	                                    show_axes=False,
 	                                    **kwargs)
+
+
+def produce_four_square_explorer(four_square,
+                                 x_label=None,
+                                 y_label=None,
+                                 a_category_name=None,
+                                 b_category_name=None,
+                                 not_a_category_name=None,
+                                 not_b_category_name=None,
+                                 num_terms_semiotic_square=None,
+                                 get_tooltip_content=None,
+                                 x_axis_values=None,
+                                 y_axis_values=None,
+                                 color_func=None,
+                                 axis_scaler=scale_neg_1_to_1_with_zero_mean,
+                                 **kwargs):
+	'''
+	Produces a semiotic square visualization.
+
+	Parameters
+	----------
+	four_square : FourSquare
+		The basis of the visualization
+	x_label : str
+		The x-axis label in the scatter plot.  Relationship between `category_a` and `category_b`.
+	y_label
+		The y-axis label in the scatter plot.  Relationship neutral term and complex term.
+	a_category_name : str or None
+		Name of category to use.  Defaults to category_a.
+	b_category_name : str or None
+		Name of everything that isn't in category.  Defaults to category_b.
+	not_a_category_name : str or None
+		Name of neutral set of data.  Defaults to "Neutral".
+	not_b_category_name: str or None
+		Name of neutral set of data.  Defaults to "Extra".
+	num_terms_semiotic_square : int or None
+		10 by default. Number of terms to show in semiotic square.
+	get_tooltip_content : str or None
+		Defaults to tooltip showing z-scores on both axes.
+	x_axis_values : list, default None
+		Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	y_axis_values : list, default None
+		Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	color_func : str, default None
+		Javascript function to control color of a point.  Function takes a parameter
+		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+		returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.
+	axis_scaler : lambda, default scale_neg_1_to_1_with_zero_mean_abs_max
+		Scale values to fit axis
+	Remaining arguments are from `produce_scattertext_explorer`.
+
+	Returns
+	-------
+		str, html of visualization
+	'''
+	if x_label is None:
+		x_label = a_category_name + '-' + b_category_name
+	if y_label is None:
+		y_label = not_a_category_name + '-' + not_b_category_name
+
+	if a_category_name is None:
+		a_category_name = four_square.get_labels()['a_label']
+	if b_category_name is None:
+		b_category_name = four_square.get_labels()['b_label']
+	if not_a_category_name is None:
+		not_a_category_name = four_square.get_labels()['not_a_label']
+	if not_b_category_name is None:
+		not_b_category_name = four_square.get_labels()['not_b_label']
+	if get_tooltip_content is None:
+		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
+		                      % (x_label, y_label)
+	if color_func is None:
+		# this desaturates
+		# color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+		color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+	'''
+	my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
+	if foveate:
+		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
+	'''
+	axes = four_square.get_axes()
+
+	return produce_scattertext_explorer(
+		four_square.term_doc_matrix_,
+		category=list(set(four_square.category_a_list_) - set(four_square.category_b_list_))[0],
+		category_name=a_category_name,
+		not_category_name=b_category_name,
+		not_categories=four_square.category_b_list_,
+		neutral_categories=four_square.not_category_a_list_,
+		extra_categories=four_square.not_category_b_list_,
+		scores=-axes['x'],
+		sort_by_dist=False,
+		x_coords=axis_scaler(-axes['x']),
+		y_coords=axis_scaler(axes['y']),
+		original_x=-axes['x'],
+		original_y=axes['y'],
+		show_characteristic=False,
+		show_top_terms=False,
+		x_label=x_label,
+		y_label=y_label,
+		semiotic_square=four_square,
+		show_neutral=True,
+		neutral_category_name=not_a_category_name,
+		show_extra=True,
+		extra_category_name=not_b_category_name,
+		num_terms_semiotic_square=num_terms_semiotic_square,
+		get_tooltip_content=get_tooltip_content,
+		x_axis_values=x_axis_values,
+		y_axis_values=y_axis_values,
+		color_func=color_func,
+		show_axes=False,
+		**kwargs)
 
 
 def sparse_explorer(corpus,

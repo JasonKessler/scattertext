@@ -52,6 +52,15 @@ class TestIndexStore(TestCase):
 		self.assertEqual(new_idx_store.getidx('e'), 3)
 
 
+	def test_getidxstrictbatch(self):
+		index_store = IndexStore()
+		self.assertEqual(index_store.getidx('a'), 0)
+		self.assertEqual(index_store.getidx('b'), 1)
+		self.assertEqual(index_store.getidx('c'), 2)
+		self.assertEqual(index_store.getidx('d'), 3)
+		self.assertEqual(index_store.getidx('e'), 4)
+		self.assertEqual(index_store.getidx('f'), 5)
+		self.assertEqual(index_store.getidxstrictbatch(['b','f','b','a']), [1,5,1,0])
 
 	def test_batch_delete_extra(self):
 		index_store = IndexStore()

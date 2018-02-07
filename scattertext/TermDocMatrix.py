@@ -204,6 +204,15 @@ class TermDocMatrix(object):
 		                   if ' ' in term or "'" in term]
 		return self.remove_terms(terms_to_ignore)
 
+	def remove_infrequent_words(self, minimum_term_count):
+		'''
+		Returns
+		-------
+		A new TermDocumentMatrix consisting of only terms which occur at least minimum_term_count.
+		'''
+		tdf = self.get_term_freq_df().sum(axis=1)
+		return self.remove_terms(list(tdf[tdf <= minimum_term_count].index))
+
 	def remove_entity_tags(self):
 		'''
 		Returns
@@ -310,9 +319,28 @@ class TermDocMatrix(object):
 			idx_to_delete_list.append(self._term_idx_store.getidx(term))
 		return self.remove_terms_by_indices(idx_to_delete_list)
 
+	def keep_only_these_categories(self, categories, ignore_absences=False):
+		'''
+		Non destructive category removal.
+
+		Parameters
+		----------
+		categories : list
+			list of categories to keep
+		ignore_absences : bool, False by default
+			if categories does not appear, don't raise an error, just move on.
+
+		Returns
+		-------
+		TermDocMatrix, new object with categories removed.
+		'''
+		if not ignore_absences:
+			assert set(self.get_categories()) & set(categories) == set(categories)
+		return self.remove_categories([c for c in self.get_categories() if c not in categories])
+
 	def remove_categories(self, categories, ignore_absences=False):
 		'''
-		Non destructive term removal.
+		Non destructive category removal.
 
 		Parameters
 		----------
@@ -334,12 +362,17 @@ class TermDocMatrix(object):
 					raise KeyError('Category %s not found' % (category))
 				continue
 			idx_to_delete_list.append(self._category_idx_store.getidx(category))
+
 		new_category_idx_store = self._category_idx_store.batch_delete_idx(idx_to_delete_list)
 
 		columns_to_delete = np.nonzero(np.isin(self._y, idx_to_delete_list))
 		new_X = delete_columns(self._X.T, columns_to_delete).T
 		new_mX = delete_columns(self._mX.T, columns_to_delete).T
-		new_y = self._y[~np.isin(self._y, idx_to_delete_list)]
+		intermediate_y = self._y[~np.isin(self._y, idx_to_delete_list)]
+		old_y_to_new_y = [self._category_idx_store.getidx(x)
+		                  for x in new_category_idx_store._i2val]
+		new_y = np.array([old_y_to_new_y.index(i) if i in old_y_to_new_y else None
+		                  for i in range(intermediate_y.max() + 1)])[intermediate_y]
 
 		new_metadata_idx_store = self._metadata_idx_store
 		if len(self._metadata_idx_store):
@@ -349,15 +382,22 @@ class TermDocMatrix(object):
 		term_idx_to_delete = np.nonzero(new_X.sum(axis=0).A1 == 0)[0]
 		new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
 		new_X = delete_columns(new_X, term_idx_to_delete)
-		return self._make_new_term_doc_matrix(new_X,
-		                                      new_mX,
-		                                      new_y,
-		                                      new_term_idx_store,
-		                                      new_category_idx_store,
-		                                      new_metadata_idx_store,
-		                                      ~np.isin(self._y, idx_to_delete_list))
+
+		term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X, new_mX, new_y, new_term_idx_store,
+		                                                     new_category_idx_store,
+		                                                     new_metadata_idx_store, ~np.isin(self._y, idx_to_delete_list))
+		return term_doc_mat_to_ret
 
 	def remove_terms_by_indices(self, idx_to_delete_list):
+		'''
+		Parameters
+		----------
+		idx_to_delete_list, list
+
+		Returns
+		-------
+		TermDocMatrix
+		'''
 		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
 		new_X = delete_columns(self._X, idx_to_delete_list)
 		return self._make_new_term_doc_matrix(new_X,
@@ -763,9 +803,9 @@ class TermDocMatrix(object):
 			                                  .decode('utf-8'))
 		to_ret = (pd.read_table(unigram_freq_table_buf,
 		                        names=['word', 'background'])
-			.sort_values(ascending=False, by='background')
-			.drop_duplicates(['word'])
-			.set_index('word'))
+		          .sort_values(ascending=False, by='background')
+		          .drop_duplicates(['word'])
+		          .set_index('word'))
 		return to_ret
 
 	def list_extra_features(self):

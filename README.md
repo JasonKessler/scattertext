@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.18
+# Scattertext 0.0.2.19
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -14,6 +14,12 @@ use. See `demo_general_inquierer.py`.
 Incorporated Phrasemachine from [AbeHandler](https://github.com/AbeHandler) (Handler et al. 2016). For the license, 
 please see `PhraseMachineLicense.txt`.  For an example, please see `demo_phrase_machine.py`.
 
+Added `CompactTerms` for removing redundant and infrequent terms from term document matrices.
+These occur if a word or phrase is always part of a larger phrase; the shorter phrase is 
+considered redundant and removed from the corpus. See `demo_phrase_machine.py` for an example.   
+
+Added `FourSquare`, a pattern that allows for the creation of a semiotic square with
+separate categories for each corner.  Please see `demo_four_square.py` for an early example. 
 
 **Table of Contents**
 

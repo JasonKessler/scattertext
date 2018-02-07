@@ -23,7 +23,8 @@ buildViz = function (d3) {
                      xAxisValues = null,
                      yAxisValues = null,
                      colorFunc = null,
-                     showAxes = true) {
+                     showAxes = true,
+                     showExtra = false) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -41,14 +42,31 @@ buildViz = function (d3) {
 
         if (showNeutral) {
 
-            document.querySelectorAll('#neutcol')
-                .forEach(function (x) {
-                    x.style.display = 'inline'
-                });
-            document.querySelectorAll('.contexts')
-                .forEach(function (x) {
-                    x.style.width = '30%'
-                });
+            if (showExtra) {
+                document.querySelectorAll('#neutcol')
+                    .forEach(function (x) {
+                        x.style.display = 'inline'
+                    });
+                document.querySelectorAll('#extracol')
+                    .forEach(function (x) {
+                        x.style.display = 'inline'
+                    });
+                document.querySelectorAll('.contexts')
+                    .forEach(function (x) {
+                        x.style.width = '25%'
+                    });
+
+            } else {
+                document.querySelectorAll('#neutcol')
+                    .forEach(function (x) {
+                        x.style.display = 'inline'
+                    });
+                document.querySelectorAll('.contexts')
+                    .forEach(function (x) {
+                        x.style.width = '30%'
+                    });
+
+            }
         }
         var yAxis = null;
         var xAxis = null;
@@ -84,7 +102,9 @@ buildViz = function (d3) {
 
             return bsa(0, ar.length);
         }
-        console.log("fullData"); console.log(fullData);
+
+        console.log("fullData");
+        console.log(fullData);
 
         var sortedX = fullData.data.sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
@@ -160,6 +180,7 @@ buildViz = function (d3) {
             .append("g")
             .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
+
 
         origSVGLeft = svg.node().getBoundingClientRect().left;
         origSVGTop = svg.node().getBoundingClientRect().top;
@@ -437,7 +458,7 @@ buildViz = function (d3) {
         function gatherTermContexts(d) {
             var category_name = fullData['info']['category_name'];
             var not_category_name = fullData['info']['not_category_name'];
-            var matches = [[], [], []];
+            var matches = [[], [], [], []];
             console.log("searching")
 
             if (fullData.docs === undefined) return matches;
@@ -449,7 +470,7 @@ buildViz = function (d3) {
         }
 
         function searchInExtraFeatures(d) {
-            var matches = [[], [], []];
+            var matches = [[], [], [], []];
             var term = d.term;
             var categoryNum = fullData.docs.categories.indexOf(fullData.info.category_internal_name);
             var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
@@ -534,13 +555,8 @@ buildViz = function (d3) {
         function displayTermContexts(termInfo, jump=true) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
-            if (contexts[0].length == 0 && contexts[1].length == 0 ) {
-                if(contexts.length >= 2) {
-                    if(contexts[2].length == 0) {
-                        return null;
-                    }
-                }
-
+            if (contexts[0].length + contexts[1].length + contexts[2].length + contexts[3].length == 0) {
+                return null;
             }
             //!!! Future feature: context words
             //var contextWords = getContextWordSFS(info.term);
@@ -558,6 +574,14 @@ buildViz = function (d3) {
                 } else {
                     contextCoulumns.push("Neutral")
                 }
+                if (showExtra) {
+                    if ('extra_category_name' in fullData.info) {
+                        contextCoulumns.push(fullData.info.extra_category_name)
+                    } else {
+                        contextCoulumns.push("Extra")
+                    }
+                }
+
             }
 
             contextCoulumns.map(
@@ -565,14 +589,24 @@ buildViz = function (d3) {
                     if (max_snippets != null) {
                         var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
                     }
-
+                    console.log("CATCAT")
+                    console.log(catName, catIndex)
                     //var divId = catName == catInternalName ? '#cat' : '#notcat';
-                    var divId = '#neut';
+                    var divId = null
                     if (catName == fullData.info.category_internal_name) {
                         divId = '#cat'
-                    } else if (catName == fullData.info.not_category_name) {
+                    } else if (fullData.info.not_category_name == catName) {
                         divId = '#notcat'
+                    } else if (fullData.info.neutral_category_name == catName) {
+                        divId = '#neut';
+                    } else if (fullData.info.extra_category_name == catName) {
+                        divId = '#extra'
+                    } else {
+                        return;
                     }
+                    console.log('divid');
+                    console.log(divId)
+
                     var temp = d3.select(divId)
                         .selectAll("div").remove();
                     contexts[catIndex].forEach(function (context) {
@@ -678,33 +712,64 @@ buildViz = function (d3) {
             console.log(info)
             if (showNeutral) {
                 console.log("NEUTRAL")
-                var neutralNumList = fullData.docs.categories.map(function (x, i) {
-                    if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
-                        return -1;
-                    } else if (x == fullData.docs.categories.indexOf(fullData.info.category_internal_name)) {
-                        return -1;
-                    } else {
+
+                var numList = fullData.docs.categories.map(function (x, i) {
+                    if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
                         return i;
+                    } else {
+                        return -1;
                     }
                 }).filter(function (x) {
                     return x > -1
                 });
-                var numNeutDocs = fullData.docs.labels
+
+                var numDocs = fullData.docs.labels
                     .map(function (x) {
-                        return neutralNumList.indexOf(x) > -1
+                        return numList.indexOf(x) > -1
                     })
                     .reduce(function (a, b) {
                         return a + b;
                     });
-                d3.select('#neuthead')
+
+                d3.select("#neuthead")
                     .style('fill', color(0))
                     .html(
                         getFrequencyDescription(fullData.info.neutral_category_name,
                             info.neut25k,
                             info.neut,
-                            termInfo.contexts[2].length * 1000 / numNeutDocs)
+                            termInfo.contexts[2].length * 1000 / numDocs)
                     );
 
+                if (showExtra) {
+                    console.log("EXTRA")
+                    var numList = fullData.docs.categories.map(function (x, i) {
+                        if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
+                            return i;
+                        } else {
+                            return -1;
+                        }
+                    }).filter(function (x) {
+                        return x > -1
+                    });
+
+                    var numDocs = fullData.docs.labels
+                        .map(function (x) {
+                            return numList.indexOf(x) > -1
+                        })
+                        .reduce(function (a, b) {
+                            return a + b;
+                        });
+
+                    d3.select("#extrahead")
+                        .style('fill', color(0))
+                        .html(
+                            getFrequencyDescription(fullData.info.extra_category_name,
+                                info.extra25k,
+                                info.extra,
+                                termInfo.contexts[3].length * 1000 / numDocs)
+                        );
+
+                }
             }
             if (jump) {
                 if (window.location.hash == '#snippets') {
@@ -759,7 +824,7 @@ buildViz = function (d3) {
                 return regexp;
             }
 
-            var matches = [[], [], []];
+            var matches = [[], [], [], []];
             var pattern = buildMatcher(d.term);
             var categoryNum = fullData.docs.categories.indexOf(fullData.info.category_internal_name);
             var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
@@ -771,6 +836,26 @@ buildViz = function (d3) {
             }).filter(function (x) {
                 return x > -1
             });
+            var neutralCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
+            var extraCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
+            console.log('extraCategoryNumList')
+            console.log(extraCategoryNumList);
             console.log("categoryNum");
             console.log(categoryNum);
             console.log("categoryNum");
@@ -778,12 +863,20 @@ buildViz = function (d3) {
                 for (var i in fullData.docs.texts) {
                     //var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
                     var docLabel = fullData.docs.labels[i];
-                    var numericLabel = 2;
+                    var numericLabel = -1;
                     if (docLabel == categoryNum) {
                         numericLabel = 0;
                     } else if (notCategoryNumList.indexOf(docLabel) > -1) {
                         numericLabel = 1;
+                    } else if (neutralCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 2;
+                    } else if (extraCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 3;
                     }
+                    if (numericLabel == -1) {
+                        continue;
+                    }
+
                     var text = removeUnderScoreJoin(fullData.docs.texts[i]);
                     //var pattern = new RegExp("\\b(" + stripNonWordChars(d.term) + ")\\b", "gim");
                     var match;
@@ -1625,34 +1718,58 @@ buildViz = function (d3) {
                             .replace(/['";:,.?¿\-!¡]+/g, '')
                             .match(/\S+/g) || []
                     ).length;
-                    var name = fullData.info.not_category_name;
+                    var name = null;
                     if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
                         name = fullData.info.category_name;
+                    } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.not_category_name;
+                    } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.neutral_category_name;
+                    } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.extra_category_name;
+                    }
+                    if (name) {
+                        wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt
                     }
                     //!!!
-                    wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt
+
                 });
                 fullData.docs.labels.forEach(function (x) {
-                    var name = fullData.info.not_category_name;
+                    var name = null;
                     if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
                         name = fullData.info.category_name;
+                    } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.not_category_name;
+                    } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.neutral_category_name;
+                    } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                        name = fullData.info.extra_category_name;
                     }
-                    docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
+                    if (name) {
+                        docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
+                    }
                 });
+                console.log("docCounts");
+                console.log(docCounts)
                 var messages = [];
-                var categoriesToShow = [fullData.info.category_name, fullData.info.not_category_name];
+                var categoriesToShow = [fullData.info.category_name,
+                    fullData.info.not_category_name,
+                    fullData.info.neutral_category_name,
+                    fullData.info.extra_category_name];
                 categoriesToShow.forEach(function (x, i) {
-                    messages.push('<b>' + x + '</b> document count: '
-                        + Number(docCounts[x]).toLocaleString('en')
-                        + '; word count: '
-                        + Number(wordCounts[x]).toLocaleString('en'));
+                    if (docCounts[x] > 0) {
+                        messages.push('<b>' + x + '</b> document count: '
+                            + Number(docCounts[x]).toLocaleString('en')
+                            + '; word count: '
+                            + Number(wordCounts[x]).toLocaleString('en'));
+                    }
                 });
 
                 d3.select('#corpus-stats')
                     .style('width', width + margin.left + margin.right + 200)
                     .append('div')
                     .html(messages.join('<br />'));
-            };
+            }
 
 
             if (fullData.docs) {

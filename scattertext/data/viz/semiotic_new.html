@@ -171,6 +171,12 @@ input:focus {
   float: left
 }
 
+.extra_display {
+  display: none;
+  float: left
+}
+
+
 .scattertext {
   font-size: 10px;
   font-family: Helvetica, Arial, Sans-Serif;
@@ -207,6 +213,10 @@ input:focus {
   background-color: rgb(250, 248, 193);
   font-size: 16;
 }
+.extra{
+  background-color: rgb(250, 248, 193);
+  font-size: 16;
+}
 
 #corpus-stats {
   text-align: center;
@@ -224,6 +234,14 @@ input:focus {
 #neutcol {
   display: none;
 }
+
+#extra {
+}
+
+#extracol {
+  display: none;
+}
+
 
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
@@ -346,6 +364,10 @@ input:focus {
   <div id="neutcol" class="contexts">
     <div class="snippet_header" id="neuthead"></div>
     <div class="snippet" id="neut"></div>
+  </div>
+  <div id="extracol" class="contexts">
+    <div class="snippet_header" id="extrahead"></div>
+    <div class="snippet" id="extra"></div>
   </div>
 </div>
 
