@@ -25,7 +25,7 @@ corpus = st.CorpusFromScikit(
 	raw_texts=newsgroups_train.data
 ).build()
 
-html = st.produce_fightin_words_explorer(
+html = st.produce_frequency_explorer(
 	corpus,
 	'alt.atheism',
 	scores=clf.coef_[0],
@@ -39,7 +39,7 @@ open(file_name, 'wb').write(html.encode('utf-8'))
 print("open " + file_name)
 
 sfs = (corpus.get_scaled_f_scores('alt.atheism') - 0.5) * 2
-html = st.produce_fightin_words_explorer(
+html = st.produce_frequency_explorer(
 	corpus,
 	'alt.atheism',
 	scores=sfs,
@@ -53,7 +53,7 @@ open(file_name, 'wb').write(html.encode('utf-8'))
 print("open " + file_name)
 
 sfs = (corpus.get_scaled_f_scores('alt.atheism', beta=1) - 0.5) * 2
-html = st.produce_fightin_words_explorer(
+html = st.produce_frequency_explorer(
 	corpus,
 	'alt.atheism',
 	scores=sfs,

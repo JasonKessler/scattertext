@@ -3,6 +3,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
+from scattertext import LogOddsRatioInformativeDirichletPrior
 from scattertext.PriorFactory import PriorFactory
 from scattertext.test.test_semioticSquare import get_test_corpus
 
@@ -57,6 +58,34 @@ class TestPriorFactory(TestCase):
 
 		np.testing.assert_allclose(priors.values, expected_prior.values)
 
+
+	def test_align_to_target(self):
+		full_corpus = get_test_corpus()
+		corpus = full_corpus.remove_categories(['swift'])
+		priors = PriorFactory(full_corpus).use_all_categories().get_priors()
+		with self.assertRaises(ValueError):
+			(LogOddsRatioInformativeDirichletPrior(priors)
+			 .get_scores(*corpus.get_term_freq_df().values.T))
+		priors = (PriorFactory(full_corpus)
+		          .use_all_categories()
+		          .align_to_target(corpus)
+		          .get_priors())
+		(LogOddsRatioInformativeDirichletPrior(priors)
+		 .get_scores(*corpus.get_term_freq_df().values.T))
+
+	def test_use_categories(self):
+		full_corpus = get_test_corpus()
+		priors = PriorFactory(full_corpus).use_categories(['swift']).get_priors()
+		corpus = full_corpus.remove_categories(['swift'])
+		with self.assertRaises(ValueError):
+			(LogOddsRatioInformativeDirichletPrior(priors)
+			 .get_scores(*corpus.get_term_freq_df().values.T))
+		priors = (PriorFactory(full_corpus)
+		          .use_all_categories()
+		          .align_to_target(corpus)
+		          .get_priors())
+		(LogOddsRatioInformativeDirichletPrior(priors)
+		 .get_scores(*corpus.get_term_freq_df().values.T))
 
 	def test_get_custom_term_frequencies(self):
 		corpus = get_test_corpus()

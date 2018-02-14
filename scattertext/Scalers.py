@@ -116,10 +116,10 @@ def percentile(vec, terms=None, other_vec=None):
 	return _scale_0_to_1(vec_ss)
 
 
-def percentile_dense(vec, terms=None, other_vec=None):
+def dense_rank(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='dense') * (1. / len(vec))
 	return _scale_0_to_1(vec_ss)
-
+percentile_dense = dense_rank
 
 def percentile_ordinal(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='ordinal') * (1. / len(vec))

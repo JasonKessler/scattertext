@@ -18,6 +18,7 @@ from scattertext.CSRMatrixTools import delete_columns
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
 	DEFAULT_BACKGROUND_BETA
 from scattertext.FeatureOuput import FeatureLister
+from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.CornerScore import CornerScore
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
@@ -204,13 +205,13 @@ class TermDocMatrix(object):
 		                   if ' ' in term or "'" in term]
 		return self.remove_terms(terms_to_ignore)
 
-	def remove_infrequent_words(self, minimum_term_count):
+	def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker):
 		'''
 		Returns
 		-------
 		A new TermDocumentMatrix consisting of only terms which occur at least minimum_term_count.
 		'''
-		tdf = self.get_term_freq_df().sum(axis=1)
+		tdf = term_ranker(self).get_ranks().sum(axis=1)
 		return self.remove_terms(list(tdf[tdf <= minimum_term_count].index))
 
 	def remove_entity_tags(self):

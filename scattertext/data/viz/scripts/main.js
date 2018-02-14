@@ -808,10 +808,14 @@ buildViz = function (d3) {
                     boundary = '';
                     wordSep = '';
                 }
+                var termToRegex = term;
+                ['[', ']', '(', ')', '{', '}', '^', '$', '.', '|', '?',
+                    '*', '+', '-', '=', '~', '`', '{', '#'].forEach(function (a) {
+                    termToRegex = termToRegex.replace(a, '\\\\' + a)
+                });
                 var regexp = new RegExp(boundary + '('
                     + removeUnderScoreJoin(
-                        term.replace('$', '\\$')
-                            .replace(' ', wordSep, 'gim')
+                        termToRegex.replace(' ', wordSep, 'gim')
                     )
                     + ')' + boundary, 'gim');
                 try {

@@ -45,9 +45,16 @@ class ScoreBalancer(object):
 
 
 class ScaledFScorePresets(object):
-	def __init__(self, scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
+	def __init__(self,
+	             scaler_algo=DEFAULT_SCALER_ALGO,
+	             beta=DEFAULT_BETA,
+	             one_to_neg_one=False,
+	             priors=None):
 		self.scaler_algo_ = scaler_algo
 		self.beta_ = beta
+		self.one_to_neg_one_ = one_to_neg_one
+		self.priors_ = priors
+		assert self.beta_ > 0
 
 	def get_name(self):
 		return 'Scaled F-Score'
@@ -70,10 +77,11 @@ class ScaledFScorePresets(object):
 		np.array
 			scores
 		'''
-		return ScaledFScore.get_scores(cat_word_counts,
-		                               not_cat_word_counts,
-		                               scaler_algo=self.scaler_algo_,
-		                               beta=self.beta_)
+		cat_scores = self.get_scores_for_category(cat_word_counts,
+		                                                  not_cat_word_counts)
+		not_cat_scores = self.get_scores_for_category(not_cat_word_counts,
+		                                              cat_word_counts)
+		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 
 	def get_scores_for_category(self, cat_word_counts, not_cat_word_counts):
 		'''
@@ -89,10 +97,26 @@ class ScaledFScorePresets(object):
 		np.array
 			scores
 		'''
-		return ScaledFScore.get_scores_for_category(cat_word_counts,
-		                                            not_cat_word_counts,
-		                                            self.scaler_algo_,
-		                                            self.beta_, )
+		beta = self.beta_
+		assert len(cat_word_counts) == len(not_cat_word_counts)
+		if self.priors_ is not None:
+			p = self.priors_
+			assert len(p) == len(cat_word_counts)
+			precision = ((cat_word_counts + p * 1.) /
+			             (cat_word_counts + not_cat_word_counts + 2 * p))
+			recall = (cat_word_counts + p) * 1. / (cat_word_counts.sum() + p.sum())
+		else:
+			precision = (cat_word_counts * 1. / (cat_word_counts + not_cat_word_counts))
+			recall = cat_word_counts * 1. / cat_word_counts.sum()
+		precision_normcdf = ScaledFScore._safe_scaler(self.scaler_algo_, precision)
+		recall_normcdf = ScaledFScore._safe_scaler(self.scaler_algo_, recall)
+		scores = self._weighted_h_mean(precision_normcdf, recall_normcdf)
+		scores[np.isnan(scores)] = 0.
+
+	def _weighted_h_mean(self, precision_normcdf, recall_normcdf):
+		scores = (1 + self.beta_ ** 2) * (precision_normcdf * recall_normcdf) \
+		         / ((self.beta_ ** 2) * precision_normcdf + recall_normcdf)
+		return scores
 
 
 class ScaledFScorePresetsNeg1To1(ScaledFScorePresets):

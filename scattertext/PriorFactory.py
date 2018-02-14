@@ -87,6 +87,11 @@ class PriorFactory(object):
 		self.priors += custom_term_frequencies.reindex(self.priors.index).fillna(0)
 		return self
 
+	def use_categories(self, categories):
+		self.priors += self.term_ranker.get_ranks()[
+			[c + ' freq' for c in categories]].sum(axis=1)
+		return self
+
 	def use_all_categories(self):
 		'''
 		Returns
@@ -147,6 +152,19 @@ class PriorFactory(object):
 			self.priors[self.priors == 0].index
 		)
 		self._reindex_priors()
+		return self
+
+	def align_to_target(self, target_term_doc_mat):
+		'''
+		Parameters
+		----------
+		target_term_doc_mat : TermDocMatrix
+
+		Returns
+		-------
+		PriorFactory
+		'''
+		self.priors = self.priors[target_term_doc_mat.get_terms()].fillna(0)
 		return self
 
 	def build(self):

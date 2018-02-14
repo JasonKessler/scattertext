@@ -66,3 +66,21 @@ class CorpusFromParsedDocuments(object):
 		for meta, val in self._feats_from_spacy_doc.get_doc_metadata(parsed_text).items():
 			meta_idx = self._metadata_idx_store.getidx(meta)
 			self._mX_factory[row.name, meta_idx] = val
+
+	def _make_new_term_doc_matrix(self,
+	                              new_X,
+	                              new_mX,
+	                              new_y,
+	                              new_term_idx_store,
+	                              new_category_idx_store,
+	                              new_metadata_idx_store,
+	                              new_y_mask):
+		return ParsedCorpus(self._df[new_y_mask],
+		                    new_X,
+		                    new_mX,
+		                    new_y,
+		                    new_term_idx_store,
+		                    new_category_idx_store,
+		                    new_metadata_idx_store,
+		                    self._parsed_col,
+		                    self._category_col)

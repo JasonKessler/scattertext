@@ -2,6 +2,7 @@
 [![Conda Install](https://anaconda.org/ioam/holoviews/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
+[![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
 # Scattertext 0.0.2.19
 ### Updates
@@ -677,7 +678,7 @@ select around 4000 terms that encompass the set of frequent terms, terms with hi
 and terms that are characteristic of the corpus.  
 
 ```python
-html = st.produce_fightin_words_explorer(
+html = st.produce_frequency_explorer(
 	corpus,
 	'alt.atheism',
 	scores=term_scores,
@@ -843,7 +844,7 @@ Fixed bug when processing single-word documents, and set the default beta to 2.
 
 
 ### 0.0.2.11-13
-Added `produce_fightin_words_explorer` function, and adding the PEP 369-compliant 
+Added `produce_frequency_explorer` function, and adding the PEP 369-compliant 
 `__version__` attribute as mentioned in [#19](https://github.com/JasonKessler/scattertext/issues/19).
 Fixed bug when creating visualizations with more than two possible categories.  Now, by default, 
 category names will not be title-cased in the visualization, but will retain their original case.  

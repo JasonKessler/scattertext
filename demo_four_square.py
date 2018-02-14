@@ -8,7 +8,7 @@ import scattertext as st
 nlp = spacy.load('en', parser=False)
 t0 = time.time()
 print('reading dataset')
-reviews_df = pd.read_csv('../jasonkessler.github.io/iclr2018_reviews.csv.bz2')
+reviews_df = pd.read_csv('https://github.com/JasonKessler/ICLR18ReviewVis/raw/master/iclr2018_reviews.csv.bz2')
 print('parsing', time.time() - t0, 's')
 reviews_df['parse'] = reviews_df['review'].apply(st.whitespace_nlp_with_sentences)
 print('building full corpus', time.time() - t0, 's')

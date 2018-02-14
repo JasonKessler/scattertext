@@ -16,15 +16,40 @@ class LogOddsRatioInformativeDirichletPrior(LogOddsRatioUninformativeDirichletPr
 		Monroe, B. L., Colaresi, M. P., & Quinn, K. M. (2008). Fightin' words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.
 	'''
 
-	def __init__(self, priors, alpha_w=10):
+	def __init__(self,
+	             priors,
+	             sigma=10,
+	             scale_type='none',
+	             prior_power=1):
 		'''
 		Parameters
 		----------
-		alpha_w : np.float
-			The constant prior.
+		priors : pd.Series
+			term -> prior count
+
+		sigma : np.float
+			prior scale
+
+		scale_type : str
+			'none': Don't scale prior. Jurafsky approach.
+			'class-size': Scale prior st the sum of the priors is the same as the word count
+			  in the document-class being scaled
+			'corpus-size': Scale prior to the size of the corpus
+			'word': Original formulation from MCQ. Sum of priors will be sigma.
+			'background-corpus-size': Scale corpus size to multiple of background-corpus.
+
+		prior_power : numeric
+			Exponent to apply to prior
+			> 1 will shrink frequent words
+
 		'''
+		assert scale_type in ['none', 'class-size', 'corpus-size',
+		                      'background-corpus-size', 'word']
 		self._priors = priors
-		LogOddsRatioUninformativeDirichletPrior.__init__(self, alpha_w)
+		self._scale_type = scale_type
+		self._prior_power = prior_power
+		self._scale = sigma
+		LogOddsRatioUninformativeDirichletPrior.__init__(self, sigma)
 
 	def get_priors(self):
 		return self._priors
@@ -44,19 +69,21 @@ class LogOddsRatioInformativeDirichletPrior(LogOddsRatioUninformativeDirichletPr
 		-------
 		np.array of z-scores
 		'''
-		# a_w = self.alpha_w
-		# prior_coef = 10
 		n_i, n_j = y_i.sum(), y_j.sum()
-		prior_scale_i = ((n_i) * self.alpha_w * 1. / np.sum(self._priors))
-		# prior_scale_i = (self.alpha_w * 1. / np.sum(self._priors))
-		a_wi = self._priors * prior_scale_i
-		a_0i = np.sum(a_wi)
-
-		prior_scale_j = ((n_j) * self.alpha_w * 1. / np.sum(self._priors))
-		# prior_scale_j = (self.alpha_w * 1. / np.sum(self._priors))
-		a_wj = self._priors * prior_scale_j
+		prior_scale_j = prior_scale_i = 1
+		if self._scale_type == 'class-size':
+			prior_scale_i = ((n_i) * self._scale * 1. / np.sum(self._priors))
+			prior_scale_j = ((n_j) * self._scale * 1. / np.sum(self._priors))
+		elif self._scale_type == 'corpus-size':
+			prior_scale_j = prior_scale_i = ((n_i + n_j) * self._scale * 1. / np.sum(self._priors))
+		elif self._scale_type == 'word':
+			prior_scale_j = prior_scale_i = self._scale / np.sum(self._priors)
+		elif self._scale_type == 'background-corpus-size':
+			prior_scale_j = prior_scale_i = self._scale
+		a_wj = (self._priors * prior_scale_j) ** self._prior_power
 		a_0j = np.sum(a_wj)
-		# a_0 = len(y_i) * a_w
+		a_wi = (self._priors * prior_scale_i) ** self._prior_power
+		a_0i = np.sum(a_wi)
 
 		delta_i_j = (np.log((y_i + a_wi) / (n_i + a_0i - y_i - a_wi))
 		             - np.log((y_j + a_wj) / (n_j + a_0j - y_j - a_wj)))

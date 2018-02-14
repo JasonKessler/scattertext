@@ -26,7 +26,7 @@ from scattertext.Formatter import large_int_format, round_downer
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.PriorFactory import PriorFactory
 from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max, \
-	scale_neg_1_to_1_with_zero_mean
+	scale_neg_1_to_1_with_zero_mean, dense_rank
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 from scattertext.ScatterChart import ScatterChart
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
@@ -591,20 +591,20 @@ def word_similarity_explorer(corpus,
 	                                    **kwargs)
 
 
-def produce_fightin_words_explorer(corpus,
-                                   category,
-                                   category_name=None,
-                                   not_category_name=None,
-                                   term_ranker=termranking.AbsoluteFrequencyRanker,
-                                   alpha=0.01,
-                                   use_term_significance=False,
-                                   term_scorer=None,
-                                   not_categories=None,
-                                   grey_threshold=1.96,
-                                   y_axis_values=None,
-                                   **kwargs):
+def produce_frequency_explorer(corpus,
+                               category,
+                               category_name=None,
+                               not_category_name=None,
+                               term_ranker=termranking.AbsoluteFrequencyRanker,
+                               alpha=0.01,
+                               use_term_significance=False,
+                               term_scorer=None,
+                               not_categories=None,
+                               grey_threshold=1.96,
+                               y_axis_values=None,
+                               **kwargs):
 	'''
-	Produces a Monroe et al. style visualization.
+	Produces a Monroe et al. style visualization, with the x-axis being the log frequency
 
 	Parameters
 	----------
@@ -648,6 +648,7 @@ def produce_fightin_words_explorer(corpus,
 	freqs = term_freq_df[[c + ' freq' for c in [category] + not_categories]].sum(axis=1).values
 	x_axis_values = [round_downer(10 ** x) for x
 	                 in np.linspace(0, np.log(freqs.max()) / np.log(10), 5)]
+	x_axis_values = [x for x in x_axis_values if x > 1 and x <= freqs.max()]
 	# y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
 	frequencies_log_scaled = scale(np.log(freqs) - np.log(1))
 
@@ -668,10 +669,21 @@ def produce_fightin_words_explorer(corpus,
 		return round(x, -int(np.floor(np.log10(abs(x)))))
 
 	if y_axis_values is None:
+		'''
 		y_axis_values = [round_to_1(x) for x
 		                 in sorted(set(-np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
 		                           | set(np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
 		                           | {0})]
+		'''
+		max_score = np.floor(np.max(kwargs['scores']) * 100)/100
+		min_score = np.ceil(np.min(kwargs['scores']) * 100)/100
+		central = 0.5
+		if min_score < 0 and max_score > 0:
+			central = 0
+		else:
+			central = 0.5
+		y_axis_values = [x for x in [min_score, central, max_score]
+		                 if x >= min_score and x <= max_score]
 	scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
 	# kwargs['metadata'] = kwargs.get('metadata', None),
 	if use_term_significance:
@@ -702,7 +714,8 @@ def produce_fightin_words_explorer(corpus,
 	                                    x_label=kwargs.get('x_label', 'Log Frequency'),
 	                                    y_label=kwargs.get('y_label', term_scorer.get_name()),
 	                                    **kwargs)
-
+# for legacy reasons
+produce_fightin_words_explorer = produce_frequency_explorer
 
 def produce_semiotic_square_explorer(semiotic_square,
                                      x_label,
