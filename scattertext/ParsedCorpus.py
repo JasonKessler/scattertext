@@ -50,6 +50,14 @@ class ParsedCorpus(Corpus):
 			return self._df[self._parsed_col]
 		return self._df[self._parsed_col].apply(str)
 
+	def get_df(self):
+		'''
+		Returns
+		-------
+		pd.DataFrame
+		'''
+		return self._df
+
 	def get_field(self, field):
 		'''
 		Parameters

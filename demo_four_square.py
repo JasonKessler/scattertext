@@ -15,21 +15,17 @@ print('building full corpus', time.time() - t0, 's')
 full_corpus = (st.CorpusFromParsedDocuments(reviews_df,
                                             category_col='category',
                                             parsed_col='parse',
-                                            feats_from_spacy_doc=st.PhraseMachinePhrases()
+                                            #feats_from_spacy_doc=st.PhraseMachinePhrases()
                                             ).build())
-# print('building corpus', time.time() - t0, 's')
-corpus = (full_corpus
-          .keep_only_these_categories(['Accept, Positive',
-                                       'Accept, Negative',
-                                       'Reject, Positive',
-                                       'Reject, Negative'],
-                                      False))
 
-print('compacting', time.time() - t0, 's')
 term_ranker = st.OncePerDocFrequencyRanker
-corpus = st.CompactTerms(corpus,
-                         minimum_term_count=2,
-                         term_ranker=term_ranker).compact()
+corpus = (full_corpus
+          .keep_only_these_categories(['Accept, Positive', 'Accept, Negative',
+                                       'Reject, Positive', 'Reject, Negative'],
+                                      False)
+          .get_unigram_corpus()
+          .compact(st.ClassPercentageCompactor(term_count=5)))
+
 print('finding priors', time.time() - t0, 's')
 priors = (st.PriorFactory(full_corpus, starting_count=0.01)
           .use_all_categories()
@@ -43,7 +39,7 @@ four_square = st.FourSquare(
 	category_b_list=['Accept, Negative'],
 	not_category_b_list=['Reject, Positive'],
 	term_ranker=term_ranker,
-	scorer=st.LogOddsRatioInformativeDirichletPrior(priors, 10),
+	scorer=st.LogOddsRatioInformativeDirichletPrior(priors, 500, 'word'),
 	labels={'a': 'Positive Reviews of Accepted Papers',
 	        'b': 'Negative Reviews of Accepted Papers',
 	        'not_a_and_not_b': 'Rejections',
@@ -65,8 +61,7 @@ html = st.produce_four_square_explorer(four_square=four_square,
                                        metadata=(corpus._df['category'] + ': '
                                                  + corpus._df.rating + ', '
                                                  + corpus._df['title']))
-import pdb;pdb.set_trace()
-fn = 'demo_four_square_phrase.html'
+fn = 'demo_four_square.html'
 open(fn, 'wb').write(html.encode('utf-8'))
 print('Open ' + fn + ' in Chrome or Firefox.')
 print('done', time.time() - t0, 's')

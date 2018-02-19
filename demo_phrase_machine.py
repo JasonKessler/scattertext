@@ -3,7 +3,7 @@ import spacy
 from scattertext import SampleCorpora, whitespace_nlp_with_sentences, PhraseMachinePhrases
 from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.termcompaction.TermCompaction import CompactTerms
+from scattertext.termcompaction.CompactTerms import CompactTerms
 
 convention_df = SampleCorpora.ConventionData2012.get_data()
 corpus = CorpusFromPandas(convention_df,

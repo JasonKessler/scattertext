@@ -13,7 +13,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 		params = ['1000', '600', 'null', 'null', 'true', 'false',
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
-		          'null', 'null', 'null', 'null', 'true', 'false']
+		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -313,3 +313,21 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            show_extra=True)
 			._call_build_visualization_in_javascript()),
 		                 self.get_params({25: 'true'}))
+
+	def test_do_censor_points(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            do_censor_points=False)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({26: 'false'}))
+
+
+	def test_center_label_over_points(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            center_label_over_points=True)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({27: 'true'}))
+
+
+

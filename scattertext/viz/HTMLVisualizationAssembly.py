@@ -37,6 +37,8 @@ class HTMLVisualizationAssembly(object):
 	             color_func=None,
 	             show_axes=True,
 	             show_extra=False,
+	             do_censor_points=True,
+	             center_label_over_points=False
 	             ):
 		'''
 
@@ -101,8 +103,12 @@ class HTMLVisualizationAssembly(object):
 			returns a string.
 		show_axes : bool, default True
 			Show x and y axes
-		show_extra : bool, default Bool
+		show_extra : bool, default False
 			Show extra fourth column
+		do_censor_points  : bool, default True
+			Don't label over dots
+		center_label_over_points : bool, default False
+			Only put labels centered over point
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -131,6 +137,8 @@ class HTMLVisualizationAssembly(object):
 		self._color_func = color_func
 		self._show_axes = show_axes
 		self._show_extra = show_extra
+		self._do_censor_points = do_censor_points
+		self._center_label_over_points = center_label_over_points
 
 	def to_html(self,
 	            protocol='http',
@@ -264,5 +272,7 @@ class HTMLVisualizationAssembly(object):
 		             js_default_value_to_null(self._y_axis_values),
 		             js_default_value_to_null(self._color_func),
 		             js_bool(self._show_axes),
-		             js_bool(self._show_extra)]
+		             js_bool(self._show_extra),
+		             js_bool(self._do_censor_points),
+		             js_bool(self._center_label_over_points)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

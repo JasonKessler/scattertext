@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
-from scattertext import TermDocMatrixFromPandas
+from scattertext import TermDocMatrixFromPandas, CompactTerms
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS, \
 	CannotCreateATermDocMatrixWithASignleCategoryException
@@ -271,6 +271,10 @@ class TestTermDocMat(TestCase):
 		back_df = pd.DataFrame({'word': ['a', 'bee'], 'background': [3, 1]})
 		tdm.set_background_corpus(back_df)
 		tdm.set_background_corpus(tdm)
+
+	def test_compact(self):
+		x = get_hamlet_term_doc_matrix().compact(CompactTerms())
+		self.assertEqual(type(x), TermDocMatrix)
 
 	def test_get_background_corpus(self):
 		tdm = get_hamlet_term_doc_matrix()

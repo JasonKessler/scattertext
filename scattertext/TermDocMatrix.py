@@ -30,6 +30,7 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'type', 'date', 'time', 'percent', 'money', 'quantity',
                      'ordinal', 'cardinal']
 
+MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) |  {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn', 'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn'}
 
 class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
 	pass
@@ -74,6 +75,26 @@ class TermDocMatrix(object):
 		self._metadata_idx_store = metadata_idx_store
 		self._unigram_frequency_path = unigram_frequency_path
 		self._background_corpus = None
+
+	def get_default_stoplist(self):
+		return MY_ENGLISH_STOP_WORDS
+
+	def compact(self, compactor):
+		'''
+		Compact term document matrix.
+
+		Parameters
+		----------
+		compactor : object
+			Object that takes a Term Doc Matrix as its first argument, and has a compact function which returns a
+			Term Doc Matrix like argument
+
+		Returns
+		-------
+		New Term Doc Matrix
+		'''
+		return compactor.compact(self)
+
 
 	def get_num_terms(self):
 		'''
@@ -238,7 +259,7 @@ class TermDocMatrix(object):
 		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
 		'''
 		if stoplist is None:
-			stoplist = ENGLISH_STOP_WORDS
+			stoplist = self.get_default_stoplist()
 		else:
 			stoplist = [w.lower() for w in stoplist]
 		return self._remove_terms_from_list(stoplist)
@@ -256,7 +277,7 @@ class TermDocMatrix(object):
 		'''
 		if type(custom_stoplist) == str:
 			custom_stoplist = [custom_stoplist]
-		return self._remove_terms_from_list(set(ENGLISH_STOP_WORDS)
+		return self._remove_terms_from_list(set(self.get_default_stoplist())
 		                                    | set(w.lower() for w in custom_stoplist))
 
 	def _remove_terms_from_list(self, stoplist):
@@ -337,7 +358,8 @@ class TermDocMatrix(object):
 		'''
 		if not ignore_absences:
 			assert set(self.get_categories()) & set(categories) == set(categories)
-		return self.remove_categories([c for c in self.get_categories() if c not in categories])
+		categories_to_remove = [c for c in self.get_categories() if c not in categories]
+		return self.remove_categories(categories_to_remove)
 
 	def remove_categories(self, categories, ignore_absences=False):
 		'''
@@ -354,7 +376,6 @@ class TermDocMatrix(object):
 		-------
 		TermDocMatrix, new object with categories removed.
 		'''
-
 		idx_to_delete_list = []
 		existing_categories = set(self.get_categories())
 		for category in categories:
@@ -363,7 +384,6 @@ class TermDocMatrix(object):
 					raise KeyError('Category %s not found' % (category))
 				continue
 			idx_to_delete_list.append(self._category_idx_store.getidx(category))
-
 		new_category_idx_store = self._category_idx_store.batch_delete_idx(idx_to_delete_list)
 
 		columns_to_delete = np.nonzero(np.isin(self._y, idx_to_delete_list))

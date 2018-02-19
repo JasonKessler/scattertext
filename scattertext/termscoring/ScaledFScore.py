@@ -2,7 +2,6 @@ import numpy as np
 from scipy.stats import norm, rankdata
 
 from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
-from scattertext.termsignificance.LogOddsRatioAddOne import z_to_p_val
 
 
 class InvalidScalerException(Exception):
@@ -59,8 +58,9 @@ class ScaledFScorePresets(object):
 	def get_name(self):
 		return 'Scaled F-Score'
 
-	@staticmethod
-	def get_default_score():
+	def get_default_score(self):
+		if self.one_to_neg_one_:
+			return 0
 		return 0.5
 
 	def get_scores(self, cat_word_counts, not_cat_word_counts):
@@ -78,10 +78,13 @@ class ScaledFScorePresets(object):
 			scores
 		'''
 		cat_scores = self.get_scores_for_category(cat_word_counts,
-		                                                  not_cat_word_counts)
+		                                          not_cat_word_counts)
 		not_cat_scores = self.get_scores_for_category(not_cat_word_counts,
 		                                              cat_word_counts)
-		return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
+		if self.one_to_neg_one_:
+			return ScoreBalancer.balance_scores_and_dont_scale(cat_scores, not_cat_scores)
+		else:
+			return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 
 	def get_scores_for_category(self, cat_word_counts, not_cat_word_counts):
 		'''
@@ -112,6 +115,7 @@ class ScaledFScorePresets(object):
 		recall_normcdf = ScaledFScore._safe_scaler(self.scaler_algo_, recall)
 		scores = self._weighted_h_mean(precision_normcdf, recall_normcdf)
 		scores[np.isnan(scores)] = 0.
+		return scores
 
 	def _weighted_h_mean(self, precision_normcdf, recall_normcdf):
 		scores = (1 + self.beta_ ** 2) * (precision_normcdf * recall_normcdf) \
@@ -128,6 +132,7 @@ class ScaledFScorePresetsNeg1To1(ScaledFScorePresets):
 		scores = ScaledFScorePresets.get_scores(self, cat_word_counts, not_cat_word_counts)
 		return scores * 2 - 1
 
+
 class ScaledFZScore(ScaledFScorePresets):
 	@staticmethod
 	def get_default_score():
@@ -135,10 +140,11 @@ class ScaledFZScore(ScaledFScorePresets):
 
 	def get_scores(self, cat_word_counts, not_cat_word_counts):
 		sfs = ScaledFScorePresets.get_scores(self, cat_word_counts, not_cat_word_counts)
-		#sfs = self.get_score_deltas(cat_word_counts, not_cat_word_counts)
-		#import pdb; pdb.set_trace()
-		#return (sfs - 0.5) / np.std(sfs - 0.5)
+		# sfs = self.get_score_deltas(cat_word_counts, not_cat_word_counts)
+		# import pdb; pdb.set_trace()
+		# return (sfs - 0.5) / np.std(sfs - 0.5)
 		return (sfs - sfs.mean()) / np.std(sfs)
+
 	def get_name(self):
 		return "Scaled F-Score Z-Score"
 
@@ -166,13 +172,11 @@ class ScaledFZScore(ScaledFScorePresets):
 		return norm.cdf(z_scores)
 
 
-
 class ScaledFZScorePrior(ScaledFZScore):
 	def __init__(self, prior, alpha=1, scaler_algo=DEFAULT_SCALER_ALGO, beta=DEFAULT_BETA):
 		self.prior = prior
 		self.alpha = alpha
 		ScaledFZScore.__init__(self, scaler_algo, beta)
-
 
 	def get_name(self):
 		return 'SFS w/ Informative Prior Z-Score'
@@ -185,10 +189,11 @@ class ScaledFZScorePrior(ScaledFZScore):
 	def get_scores(self, cat_word_counts, not_cat_word_counts):
 		sfs = ScaledFScorePresets.get_scores(self, self.apply_prior(cat_word_counts),
 		                                     self.apply_prior(not_cat_word_counts))
-		#sfs = self.get_score_deltas(cat_word_counts, not_cat_word_counts)
-		#import pdb; pdb.set_trace()
-		#return (sfs - 0.5) / np.std(sfs - 0.5)
+		# sfs = self.get_score_deltas(cat_word_counts, not_cat_word_counts)
+		# import pdb; pdb.set_trace()
+		# return (sfs - 0.5) / np.std(sfs - 0.5)
 		return (sfs - sfs.mean()) / np.std(sfs)
+
 	def get_name(self):
 		return "SFS Z-Scores"
 
@@ -202,6 +207,7 @@ class ScaledFZScorePrior(ScaledFZScore):
 			self.apply_prior(not_cat_word_counts),
 			self.apply_prior(cat_word_counts))
 		return np.log(cat_scores) - np.log(not_cat_scores)
+
 
 class ScaledFScore(object):
 	@staticmethod

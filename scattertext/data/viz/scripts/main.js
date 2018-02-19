@@ -24,7 +24,9 @@ buildViz = function (d3) {
                      yAxisValues = null,
                      colorFunc = null,
                      showAxes = true,
-                     showExtra = false) {
+                     showExtra = false,
+                     doCensorPoints = true,
+                     centerLabelsOverPoints = false) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -809,7 +811,7 @@ buildViz = function (d3) {
                     wordSep = '';
                 }
                 var termToRegex = term;
-                ['[', ']', '(', ')', '{', '}', '^', '$', '.', '|', '?',
+                ['[', ']', '(', ')', '{', '}', '^', '$', '.', '|', '?', "'", '"',
                     '*', '+', '-', '=', '~', '`', '{', '#'].forEach(function (a) {
                     termToRegex = termToRegex.replace(a, '\\\\' + a)
                 });
@@ -1146,7 +1148,7 @@ buildViz = function (d3) {
             coords = Object();
 
             var pointStore = [];
-            var pointRects = []
+            var pointRects = [];
 
             function censorPoints(datum, getX, getY) {
                 var term = datum.term;
@@ -1187,10 +1189,9 @@ buildViz = function (d3) {
                     {'anchor': 'start', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
                 ];
-                /*if(!useOffset) {
-                 configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0,
-                 'alignment-baseline': 'middle'}];
-                 }*/
+                if(centerLabelsOverPoints) {
+                 configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
+                 }
                 var matchedElement = null;
                 for (var configI in configs) {
                     var config = configs[configI];
@@ -1319,17 +1320,19 @@ buildViz = function (d3) {
             data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
             console.log("Sorted Data:");
             console.log(data);
-            for (var i in data) {
-                var d = data[i];
-                censorPoints(
-                    d,
-                    function (d) {
-                        return d.x
-                    },
-                    function (d) {
-                        return d.y
-                    }
-                );
+            if(doCensorPoints) {
+                for (var i in data) {
+                    var d = data[i];
+                    censorPoints(
+                        d,
+                        function (d) {
+                            return d.x
+                        },
+                        function (d) {
+                            return d.y
+                        }
+                    );
+                }
             }
 
 

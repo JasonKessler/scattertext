@@ -1,15 +1,18 @@
 from __future__ import print_function
 
-from scattertext.termcompaction.TermCompaction import CompactTerms
+import re
+
+from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
+from scattertext.termcompaction.CompactTerms import CompactTerms
+from scattertext.termcompaction.PhraseSelector import PhraseSelector
 
 version = [0, 0, 2, 19]
 __version__ = '.'.join([str(e) for e in version])
 
-
 import warnings
 
 import numpy as np
-
+import pandas as pd
 import scattertext.viz
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
@@ -185,7 +188,9 @@ def produce_scattertext_explorer(corpus,
                                  term_scorer=None,
                                  show_axes=True,
                                  show_extra=False,
-                                 extra_category_name=None):
+                                 extra_category_name=None,
+                                 censor_points=True,
+                                 center_label_over_points=False):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -337,6 +342,11 @@ def produce_scattertext_explorer(corpus,
 	extra_category_name : str, default None
 		"Extra" by default. Only active if show_neutral is True and show_extra is True.  Name
 		of the extra column.
+	censor_points : bool, default True
+		Don't label over points.
+	center_label_over_points : bool, default False
+		Center a label over points, or try to find a position near a point that
+		doesn't overlap anything else.
 
 	Returns
 	-------
@@ -417,7 +427,7 @@ def produce_scattertext_explorer(corpus,
 	                                                    alternative_text_field=alternative_text_field,
 	                                                    neutral_category_name=neutral_category_name,
 	                                                    extra_category_name=extra_category_name,
-	                                                    neutral_categories =neutral_categories,
+	                                                    neutral_categories=neutral_categories,
 	                                                    extra_categories=extra_categories)
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
@@ -444,7 +454,9 @@ def produce_scattertext_explorer(corpus,
 	                                 y_axis_values=y_axis_values,
 	                                 color_func=color_func,
 	                                 show_axes=show_axes,
-	                                 show_extra=show_extra) \
+	                                 show_extra=show_extra,
+	                                 do_censor_points=censor_points,
+	                                 center_label_over_points=center_label_over_points) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,
@@ -675,8 +687,8 @@ def produce_frequency_explorer(corpus,
 		                           | set(np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
 		                           | {0})]
 		'''
-		max_score = np.floor(np.max(kwargs['scores']) * 100)/100
-		min_score = np.ceil(np.min(kwargs['scores']) * 100)/100
+		max_score = np.floor(np.max(kwargs['scores']) * 100) / 100
+		min_score = np.ceil(np.min(kwargs['scores']) * 100) / 100
 		central = 0.5
 		if min_score < 0 and max_score > 0:
 			central = 0
@@ -714,8 +726,11 @@ def produce_frequency_explorer(corpus,
 	                                    x_label=kwargs.get('x_label', 'Log Frequency'),
 	                                    y_label=kwargs.get('y_label', term_scorer.get_name()),
 	                                    **kwargs)
+
+
 # for legacy reasons
 produce_fightin_words_explorer = produce_frequency_explorer
+
 
 def produce_semiotic_square_explorer(semiotic_square,
                                      x_label,
@@ -801,6 +816,7 @@ def produce_semiotic_square_explorer(semiotic_square,
 	                                    x_label=x_label,
 	                                    y_label=y_label,
 	                                    semiotic_square=semiotic_square,
+	                                    neutral_categories=semiotic_square.neutral_categories_,
 	                                    show_neutral=True,
 	                                    neutral_category_name=neutral_category_name,
 	                                    num_terms_semiotic_square=num_terms_semiotic_square,
@@ -865,19 +881,29 @@ def produce_four_square_explorer(four_square,
 	-------
 		str, html of visualization
 	'''
+	if a_category_name is None:
+		a_category_name = four_square.get_labels()['a_label']
+		if a_category_name is None or a_category_name == '':
+			a_category_name = four_square.category_a_list_[0]
+	if b_category_name is None:
+		b_category_name = four_square.get_labels()['b_label']
+		if b_category_name is None or b_category_name == '':
+			b_category_name = four_square.category_b_list_[0]
+	if not_a_category_name is None:
+		not_a_category_name = four_square.get_labels()['not_a_label']
+		if not_a_category_name is None or not_a_category_name == '':
+			not_a_category_name = four_square.not_category_a_list_[0]
+	if not_b_category_name is None:
+		not_b_category_name = four_square.get_labels()['not_b_label']
+		if not_b_category_name is None or not_b_category_name == '':
+			not_b_category_name = four_square.not_category_b_list_[0]
+
 	if x_label is None:
 		x_label = a_category_name + '-' + b_category_name
 	if y_label is None:
 		y_label = not_a_category_name + '-' + not_b_category_name
 
-	if a_category_name is None:
-		a_category_name = four_square.get_labels()['a_label']
-	if b_category_name is None:
-		b_category_name = four_square.get_labels()['b_label']
-	if not_a_category_name is None:
-		not_a_category_name = four_square.get_labels()['not_a_label']
-	if not_b_category_name is None:
-		not_b_category_name = four_square.get_labels()['not_b_label']
+
 	if get_tooltip_content is None:
 		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
 		                      % (x_label, y_label)
@@ -891,7 +917,6 @@ def produce_four_square_explorer(four_square,
 		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
 	'''
 	axes = four_square.get_axes()
-
 	return produce_scattertext_explorer(
 		four_square.term_doc_matrix_,
 		category=list(set(four_square.category_a_list_) - set(four_square.category_b_list_))[0],
@@ -922,6 +947,74 @@ def produce_four_square_explorer(four_square,
 		color_func=color_func,
 		show_axes=False,
 		**kwargs)
+
+
+def produce_projection_explorer(corpus,
+                                category,
+                                word2vec_model=None,
+                                projection_model=None,
+                                term_acceptance_re=re.compile('[a-z]{3,}'),
+                                **kwargs):
+	'''
+	Parameters
+	----------
+	corpus : Corpus
+		It is highly recommended to use a stoplisted, unigram corpus-- `corpus.get_stoplisted_unigram_corpus()`
+	category : str
+	word2vec_model : Word2Vec
+		A gensim word2vec model.  By default word2vec.Word2Vec(size=100, window=5, min_count=10, workers=4)
+	projection_model : sklearn-style dimensionality reduction model.
+		By default: umap.UMAP(min_dist=0.1)
+	  You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init='pca', n_iter=2500, random_state=23)
+	term_acceptance_re : SRE_Pattern
+		Regular expression to identify valid terms
+	kwargs : dict
+		remaining produce_scattertext_explorer keywords
+
+	Returns
+	-------
+	str
+	HTML of visualization
+
+	'''
+	if word2vec_model is None:
+		try:
+			from gensim.models import word2vec
+		except:
+			raise Exception("Please install gensim before using the default model")
+		word2vec = word2vec.Word2Vec(size=100, window=5, min_count=10, workers=4)
+	if projection_model is None:
+		try:
+			import umap
+		except:
+			raise Exception("Please install umap (pip install umap-learn) to use the default projection_model.")
+		projection_model = umap.UMAP(min_dist=0.5, metric='cosine')
+	unicorpus = corpus
+	acceptable_terms = set([t for t in unicorpus.get_terms() if term_acceptance_re.match(t)])
+	unicorpus = unicorpus.remove_terms(set(unicorpus.get_terms()) - acceptable_terms)
+	model = Word2VecFromParsedCorpus(unicorpus, word2vec_model).train()
+	weights = [model[word] for word in model.wv.vocab]
+	weights = np.stack(weights)
+	axes = projection_model.fit_transform(weights)
+	word_axes = (pd.DataFrame({'term': [w for w in model.wv.vocab],
+	                           'x': axes.T[0],
+	                           'y': axes.T[1]})
+	             .set_index('term')
+	             .reindex(pd.Series(unicorpus.get_terms()))
+	             .dropna())
+	unicorpus = unicorpus.remove_terms(set(unicorpus.get_terms()) - set(word_axes.index))
+	word_axes = word_axes.reindex(unicorpus.get_terms()).dropna()
+	return produce_scattertext_explorer(
+		corpus=unicorpus,
+		category=category,
+		minimum_term_frequency=0,
+		sort_by_dist=False,
+		x_coords=scale(word_axes['x']),
+		y_coords=scale(word_axes['y']),
+		y_label='',
+		x_label='',
+		**kwargs
+	)
 
 
 def sparse_explorer(corpus,

@@ -1,4 +1,4 @@
-from scattertext.termcompaction.TermCompaction import CompactTerms
+from scattertext.termcompaction.CompactTerms import CompactTerms
 
 import scattertext as st
 from scattertext import LogOddsRatioInformativeDirichletPrior

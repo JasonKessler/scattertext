@@ -22,6 +22,9 @@ considered redundant and removed from the corpus. See `demo_phrase_machine.py` f
 Added `FourSquare`, a pattern that allows for the creation of a semiotic square with
 separate categories for each corner.  Please see `demo_four_square.py` for an early example. 
 
+Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
+the [umap-learn](https://github.com/lmcinnes/umap) package.  Please see     
+
 **Table of Contents**
 
 - [Installation](#installation)
@@ -35,6 +38,7 @@ separate categories for each corner.  Please see `demo_four_square.py` for an ea
     - [Emoji analysis](#emoji-analysis)
     - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
     - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
+    - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -753,8 +757,7 @@ corpus = st.CorpusFromPandas(
 	category_col='category',
 	text_col='text',
 	nlp=st.whitespace_nlp_with_sentences
-).build()
-corpus = corpus.get_unigram_corpus()
+).build().get_unigram_corpus()
 
 semiotic_square = st.SemioticSquare(
 	corpus,
@@ -775,6 +778,44 @@ html = st.produce_semiotic_square_explorer(semiotic_square,
 ```
 
 [![semiotic square](https://jasonkessler.github.io/semiotic_square_plot.png)](https://jasonkessler.github.io/demo_semiotic.html)
+
+### Creating T-SNE-style word embedding projection plots
+
+Scattertext makes it easy to create word-similarity plots using projections of word embeddings as the x and y-axes. 
+In the example below, we create a stop-listed Corpus with only unigram terms.  The `produce_projection_explorer` function
+by uses Gensim to create word embeddings and then projects them to two dimentions using Uniform Manifold Approximation and Projection (UMAP).
+
+UMAP is chosen over T-SNE because it can employ the cosine similarity between two word vectors instead of just the euclidean distance.    
+
+```python
+convention_df = st.SampleCorpora.ConventionData2012.get_data()
+convention_df['parse'] = convention_df['text'].apply(st.whitespace_nlp_with_sentences)
+
+corpus = (st.CorpusFromParsedDocuments(convention_df, category_col='party', parsed_col='parse')
+          .build().get_stoplisted_unigram_corpus())
+
+html = st.produce_projection_explorer(corpus, category='democrat', category_name='Democratic',
+  not_category_name='Republican', metadata=convention_df.speaker)
+```
+
+In order to use custom word embedding functions or projection functions, pass models into the `word2vec_model`
+and `projection_model` parameters.  In order to use T-SNE, for example, use 
+`projection_model=sklearn.manifold.TSNE()`. 
+
+```python
+import umap
+from gensim.models.word2vec import Word2Vec
+
+html = st.produce_projection_explorer(corpus,
+                                      word2vec_model=Word2Vec(size=100, window=5, min_count=10, workers=4),
+                                      projection_model=umap.UMAP(min_dist=0.5, metric='cosine'),
+                                      category='democrat',
+                                      category_name='Democratic',
+                                      not_category_name='Republican',
+                                      metadata=convention_df.speaker)                                                                            
+```
+
+[![t-sne style plot](https://jasonkessler.github.io/demo_tsne_style.png)](https://jasonkessler.github.io/demo_tsne_style.html)
 
 ## Examples 
 
