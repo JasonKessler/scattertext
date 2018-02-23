@@ -25,8 +25,6 @@ class PhraseMachinePhrases(FeatsFromSpacyDoc):
 		return ngram_counter
 
 
-
-
 class PhraseMachinePhrasesAndUnigrams(FeatsFromSpacyDoc):
 	'''
 	Returns unigrams and phrase machine phrases
@@ -42,12 +40,13 @@ class PhraseMachinePhrasesAndUnigrams(FeatsFromSpacyDoc):
 		-------
 		Counter noun chunk -> count
 		'''
-		#ngram_counter = phrasemachine.get_phrases(str(doc), tagger='spacy')['counts']
+		# ngram_counter = phrasemachine.get_phrases(str(doc), tagger='spacy')['counts']
 		ngram_counter = Counter()
 		for sent in doc.sents:
 			unigrams = self._get_unigram_feats(sent)
 			ngram_counter += Counter(unigrams) + _phrase_counts(sent)
 		return ngram_counter
+
 
 def _phrase_counts(sent):
 	pos_seq = [w.tag_ for w in sent]

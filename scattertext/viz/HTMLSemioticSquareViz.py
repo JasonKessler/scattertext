@@ -39,8 +39,6 @@ class HTMLSemioticSquareViz(object):
 		             for category, lexicon
 		             in lexicons.items()}
 		formatters.update(self.semiotic_square_.get_labels())
-		#formatters['category_a'] = self.semiotic_square_.category_a_
-		#formatters['category_b'] = self.semiotic_square_.category_b_
 		for k, v in formatters.items():
 			template = template.replace('{' + k + '}', v)
 		return template

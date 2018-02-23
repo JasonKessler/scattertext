@@ -8,7 +8,7 @@ from scattertext.termranking import AbsoluteFrequencyRanker
 class CompactTerms(object):
 	def __init__(self,
 	             term_ranker=AbsoluteFrequencyRanker,
-	             minimum_term_count=2,
+	             minimum_term_count=0,
 	             slack=1):
 		'''
 
@@ -17,7 +17,7 @@ class CompactTerms(object):
 		term_ranker : TermRanker
 			Default AbsoluteFrequencyRanker
 		minimum_term_count : int
-			Default 2
+			Default 0
 		slack : int
 			Default 1
 

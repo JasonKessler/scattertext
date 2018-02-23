@@ -16,7 +16,7 @@ html = st.produce_projection_explorer(corpus,
                                       metadata=convention_df.speaker,
                                       color_func='''(function(d) {return d.s > 0.5 ? d3.interpolateRdYlBu(0.6) : d3.interpolateRdYlBu(0.4) })''',
                                       center_label_over_points = True,
-                                      censor_points=False,
+                                      censor_points=True,
                                       width_in_pixels=1000)
 file_name = 'demo_tsne_style_for_publication.html'
 open(file_name, 'wb').write(html.encode('utf-8'))

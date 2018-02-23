@@ -90,7 +90,6 @@ class CorpusAdapterForGensim(object):
 		iter: [sentence1word1, ...], [sentence2word1, ...]
 		'''
 		assert isinstance(corpus, ParsedCorpus)
-		valid_terms = set(corpus.get_terms())
 		return itertools.chain(*[[[t.lower_ for t in sent if not t.is_punct]
 		                          for sent in doc.sents]
 		                         for doc in corpus.get_parsed_docs()])

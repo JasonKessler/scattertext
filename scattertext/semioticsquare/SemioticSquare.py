@@ -1,10 +1,15 @@
 import numpy as np
 
 from scattertext.termranking import AbsoluteFrequencyRanker
-from scattertext.termscoring.ScaledFScore import ScaledFScorePresetsNeg1To1
+from scattertext.termscoring.RankDifference import RankDifference
 
 
 class EmptyNeutralCategoriesError(Exception): pass
+
+
+'''
+!!! Need to properly segregate interfaces
+'''
 
 
 class SemioticSquare(object):
@@ -76,7 +81,7 @@ class SemioticSquare(object):
 	def _build_square(self, term_doc_matrix, term_ranker, labels, scorer):
 		self.term_doc_matrix_ = term_doc_matrix
 		self.term_ranker = term_ranker(term_doc_matrix)
-		self.scorer = ScaledFScorePresetsNeg1To1() \
+		self.scorer = RankDifference() \
 			if scorer is None else scorer
 		self.axes = self._build_axes(scorer)
 		self.lexicons = self._build_lexicons()
@@ -166,22 +171,29 @@ class SemioticSquare(object):
 		y_max = ax['y'].max()
 		x_min = ax['x'].min()
 		y_min = ax['y'].min()
-		baseline = self.scorer.get_default_score()
+		x_baseline = self._get_x_baseline()
+		y_baseline = self._get_y_baseline()
 
 		def dist(candidates, x_bound, y_bound):
 			return ((x_bound - candidates['x']) ** 2 + (y_bound - candidates['y']) ** 2).sort_values()
 
-		self.lexicons['a'] = dist(ax[(ax['x'] > baseline) & (ax['y'] > baseline)], x_max, y_max)
-		self.lexicons['not_a'] = dist(ax[(ax['x'] < baseline) & (ax['y'] < baseline)], x_min, y_min)
+		self.lexicons['a'] = dist(ax[(ax['x'] > x_baseline) & (ax['y'] > y_baseline)], x_max, y_max)
+		self.lexicons['not_a'] = dist(ax[(ax['x'] < x_baseline) & (ax['y'] < y_baseline)], x_min, y_min)
 
-		self.lexicons['b'] = dist(ax[(ax['x'] < baseline) & (ax['y'] > baseline)], x_min, y_max)
-		self.lexicons['not_b'] = dist(ax[(ax['x'] > baseline) & (ax['y'] < baseline)], x_max, y_min)
+		self.lexicons['b'] = dist(ax[(ax['x'] < x_baseline) & (ax['y'] > y_baseline)], x_min, y_max)
+		self.lexicons['not_b'] = dist(ax[(ax['x'] > x_baseline) & (ax['y'] < y_baseline)], x_max, y_min)
 
-		self.lexicons['a_and_b'] = dist(ax[(ax['y'] > baseline)], baseline, y_max)
-		self.lexicons['not_a_and_not_b'] = dist(ax[(ax['y'] < baseline)], baseline, y_min)
+		self.lexicons['a_and_b'] = dist(ax[(ax['y'] > y_baseline)], x_baseline, y_max)
+		self.lexicons['not_a_and_not_b'] = dist(ax[(ax['y'] < y_baseline)], x_baseline, y_min)
 
-		self.lexicons['a_and_not_b'] = dist(ax[(ax['x'] > baseline)], x_max, baseline)
+		self.lexicons['a_and_not_b'] = dist(ax[(ax['x'] > x_baseline)], x_max, y_baseline)
 
-		self.lexicons['b_and_not_a'] = dist(ax[(ax['x'] < baseline)], x_min, baseline)
+		self.lexicons['b_and_not_a'] = dist(ax[(ax['x'] < x_baseline)], x_min, y_baseline)
 
 		return self.lexicons
+
+	def _get_y_baseline(self):
+		return self.scorer.get_default_score()
+
+	def _get_x_baseline(self):
+		return self.scorer.get_default_score()

@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.19
+# Scattertext 0.0.2.20
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -23,7 +23,9 @@ Added `FourSquare`, a pattern that allows for the creation of a semiotic square 
 separate categories for each corner.  Please see `demo_four_square.py` for an early example. 
 
 Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
-the [umap-learn](https://github.com/lmcinnes/umap) package.  Please see     
+the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
+
+  
 
 **Table of Contents**
 
@@ -778,6 +780,8 @@ html = st.produce_semiotic_square_explorer(semiotic_square,
 ```
 
 [![semiotic square](https://jasonkessler.github.io/semiotic_square_plot.png)](https://jasonkessler.github.io/demo_semiotic.html)
+
+There are a number of other types of semiotic square construction functions.  
 
 ### Creating T-SNE-style word embedding projection plots
 

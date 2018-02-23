@@ -2,15 +2,10 @@ from __future__ import print_function
 
 import re
 
-from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
-from scattertext.termcompaction.CompactTerms import CompactTerms
-from scattertext.termcompaction.PhraseSelector import PhraseSelector
-
-version = [0, 0, 2, 19]
+version = [0, 0, 2, 20]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
-
 import numpy as np
 import pandas as pd
 import scattertext.viz
@@ -46,13 +41,13 @@ from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
-from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases
+from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases, PhraseMachinePhrasesAndUnigrams
 from scattertext.indexstore import IndexStoreFromDict
 from scattertext.indexstore import IndexStoreFromList
 from scattertext.indexstore.IndexStore import IndexStore
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
 	Word2VecFromParsedCorpusBigrams
-from scattertext.semioticsquare import SemioticSquare
+from scattertext.semioticsquare import SemioticSquare, FourSquareAxis
 from scattertext.semioticsquare.FourSquare import FourSquare
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.RankDifference import RankDifference
@@ -65,6 +60,10 @@ from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSi
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
 from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
+from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
+from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
+from scattertext.termcompaction.CompactTerms import CompactTerms
+from scattertext.termcompaction.PhraseSelector import PhraseSelector
 
 
 def produce_scattertext_html(term_doc_matrix,
@@ -903,7 +902,6 @@ def produce_four_square_explorer(four_square,
 	if y_label is None:
 		y_label = not_a_category_name + '-' + not_b_category_name
 
-
 	if get_tooltip_content is None:
 		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
 		                      % (x_label, y_label)
@@ -917,6 +915,9 @@ def produce_four_square_explorer(four_square,
 		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
 	'''
 	axes = four_square.get_axes()
+	if 'scores' not in kwargs:
+		kwargs['scores'] = -axes['x']
+
 	return produce_scattertext_explorer(
 		four_square.term_doc_matrix_,
 		category=list(set(four_square.category_a_list_) - set(four_square.category_b_list_))[0],
@@ -925,7 +926,6 @@ def produce_four_square_explorer(four_square,
 		not_categories=four_square.category_b_list_,
 		neutral_categories=four_square.not_category_a_list_,
 		extra_categories=four_square.not_category_b_list_,
-		scores=-axes['x'],
 		sort_by_dist=False,
 		x_coords=axis_scaler(-axes['x']),
 		y_coords=axis_scaler(axes['y']),
@@ -949,10 +949,109 @@ def produce_four_square_explorer(four_square,
 		**kwargs)
 
 
+def produce_four_square_axes_explorer(four_square_axes,
+                                      x_label=None,
+                                      y_label=None,
+                                      num_terms_semiotic_square=None,
+                                      get_tooltip_content=None,
+                                      x_axis_values=None,
+                                      y_axis_values=None,
+                                      color_func=None,
+                                      axis_scaler=scale_neg_1_to_1_with_zero_mean,
+                                      **kwargs):
+	'''
+	Produces a semiotic square visualization.
+
+	Parameters
+	----------
+	four_square : FourSquareAxes
+		The basis of the visualization
+	x_label : str
+		The x-axis label in the scatter plot.  Relationship between `category_a` and `category_b`.
+	y_label
+		The y-axis label in the scatter plot.  Relationship neutral term and complex term.
+	not_b_category_name: str or None
+		Name of neutral set of data.  Defaults to "Extra".
+	num_terms_semiotic_square : int or None
+		10 by default. Number of terms to show in semiotic square.
+	get_tooltip_content : str or None
+		Defaults to tooltip showing z-scores on both axes.
+	x_axis_values : list, default None
+		Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	y_axis_values : list, default None
+		Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default
+	color_func : str, default None
+		Javascript function to control color of a point.  Function takes a parameter
+		which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
+		returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.
+	axis_scaler : lambda, default scale_neg_1_to_1_with_zero_mean_abs_max
+		Scale values to fit axis
+	Remaining arguments are from `produce_scattertext_explorer`.
+
+	Returns
+	-------
+		str, html of visualization
+	'''
+
+	if x_label is None:
+		x_label = four_square_axes.left_category_name_ + '-' + four_square_axes.right_category_name_
+	if y_label is None:
+		y_label = four_square_axes.top_category_name_ + '-' + four_square_axes.bottom_category_name_
+
+	if get_tooltip_content is None:
+		get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
+		                      % (x_label, y_label)
+	if color_func is None:
+		# this desaturates
+		# color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
+		color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+	axes = four_square_axes.get_axes()
+
+	if 'scores' not in kwargs:
+		kwargs['scores'] = -axes['x']
+
+	'''
+	my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
+	if foveate:
+		my_scaler = scale_neg_1_to_1_with_zero_mean_rank_abs_max
+	'''
+	return produce_scattertext_explorer(
+		four_square_axes.term_doc_matrix_,
+		category=four_square_axes.left_categories_[0],
+		category_name=four_square_axes.left_category_name_,
+		not_categories=four_square_axes.right_categories_,
+		not_category_name=four_square_axes.right_category_name_,
+		neutral_categories=four_square_axes.top_categories_,
+		neutral_category_name=four_square_axes.top_category_name_,
+		extra_categories=four_square_axes.bottom_categories_,
+		extra_category_name=four_square_axes.bottom_category_name_,
+		sort_by_dist=False,
+		x_coords=axis_scaler(-axes['x']),
+		y_coords=axis_scaler(axes['y']),
+		original_x=-axes['x'],
+		original_y=axes['y'],
+		show_characteristic=False,
+		show_top_terms=False,
+		x_label=x_label,
+		y_label=y_label,
+		semiotic_square=four_square_axes,
+		show_neutral=True,
+		show_extra=True,
+		num_terms_semiotic_square=num_terms_semiotic_square,
+		get_tooltip_content=get_tooltip_content,
+		x_axis_values=x_axis_values,
+		y_axis_values=y_axis_values,
+		color_func=color_func,
+		show_axes=False,
+		**kwargs
+	)
+
+
 def produce_projection_explorer(corpus,
                                 category,
                                 word2vec_model=None,
                                 projection_model=None,
+                                embeddings=None,
                                 term_acceptance_re=re.compile('[a-z]{3,}'),
                                 **kwargs):
 	'''
@@ -962,10 +1061,12 @@ def produce_projection_explorer(corpus,
 		It is highly recommended to use a stoplisted, unigram corpus-- `corpus.get_stoplisted_unigram_corpus()`
 	category : str
 	word2vec_model : Word2Vec
-		A gensim word2vec model.  By default word2vec.Word2Vec(size=100, window=5, min_count=10, workers=4)
+		A gensim word2vec model.  A default model will be used instead.
 	projection_model : sklearn-style dimensionality reduction model.
-		By default: umap.UMAP(min_dist=0.1)
+		By default: umap.UMAP(min_dist=0.5, metric='cosine')
 	  You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init='pca', n_iter=2500, random_state=23)
+	embeddings : array[len(corpus.get_terms()), X]
+		Word embeddings.  If None (default), wil train them using word2vec Model
 	term_acceptance_re : SRE_Pattern
 		Regular expression to identify valid terms
 	kwargs : dict
@@ -982,30 +1083,32 @@ def produce_projection_explorer(corpus,
 			from gensim.models import word2vec
 		except:
 			raise Exception("Please install gensim before using the default model")
-		word2vec = word2vec.Word2Vec(size=100, window=5, min_count=10, workers=4)
+	# word2vec_model = word2vec.Word2Vec(size=100, window=5, min_count=10, workers=4)
 	if projection_model is None:
 		try:
 			import umap
 		except:
 			raise Exception("Please install umap (pip install umap-learn) to use the default projection_model.")
 		projection_model = umap.UMAP(min_dist=0.5, metric='cosine')
-	unicorpus = corpus
-	acceptable_terms = set([t for t in unicorpus.get_terms() if term_acceptance_re.match(t)])
-	unicorpus = unicorpus.remove_terms(set(unicorpus.get_terms()) - acceptable_terms)
-	model = Word2VecFromParsedCorpus(unicorpus, word2vec_model).train()
-	weights = [model[word] for word in model.wv.vocab]
-	weights = np.stack(weights)
+	if embeddings is None:
+		acceptable_terms = set([t for t in corpus.get_terms() if term_acceptance_re.match(t)])
+		corpus = corpus.remove_terms(set(corpus.get_terms()) - acceptable_terms)
+		model = Word2VecFromParsedCorpus(corpus, word2vec_model).train()
+		weights = [model[word] for word in model.wv.vocab]
+		weights = np.stack(weights)
+	else:
+		weights = embeddings
 	axes = projection_model.fit_transform(weights)
 	word_axes = (pd.DataFrame({'term': [w for w in model.wv.vocab],
 	                           'x': axes.T[0],
 	                           'y': axes.T[1]})
 	             .set_index('term')
-	             .reindex(pd.Series(unicorpus.get_terms()))
+	             .reindex(pd.Series(corpus.get_terms()))
 	             .dropna())
-	unicorpus = unicorpus.remove_terms(set(unicorpus.get_terms()) - set(word_axes.index))
-	word_axes = word_axes.reindex(unicorpus.get_terms()).dropna()
-	return produce_scattertext_explorer(
-		corpus=unicorpus,
+	corpus = corpus.remove_terms(set(corpus.get_terms()) - set(word_axes.index))
+	word_axes = word_axes.reindex(corpus.get_terms()).dropna()
+	html = produce_scattertext_explorer(
+		corpus=corpus,
 		category=category,
 		minimum_term_frequency=0,
 		sort_by_dist=False,
@@ -1015,6 +1118,7 @@ def produce_projection_explorer(corpus,
 		x_label='',
 		**kwargs
 	)
+	return html
 
 
 def sparse_explorer(corpus,

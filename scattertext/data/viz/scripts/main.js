@@ -1195,8 +1195,7 @@ buildViz = function (d3) {
                 var matchedElement = null;
                 for (var configI in configs) {
                     var config = configs[configI];
-                    var curLabel = makeWordInteractive(
-                        svg.append("text")
+                    var curLabel = svg.append("text")
                         //.attr("x", x(data[i].x) + config['xoff'])
                         //.attr("y", y(data[i].y) + config['yoff'])
                             .attr("x", x(myX) + config['xoff'])
@@ -1207,11 +1206,13 @@ buildViz = function (d3) {
                             .attr('font-size', '10px')
                             .attr("text-anchor", config['anchor'])
                             .attr("alignment-baseline", config['alignment'])
-                            .text(term),
-                        term
-                    );
+                            .text(term);
                     var bbox = curLabel.node().getBBox();
-                    var borderToRemove = .5;
+                    var borderToRemove = .25;
+                    if (doCensorPoints) {
+                        var borderToRemove = .5;
+                    }
+
                     var x1 = bbox.x + borderToRemove,
                         y1 = bbox.y + borderToRemove,
                         x2 = bbox.x + bbox.width - borderToRemove,
@@ -1225,6 +1226,7 @@ buildViz = function (d3) {
                     if (matchedElement) {
                         curLabel.remove();
                     } else {
+                        curLabel = makeWordInteractive(curLabel, term);
                         break;
                     }
                 }
