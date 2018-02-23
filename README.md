@@ -24,7 +24,6 @@ separate categories for each corner.  Please see `demo_four_square.py` for an ea
 
 Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
 the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
-
   
 
 **Table of Contents**
@@ -712,6 +711,10 @@ Microaveraged F1 score 0.662108337759.  Not bad over a ~0.05 baseline.
 
 Please see [Signo](http://www.signosemio.com/greimas/semiotic-square.asp) for an 
 introduction to semiotic squares.
+
+Some variants of the semiotic square-creator are can be seen in this notebook, which studies
+words and phrases in headlines that had low or high Facebook engagement and were published by
+either BuzzFeed or the New York Times: [http://nbviewer.jupyter.org/github/JasonKessler/PuPPyTalk/blob/master/notebooks/Explore-Headlines.ipynb]
 
 The idea behind the semiotic square is to express the relationship between two opposing 
 concepts and concepts things within a larger domain of a discourse. 
