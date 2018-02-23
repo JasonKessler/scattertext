@@ -17,7 +17,7 @@ setup(name='scattertext',
 	      'jieba',
 	      #'tinysegmenter',
 	      'empath',
-	      'umap',
+	      #'umap',
 	      #'gensim'
 	      # 'matplotlib',
 	      # 'seaborn',
