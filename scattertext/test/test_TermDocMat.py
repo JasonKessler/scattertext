@@ -273,7 +273,7 @@ class TestTermDocMat(TestCase):
 		tdm.set_background_corpus(tdm)
 
 	def test_compact(self):
-		x = get_hamlet_term_doc_matrix().compact(CompactTerms())
+		x = get_hamlet_term_doc_matrix().compact(CompactTerms(minimum_term_count=3))
 		self.assertEqual(type(x), TermDocMatrix)
 
 	def test_get_background_corpus(self):
