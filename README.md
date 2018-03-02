@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.20
+# Scattertext 0.0.2.20.1
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -57,13 +57,16 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 ## Installation 
 Install Python 3.4 or higher and run:
 
-`$ pip install scattertext && python -m spacy.en.download`
+`$ pip install scattertext`
 
 If you cannot (or don't want to) install spaCy, substitute `nlp = spacy.en.English()` lines with
 `nlp = scattertext.WhitespaceNLP.whitespace_nlp`.  Note, this is not compatible 
 with `word_similarity_explorer`, and the tokenization and sentence boundary detection 
 capabilities will be low-performance regular expressions. See `demo_without_spacy.py`
-for an example.
+for an example. 
+
+It is recommended you install `jieba`, `spacy`, `empath`, `gensim` and `umap` in order to 
+take full advantage of Scattertext. 
 
 Python 2.7 support is experimental.  Many things will break.
 

@@ -36,3 +36,4 @@ class ClassPercentageCompactor(object):
 		threshold = np.max(self.term_count / tdf_sum)
 		terms_to_remove = tdf_portions[~(tdf_portions > threshold).any(axis=1)].index
 		return term_doc_matrix.remove_terms(terms_to_remove)
+
