@@ -1,12 +1,12 @@
-from scipy.sparse import csr_matrix
-import numpy as np
+import pandas as pd
+
 from scattertext.termranking.TermRanker import TermRanker
 
 
 class OncePerDocFrequencyRanker(TermRanker):
 	def get_ranks(self):
-		row = self._get_row_category_ids()
-		X = self._get_X()
-		normX = csr_matrix(X.astype(np.bool).astype(np.int32))
-		categoryX = csr_matrix((normX.data, (row, normX.indices)))
-		return self._get_freq_df(categoryX)
+		mat = self._term_doc_matrix.get_term_count_mat()
+		return pd.DataFrame(mat,
+		                    index=pd.Series(self._term_doc_matrix.get_terms(), name='term'),
+		                    columns=[c + ' freq' for c
+		                             in self._term_doc_matrix.get_categories()])

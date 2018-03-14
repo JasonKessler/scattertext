@@ -30,7 +30,9 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'type', 'date', 'time', 'percent', 'money', 'quantity',
                      'ordinal', 'cardinal']
 
-MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) |  {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn', 'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn'}
+MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn',
+                                                   'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn'}
+
 
 class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
 	pass
@@ -95,7 +97,6 @@ class TermDocMatrix(object):
 		'''
 		return compactor.compact(self)
 
-
 	def get_num_terms(self):
 		'''
 		Returns
@@ -137,27 +138,64 @@ class TermDocMatrix(object):
 			d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
 		return pd.DataFrame(d).set_index('term')
 
-	def get_term_freq_df(self):
+	def get_term_freq_df(self, label_append=' freq'):
 		'''
+		Parameters
+		-------
+		label_append : str
 
 		Returns
 		-------
 		pd.DataFrame indexed on terms, with columns giving frequencies for each
 		'''
+
+		'''
 		row = self._row_category_ids()
 		newX = csr_matrix((self._X.data, (row, self._X.indices)))
 		return self._term_freq_df_from_matrix(newX)
+		'''
+		mat = self.get_term_freq_mat()
+		return pd.DataFrame(mat,
+		                    index=pd.Series(self.get_terms(), name='term'),
+		                    columns=[c + label_append for c in self.get_categories()])
 
-	def get_term_doc_count_df(self):
+	def get_term_freq_mat(self):
+		'''
+		Returns
+		-------
+		np.array with columns as categories and rows as terms
+		'''
+		freq_mat = np.zeros(shape=(len(self.get_terms()), len(self.get_categories())), dtype=int)
+		for cat_i in range(len(self._category_idx_store._i2val)):
+			freq_mat[:, cat_i] = self._X[self._y == cat_i, :].sum(axis=0)
+		return freq_mat
+
+	def get_term_count_mat(self):
+		'''
+		Returns
+		-------
+		np.array with columns as categories and rows as terms
+		'''
+		freq_mat = np.zeros(shape=(len(self.get_terms()), len(self.get_categories())), dtype=int)
+		for cat_i in range(len(self._category_idx_store._i2val)):
+			X = (self._X[self._y == cat_i, :] > 0).astype(int)
+			freq_mat[:, cat_i] = X.sum(axis=0)
+		return freq_mat
+
+	def get_term_doc_count_df(self, label_append = ' freq'):
 		'''
 
 		Returns
 		-------
 		pd.DataFrame indexed on terms, with columns the number of documents each term appeared in
 		'''
-		row = self._row_category_ids()
-		newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
-		return self._term_freq_df_from_matrix(newX)
+		#row = self._row_category_ids()
+		#newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
+		#return self._term_freq_df_from_matrix(newX)
+		mat = self.get_term_count_mat()
+		return pd.DataFrame(mat,
+		                    index=self.get_terms(),
+		                    columns=[c + label_append for c in self.get_categories()])
 
 	def _term_freq_df_from_matrix(self, catX):
 		return self._get_freq_df_using_idx_store(catX, self._term_idx_store)

@@ -28,5 +28,3 @@ priors = (st.PriorFactory(corpus,
 	).encode('utf-8'))
 )
 print(fn)
-
-CompactTerms

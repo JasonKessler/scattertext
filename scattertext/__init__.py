@@ -2,7 +2,9 @@ from __future__ import print_function
 
 import re
 
-version = [0, 0, 2, 20]
+from scattertext.diachronic import GanttChart
+
+version = [0, 0, 2, 22]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -38,6 +40,7 @@ from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
+from scattertext.features.UnigramsFromSpacyDoc import UnigramsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
@@ -64,7 +67,6 @@ from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
-
 
 def produce_scattertext_html(term_doc_matrix,
                              category,

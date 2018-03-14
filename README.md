@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.20.1
+# Scattertext 0.0.2.22
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -25,6 +25,7 @@ separate categories for each corner.  Please see `demo_four_square.py` for an ea
 Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
 the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
   
+Fixed to `ScaledFScorePresets(one_to_neg_one=True)`, added `UnigramsFromSpacyDoc`.
 
 **Table of Contents**
 

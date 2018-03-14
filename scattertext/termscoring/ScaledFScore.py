@@ -82,7 +82,8 @@ class ScaledFScorePresets(object):
 		not_cat_scores = self.get_scores_for_category(not_cat_word_counts,
 		                                              cat_word_counts)
 		if self.one_to_neg_one_:
-			return ScoreBalancer.balance_scores_and_dont_scale(cat_scores, not_cat_scores)
+			#return ScoreBalancer.balance_scores_and_dont_scale(cat_scores, not_cat_scores)
+			return 2 * ScoreBalancer.balance_scores(cat_scores, not_cat_scores) - 1
 		else:
 			return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
 

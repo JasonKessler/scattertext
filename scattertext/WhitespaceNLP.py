@@ -2,10 +2,11 @@ import re
 
 from scattertext.emojis.ProcessedEmojiStructure import VALID_EMOJIS
 
+WHITESPACE_SPLITTER = re.compile(r"(\W)")
+
 '''
 This is a fast but awful partial implementation of Spacy.  It's useful for testing.
 '''
-
 
 class Tok:
 	def __init__(self, pos, lem, low, ent_type, tag, is_punct=False):
@@ -24,7 +25,7 @@ class Tok:
 
 
 class Doc:
-	def __init__(self, sents, raw=None, noun_chunks = []):
+	def __init__(self, sents, raw=None, noun_chunks=[]):
 		self.sents = sents
 		if raw is None:
 			self.string = ' '.join(
@@ -52,16 +53,13 @@ def whitespace_nlp(doc, entity_type=None, tag_type=None):
 	return Doc([toks])
 
 
-
-
 def _regex_parse_sentence(doc, entity_type, tag_type):
 	toks = _toks_from_sentence(doc, entity_type, tag_type)
 	return toks
 
-
 def _toks_from_sentence(doc, entity_type, tag_type):
 	toks = []
-	for tok in re.split(r"(\W)", doc):
+	for tok in WHITESPACE_SPLITTER.split(doc):
 		if len(tok) > 0:
 			toks.append(Tok(_get_pos_tag(tok),
 			                tok[:2].lower(),
@@ -70,12 +68,11 @@ def _toks_from_sentence(doc, entity_type, tag_type):
 			                tag='' if tag_type is None else tag_type.get(tok, '')))
 	return toks
 
-
-def tweet_tokenzier_factory(tweet_tokenizer):
+def nltk_tokenzier_factory(nltk_tokenizer):
 	'''
 	Parameters
 	----------
-	tweet_tokenizer : nltk.tokenize.TweetTokenizer instance
+	nltk_tokenizer : nltk.tokenize.* instance (e.g., nltk.TreebankWordTokenizer())
 
 	Returns
 	-------
@@ -83,29 +80,46 @@ def tweet_tokenzier_factory(tweet_tokenizer):
 
 	Notes
 	-------
-	Requires NLTK to be installed :(
+	Requires NLTK to be installed
 	'''
+
 	def tokenize(text):
 		toks = []
-		for tok in tweet_tokenizer.tokenize(text):
+		for tok in nltk_tokenizer.tokenize(text):
 			if len(tok) > 0:
 				toks.append(Tok(_get_pos_tag(tok),
 				                tok.lower(),
 				                tok.lower(),
 				                ent_type='',
-				                tag='' ))
+				                tag=''))
 		return Doc([toks], text)
 
 	return tokenize
 
+def tweet_tokenzier_factory(tweet_tokenizer):
+	'''
+	Parameters
+	----------
+	tweet_tokenizer
 
+	Doc of tweets
+
+	Notes
+	-------
+	Requires NLTK to be installed :(
+
+	'''
+	return nltk_tokenzier_factory(tweet_tokenzier)
+
+
+PUNCT_MATCHER = re.compile('^\W+$')
 def _get_pos_tag(tok):
 	pos = 'WORD'
 	if tok.strip() == '':
 		pos = 'SPACE'
 	elif ord(tok[0]) in VALID_EMOJIS:
 		pos = 'EMJOI'
-	elif re.match('^\W+$', tok):
+	elif PUNCT_MATCHER.match(tok):
 		pos = 'PUNCT'
 	return pos
 
@@ -118,7 +132,7 @@ def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
 		raw_sents = [doc]
 	for sent in raw_sents:
 		toks = []
-		for tok in re.split(r"(\W)", sent):
+		for tok in WHITESPACE_SPLITTER.split(sent):
 			if len(tok) > 0:
 				toks.append(Tok(_get_pos_tag(tok),
 				                tok[:2].lower(),

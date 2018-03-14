@@ -288,7 +288,6 @@ class ScatterChart:
 		if extra_categories != []:
 			df['extra cat freq'] = df[[x + ' freq' for x in extra_categories]].sum(axis=1).fillna(0)
 
-
 		json_df = df[['x', 'y', 'ox', 'oy', 'term']]
 
 		if self.scatterchartdata.term_significance:
