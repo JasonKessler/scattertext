@@ -11,7 +11,7 @@ setup(name='scattertext',
       install_requires=[
 	      'numpy',
 	      'scipy',
-	      'sklearn',
+	      'scikit-learn',
 	      'pandas',
 	      #'spacy',
 	      #'jieba',
