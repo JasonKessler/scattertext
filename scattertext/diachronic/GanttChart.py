@@ -7,8 +7,10 @@ from scattertext.termscoring.RankDifference import RankDifference
 
 class GanttChart(object):
 	'''
-	Note: I know I've seen Gantt Charts showing how word usage differs over time, but I honestly
-	can't remember where.  If anyone knows, please shoot me a message.
+	Note: the Gantt charts listed here are inspired by
+	Dustin Arendt and Svitlana Volkova. ESTEEM: A Novel Framework for Qualitatively Evaluating and
+  Visualizing Spatiotemporal Embeddings in Social Media. ACL System Demonstrations. 2017.
+	http://www.aclweb.org/anthology/P/P17/P17-4005.pdf
 	'''
 	def __init__(self,
 	             term_doc_matrix,
@@ -64,6 +66,8 @@ class GanttChart(object):
 		tdf = self.term_ranker(self.corpus).get_ranks()
 		for cat in sorted(self.corpus.get_categories()):
 			if cat >= self.starting_time_step:
+				negative_categories = sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]
+				print(negative_categories, cat)
 				scores = self.term_scorer.get_scores(
 					tdf[sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]]
 						.sum(axis=1),

@@ -76,7 +76,7 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 			The data frame that contains columns for the category of interest
 			and the document text.
 		text_col : str
-			The name of the column which contains the document text.
+			The name of the column which contains each document's raw text.
 		category_col : str
 			The name of the column which contains the category of interest.
 		clean_function : function, optional

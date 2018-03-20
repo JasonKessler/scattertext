@@ -1,6 +1,6 @@
 import numpy as np
 
-from scattertext.Corpus import Corpus
+from scattertext import CorpusDF
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas, build_sparse_matrices
 
 
@@ -38,10 +38,30 @@ class CorpusFromPandas(TermDocMatrixFromPandas):
 	                                           term_idx_store,
 	                                           metadata_idx_store,
 	                                           y):
+		'''
+		Parameters
+		----------
+		X_factory
+		mX_factory
+		category_idx_store
+		df
+		parse_pipeline
+		term_idx_store
+		metadata_idx_store
+		y
+
+		Returns
+		-------
+		CorpusDF
+		'''
 		df.apply(parse_pipeline.parse, axis=1)
 		y = np.array(y)
 		X, mX = build_sparse_matrices(y, X_factory, mX_factory)
-		raw_texts = df[self._text_col]
-		return Corpus(X, mX, y, term_idx_store, category_idx_store,
-		              metadata_idx_store, raw_texts)
-
+		return CorpusDF(df,
+		                X,
+		                mX,
+		                y,
+		                self._text_col,
+		                term_idx_store,
+		                category_idx_store,
+		                metadata_idx_store)

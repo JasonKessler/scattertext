@@ -3,9 +3,8 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from scattertext import chinese_nlp
+from scattertext import chinese_nlp, CorpusDF
 from scattertext import whitespace_nlp
-from scattertext.Corpus import Corpus
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 
@@ -27,12 +26,13 @@ def get_docs_categories():
 
 class TestCorpusFromPandas(TestCase):
 	def test_term_doc(self):
-		self.assertIsInstance(self.corpus, Corpus)
+		self.assertIsInstance(self.corpus, CorpusDF)
 		self.assertEqual(set(self.corpus.get_categories()),
 		                 set(['hamlet', 'jay-z/r. kelly', '???']))
 		self.assertEqual(self.corpus.get_num_docs(), 10)
 		term_doc_df = self.corpus.get_term_freq_df()
 		self.assertEqual(term_doc_df.ix['of'].sum(), 3)
+		self.corpus.get_df()
 
 	def test_chinese_error(self):
 		with self.assertRaises(Exception):
@@ -47,22 +47,25 @@ class TestCorpusFromPandas(TestCase):
 	def test_search(self):
 		expected = pd.DataFrame({'text': ["What art thou that usurp'st this time of night,",
 		                                  "Together with that fair and warlike form"],
-		                         'category': ['hamlet', 'hamlet']})
-		self.assertIsInstance(self.corpus, Corpus)
+		                         'category': ['hamlet', 'hamlet'],
+		                         'index': [0, 1]})
+		self.assertIsInstance(self.corpus, CorpusDF)
 		returned = self.corpus.search('that')
-		np.testing.assert_array_equal(expected, returned)
+		pd.testing.assert_frame_equal(expected, returned[expected.columns])
 
 	def test_search_bigram(self):
 		expected = pd.DataFrame({'text': [u'Well, speak up man what is it?',
 		                                  u'Speak up, speak up, this is a repeat bigram.'],
-		                         'category': ['jay-z/r. kelly', '???']})
-		self.assertIsInstance(self.corpus, Corpus)
-		returned = self.corpus.search('speak up')
-		np.testing.assert_array_equal(expected, returned)
+		                         'category': ['jay-z/r. kelly', '???'],
+		                         'index': [7, 9]}).reset_index(drop=True)
+		self.assertIsInstance(self.corpus, CorpusDF)
+		returned = self.corpus.search('speak up').reset_index(drop=True)
+		pd.testing.assert_frame_equal(expected,
+		                              returned[expected.columns])
 
 	def test_search_index(self):
 		expected = np.array([7, 9])
-		self.assertIsInstance(self.corpus, Corpus)
+		self.assertIsInstance(self.corpus, CorpusDF)
 		returned = self.corpus.search_index('speak up')
 		np.testing.assert_array_equal(expected, returned)
 

@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.22
+# Scattertext 0.0.2.23
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -26,6 +26,12 @@ Finally, added a way to easily perform T-SNE-style visualizations on a categoriz
 the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
   
 Fixed to `ScaledFScorePresets(one_to_neg_one=True)`, added `UnigramsFromSpacyDoc`.
+
+Now, when using `CorpusFromPandas`, a `CorpusDF` object is returned, instead of a `Corpus` object. This new type of object 
+keeps a reference to the source data frame, and returns it via the `CorpusDF.get_df()` method.
+
+The factory `CorpusFromFeatureDict` was added. It allows you to directly specify term counts and
+metadata item counts within the dataframe.  Please see `test_corpusFromFeatureDict.py` for an example.
 
 **Table of Contents**
 

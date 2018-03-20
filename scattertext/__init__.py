@@ -2,9 +2,11 @@ from __future__ import print_function
 
 import re
 
+from scattertext.CorpusDF import CorpusDF
+from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.diachronic import GanttChart
 
-version = [0, 0, 2, 22]
+version = [0, 0, 2, 23]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -67,6 +69,7 @@ from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,

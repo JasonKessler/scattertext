@@ -246,8 +246,8 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(swiftless_constructed._X.shape, swiftless._X.shape)
 		self.assertEqual(set(swiftless_constructed.get_terms()),
 		                 set(swiftless.get_terms()))
-		np.testing.assert_equal(swiftless_constructed.get_texts(),
-		                        swiftless.get_texts())
+		pd.testing.assert_series_equal(swiftless_constructed.get_texts(),
+		                               swiftless.get_texts())
 
 	def test_get_category_names_by_row(self):
 		hamlet = get_hamlet_term_doc_matrix()
