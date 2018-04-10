@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.23
+# Scattertext 0.0.2.23.1
 ### Updates
 Semiotic Squares now look better, and have customizable labels. 
 
@@ -307,7 +307,7 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 ...                                              feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
 ...                                              parsed_col='text').build()
 >>> html = st.produce_scattertext_explorer(empath_corpus,
-...                                        corpus_for_empath='democrat',
+...                                        category='democrat',
 ...                                        category_name='Democratic',
 ...                                        not_category_name='Republican',
 ...                                        width_in_pixels=1000,
@@ -317,6 +317,14 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 >>> open("Convention-Visualization-Empath.html", 'wb').write(html.encode('utf-8'))
 ``` 
 
+html = st.produce_scattertext_explorer(empath_corpus,
+                                        category='democrat',
+                                        category_name='Democratic',
+                                        not_category_name='Republican',
+                                        width_in_pixels=1000,
+                                        metadata=convention_df['speaker'],
+                                        use_non_text_features=True,
+                                        use_full_doc=True)
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
 ### Understanding Scaled F-Score

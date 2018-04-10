@@ -5,8 +5,10 @@ from scattertext.emojis.ProcessedEmojiStructure import VALID_EMOJIS
 WHITESPACE_SPLITTER = re.compile(r"(\W)")
 
 '''
-This is a fast but awful partial implementation of Spacy.  It's useful for testing.
+This is a fast but awful partial implementation of Spacy.   It's useful 
+for testing and when you don't need POS tagging. 
 '''
+
 
 class Tok:
 	def __init__(self, pos, lem, low, ent_type, tag, is_punct=False):
@@ -57,6 +59,7 @@ def _regex_parse_sentence(doc, entity_type, tag_type):
 	toks = _toks_from_sentence(doc, entity_type, tag_type)
 	return toks
 
+
 def _toks_from_sentence(doc, entity_type, tag_type):
 	toks = []
 	for tok in WHITESPACE_SPLITTER.split(doc):
@@ -67,6 +70,7 @@ def _toks_from_sentence(doc, entity_type, tag_type):
 			                ent_type='' if entity_type is None else entity_type.get(tok, ''),
 			                tag='' if tag_type is None else tag_type.get(tok, '')))
 	return toks
+
 
 def nltk_tokenzier_factory(nltk_tokenizer):
 	'''
@@ -96,6 +100,7 @@ def nltk_tokenzier_factory(nltk_tokenizer):
 
 	return tokenize
 
+
 def tweet_tokenzier_factory(tweet_tokenizer):
 	'''
 	Parameters
@@ -109,10 +114,12 @@ def tweet_tokenzier_factory(tweet_tokenizer):
 	Requires NLTK to be installed :(
 
 	'''
-	return nltk_tokenzier_factory(tweet_tokenzier)
+	return nltk_tokenzier_factory(tweet_tokenizer)
 
 
 PUNCT_MATCHER = re.compile('^\W+$')
+
+
 def _get_pos_tag(tok):
 	pos = 'WORD'
 	if tok.strip() == '':
@@ -124,15 +131,18 @@ def _get_pos_tag(tok):
 	return pos
 
 
-def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
-	pat = re.compile(r'([^\.!?]*?[\.!?$])', re.M)
+def whitespace_nlp_with_sentences(doc,
+                                  entity_type=None,
+                                  tag_type=None,
+                                  tok_splitter_re=WHITESPACE_SPLITTER):
+	sentence_split_pat = re.compile(r'([^\.!?]*?[\.!?$])', re.M)
 	sents = []
-	raw_sents = pat.findall(doc)
+	raw_sents = sentence_split_pat.findall(doc)
 	if len(raw_sents) == 0:
 		raw_sents = [doc]
 	for sent in raw_sents:
 		toks = []
-		for tok in WHITESPACE_SPLITTER.split(sent):
+		for tok in tok_splitter_re.split(sent):
 			if len(tok) > 0:
 				toks.append(Tok(_get_pos_tag(tok),
 				                tok[:2].lower(),
@@ -140,5 +150,4 @@ def whitespace_nlp_with_sentences(doc, entity_type=None, tag_type=None):
 				                ent_type='' if entity_type is None else entity_type.get(tok, ''),
 				                tag='' if tag_type is None else tag_type.get(tok, '')))
 		sents.append(toks)
-		toks = []
 	return Doc(sents, doc)

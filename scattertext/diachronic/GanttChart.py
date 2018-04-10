@@ -9,9 +9,10 @@ class GanttChart(object):
 	'''
 	Note: the Gantt charts listed here are inspired by
 	Dustin Arendt and Svitlana Volkova. ESTEEM: A Novel Framework for Qualitatively Evaluating and
-  Visualizing Spatiotemporal Embeddings in Social Media. ACL System Demonstrations. 2017.
+	Visualizing Spatiotemporal Embeddings in Social Media. ACL System Demonstrations. 2017.
 	http://www.aclweb.org/anthology/P/P17/P17-4005.pdf
 	'''
+
 	def __init__(self,
 	             term_doc_matrix,
 	             category_to_timestep_func,
@@ -67,13 +68,12 @@ class GanttChart(object):
 		for cat in sorted(self.corpus.get_categories()):
 			if cat >= self.starting_time_step:
 				negative_categories = sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]
-				print(negative_categories, cat)
 				scores = self.term_scorer.get_scores(
-					tdf[sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]]
-						.sum(axis=1),
-					tdf[cat + ' freq'].astype(int)
+					tdf[cat + ' freq'].astype(int),
+					tdf[negative_categories].sum(axis=1)
 				)
-				for term in tdf.index[np.argsort(-scores)[:self.num_top_terms_each_timestep]]:
+				top_term_indices = np.argsort(-scores)[:self.num_top_terms_each_timestep]
+				for term in tdf.index[top_term_indices]:
 					data.append({'time': self.category_to_timestep_func(cat),
 					             'term': term,
 					             'top': 1})
@@ -105,13 +105,18 @@ class GanttChart(object):
 		min_timestep = None
 		last_timestep = None
 		sequences = []
+		cur_sequence = []
 		for cur_timestep in sorted(time_steps):
 			if min_timestep is None:
+				cur_sequence = [cur_timestep]
 				min_timestep = cur_timestep
-			elif self.is_gap_between_sequences_func(last_timestep, cur_timestep):
-				sequences.append([min_timestep, last_timestep])
+			elif not self.is_gap_between_sequences_func(last_timestep, cur_timestep):
+				cur_sequence.append(cur_timestep)
 				min_timestep = cur_timestep
+			else:
+				sequences.append([cur_sequence[0], cur_sequence[-1]])
+				cur_sequence = [cur_timestep]
 			last_timestep = cur_timestep
-		if sequences == [] or sequences[-1][1] != last_timestep:
-			sequences.append([min_timestep, last_timestep])
+		if len(cur_sequence) != []:
+			sequences.append([cur_sequence[0], cur_sequence[-1]])
 		return sequences
