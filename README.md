@@ -4,34 +4,9 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.23.1
+# Scattertext 0.0.2.24
 ### Updates
-Semiotic Squares now look better, and have customizable labels. 
-
-Incorporated the [General Inquirer](http://www.wjh.harvard.edu/~inquirer/homecat.htm) 
-lexicon. For non-commercial use only. The lexicon is downloaded from their homepage at the start of each 
-use. See `demo_general_inquierer.py`.
-
-Incorporated Phrasemachine from [AbeHandler](https://github.com/AbeHandler) (Handler et al. 2016). For the license, 
-please see `PhraseMachineLicense.txt`.  For an example, please see `demo_phrase_machine.py`.
-
-Added `CompactTerms` for removing redundant and infrequent terms from term document matrices.
-These occur if a word or phrase is always part of a larger phrase; the shorter phrase is 
-considered redundant and removed from the corpus. See `demo_phrase_machine.py` for an example.   
-
-Added `FourSquare`, a pattern that allows for the creation of a semiotic square with
-separate categories for each corner.  Please see `demo_four_square.py` for an early example. 
-
-Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
-the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
-  
-Fixed to `ScaledFScorePresets(one_to_neg_one=True)`, added `UnigramsFromSpacyDoc`.
-
-Now, when using `CorpusFromPandas`, a `CorpusDF` object is returned, instead of a `Corpus` object. This new type of object 
-keeps a reference to the source data frame, and returns it via the `CorpusDF.get_df()` method.
-
-The factory `CorpusFromFeatureDict` was added. It allows you to directly specify term counts and
-metadata item counts within the dataframe.  Please see `test_corpusFromFeatureDict.py` for an example.
+Added `TermCategoryFrequencies`
 
 **Table of Contents**
 
@@ -40,6 +15,7 @@ metadata item counts within the dataframe.  Please see `test_corpusFromFeatureDi
 - [Overview](#overview)
 - [Tutorial](#tutorial)
 - [Advanced Uses](#advanced-uses)
+    - [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies)
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
     - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
     - [Custom term positions](#custom-term-positions)
@@ -335,6 +311,87 @@ html = st.produce_scattertext_explorer(empath_corpus,
 ![Scaled F-Score Explanation 2](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score2.png)
 
 ## Advanced uses
+
+### Visualizing differences based on only term frequencies
+Occasionally, only term frequency statistics are available. This may happen in the case of very large, 
+lost, or proprietary data sets. `TermCategoryFrequencies` is a corpus representation,that can accept this 
+sort of data, along with any categorized documents that happen to be available.
+
+Let use the [Corpus of Contemporary American English](https://corpus.byu.edu/coca/) as an example.  
+We'll construct a visualization
+to analyze the difference between spoken American English and English that occurs in fiction.
+
+```python
+df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
+	      .dropna()
+	      .set_index('lemma')[['SPOKEN', 'FICTION']]
+	      .iloc[:1000])
+'''
+>>> df.head()
+          SPOKEN    FICTION
+lemma                      
+the    3859682.0  4092394.0
+I      1346545.0  1382716.0
+they   609735.0   352405.0 
+she    212920.0   798208.0 
+would  233766.0   229865.0 
+'''	      
+```
+
+Transforming this into a visualization is extremely easy. Just pass a dataframe indexed on 
+terms with columns indicating category-counts into the the `TermCategoryFrequencies` constructor.
+
+```python
+term_cat_freq = st.TermCategoryFrequencies(df)
+``` 
+
+And call `produce_scattertext_explorer` normally:
+
+```python
+html = st.produce_scattertext_explorer(
+	term_cat_freq,
+	category='SPOKEN',
+	category_name='Spoken',
+	not_category_name='Fiction',
+)
+```
+
+
+[![demo_category_frequencies.html](https://jasonkessler.github.io/demo_category_frequencies.png)](https://jasonkessler.github.io/demo_category_frequencies.html)
+
+If you'd like to incorporate some documents into the visualization, you can add them into to the
+`TermCategoyFrequencies` object.
+
+First, let's extract some example Fiction and Spoken documents from the sample COCA corpus.
+
+```python
+import requests, zipfile, io
+coca_sample_url = 'http://corpus.byu.edu/cocatext/samples/text.zip'
+zip_file = zipfile.ZipFile(io.BytesIO(requests.get(coca_sample_url).content))
+
+document_df = pd.DataFrame(
+	[{'text': zip_file.open(fn).read().decode('utf-8'),
+	  'category': 'SPOKEN'}
+	 for fn in zip_file.filelist if fn.filename.startswith('w_spok')][:2]
+	+ [{'text': zip_file.open(fn).read().decode('utf-8'),
+	    'category': 'FICTION'}
+	   for fn in zip_file.filelist if fn.filename.startswith('w_fic')][:2])
+```   
+
+And we'll pass the `documents_df` dataframe into `TermCategoryFrequencies` via the `document_category_df` 
+parameter.  Ensure the dataframe has two columns, 'text' and 'category'.  Afterward, we can
+call `produce_scattertext_explorer` (or your visualization function of choice) normally.
+
+```python
+doc_term_cat_freq = st.TermCategoryFrequencies(df, document_category_df=document_df)
+
+html = st.produce_scattertext_explorer(
+	doc_term_cat_freq,
+	category='SPOKEN',
+	category_name='Spoken',
+	not_category_name='Fiction',
+)
+```
 
 ### Visualizing query-based categorical differences  
 Word representations have recently become a hot topic in NLP.  While lots of work has been done visualizing 
@@ -867,6 +924,35 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.16-23.1
+Semiotic Squares now look better, and have customizable labels. 
+
+Incorporated the [General Inquirer](http://www.wjh.harvard.edu/~inquirer/homecat.htm) 
+lexicon. For non-commercial use only. The lexicon is downloaded from their homepage at the start of each 
+use. See `demo_general_inquierer.py`.
+
+Incorporated Phrasemachine from [AbeHandler](https://github.com/AbeHandler) (Handler et al. 2016). For the license, 
+please see `PhraseMachineLicense.txt`.  For an example, please see `demo_phrase_machine.py`.
+
+Added `CompactTerms` for removing redundant and infrequent terms from term document matrices.
+These occur if a word or phrase is always part of a larger phrase; the shorter phrase is 
+considered redundant and removed from the corpus. See `demo_phrase_machine.py` for an example.   
+
+Added `FourSquare`, a pattern that allows for the creation of a semiotic square with
+separate categories for each corner.  Please see `demo_four_square.py` for an early example. 
+
+Finally, added a way to easily perform T-SNE-style visualizations on a categorized corpus. This uses, by default,
+the [umap-learn](https://github.com/lmcinnes/umap) package. Please see demo_tsne_style.py.
+  
+Fixed to `ScaledFScorePresets(one_to_neg_one=True)`, added `UnigramsFromSpacyDoc`.
+
+Now, when using `CorpusFromPandas`, a `CorpusDF` object is returned, instead of a `Corpus` object. This new type of object 
+keeps a reference to the source data frame, and returns it via the `CorpusDF.get_df()` method.
+
+The factory `CorpusFromFeatureDict` was added. It allows you to directly specify term counts and
+metadata item counts within the dataframe.  Please see `test_corpusFromFeatureDict.py` for an example.
+
 
 ### 0.0.2.15-16
 Added a very semiotic square creator.

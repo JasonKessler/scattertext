@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 
+from scattertext import TermCategoryFrequencies
 from scattertext.Corpus import Corpus
 from scattertext.ParsedCorpus import ParsedCorpus
 
@@ -17,7 +18,7 @@ class DocsAndLabelsFromCorpus:
 		corpus, Corpus: Corpus to extract documents and labels from
 		alternative_text_field, str or None: if str, corpus must be parsed corpus
 		'''
-		assert (isinstance(corpus, Corpus))
+		assert (isinstance(corpus, Corpus)) or (isinstance(corpus, TermCategoryFrequencies))
 		self._texts_to_display = None
 		if alternative_text_field is not None:
 			if not isinstance(corpus, ParsedCorpus):
@@ -35,7 +36,7 @@ class DocsAndLabelsFromCorpus:
 		# type: () -> dict
 		texts = self._get_texts_to_display()
 		to_ret = {'categories': self._corpus.get_categories(),
-		          'labels': self._corpus._y.astype(int).tolist(),
+		          'labels': self._corpus.get_doc_indices(),
 		          'texts': self._get_list_from_texts(texts)}
 		if self._use_non_text_features:
 			to_ret['extra'] = self._corpus.list_extra_features()

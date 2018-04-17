@@ -924,3 +924,32 @@ class TermDocMatrix(object):
 
 	def _get_percentiles_from_freqs(self, freqs):
 		return rankdata(freqs) / len(freqs)
+
+	def get_term_category_frequencies(self, scatterchartdata):
+		'''
+		Applies the ranker in scatterchartdata to term-category frequencies.
+
+		Parameters
+		----------
+		scatterchartdata : ScatterChartData
+
+		Returns
+		-------
+		pd.DataFrame
+		'''
+		term_ranker = scatterchartdata.term_ranker(self)
+		if scatterchartdata.use_non_text_features:
+			term_ranker.use_non_text_features()
+		return term_ranker.get_ranks()
+
+	def apply_ranker(self, term_ranker):
+		'''
+		Parameters
+		----------
+		term_ranker : TermRanker
+
+		Returns
+		-------
+		pd.Dataframe
+		'''
+		return term_ranker(self).get_ranks()

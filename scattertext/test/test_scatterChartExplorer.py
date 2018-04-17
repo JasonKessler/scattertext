@@ -61,8 +61,8 @@ class TestScatterChartExplorer(TestCase):
 			.to_dict('hamlet', not_categories=['swift'])
 		self.assertNotEqual(set(j_vs_all['info']['not_category_internal_names']),
 		                    set(j_vs_swift['info']['not_category_internal_names']))
-		self.assertEqual(j_vs_all['docs']['labels'], j_vs_swift['docs']['labels'])
-		self.assertEqual(j_vs_all['docs']['categories'], j_vs_swift['docs']['categories'])
+		self.assertEqual(list(j_vs_all['docs']['labels']), list(j_vs_swift['docs']['labels']))
+		self.assertEqual(list(j_vs_all['docs']['categories']), list(j_vs_swift['docs']['categories']))
 
 	def test_metadata(self):
 		corpus = build_hamlet_jz_corpus()
@@ -71,6 +71,7 @@ class TestScatterChartExplorer(TestCase):
 		                          minimum_term_frequency=0)
 			.to_dict('hamlet', metadata=meta))
 		self.maxDiff = None
+		j['docs']['labels'] = list(j['docs']['labels'])
 		self.assertEqual(j['docs'],
 		                 {'labels': [0, 0, 0, 0, 1, 1, 1, 1],
 		                  'categories': ['hamlet', 'jay-z/r. kelly'],
@@ -121,6 +122,7 @@ class TestScatterChartExplorer(TestCase):
 		          {'cat3': 2, 'cat4': 1}]
 		extras = [{'cat1': 2}] * 8
 		self.maxDiff = None
+		j['docs']['labels'] = list(j['docs']['labels'])
 		self.assertEqual(j['docs'],
 		                 {'labels': [0, 0, 0, 0, 1, 1, 1, 1],
 		                  'categories': ['hamlet', 'jay-z/r. kelly'],

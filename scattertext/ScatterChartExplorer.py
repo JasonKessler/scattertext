@@ -1,6 +1,6 @@
 import numpy as np
 
-from scattertext import ScatterChart
+from scattertext import ScatterChart, TermCategoryFrequencies
 from scattertext import percentile_alphabetical
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
@@ -13,7 +13,7 @@ class ScatterChartExplorer(ScatterChart):
 		'''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
 
 		'''
-		assert isinstance(corpus, Corpus)
+		assert (isinstance(corpus, Corpus)) or (isinstance(corpus, TermCategoryFrequencies))
 		ScatterChart.__init__(self, corpus, **kwargs)
 
 	def to_dict(self,
@@ -69,7 +69,7 @@ class ScatterChartExplorer(ScatterChart):
 
 		Returns
 		-------
-		dictionary {info: {category_name: ..., not_category_name},
+		dictionary {info: {'category_name': full category name, ...},
 												 docs: {'texts': [doc1text, ...],
 												        'labels': [1, 0, ...],
 												        'meta': ['<b>blah</b>', '<b>blah</b>']}

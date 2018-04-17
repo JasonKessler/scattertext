@@ -4,9 +4,10 @@ import re
 
 from scattertext.CorpusDF import CorpusDF
 from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
+from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.diachronic import GanttChart
 
-version = [0, 0, 2, 23]
+version = [0, 0, 2, 24]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -69,7 +70,6 @@ from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
-
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -381,7 +381,8 @@ def produce_scattertext_explorer(corpus,
 		not_categories = [c for c in corpus.get_categories() if c != category]
 
 	if term_scorer:
-		tdf = term_ranker(corpus).get_ranks()
+		#tdf = term_ranker(corpus).get_ranks()
+		tdf = corpus.apply_ranker(term_ranker)
 		cat_freqs = tdf[category + ' freq']
 		if not_categories:
 			not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)

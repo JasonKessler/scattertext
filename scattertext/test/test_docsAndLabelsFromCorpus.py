@@ -42,9 +42,9 @@ class TestDocsAndLabelsFromCorpus(TestCase):
 		self.assertTrue('texts' in output)
 		self.assertTrue('labels' in output)
 		self.assertEqual(self.parsed_corpus._y.astype(int).tolist(),
-		                 output['labels'])
+		                 list(output['labels']))
 		self.assertEqual(self.parsed_corpus.get_texts().tolist(),
-		                 output['texts'])
+		                 list(output['texts']))
 
 	def test_extra_features(self):
 		corpus = build_hamlet_jz_corpus_with_meta()
@@ -57,7 +57,7 @@ class TestDocsAndLabelsFromCorpus(TestCase):
 		             {'cat5': 1, 'cat2': 2},
 		             {'cat3': 2, 'cat4': 1}]
 		extra_val = [{'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}, {'cat1': 2}]
-
+		output['labels'] = list(output['labels'])
 		self.assertEqual(output, {'categories': ['hamlet', 'jay-z/r. kelly'],
 		                          'texts': ["what art thou that usurp'st this time of night,",
 		                                    'together with that fair and warlike form',

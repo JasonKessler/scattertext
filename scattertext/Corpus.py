@@ -50,6 +50,9 @@ class Corpus(TermDocMatrix):
 		'''
 		return self._raw_texts
 
+	def get_doc_indices(self):
+		return self._y.astype(int)
+
 	def search(self, ngram):
 		'''
 		Parameters
