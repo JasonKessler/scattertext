@@ -1815,7 +1815,9 @@ buildViz = function (d3) {
         };
 
         //fullData = getDataAndInfo();
-        var corpusWordCounts = getCorpusWordCounts();
+        if(fullData.docs) {
+            var corpusWordCounts = getCorpusWordCounts();
+        }
         var redrawPoints = processData(fullData);
 
 

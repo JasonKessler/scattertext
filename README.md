@@ -6,7 +6,8 @@
 
 # Scattertext 0.0.2.24
 ### Updates
-Added `TermCategoryFrequencies`
+Added `TermCategoryFrequencies` in response to Issue 23.  Please see [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies) 
+for more details. 
 
 **Table of Contents**
 
