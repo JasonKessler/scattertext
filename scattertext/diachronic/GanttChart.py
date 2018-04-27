@@ -11,6 +11,8 @@ class GanttChart(object):
 	Dustin Arendt and Svitlana Volkova. ESTEEM: A Novel Framework for Qualitatively Evaluating and
 	Visualizing Spatiotemporal Embeddings in Social Media. ACL System Demonstrations. 2017.
 	http://www.aclweb.org/anthology/P/P17/P17-4005.pdf
+
+	In order to use the make chart function, Altair must be installed.
 	'''
 
 	def __init__(self,
@@ -53,6 +55,11 @@ class GanttChart(object):
 		self.starting_time_step = starting_time_step
 
 	def make_chart(self):
+		'''
+		Returns
+		-------
+		altair.Chart
+		'''
 		task_df = self.get_task_df()
 		import altair as alt
 		chart = alt.Chart(task_df).mark_bar().encode(
@@ -62,12 +69,34 @@ class GanttChart(object):
 		)
 		return chart
 
+	def get_temporal_score_df(self):
+		'''
+		Returns
+		-------
+
+		'''
+		scoredf = {}
+		tdf = self.term_ranker(self.corpus).get_ranks()
+		for cat in sorted(self.corpus.get_categories()):
+			if cat >= self.starting_time_step:
+				negative_categories = self._get_negative_categories(cat, tdf)
+				scores = self.term_scorer.get_scores(
+					tdf[cat + ' freq'].astype(int),
+					tdf[negative_categories].sum(axis=1)
+				)
+				scoredf[cat + ' score'] = scores
+				scoredf[cat + ' freq'] = tdf[cat + ' freq'].astype(int)
+		return pd.DataFrame(scoredf)
+
+	def _get_negative_categories(self, cat, tdf):
+		return sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]
+
 	def _get_term_time_df(self):
 		data = []
 		tdf = self.term_ranker(self.corpus).get_ranks()
 		for cat in sorted(self.corpus.get_categories()):
 			if cat >= self.starting_time_step:
-				negative_categories = sorted([x for x in tdf.columns if x < cat])[-self.timesteps_to_lag:]
+				negative_categories = self._get_negative_categories(cat, tdf)
 				scores = self.term_scorer.get_scores(
 					tdf[cat + ' freq'].astype(int),
 					tdf[negative_categories].sum(axis=1)
@@ -80,6 +109,11 @@ class GanttChart(object):
 		return pd.DataFrame(data)
 
 	def get_task_df(self):
+		'''
+		Returns
+		-------
+
+		'''
 		term_time_df = self._get_term_time_df()
 		terms_to_include = (
 			term_time_df

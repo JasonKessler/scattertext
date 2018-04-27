@@ -13,7 +13,8 @@ class TestHTMLVisualizationAssembly(TestCase):
 		params = ['1000', '600', 'null', 'null', 'true', 'false',
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
-		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false']
+		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
+		          'null', 'null']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -329,5 +330,16 @@ class TestHTMLVisualizationAssembly(TestCase):
 			._call_build_visualization_in_javascript()),
 		                 self.get_params({27: 'true'}))
 
+	def test_x_axis_labels_over_points(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            x_axis_labels=['Lo', 'Hi'])
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({28: '["Lo", "Hi"]'}))
 
-
+	def test_y_axis_labels_over_points(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            y_axis_labels=['Lo', 'Hi'])
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({29: '["Lo", "Hi"]'}))

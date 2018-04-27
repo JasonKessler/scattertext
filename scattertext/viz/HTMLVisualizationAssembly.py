@@ -38,8 +38,9 @@ class HTMLVisualizationAssembly(object):
 	             show_axes=True,
 	             show_extra=False,
 	             do_censor_points=True,
-	             center_label_over_points=False
-	             ):
+	             center_label_over_points=False,
+	             x_axis_labels=None,
+	             y_axis_labels=None):
 		'''
 
 		Parameters
@@ -94,9 +95,9 @@ class HTMLVisualizationAssembly(object):
 			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
 			returns a string.
 		x_axis_values : list, default None
-			Value-labels to show on x-axis. Low, medium, high are defaults.
+			Numeric value-labels to show on x-axis which correspond to original x-values.
 		y_axis_values : list, default None
-			Value-labels to show on y-axis. Low, medium, high are defaults.
+			Numeric Value-labels to show on y-axis which correspond to original y-values.
 		color_func : str, default None
 			Javascript function to control color of a point.  Function takes a parameter
 			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
@@ -109,6 +110,15 @@ class HTMLVisualizationAssembly(object):
 			Don't label over dots
 		center_label_over_points : bool, default False
 			Only put labels centered over point
+		x_axis_labels: list, default None
+			List of string value-labels to show at evenly spaced intervals on the x-axis.
+			Low, medium, high are defaults. This relies on d3's ticks function, which can
+			behave unpredictable. Caveat usor.
+		y_axis_labels : list, default None
+			List of string value-labels to show at evenly spaced intervals on the y-axis.
+			Low, medium, high are defaults.  This relies on d3's ticks function, which can
+			behave unpredictable. Caveat usor.
+
 		'''
 		self._visualization_data = visualization_data
 		self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -134,6 +144,8 @@ class HTMLVisualizationAssembly(object):
 		self._get_tooltip_content = get_tooltip_content
 		self._x_axis_values = x_axis_values
 		self._y_axis_values = y_axis_values
+		self._x_axis_labels = x_axis_labels
+		self._y_axis_labels = y_axis_labels
 		self._color_func = color_func
 		self._show_axes = show_axes
 		self._show_extra = show_extra
@@ -238,6 +250,9 @@ class HTMLVisualizationAssembly(object):
 		def js_default_value_to_null(x):
 			return 'null' if x is None else str(x)
 
+		def js_list_or_null(x):
+			return 'null' if x is None else json.dumps(x)
+
 		def js_bool(x):
 			return 'true' if x else 'false'
 
@@ -274,5 +289,7 @@ class HTMLVisualizationAssembly(object):
 		             js_bool(self._show_axes),
 		             js_bool(self._show_extra),
 		             js_bool(self._do_censor_points),
-		             js_bool(self._center_label_over_points)]
+		             js_bool(self._center_label_over_points),
+		             js_list_or_null(self._x_axis_labels),
+		             js_list_or_null(self._y_axis_labels)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

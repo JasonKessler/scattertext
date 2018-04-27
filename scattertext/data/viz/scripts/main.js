@@ -26,7 +26,9 @@ buildViz = function (d3) {
                      showAxes = true,
                      showExtra = false,
                      doCensorPoints = true,
-                     centerLabelsOverPoints = false) {
+                     centerLabelsOverPoints = false,
+                     xAxisLabels = null,
+                     yAxisLabels = null) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -147,11 +149,19 @@ buildViz = function (d3) {
 
         if (xAxisValues) {
             xAxis = labelWithZScore(d3.axisBottom(x), 'x', xAxisValues);
+        } else if (xAxisLabels) {
+            xAxis = d3.axisBottom(x)
+                .ticks(xAxisLabels.length)
+                .tickFormat(function (d, i) { return xAxisLabels[i]; });
         } else {
             xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
         }
         if (yAxisValues) {
             yAxis = labelWithZScore(d3.axisLeft(y), 'y', yAxisValues);
+        } else if (yAxisLabels) {
+            yAxis = d3.axisLeft(y)
+                .ticks(yAxisLabels.length)
+                .tickFormat(function(d, i) {return yAxisLabels[i];});
         } else {
             yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabelerFactory('y'));
         }
@@ -163,9 +173,9 @@ buildViz = function (d3) {
         var interpolateLightGreys = d3.interpolate(d3.rgb(230, 230, 230),
             d3.rgb(130, 130, 130));
         // setup fill color
-        //var color = d3.interpolateRdYlBu;
         if (color == null) {
             color = d3.interpolateRdYlBu;
+            //color = d3.interpolateWarm;
         }
 
         var pixelsToAddToWidth = 200;
@@ -1189,24 +1199,24 @@ buildViz = function (d3) {
                     {'anchor': 'start', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
                 ];
-                if(centerLabelsOverPoints) {
-                 configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
-                 }
+                if (centerLabelsOverPoints) {
+                    configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
+                }
                 var matchedElement = null;
                 for (var configI in configs) {
                     var config = configs[configI];
                     var curLabel = svg.append("text")
-                        //.attr("x", x(data[i].x) + config['xoff'])
-                        //.attr("y", y(data[i].y) + config['yoff'])
-                            .attr("x", x(myX) + config['xoff'])
-                            .attr("y", y(myY) + config['yoff'])
-                            .attr('class', 'label')
-                            .attr('class', 'pointlabel')
-                            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                            .attr('font-size', '10px')
-                            .attr("text-anchor", config['anchor'])
-                            .attr("alignment-baseline", config['alignment'])
-                            .text(term);
+                    //.attr("x", x(data[i].x) + config['xoff'])
+                    //.attr("y", y(data[i].y) + config['yoff'])
+                        .attr("x", x(myX) + config['xoff'])
+                        .attr("y", y(myY) + config['yoff'])
+                        .attr('class', 'label')
+                        .attr('class', 'pointlabel')
+                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                        .attr('font-size', '10px')
+                        .attr("text-anchor", config['anchor'])
+                        .attr("alignment-baseline", config['alignment'])
+                        .text(term);
                     var bbox = curLabel.node().getBBox();
                     var borderToRemove = .25;
                     if (doCensorPoints) {
@@ -1322,7 +1332,7 @@ buildViz = function (d3) {
             data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
             console.log("Sorted Data:");
             console.log(data);
-            if(doCensorPoints) {
+            if (doCensorPoints) {
                 for (var i in data) {
                     var d = data[i];
                     censorPoints(
@@ -1815,7 +1825,7 @@ buildViz = function (d3) {
         };
 
         //fullData = getDataAndInfo();
-        if(fullData.docs) {
+        if (fullData.docs) {
             var corpusWordCounts = getCorpusWordCounts();
         }
         var redrawPoints = processData(fullData);

@@ -4,10 +4,15 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.24
+# Scattertext 0.0.2.25
 ### Updates
 Added `TermCategoryFrequencies` in response to Issue 23.  Please see [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies) 
 for more details. 
+
+Added `x_axis_labels` and `y_axis_labels` parameters to `produce_scattertext_explorer`. 
+These let you include evenly-spaced string axis labels on the chart, as opposed to just
+"Low", "Medium" and "High". These rely on d3's ticks function, which can behave 
+unpredictable. Caveat usor.
 
 **Table of Contents**
 
@@ -15,6 +20,7 @@ for more details.
 - [Citation](#citation)
 - [Overview](#overview)
 - [Tutorial](#tutorial)
+- [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Advanced Uses](#advanced-uses)
     - [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies)
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
@@ -308,8 +314,22 @@ html = st.produce_scattertext_explorer(empath_corpus,
 
 ![Scaled F-Score Explanation 1](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score1.png)
 
-
 ![Scaled F-Score Explanation 2](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score2.png)
+
+```python
+html = produce_frequency_explorer(corpus,
+                                  category='democrat',
+                                  category_name='Democratic',
+                                  not_category_name='Republican',
+                                  minimum_term_frequency=5,
+                                  width_in_pixels=1000,
+                                  term_scorer=ScaledFScorePresetsNeg1To1(beta=1, scaler_algo='normcdf'),
+                                  grey_threshold=0,
+                                  y_axis_values=[-1, 0, 1],
+                                  metadata=convention_df['speaker'])
+```
+[![Scaled F-Score Viz](https://jasonkessler.github.io/demo_scaled_f_score.html.png)](https://jasonkessler.github.io/demo_scaled_f_score.html)
+
 
 ## Advanced uses
 

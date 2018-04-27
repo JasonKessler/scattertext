@@ -7,7 +7,7 @@ from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.diachronic import GanttChart
 
-version = [0, 0, 2, 24]
+version = [0, 0, 2, 25]
 __version__ = '.'.join([str(e) for e in version])
 
 import warnings
@@ -70,6 +70,7 @@ from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -194,7 +195,9 @@ def produce_scattertext_explorer(corpus,
                                  show_extra=False,
                                  extra_category_name=None,
                                  censor_points=True,
-                                 center_label_over_points=False):
+                                 center_label_over_points=False,
+                                 x_axis_labels=None,
+                                 y_axis_labels=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -351,6 +354,12 @@ def produce_scattertext_explorer(corpus,
 	center_label_over_points : bool, default False
 		Center a label over points, or try to find a position near a point that
 		doesn't overlap anything else.
+	x_axis_labels: list, default None
+		List of string value-labels to show at evenly spaced intervals on the x-axis.
+		Low, medium, high are defaults.
+	y_axis_labels : list, default None
+		List of string value-labels to show at evenly spaced intervals on the y-axis.
+		Low, medium, high are defaults.
 
 	Returns
 	-------
@@ -381,7 +390,7 @@ def produce_scattertext_explorer(corpus,
 		not_categories = [c for c in corpus.get_categories() if c != category]
 
 	if term_scorer:
-		#tdf = term_ranker(corpus).get_ranks()
+		# tdf = term_ranker(corpus).get_ranks()
 		tdf = corpus.apply_ranker(term_ranker)
 		cat_freqs = tdf[category + ' freq']
 		if not_categories:
@@ -461,7 +470,9 @@ def produce_scattertext_explorer(corpus,
 	                                 show_axes=show_axes,
 	                                 show_extra=show_extra,
 	                                 do_censor_points=censor_points,
-	                                 center_label_over_points=center_label_over_points) \
+	                                 center_label_over_points=center_label_over_points,
+	                                 x_axis_labels=x_axis_labels,
+	                                 y_axis_labels=y_axis_labels) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,
