@@ -1,19 +1,20 @@
 import spacy
 
-from scattertext import SampleCorpora, whitespace_nlp_with_sentences, PhraseMachinePhrases
+from scattertext import SampleCorpora, PhraseMachinePhrases
 from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.termcompaction.CompactTerms import CompactTerms
 
 convention_df = SampleCorpora.ConventionData2012.get_data()
-corpus = CorpusFromPandas(convention_df,
-                          category_col='party',
-                          text_col='text',
-                          feats_from_spacy_doc=PhraseMachinePhrases(),
-                          nlp=spacy.load('en', parser=False)).build()
+corpus = (CorpusFromPandas(convention_df,
+                           category_col='party',
+                           text_col='text',
+                           feats_from_spacy_doc=PhraseMachinePhrases(),
+                           nlp=spacy.load('en', parser=False))
+          .build()
+          .compact(CompactTerms(minimum_term_count=2)))
 
-compact_corpus = CompactTerms(corpus, minimum_term_count = 2).compact()
-html = produce_scattertext_explorer(compact_corpus,
+html = produce_scattertext_explorer(corpus,
                                     category='democrat',
                                     category_name='Democratic',
                                     not_category_name='Republican',

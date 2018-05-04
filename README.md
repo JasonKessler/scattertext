@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.26
+# Scattertext 0.0.2.26.1
 ### Updates
 
 Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is 
@@ -13,6 +13,8 @@ clicked.
 Enabled display of terms in topic models in explorer, along with the the display of 
 customized topic models.  Please see [Visualizing topic models](#visualizing-topic-models) for an
 overview of the additions.
+
+Removed pkg_resources from Phrasemachine, corrected demo_phrase_machine.py 
 
 **Table of Contents**
 

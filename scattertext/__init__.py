@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 26]
+version = [0, 0, 2, 26, 1]
 __version__ = '.'.join([str(e) for e in version])
 
 import re

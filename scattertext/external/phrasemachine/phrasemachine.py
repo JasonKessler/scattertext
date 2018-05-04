@@ -12,7 +12,7 @@ import re
 import sys
 from collections import Counter
 
-from pkg_resources import resource_filename
+#from pkg_resources import resource_filename
 
 
 def logmsg(s):
@@ -173,8 +173,13 @@ class NLTKTagger:
 		import nltk
 		from nltk.tag import PerceptronTagger
 		from nltk.tokenize import TreebankWordTokenizer
-		tokenizer_fn = os.path.abspath(resource_filename('scattertext.data', 'punkt.english.pickle'))
-		tagger_fn = os.path.abspath(resource_filename('scattertext.data', 'averaged_perceptron_tagger.pickle'))
+		#return pkgutil.get_data('scattertext',
+		#                        'data/viz/semiotic_new.html').decode('utf-8')
+		path = os.path.dirname(sys.modules['scattertext'].__file__)+'/data/'
+		tokenizer_fn = path + 'punkt.english.pickle'
+		tagger_fn = path + 'averaged_perceptron_tagger.pickle'
+		#tokenizer_fn = os.path.abspath(resource_filename('scattertext.data', 'punkt.english.pickle'))
+		#tagger_fn = os.path.abspath(resource_filename('scattertext.data', 'averaged_perceptron_tagger.pickle'))
 		# Load the tagger
 		self.tagger = PerceptronTagger(load=False)
 		self.tagger.load(tagger_fn)
