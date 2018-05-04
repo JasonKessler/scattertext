@@ -18,6 +18,7 @@ from scattertext.CSRMatrixTools import delete_columns
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
 	DEFAULT_BACKGROUND_BETA
 from scattertext.FeatureOuput import FeatureLister
+from scattertext.indexstore import IndexStore
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.CornerScore import CornerScore
 
@@ -105,6 +106,7 @@ class TermDocMatrix(object):
 		'''
 		return len(self._term_idx_store)
 
+
 	def get_categories(self):
 		'''
 
@@ -182,16 +184,16 @@ class TermDocMatrix(object):
 			freq_mat[:, cat_i] = X.sum(axis=0)
 		return freq_mat
 
-	def get_term_doc_count_df(self, label_append = ' freq'):
+	def get_term_doc_count_df(self, label_append=' freq'):
 		'''
 
 		Returns
 		-------
 		pd.DataFrame indexed on terms, with columns the number of documents each term appeared in
 		'''
-		#row = self._row_category_ids()
-		#newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
-		#return self._term_freq_df_from_matrix(newX)
+		# row = self._row_category_ids()
+		# newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
+		# return self._term_freq_df_from_matrix(newX)
 		mat = self.get_term_count_mat()
 		return pd.DataFrame(mat,
 		                    index=self.get_terms(),
@@ -259,10 +261,13 @@ class TermDocMatrix(object):
 		-------
 		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
 		'''
-		terms_to_ignore = [term for term
-		                   in self._term_idx_store._i2val
-		                   if ' ' in term or "'" in term]
+		terms_to_ignore = self._get_non_unigrams()
 		return self.remove_terms(terms_to_ignore)
+
+	def _get_non_unigrams(self):
+		return [term for term
+		        in self._term_idx_store._i2val
+		        if ' ' in term or "'" in term]
 
 	def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker):
 		'''
@@ -370,6 +375,10 @@ class TermDocMatrix(object):
 		-------
 		TermDocMatrix, new object with terms removed.
 		'''
+		idx_to_delete_list = self._build_term_index_list(ignore_absences, terms)
+		return self.remove_terms_by_indices(idx_to_delete_list)
+
+	def _build_term_index_list(self, ignore_absences, terms):
 		idx_to_delete_list = []
 		for term in terms:
 			if term not in self._term_idx_store:
@@ -377,7 +386,7 @@ class TermDocMatrix(object):
 					raise KeyError('Term %s not found' % (term))
 				continue
 			idx_to_delete_list.append(self._term_idx_store.getidx(term))
-		return self.remove_terms_by_indices(idx_to_delete_list)
+		return idx_to_delete_list
 
 	def keep_only_these_categories(self, categories, ignore_absences=False):
 		'''
@@ -434,7 +443,8 @@ class TermDocMatrix(object):
 		                  for i in range(intermediate_y.max() + 1)])[intermediate_y]
 
 		new_metadata_idx_store = self._metadata_idx_store
-		if len(self._metadata_idx_store):
+
+		if self.metadata_in_use():
 			meta_idx_to_delete = np.nonzero(new_mX.sum(axis=0).A1 == 0)[0]
 			new_metadata_idx_store = self._metadata_idx_store.batch_delete_idx(meta_idx_to_delete)
 
@@ -451,6 +461,16 @@ class TermDocMatrix(object):
 		                                                     ~np.isin(self._y, idx_to_delete_list))
 		return term_doc_mat_to_ret
 
+	def metadata_in_use(self):
+		'''
+		Returns True if metadata values are in term doc matrix.
+
+		Returns
+		-------
+		bool
+		'''
+		return len(self._metadata_idx_store) > 0
+
 	def remove_terms_by_indices(self, idx_to_delete_list):
 		'''
 		Parameters
@@ -461,8 +481,7 @@ class TermDocMatrix(object):
 		-------
 		TermDocMatrix
 		'''
-		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
-		new_X = delete_columns(self._X, idx_to_delete_list)
+		new_X, new_term_idx_store = self._get_X_after_delete_terms(idx_to_delete_list)
 		return self._make_new_term_doc_matrix(new_X,
 		                                      self._mX,
 		                                      self._y,
@@ -470,6 +489,11 @@ class TermDocMatrix(object):
 		                                      self._category_idx_store,
 		                                      self._metadata_idx_store,
 		                                      self._y == self._y)
+
+	def _get_X_after_delete_terms(self, idx_to_delete_list):
+		new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
+		new_X = delete_columns(self._X, idx_to_delete_list)
+		return new_X, new_term_idx_store
 
 	def remove_terms_used_in_less_than_num_docs(self, threshold):
 		'''
@@ -656,6 +680,18 @@ class TermDocMatrix(object):
 
 	def _get_continuous_version_boolean_y(self, y_bool):
 		return 1000 * (y_bool * 2. - 1)
+
+	def get_doc_lengths(self):
+		'''
+		Returns a list of document lengths in words
+
+		Returns
+		-------
+		np.array
+		'''
+		idx_to_delete_list = self._build_term_index_list(True, self._get_non_unigrams())
+		unigram_X, _ = self._get_X_after_delete_terms(idx_to_delete_list)
+		return unigram_X.sum(axis=1).A1
 
 	def get_scaled_f_scores(self,
 	                        category,
@@ -953,3 +989,26 @@ class TermDocMatrix(object):
 		pd.Dataframe
 		'''
 		return term_ranker(self).get_ranks()
+
+	def get_category_ids(self):
+		'''
+		Returns array of category ids
+
+		Returns
+		-------
+		np.array
+		'''
+		return self._y
+
+	def get_term_counts_from_term_as_category(self, term):
+		'''
+		Parameters
+		----------
+		term : str
+			Term to use as a category marker
+
+		Returns
+		-------
+		pd.DataFrame
+		'''
+		sel

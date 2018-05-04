@@ -40,7 +40,8 @@ class HTMLVisualizationAssembly(object):
 	             do_censor_points=True,
 	             center_label_over_points=False,
 	             x_axis_labels=None,
-	             y_axis_labels=None):
+	             y_axis_labels=None,
+	             topic_model_preview_size=10):
 		'''
 
 		Parameters
@@ -118,6 +119,9 @@ class HTMLVisualizationAssembly(object):
 			List of string value-labels to show at evenly spaced intervals on the y-axis.
 			Low, medium, high are defaults.  This relies on d3's ticks function, which can
 			behave unpredictable. Caveat usor.
+		topic_model_preview_size : int, default 10
+			If topic models are being visualized, show the first topic_model_preview_size topics
+			in a preview.
 
 		'''
 		self._visualization_data = visualization_data
@@ -151,6 +155,7 @@ class HTMLVisualizationAssembly(object):
 		self._show_extra = show_extra
 		self._do_censor_points = do_censor_points
 		self._center_label_over_points = center_label_over_points
+		self._topic_model_preview_size = topic_model_preview_size
 
 	def to_html(self,
 	            protocol='http',
@@ -291,5 +296,6 @@ class HTMLVisualizationAssembly(object):
 		             js_bool(self._do_censor_points),
 		             js_bool(self._center_label_over_points),
 		             js_list_or_null(self._x_axis_labels),
-		             js_list_or_null(self._y_axis_labels)]
+		             js_list_or_null(self._y_axis_labels),
+		             js_default_value(self._topic_model_preview_size)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

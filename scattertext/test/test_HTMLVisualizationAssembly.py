@@ -14,7 +14,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
 		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
-		          'null', 'null']
+		          'null', 'null', '10']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -343,3 +343,11 @@ class TestHTMLVisualizationAssembly(TestCase):
 		                                            y_axis_labels=['Lo', 'Hi'])
 			._call_build_visualization_in_javascript()),
 		                 self.get_params({29: '["Lo", "Hi"]'}))
+
+
+	def test_topic_model_preview_size(self):
+		visualization_data = self.make_adapter()
+		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
+		                                            topic_model_preview_size=20)
+			._call_build_visualization_in_javascript()),
+		                 self.get_params({30: '20'}))

@@ -4,15 +4,15 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.25
+# Scattertext 0.0.2.26
 ### Updates
-Added `TermCategoryFrequencies` in response to Issue 23.  Please see [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies) 
-for more details. 
 
-Added `x_axis_labels` and `y_axis_labels` parameters to `produce_scattertext_explorer`. 
-These let you include evenly-spaced string axis labels on the chart, as opposed to just
-"Low", "Medium" and "High". These rely on d3's ticks function, which can behave 
-unpredictable. Caveat usor.
+Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is 
+clicked.  
+
+Enabled display of terms in topic models in explorer, along with the the display of 
+customized topic models.  Please see [Visualizing topic models](#visualizing-topic-models) for an
+overview of the additions.
 
 **Table of Contents**
 
@@ -29,6 +29,7 @@ unpredictable. Caveat usor.
     - [Emoji analysis](#emoji-analysis)
     - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
     - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
+    - [Visualizing topic models](#visualizing-topic-models)
     - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
@@ -284,10 +285,15 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
  category-association strength, setting `use_full_doc=True` makes sense, unless you have
  enormous documents.  Otherwise, the first 300 characters will be shown.
  
+(New in 0.0.26). Ensure you include `topic_model_term_lists=feat_builder.get_top_model_term_lists()`
+in `produce_scattertext_explorer` to ensure it bolds passages of snippets that match the 
+topic model.
+ 
 ```pydocstring
+>>> feat_builder = st.FeatsFromOnlyEmpath()
 >>> empath_corpus = st.CorpusFromParsedDocuments(convention_df,
 ...                                              category_col='party',
-...                                              feats_from_spacy_doc=st.FeatsFromOnlyEmpath(),
+...                                              feats_from_spacy_doc=feat_builder,
 ...                                              parsed_col='text').build()
 >>> html = st.produce_scattertext_explorer(empath_corpus,
 ...                                        category='democrat',
@@ -296,18 +302,12 @@ When creating the visualization, pass the `use_non_text_features=True` argument 
 ...                                        width_in_pixels=1000,
 ...                                        metadata=convention_df['speaker'],
 ...                                        use_non_text_features=True,
-...                                        use_full_doc=True)
+...                                        use_full_doc=True,
+...                                        topic_model_term_lists=feat_builder.get_top_model_term_lists())
 >>> open("Convention-Visualization-Empath.html", 'wb').write(html.encode('utf-8'))
 ``` 
 
-html = st.produce_scattertext_explorer(empath_corpus,
-                                        category='democrat',
-                                        category_name='Democratic',
-                                        not_category_name='Republican',
-                                        width_in_pixels=1000,
-                                        metadata=convention_df['speaker'],
-                                        use_non_text_features=True,
-                                        use_full_doc=True)
+
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
 ### Understanding Scaled F-Score
@@ -882,6 +882,166 @@ html = st.produce_semiotic_square_explorer(semiotic_square,
 
 There are a number of other types of semiotic square construction functions.  
 
+### Visualizing Topic Models
+A frequently requested feature of Scattertext has been the ability to visualize topic 
+models. While this capability has existed in some forms (e.g., the Empath visualization),
+I've finally gotten around to implementing a concise API for such a visualization. 
+There are three main ways to visualize topic models using Scattertext.
+The first is the simplest: manually entering topic models and visualizing them.
+The second uses a Scikit-Learn pipeline to produce the topic models for visualization.
+The third is a novel topic modeling technique, based on finding terms similar to a
+custom set of seed terms.  
+
+#### Manually entered topic models
+
+If you have already created a topic model, simply structure it as a dictionary. 
+This dictionary is keyed on string which serve as topic titles and are displayed
+in the main scatterplot.  The values are lists of words that belong to that topic. The words
+that are in each topic list are bolded when they appear in a snippet. 
+
+Note that currently, there is no support for keyword scores.
+
+For example, one might manually the following topic models to explore in the Convention
+corpus: 
+
+```python
+topic_model = {
+  'money': ['money','bank','banks','finances','financial','loan','dollars','income'],
+  'jobs':['jobs','workers','labor','employment','worker','employee','job'],
+  'patriotic':['america','country','flag','americans','patriotism','patriotic'],
+  'family':['mother','father','mom','dad','sister','brother','grandfather','grandmother','son','daughter']
+}
+```
+
+We can use the `FeatsFromTopicModel` class to transform this topic model into one which
+can be visualized using Scattertext. This is used just like any other feature builder,
+and we pass the topic model object into `produce_scattertext_explorer`.
+
+```
+import scattertext as st
+
+topic_feature_builder = st.FeatsFromTopicModel(topic_model)
+
+topic_corpus = st.CorpusFromParsedDocuments(
+	convention_df,
+	category_col='party',
+	parsed_col='parse',
+	feats_from_spacy_doc=topic_feature_builder
+).build()
+
+html = st.produce_scattertext_explorer(
+	topic_corpus,
+	category='democrat',
+	category_name='Democratic',
+	not_category_name='Republican',
+	width_in_pixels=1000,
+	metadata=convention_df['speaker'],
+	use_non_text_features=True,
+	use_full_doc=True,
+	pmi_threshold_coefficient=0,
+	topic_model_term_lists=topic_feature_builder.get_top_model_term_lists()
+)
+```
+
+[![demo_custom_topic_model.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_custom_topic_model.png)](https://jasonkessler.github.io/demo_custom_topic_model.html)
+
+#### Using Scikit-Learn for Topic Modeling
+
+Since topic modeling using document-level coocurence generally produces poor results,
+I've added a `SentencesForTopicModeling` class which allows clusterting by coocurence
+at the sentence-level.  It requires a `ParsedCorpus` object to be passed to its constructor,
+and creates a term-sentence matrix internally.
+
+Next, you can create a topic model dictionary like the one above by passing in a Scikit-Learn
+clustering or dimensionality reduction pipeline. The only constraint is the last transformer
+in the pipeline must populate a `components_` attribute.
+
+The `num_topics_per_term` attribute specifies how many terms should be added to a list.
+
+In the following example, we'll use NMF to cluster a stoplisted, unigram corpus of documents,
+and use the topic model dictionary to create a `FeatsFromTopicModel`, just like before.
+
+Note that in `produce_scattertext_explorer`, we make the `topic_model_preview_size` 20 in order to show
+a preview of the first 20 terms in the topic in the snippet view as opposed to the default 10. 
+
+```python
+from sklearn.decomposition import NMF
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.pipeline import Pipeline
+
+convention_df = st.SampleCorpora.ConventionData2012.get_data()
+convention_df['parse'] = convention_df['text'].apply(st.whitespace_nlp_with_sentences)
+
+unigram_corpus = (st.CorpusFromParsedDocuments(convention_df,
+                                               category_col='party',
+                                               parsed_col='parse')
+                  .build().get_stoplisted_unigram_corpus())
+topic_model = st.SentencesForTopicModeling(unigram_corpus).get_topics_from_model(
+	Pipeline([
+		('tfidf', TfidfTransformer(sublinear_tf=True)),
+		('nmf', (NMF(n_components=100, alpha=.1, l1_ratio=.5, random_state=0)))
+	]),
+	num_terms_per_topic=20
+)
+  
+topic_feature_builder = st.FeatsFromTopicModel(topic_model)
+
+
+topic_corpus = st.CorpusFromParsedDocuments(
+	convention_df,
+	category_col='party',
+	parsed_col='parse',
+	feats_from_spacy_doc=topic_feature_builder
+).build()
+
+html = st.produce_scattertext_explorer(
+	topic_corpus,
+	category='democrat',
+	category_name='Democratic',
+	not_category_name='Republican',
+	width_in_pixels=1000,
+	metadata=convention_df['speaker'],
+	use_non_text_features=True,
+	use_full_doc=True,
+	pmi_threshold_coefficient=0,
+	topic_model_term_lists=topic_feature_builder.get_top_model_term_lists(),
+	topic_model_preview_size=20
+)
+```
+[![demo_nmf_topic_model.html](https://jasonkessler.github.io/demo_nmf_topic_model.png)](https://jasonkessler.github.io/demo_nmf_topic_model.html)
+
+#### Using a Word List to Generate a Series of Topics
+
+A surprisingly easy way to generate good topic models is to use a term scoring formula
+to find words that are associated with sentences where a seed word occurs vs. where
+one doesn't occur.  
+
+Given a custom term list, the `SentencesForTopicModeling.get_topics_from_terms` will
+generate a series of topics.  Note that the dense rank difference (`RankDifference`) works 
+particularly well for this task, and is the default paramter.
+
+```python
+term_list = ['obama', 'romney', 'democrats', 'republicans', 'health', 'military', 'taxes',
+ 'education', 'olympics', 'auto', 'iraq', 'iran', 'israel']
+
+unigram_corpus = (st.CorpusFromParsedDocuments(convention_df,
+                                               category_col='party',
+                                               parsed_col='parse')
+                  .build().get_stoplisted_unigram_corpus())
+
+topic_model = (st.SentencesForTopicModeling(unigram_corpus)
+               .get_topics_from_terms(term_list,
+                                      scorer=st.RankDifference(), 
+                                      num_terms_per_topic=20))
+
+topic_feature_builder = st.FeatsFromTopicModel(topic_model)
+# The remaining code is identical to two examples above. See demo_word_list_topic_model.py
+# for the complete example.
+```
+
+[![demo_word_list_topic_model.html](https://jasonkessler.github.io/demo_word_list_topic_model.png)](https://jasonkessler.github.io/demo_word_list_topic_model.html)
+
+
 ### Creating T-SNE-style word embedding projection plots
 
 Scattertext makes it easy to create word-similarity plots using projections of word embeddings as the x and y-axes. 
@@ -945,6 +1105,16 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+### 0.0.2.24-25
+Added `TermCategoryFrequencies` in response to Issue 23.  Please see [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies) 
+for more details. 
+
+Added `x_axis_labels` and `y_axis_labels` parameters to `produce_scattertext_explorer`. 
+These let you include evenly-spaced string axis labels on the chart, as opposed to just
+"Low", "Medium" and "High". These rely on d3's ticks function, which can behave 
+unpredictable. Caveat usor.
+
 
 ### 0.0.2.16-23.1
 Semiotic Squares now look better, and have customizable labels. 
@@ -1201,7 +1371,8 @@ Added an optional save-as-SVG button.
 Addition option of showing characteristic terms (from the full set of documents) being considered.
 The option (`show_characteristic` in `produce_scattertext_explorer`) is on by default, 
 but currently unavailable for Chinese.  If you know of a good Chinese wordcount list,
-please let me know.  The algorithm used to produce these is F-Score.  See [this and the following slide](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/58) for more details
+please let me know.  The algorithm used to produce these is F-Score.  
+See [this and the following slide](http://www.slideshare.net/JasonKessler/turning-unstructured-content-into-kernels-of-ideas/58) for more details
 
 ### 0.0.2.1.5
 

@@ -16,6 +16,7 @@ from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 from scattertext.test.test_semioticSquare import get_docs_categories_semiotic
+from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus_with_meta
 
 
 def make_a_test_term_doc_matrix():
@@ -305,8 +306,21 @@ class TestTermDocMat(TestCase):
 		self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
 		                 ['the', 'starts', 'incorporal'])
 
+	def test_get_doc_lengths(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		hamlet_unigram = hamlet.get_unigram_corpus()
+		self.assertEqual(len(hamlet.get_doc_lengths()), hamlet.get_num_docs())
+		np.testing.assert_array_equal(hamlet.get_doc_lengths(), hamlet_unigram._X.sum(axis=1).A1)
 
-# ['hamlet', 'hamlet,', 'the'])
+	def test_get_category_ids(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		np.testing.assert_array_equal(hamlet.get_category_ids(), hamlet._y)
+
+	def test_metadata_in_use(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		self.assertFalse(hamlet.metadata_in_use())
+		hamlet_meta = build_hamlet_jz_corpus_with_meta()
+		self.assertTrue(hamlet_meta.metadata_in_use())
 
 
 def get_hamlet_term_doc_matrix():

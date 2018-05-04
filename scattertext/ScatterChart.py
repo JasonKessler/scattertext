@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
@@ -17,6 +19,38 @@ class NoWordMeetsTermFrequencyRequirementsError(Exception):
 
 class CoordinatesNotRightException(Exception): pass
 
+
+class TermDocMatrixHasNoMetadataException(Exception): pass
+
+def check_topic_model_string_format(term_dict):
+	'''
+	Parameters
+	----------
+	term_dict: dict {metadataname: [term1, term2, ....], ...}
+
+	Returns
+	-------
+	None
+	'''
+	if type(term_dict) != dict:
+		raise TypeError("Argument for term_dict must be a dict, keyed on strings, and contain a list of strings.")
+	for k, v in term_dict.items():
+		if type(v) != list:
+			raise TypeError("Values in term dict must only be lists.")
+
+		if sys.version_info[0] == 2:
+			if type(k) != str and type(k) != unicode:
+				raise TypeError("Keys in term dict must be of type str or unicode.")
+			for e in v:
+				if type(k) != str and type(k) != unicode:
+					raise TypeError("Values in term lists must be str or unicode.")
+
+		if sys.version_info[0] == 3:
+			if type(k) != str:
+				raise TypeError("Keys in term dict must be of type str.")
+			for e in v:
+				if type(e) != str:
+					raise TypeError("Values in term lists must be str.")
 
 class ScatterChart:
 	def __init__(self,
@@ -38,6 +72,27 @@ class ScatterChart:
 		self._rescale_x = None
 		self._rescale_y = None
 		self.used = False
+		self.metadata_term_lists = None
+
+	def inject_metadata_term_lists(self, term_dict):
+		'''
+		Inserts dictionary of meta data terms into object.
+
+		Parameters
+		----------
+		term_dict: dict {metadataname: [term1, term2, ....], ...}
+
+		Returns
+		-------
+		self: ScatterChart
+		'''
+		check_topic_model_string_format(term_dict)
+
+		if not self.term_doc_matrix.metadata_in_use():
+			raise TermDocMatrixHasNoMetadataException("No metadata is present in the term document matrix")
+
+		self.metadata_term_lists = term_dict
+		return self
 
 	def inject_coordinates(self,
 	                       x_coords,
@@ -183,13 +238,13 @@ class ScatterChart:
 		category_column_name = category + ' freq'
 		df['category score'] = CornerScore.get_scores_for_category(
 			df[category_column_name],
-			df[[c+' freq' for c in not_categories]].sum(axis=1)
+			df[[c + ' freq' for c in not_categories]].sum(axis=1)
 		)
 		if self.scatterchartdata.term_significance is not None:
 			df['p'] = get_p_vals(df, category_column_name,
 			                     self.scatterchartdata.term_significance)
 		df['not category score'] = CornerScore.get_scores_for_category(
-			df[[c+' freq' for c in not_categories]].sum(axis=1),
+			df[[c + ' freq' for c in not_categories]].sum(axis=1),
 			df[category_column_name]
 		)
 		df['color_scores'] = scores
@@ -211,8 +266,6 @@ class ScatterChart:
 			assert self.scatterchartdata.max_terms > 0
 			df = self._limit_max_terms(category, df)
 		df = df.reset_index()
-
-
 
 		if self.x_coords is None:
 			self.x_coords, self.y_coords = self._get_coordinates_from_transform_and_jitter_frequencies \
@@ -264,6 +317,8 @@ class ScatterChart:
 		              'categories': self.term_doc_matrix.get_categories(),
 		              'neutral_category_internal_names': neutral_categories,
 		              'extra_category_internal_names': extra_categories}}
+		if self.metadata_term_lists is not None:
+			j['metalists'] = self.metadata_term_lists
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 
@@ -291,14 +346,14 @@ class ScatterChart:
 	def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
 		json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
 		                       / term_freq_df[category + ' freq'].sum()) * 25000)
-			.apply(np.round).astype(np.int))
+		                     .apply(np.round).astype(np.int))
 		json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
 		                        / term_freq_df['not cat freq'].sum()) * 25000)
-			.apply(np.round).astype(np.int))
+		                      .apply(np.round).astype(np.int))
 		if 'neut cat freq' in term_freq_df:
 			json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
 			                        / term_freq_df['neut cat freq'].sum()) * 25000)
-				.apply(np.round).astype(np.int))
+			                      .apply(np.round).astype(np.int))
 			json_df['neut'] = term_freq_df['neut cat freq']
 		else:
 			json_df['neut25k'] = 0
@@ -306,7 +361,7 @@ class ScatterChart:
 		if 'extra cat freq' in term_freq_df:
 			json_df['extra25k'] = (((term_freq_df['extra cat freq'] * 1.
 			                         / term_freq_df['extra cat freq'].sum()) * 25000)
-				.apply(np.round).astype(np.int))
+			                       .apply(np.round).astype(np.int))
 			json_df['extra'] = term_freq_df['extra cat freq']
 		else:
 			json_df['extra25k'] = 0
@@ -324,7 +379,7 @@ class ScatterChart:
 	                                                           df,
 	                                                           other_categories,
 	                                                           transform):
-		not_counts = df[[c + ' freq'  for c in other_categories]].sum(axis=1)
+		not_counts = df[[c + ' freq' for c in other_categories]].sum(axis=1)
 		counts = df[category + ' freq']
 		x_data_raw = transform(not_counts, df.index, counts)
 		y_data_raw = transform(counts, df.index, not_counts)
@@ -425,7 +480,6 @@ class ScatterChart:
 
 	def _term_importance_ranks(self, category, df):
 		return np.array([df['category score rank'], df['not category score rank']]).min(axis=0)
-
 
 	def draw(self,
 	         category,

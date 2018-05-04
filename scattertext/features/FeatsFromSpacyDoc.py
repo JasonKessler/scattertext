@@ -72,3 +72,16 @@ class FeatsFromSpacyDoc(object):
 				elif tok.lower_.strip():
 					unigrams.append(self._post_process_term(tok.lower_.strip()))
 		return unigrams
+
+	def has_metadata_term_list(self):
+		'''
+		Returns True if there is a meta data term list associated with object, False if not.
+
+		Returns
+		-------
+		bool
+		'''
+		return False
+
+	def get_top_model_term_lists(self):
+		raise Exception("No topic models associated with these features.")

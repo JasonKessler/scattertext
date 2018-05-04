@@ -60,3 +60,9 @@ class FeatsFromGeneralInquirer(FeatsFromSpacyDoc):
 		for empath_category, score in self._analyze(doc).to_dict()[0].items():
 			empath_counter[prefix + empath_category] = int(score)
 		return empath_counter
+
+	def has_metadata_term_list(self):
+		return True
+
+	def get_top_model_term_lists(self):
+		return self._lexicon_df.reset_index().groupby('cat')['term'].apply(list).to_dict()

@@ -43,3 +43,13 @@ class FeatsFromSpacyDocAndEmpath(FeatsFromSpacyDoc):
 			if score > 0:
 				empath_counter[prefix + empath_category] = int(score)
 		return empath_counter
+
+	def has_metadata_term_list(self):
+		return True
+
+	def get_top_model_term_lists(self):
+		try:
+			import empath
+		except ImportError:
+			raise Exception("Please install the empath library to use FeatsFromSpacyDocAndEmpath.")
+		return dict(empath.Empath().cats)

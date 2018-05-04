@@ -1,19 +1,20 @@
 from __future__ import print_function
 
+version = [0, 0, 2, 26]
+__version__ = '.'.join([str(e) for e in version])
+
 import re
+import warnings
+import numpy as np
+import pandas as pd
+import scattertext.viz
 
 from scattertext.CorpusDF import CorpusDF
 from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.diachronic import GanttChart
-
-version = [0, 0, 2, 25]
-__version__ = '.'.join([str(e) for e in version])
-
-import warnings
-import numpy as np
-import pandas as pd
-import scattertext.viz
+from scattertext.features.FeatsFromTopicModel import FeatsFromTopicModel
+from scattertext.termscoring.BM25Difference import BM25Difference
 from scattertext import SampleCorpora
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
@@ -38,7 +39,8 @@ from scattertext.TermDocMatrixFactory import TermDocMatrixFactory, FeatsFromDoc
 from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_by_pmis
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
-from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, tweet_tokenzier_factory
+from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, \
+	tweet_tokenzier_factory
 from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
@@ -47,7 +49,8 @@ from scattertext.features.UnigramsFromSpacyDoc import UnigramsFromSpacyDoc
 from scattertext.features.FeatsFromSpacyDocAndEmpath import FeatsFromSpacyDocAndEmpath
 from scattertext.features.FeatsFromSpacyDocOnlyEmoji import FeatsFromSpacyDocOnlyEmoji
 from scattertext.features.FeatsFromSpacyDocOnlyNounChunks import FeatsFromSpacyDocOnlyNounChunks
-from scattertext.features.PhraseMachinePhrases import PhraseMachinePhrases, PhraseMachinePhrasesAndUnigrams
+from scattertext.features.PhraseMachinePhrases \
+	import PhraseMachinePhrases, PhraseMachinePhrasesAndUnigrams
 from scattertext.indexstore import IndexStoreFromDict
 from scattertext.indexstore import IndexStoreFromList
 from scattertext.indexstore.IndexStore import IndexStore
@@ -57,11 +60,13 @@ from scattertext.semioticsquare import SemioticSquare, FourSquareAxis
 from scattertext.semioticsquare.FourSquare import FourSquare
 from scattertext.termranking import OncePerDocFrequencyRanker
 from scattertext.termscoring.RankDifference import RankDifference
-from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFZScore, \
-	ScaledFZScorePrior, ScaledFScorePresetsNeg1To1
+from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, \
+	ScaledFZScore, ScaledFZScorePrior, ScaledFScorePresetsNeg1To1
 from scattertext.termsignificance.LogOddsRatioAddOne import LogOddsRatioAddOne
-from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror import LogOddsRatioInformativeDirichletPrior
-from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior import LogOddsRatioUninformativeDirichletPrior
+from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror \
+	import LogOddsRatioInformativeDirichletPrior
+from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior \
+	import LogOddsRatioUninformativeDirichletPrior
 from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
@@ -70,7 +75,7 @@ from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
-
+from scattertext.topicmodel.SentencesForTopicModeling import SentencesForTopicModeling
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -197,7 +202,9 @@ def produce_scattertext_explorer(corpus,
                                  censor_points=True,
                                  center_label_over_points=False,
                                  x_axis_labels=None,
-                                 y_axis_labels=None):
+                                 y_axis_labels=None,
+                                 topic_model_term_lists=None,
+                                 topic_model_preview_size=10):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -360,6 +367,11 @@ def produce_scattertext_explorer(corpus,
 	y_axis_labels : list, default None
 		List of string value-labels to show at evenly spaced intervals on the y-axis.
 		Low, medium, high are defaults.
+	topic_model_term_lists : dict default None
+		Dict of metadata name (str) -> List of string terms in metatdata. These will be bolded
+		in query in context results.
+	topic_model_preview_size : int default 10
+		Number of terms in topic model to show as a preview.
 
 	Returns
 	-------
@@ -405,6 +417,9 @@ def produce_scattertext_explorer(corpus,
 			"The argument name 'pmi_filter_thresold' has been deprecated. Use 'pmi_threshold_coefficient' in its place",
 			DeprecationWarning)
 
+	if use_non_text_features:
+		pmi_threshold_coefficient = 0
+
 	scatter_chart_explorer = ScatterChartExplorer(corpus,
 	                                              minimum_term_frequency=minimum_term_frequency,
 	                                              minimum_not_category_term_frequency=minimum_not_category_term_frequency,
@@ -426,6 +441,8 @@ def produce_scattertext_explorer(corpus,
 		                                          rescale_y=rescale_y,
 		                                          original_x=original_x,
 		                                          original_y=original_y)
+	if topic_model_term_lists is not None:
+		scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
 	html_base = None
 	if semiotic_square:
 		html_base = get_semiotic_square_html(num_terms_semiotic_square,
@@ -472,7 +489,8 @@ def produce_scattertext_explorer(corpus,
 	                                 do_censor_points=censor_points,
 	                                 center_label_over_points=center_label_over_points,
 	                                 x_axis_labels=x_axis_labels,
-	                                 y_axis_labels=y_axis_labels) \
+	                                 y_axis_labels=y_axis_labels,
+	                                 topic_model_preview_size=topic_model_preview_size) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,

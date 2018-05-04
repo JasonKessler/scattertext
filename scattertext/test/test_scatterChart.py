@@ -1,11 +1,10 @@
-import json
 from unittest import TestCase
 
 import numpy as np
 
 from scattertext import LogOddsRatioUninformativeDirichletPrior
 from scattertext import ScatterChart
-from scattertext.ScatterChart import CoordinatesNotRightException
+from scattertext.ScatterChart import CoordinatesNotRightException, TermDocMatrixHasNoMetadataException
 from scattertext.test.test_semioticSquare import get_test_corpus
 from scattertext.test.test_termDocMatrixFactory \
 	import build_hamlet_jz_term_doc_mat, build_hamlet_jz_corpus_with_meta
@@ -18,7 +17,7 @@ class TestScatterChart(TestCase):
 		#	ScatterChart(term_doc_matrix=tdm).to_dict('hamlet')
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(set(j.keys()), set(['info', 'data']))
 		self.assertEqual(set(j['info'].keys()),
 		                 set(['not_category_name',
@@ -59,9 +58,9 @@ class TestScatterChart(TestCase):
 
 	def test_multi_categories(self):
 		corpus = get_test_corpus()
-		j_vs_all = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0)\
+		j_vs_all = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0) \
 			.to_dict('hamlet')
-		j_vs_swift = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0)\
+		j_vs_swift = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0) \
 			.to_dict('hamlet', not_categories=['swift'])
 		self.assertNotEqual(set(j_vs_all['info']['not_category_internal_names']),
 		                    set(j_vs_swift['info']['not_category_internal_names']))
@@ -72,13 +71,13 @@ class TestScatterChart(TestCase):
 		tdm = build_hamlet_jz_term_doc_mat()
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0)
-			.to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
 		self.assertEqual(j['info']['category_name'], 'HAMLET')
 		self.assertEqual(j['info']['not_category_name'], 'NOT HAMLET')
 		tdm = build_hamlet_jz_term_doc_mat()
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0)
-			.to_dict('hamlet', 'HAMLET', 'NOT HAMLET', title_case_names=True))
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET', title_case_names=True))
 		self.assertEqual(j['info']['category_name'], 'Hamlet')
 		self.assertEqual(j['info']['not_category_name'], 'Not Hamlet')
 
@@ -91,7 +90,7 @@ class TestScatterChart(TestCase):
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  terms_to_include=terms_to_include)
-			.to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
+		     .to_dict('hamlet', 'HAMLET', 'NOT HAMLET'))
 		self.assertEqual(list(sorted(t['term'] for t in j['data'])), terms_to_include)
 
 	def test_p_vals(self):
@@ -99,7 +98,7 @@ class TestScatterChart(TestCase):
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  term_significance=LogOddsRatioUninformativeDirichletPrior())
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		datum = self._get_data_example(j)
 		self.assertIn('p', datum.keys())
 
@@ -130,6 +129,38 @@ class TestScatterChart(TestCase):
 			scatter_chart.inject_coordinates(x / x.max(), -y / y.max())
 		scatter_chart.inject_coordinates(x / x.max(), y / y.max())
 
+	def test_inject_metadata_term_lists(self):
+		tdm = build_hamlet_jz_term_doc_mat()
+		scatter_chart = ScatterChart(term_doc_matrix=tdm,
+		                             minimum_term_frequency=0)
+		with self.assertRaises(TermDocMatrixHasNoMetadataException):
+			scatter_chart.inject_metadata_term_lists({'blah': ['a', 'adsf', 'asfd']})
+		scatter_chart = ScatterChart(term_doc_matrix=build_hamlet_jz_corpus_with_meta(),
+		                 minimum_term_frequency=0,
+		                 use_non_text_features=True)
+
+		with self.assertRaises(TypeError):
+			scatter_chart.inject_metadata_term_lists({'blash': [3,1]})
+		with self.assertRaises(TypeError):
+			scatter_chart.inject_metadata_term_lists({3: ['a','b']})
+		with self.assertRaises(TypeError):
+			scatter_chart.inject_metadata_term_lists({'a': {'a','b'}})
+		with self.assertRaises(TypeError):
+			scatter_chart.inject_metadata_term_lists(3)
+		self.assertEqual(type(scatter_chart.inject_metadata_term_lists({'a': ['a', 'b']})), ScatterChart)
+		j = scatter_chart.to_dict('hamlet')
+		self.assertEqual(set(j.keys()), set(['info', 'data', 'metalists']))
+		self.assertEqual(set(j['info'].keys()),
+		                 set(['not_category_name',
+		                      'category_name',
+		                      'category_terms',
+		                      'not_category_terms',
+		                      'category_internal_name',
+		                      'not_category_internal_names',
+		                      'extra_category_internal_names',
+		                      'neutral_category_internal_names',
+		                      'categories']))
+
 	def test_inject_coordinates_original(self):
 		tdm = build_hamlet_jz_term_doc_mat()
 		freq_df = tdm.get_term_freq_df()
@@ -140,7 +171,8 @@ class TestScatterChart(TestCase):
 		scatter_chart.inject_coordinates(x / x.max(), y / y.max(), original_x=x, original_y=y)
 		j = scatter_chart.to_dict('hamlet')
 		self.assertEqual(j['data'][0].keys(),
-		                 {'x', 'os', 'y', 'ncat25k', 'neut', 'cat25k', 'ox', 'neut25k', 'extra25k', 'extra', 'oy', 'term', 's', 'bg'})
+		                 {'x', 'os', 'y', 'ncat25k', 'neut', 'cat25k', 'ox', 'neut25k', 'extra25k', 'extra', 'oy', 'term',
+		                  's', 'bg'})
 		and_term = [t for t in j['data'] if t['term'] == 'and'][0]
 		self.assertEqual(and_term['ox'], 0)
 		self.assertEqual(and_term['oy'], 1)
@@ -152,7 +184,7 @@ class TestScatterChart(TestCase):
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  use_non_text_features=True)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(set(j.keys()), set(['info', 'data']))
 		self.assertEqual(set(j['info'].keys()),
 		                 set(['not_category_name',
@@ -173,25 +205,25 @@ class TestScatterChart(TestCase):
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  max_terms=2)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(2, len(j['data']))
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  max_terms=10)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(10, len(j['data']))
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  pmi_threshold_coefficient=0,
 		                  max_terms=10000)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(len(tdm.get_term_freq_df()), len(j['data']))
 
 		j = (ScatterChart(term_doc_matrix=tdm,
 		                  minimum_term_frequency=0,
 		                  pmi_threshold_coefficient=0,
 		                  max_terms=None)
-			.to_dict('hamlet'))
+		     .to_dict('hamlet'))
 		self.assertEqual(len(tdm.get_term_freq_df()), len(j['data']))

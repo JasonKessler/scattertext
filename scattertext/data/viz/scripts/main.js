@@ -28,7 +28,8 @@ buildViz = function (d3) {
                      doCensorPoints = true,
                      centerLabelsOverPoints = false,
                      xAxisLabels = null,
-                     yAxisLabels = null) {
+                     yAxisLabels = null,
+                     topic_model_preview_size=10) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -43,6 +44,7 @@ buildViz = function (d3) {
         // Set the ranges
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
+
 
         if (showNeutral) {
 
@@ -152,7 +154,9 @@ buildViz = function (d3) {
         } else if (xAxisLabels) {
             xAxis = d3.axisBottom(x)
                 .ticks(xAxisLabels.length)
-                .tickFormat(function (d, i) { return xAxisLabels[i]; });
+                .tickFormat(function (d, i) {
+                    return xAxisLabels[i];
+                });
         } else {
             xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
         }
@@ -161,7 +165,9 @@ buildViz = function (d3) {
         } else if (yAxisLabels) {
             yAxis = d3.axisLeft(y)
                 .ticks(yAxisLabels.length)
-                .tickFormat(function(d, i) {return yAxisLabels[i];});
+                .tickFormat(function (d, i) {
+                    return yAxisLabels[i];
+                });
         } else {
             yAxis = d3.axisLeft(y).ticks(3).tickFormat(axisLabelerFactory('y'));
         }
@@ -494,7 +500,39 @@ buildViz = function (d3) {
             }).filter(function (x) {
                 return x > -1
             });
+            var neutralCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
+            var extraCategoryNumList = fullData.docs.categories.map(function (x, i) {
+                if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            }).filter(function (x) {
+                return x > -1
+            });
 
+            var pattern = null;
+            if ('metalists' in fullData && term in fullData.metalists) {
+                // from https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+                function escapeRegExp(str) {
+                    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+                }
+
+                console.log('term');
+                console.log(term);
+                pattern = new RegExp(
+                    '\\b(' + fullData.metalists[term].map(escapeRegExp).join('|') + ')\\b',
+                    'gim'
+                );
+            }
 
             for (var i in fullData.docs.extra) {
                 if (term in fullData.docs.extra[i]) {
@@ -503,19 +541,32 @@ buildViz = function (d3) {
                             function (a, b) {
                                 return a + b
                             });
-                    var text = fullData.docs.texts[i];
-                    if (!useFullDoc)
-                        text = text.slice(0, 300);
-                    var curMatch = {'id': i, 'snippets': [text], 'strength': strength};
 
-                    curMatch['meta'] = fullData.docs.meta[i];
                     var docLabel = fullData.docs.labels[i];
-                    var numericLabel = 2;
+                    var numericLabel = -1;
                     if (docLabel == categoryNum) {
                         numericLabel = 0;
                     } else if (notCategoryNumList.indexOf(docLabel) > -1) {
                         numericLabel = 1;
+                    } else if (neutralCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 2;
+                    } else if (extraCategoryNumList.indexOf(docLabel) > -1) {
+                        numericLabel = 3;
                     }
+                    if (numericLabel == -1) {
+                        continue;
+                    }
+                    var text = fullData.docs.texts[i];
+                    if (!useFullDoc)
+                        text = text.slice(0, 300);
+                    if (pattern !== null) {
+                        text = text.replace(pattern, '<b>$&</b>');
+                    }
+                    var curMatch = {'id': i, 'snippets': [text], 'strength': strength};
+
+                    curMatch['meta'] = fullData.docs.meta[i];
+
+
                     matches[numericLabel].push(curMatch);
                 }
             }
@@ -642,10 +693,25 @@ buildViz = function (d3) {
             d3.select('#termstats')
                 .selectAll("div")
                 .remove();
+            var termHtml = 'Term: <b>' + info.term + '</b>';
+            if ('metalists' in fullData && info.term in fullData.metalists) {
+                termHtml = 'Topic: <b>' + info.term + '</b>';
+            }
             d3.select('#termstats')
                 .append('div')
                 .attr("class", "snippet_header")
-                .html('Term: <b>' + info.term + '</b>');
+                .html(termHtml);
+            if ('metalists' in fullData && info.term in fullData.metalists) {
+                d3.select('#termstats')
+                    .attr("class", "topic_preview")
+                    .append('div')
+                    .html("<b>Topic preview</b>: "
+                        + fullData.metalists[info.term]
+                            .slice(0, topic_model_preview_size)
+                            .reduce(function (x, y) {
+                                return x + ', ' + y
+                            }));
+            }
             var message = '';
             var cat_name = fullData.info.category_name;
             var ncat_name = fullData.info.not_category_name;
@@ -900,8 +966,8 @@ buildViz = function (d3) {
                     var lastSentenceStart = null;
                     var matchFound = false;
                     var curMatch = {'id': i, 'snippets': []};
-                    if (fullData.docs.meta) {
-                        curMatch['meta'] = fullData.docs.meta[i];
+                    if (fullData.docs.extra) {
+                        curMatch['meta'] = fullData.docs.extra[i];
                     }
                     while ((match = pattern.exec(text)) != null) {
                         if (sentenceOffsets == null) {
