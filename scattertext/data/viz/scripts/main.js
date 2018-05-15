@@ -29,7 +29,8 @@ buildViz = function (d3) {
                      centerLabelsOverPoints = false,
                      xAxisLabels = null,
                      yAxisLabels = null,
-                     topic_model_preview_size=10) {
+                     topic_model_preview_size=10,
+                     verticalLines = null) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -966,8 +967,8 @@ buildViz = function (d3) {
                     var lastSentenceStart = null;
                     var matchFound = false;
                     var curMatch = {'id': i, 'snippets': []};
-                    if (fullData.docs.extra) {
-                        curMatch['meta'] = fullData.docs.extra[i];
+                    if (fullData.docs.meta) {
+                        curMatch['meta'] = fullData.docs.meta[i];
                     }
                     while ((match = pattern.exec(text)) != null) {
                         if (sentenceOffsets == null) {
@@ -1425,6 +1426,27 @@ buildViz = function (d3) {
                 //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
             }
 
+            d3.selection.prototype.moveToBack = function () {
+                return this.each(function () {
+                    var firstChild = this.parentNode.firstChild;
+                    if (firstChild) {
+                        this.parentNode.insertBefore(this, firstChild);
+                    }
+                });
+            };
+
+            if (verticalLines) {
+                for (i in verticalLines) {
+                    svg.append("g")
+                        .attr("transform", "translate(" + x(verticalLines) + ", 1)")
+                        .append("line")
+                        .attr("y2", height)
+                        .style("stroke", "#dddddd")
+                        .style("stroke-width", "1px")
+                        .moveToBack();
+                }
+            }
+
             if (showAxes) {
 
                 var myXAxis = svg.append("g")
@@ -1495,14 +1517,7 @@ buildViz = function (d3) {
                     .text(getLabelText('y'));
                 registerFigureBBox(yLabel);
             } else {
-                d3.selection.prototype.moveToBack = function () {
-                    return this.each(function () {
-                        var firstChild = this.parentNode.firstChild;
-                        if (firstChild) {
-                            this.parentNode.insertBefore(this, firstChild);
-                        }
-                    });
-                };
+
                 var x_line = svg.append("g")
                     .attr("transform", "translate(0, " + y(0.5) + ")")
                     .append("line")

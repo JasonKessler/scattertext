@@ -30,7 +30,8 @@ class ScatterChartExplorer(ScatterChart):
 	            neutral_categories=None,
 	            extra_categories=None,
 	            neutral_category_name=None,
-	            extra_category_name=None):
+	            extra_category_name=None,
+	            background_scorer=None):
 		'''
 
 		Parameters
@@ -66,6 +67,8 @@ class ScatterChartExplorer(ScatterChart):
 		extra_category_name : str
 			"Extra" by default. Only active if show_neutral and show_extra are true. Name of the
 			extra column.
+		background_scorer : CharacteristicScorer, optional
+			Used for bg scores
 
 		Returns
 		-------
@@ -93,8 +96,8 @@ class ScatterChartExplorer(ScatterChart):
 		                         title_case_names=title_case_names,
 		                         not_categories=not_categories,
 		                         neutral_categories=neutral_categories,
-		                         extra_categories=extra_categories
-		                         )
+		                         extra_categories=extra_categories,
+		                         background_scorer=background_scorer)
 		docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
 		if neutral_category_name is None:
 			neutral_category_name = 'Neutral'

@@ -18,6 +18,7 @@ from scattertext.CSRMatrixTools import delete_columns
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
 	DEFAULT_BACKGROUND_BETA
 from scattertext.FeatureOuput import FeatureLister
+from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
 from scattertext.indexstore import IndexStore
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.CornerScore import CornerScore
@@ -860,7 +861,7 @@ class TermDocMatrix(object):
 	def get_background_corpus(self):
 		if self._background_corpus is not None:
 			return self._background_corpus
-		return None
+		return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
 
 	def get_term_and_background_counts(self):
 		'''
@@ -895,17 +896,7 @@ class TermDocMatrix(object):
 	def _get_background_unigram_frequencies(self):
 		if self.get_background_corpus() is not None:
 			return self.get_background_corpus()
-		if self._unigram_frequency_path:
-			unigram_freq_table_buf = open(self._unigram_frequency_path)
-		else:
-			unigram_freq_table_buf = StringIO(pkgutil.get_data('scattertext', 'data/count_1w.txt')
-			                                  .decode('utf-8'))
-		to_ret = (pd.read_table(unigram_freq_table_buf,
-		                        names=['word', 'background'])
-		          .sort_values(ascending=False, by='background')
-		          .drop_duplicates(['word'])
-		          .set_index('word'))
-		return to_ret
+		return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
 
 	def list_extra_features(self):
 		'''

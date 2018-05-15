@@ -187,7 +187,10 @@ class Word2VecFromParsedCorpus(object):
 		                         sorted_vocab=1)
 
 	def _scan_and_build_vocab(self):
-		self.model.scan_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
+		try:
+			self.model.scan_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
+		except:
+			pass
 		self.model.build_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
 
 
@@ -195,5 +198,8 @@ class Word2VecFromParsedCorpusBigrams(Word2VecFromParsedCorpus):
 	def _scan_and_build_vocab(self):
 		from gensim.models import Phrases
 		bigram_transformer = Phrases(CorpusAdapterForGensim.get_sentences(self.corpus))
-		self.model.scan_vocab(bigram_transformer[CorpusAdapterForGensim.get_sentences(self.corpus)])
+		try:
+			self.model.scan_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
+		except:
+			pass
 		self.model.build_vocab(bigram_transformer[CorpusAdapterForGensim.get_sentences(self.corpus)])

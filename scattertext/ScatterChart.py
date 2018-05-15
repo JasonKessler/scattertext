@@ -150,7 +150,8 @@ class ScatterChart:
 	            title_case_names=False,
 	            not_categories=None,
 	            neutral_categories=None,
-	            extra_categories=None):
+	            extra_categories=None,
+	            background_scorer=None):
 		'''
 
 		Parameters
@@ -173,6 +174,8 @@ class ScatterChart:
 			List of categories to use as neutral.  Defaults [].
 		extra_categories : list, optional
 			List of categories to use as extra.  Defaults [].
+		background_scorer : CharacteristicScorer, optional
+			Used for bg scores
 
 		Returns
 		-------
@@ -286,7 +289,11 @@ class ScatterChart:
 		self._add_term_freq_to_json_df(json_df, df, category)
 		json_df['s'] = percentile_min(df['color_scores'])
 		json_df['os'] = df['color_scores']
-		if not self.scatterchartdata.use_non_text_features:
+		if background_scorer:
+			bg_scores = background_scorer.get_scores(self.term_doc_matrix)
+			json_df['bg'] = bg_scores[1].loc[json_df.term].values
+			import pdb; pdb.set_trace()
+		elif not self.scatterchartdata.use_non_text_features:
 			json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
 
 		self._preform_axis_rescale(json_df, self._rescale_x, 'x')

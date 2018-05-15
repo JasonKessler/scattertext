@@ -2,9 +2,9 @@ import sys
 from unittest import TestCase
 
 from scattertext import HTMLSemioticSquareViz
+from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
 from scattertext.test.test_semioticSquare import get_test_semiotic_square
 from scattertext.viz.HTMLVisualizationAssembly import HTMLVisualizationAssembly
-from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
 from scattertext.viz.VizDataAdapter import VizDataAdapter
 
 
@@ -14,7 +14,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
 		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
-		          'null', 'null', '10']
+		          'null', 'null', '10', 'null']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -50,13 +50,13 @@ class TestHTMLVisualizationAssembly(TestCase):
 		semsq = get_test_semiotic_square()
 		assembler = self.make_assembler()
 		html = assembler.to_html(
-			html_base= HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
+			html_base=HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
 		if sys.version_info.major == 2:
 			self.assertEqual(type(html), unicode)
 		else:
 			self.assertEqual(type(html), str)
 		self.assertFalse('<!-- EXTRA LIBS -->' in html)
-		#self.assertFalse('<!-- INSERT SEMIOTIC SQUARE -->' in html)
+		# self.assertFalse('<!-- INSERT SEMIOTIC SQUARE -->' in html)
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 		self.assertTrue('Republican' in html)
 
@@ -68,7 +68,6 @@ class TestHTMLVisualizationAssembly(TestCase):
 		self.assertFalse('<!-- INSERT SCRIPT -->' in html)
 
 	# self.assertTrue('d3-save-svg.min.js' in html)
-
 
 	def test_protocol_is_https(self):
 		html = self.make_assembler().to_html(protocol='https')
@@ -263,91 +262,95 @@ class TestHTMLVisualizationAssembly(TestCase):
 	def test_show_neutral(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({19: 'false'}))
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data, show_neutral=True)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({19: 'true'}))
-
 
 	def test_get_tooltip_content(self):
 		visualization_data = self.make_adapter()
 		f = '''(function(x) {return 'Original X: ' + x.ox;})'''
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            get_tooltip_content=f)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({20: f}))
 
 	def test_x_axis_labels(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            x_axis_values=[1, 2, 3])
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({21: "[1, 2, 3]"}))
 
 	def test_x_axis_labels(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            y_axis_values=[4, 5, 6])
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({22: "[4, 5, 6]"}))
-
 
 	def test_color_func(self):
 		visualization_data = self.make_adapter()
 		color_func = 'function colorFunc(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y;	return c;}'
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            color_func=color_func)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({23: color_func}))
 
 	def test_show_axes(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            show_axes=False)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({24: 'false'}))
 
 	def test_show_extra(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            show_extra=True)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({25: 'true'}))
 
 	def test_do_censor_points(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            do_censor_points=False)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({26: 'false'}))
-
 
 	def test_center_label_over_points(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            center_label_over_points=True)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({27: 'true'}))
 
 	def test_x_axis_labels_over_points(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            x_axis_labels=['Lo', 'Hi'])
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({28: '["Lo", "Hi"]'}))
 
 	def test_y_axis_labels_over_points(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            y_axis_labels=['Lo', 'Hi'])
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({29: '["Lo", "Hi"]'}))
-
 
 	def test_topic_model_preview_size(self):
 		visualization_data = self.make_adapter()
 		self.assertEqual((HTMLVisualizationAssembly(visualization_data,
 		                                            topic_model_preview_size=20)
-			._call_build_visualization_in_javascript()),
+		                  ._call_build_visualization_in_javascript()),
 		                 self.get_params({30: '20'}))
+
+	def test_vertical_lines(self):
+		visualization_data = self.make_adapter()
+		params = (HTMLVisualizationAssembly(visualization_data,
+		                           vertical_lines=[20, 31])
+		 ._call_build_visualization_in_javascript())
+		self.assertEqual(params,
+		                 self.get_params({31: '[20, 31]'}))

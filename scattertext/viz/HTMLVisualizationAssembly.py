@@ -41,7 +41,8 @@ class HTMLVisualizationAssembly(object):
 	             center_label_over_points=False,
 	             x_axis_labels=None,
 	             y_axis_labels=None,
-	             topic_model_preview_size=10):
+	             topic_model_preview_size=10,
+	             vertical_lines = None):
 		'''
 
 		Parameters
@@ -53,7 +54,7 @@ class HTMLVisualizationAssembly(object):
 		height_in_pixels : int, optional
 			height of viz in pixels, if None, default to 600
 		max_snippets : int, optional
-			max snippets to snow when temr is clicked, Defaults to show all
+			max snippets to snow when term is clicked, Defaults to show all
 		color : str, optional
 		  d3 color scheme
 		grey_zero_scores : bool, optional
@@ -122,6 +123,8 @@ class HTMLVisualizationAssembly(object):
 		topic_model_preview_size : int, default 10
 			If topic models are being visualized, show the first topic_model_preview_size topics
 			in a preview.
+		vertical_lines: list, default None
+			List of scaled points along the x-axis to draw horizontal lines
 
 		'''
 		self._visualization_data = visualization_data
@@ -156,6 +159,7 @@ class HTMLVisualizationAssembly(object):
 		self._do_censor_points = do_censor_points
 		self._center_label_over_points = center_label_over_points
 		self._topic_model_preview_size = topic_model_preview_size
+		self._vertical_lines = vertical_lines
 
 	def to_html(self,
 	            protocol='http',
@@ -297,5 +301,6 @@ class HTMLVisualizationAssembly(object):
 		             js_bool(self._center_label_over_points),
 		             js_list_or_null(self._x_axis_labels),
 		             js_list_or_null(self._y_axis_labels),
-		             js_default_value(self._topic_model_preview_size)]
+		             js_default_value(self._topic_model_preview_size),
+		             js_list_or_null(self._vertical_lines)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

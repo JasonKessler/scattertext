@@ -1,6 +1,8 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 26, 1]
+from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
+
+version = [0, 0, 2, 27]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -9,6 +11,7 @@ import numpy as np
 import pandas as pd
 import scattertext.viz
 
+from scattertext.characteristic.DenseRankCharacteristicness import DenseRankCharacteristicness
 from scattertext.CorpusDF import CorpusDF
 from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
@@ -204,7 +207,9 @@ def produce_scattertext_explorer(corpus,
                                  x_axis_labels=None,
                                  y_axis_labels=None,
                                  topic_model_term_lists=None,
-                                 topic_model_preview_size=10):
+                                 topic_model_preview_size=10,
+                                 vertical_lines=None,
+                                 characteristic_scorer=None):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -372,6 +377,10 @@ def produce_scattertext_explorer(corpus,
 		in query in context results.
 	topic_model_preview_size : int default 10
 		Number of terms in topic model to show as a preview.
+	vertical_lines : list default None
+		List of floats corresponding to points on the x-axis to draw vertical lines
+	characteristic_scorer : CharacteristicScorer default None
+		Used for bg scores
 
 	Returns
 	-------
@@ -389,14 +398,7 @@ def produce_scattertext_explorer(corpus,
 	if term_ranker is None:
 		term_ranker = termranking.AbsoluteFrequencyRanker
 
-	if category_name is None:
-		category_name = category
-
-	if not_category_name is None:
-		if not_categories is not None and len(not_categories) == 1:
-			not_category_name = not_categories[0]
-		else:
-			not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
+	category_name, not_category_name = get_category_names(category, category_name, not_categories, not_category_name)
 
 	if not_categories is None:
 		not_categories = [c for c in corpus.get_categories() if c != category]
@@ -430,7 +432,7 @@ def produce_scattertext_explorer(corpus,
 	                                              term_ranker=term_ranker,
 	                                              use_non_text_features=use_non_text_features,
 	                                              term_significance=term_significance,
-	                                              terms_to_include=terms_to_include)
+	                                              terms_to_include=terms_to_include,)
 	if ((x_coords is None and y_coords is not None)
 			or (y_coords is None and x_coords is not None)):
 		raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -459,7 +461,8 @@ def produce_scattertext_explorer(corpus,
 	                                                    neutral_category_name=neutral_category_name,
 	                                                    extra_category_name=extra_category_name,
 	                                                    neutral_categories=neutral_categories,
-	                                                    extra_categories=extra_categories)
+	                                                    extra_categories=extra_categories,
+	                                                    background_scorer=characteristic_scorer)
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
 	                                 height_in_pixels=height_in_pixels,
@@ -490,11 +493,23 @@ def produce_scattertext_explorer(corpus,
 	                                 center_label_over_points=center_label_over_points,
 	                                 x_axis_labels=x_axis_labels,
 	                                 y_axis_labels=y_axis_labels,
-	                                 topic_model_preview_size=topic_model_preview_size) \
+	                                 topic_model_preview_size=topic_model_preview_size,
+	                                 vertical_lines=vertical_lines) \
 		.to_html(protocol=protocol,
 	           d3_url=d3_url,
 	           d3_scale_chromatic_url=d3_scale_chromatic_url,
 	           html_base=html_base)
+
+
+def get_category_names(category, category_name, not_categories, not_category_name):
+	if category_name is None:
+		category_name = category
+	if not_category_name is None:
+		if not_categories is not None and len(not_categories) == 1:
+			not_category_name = not_categories[0]
+		else:
+			not_category_name = ('Not' if category_name[0].isupper() else 'not') + ' ' + category_name
+	return category_name, not_category_name
 
 
 def get_semiotic_square_html(num_terms_semiotic_square, semiotic_square):
@@ -1151,6 +1166,82 @@ def produce_projection_explorer(corpus,
 		y_coords=scale(word_axes['y']),
 		y_label='',
 		x_label='',
+		**kwargs
+	)
+	return html
+
+
+def produce_characteristic_explorer(corpus,
+                                    category,
+                                    category_name=None,
+                                    not_category_name=None,
+                                    not_categories=None,
+                                    characteristic_scorer=DenseRankCharacteristicness(),
+                                    term_ranker=termranking.AbsoluteFrequencyRanker,
+                                    term_scorer=RankDifference(),
+                                    **kwargs):
+	'''
+	Parameters
+	----------
+	corpus : Corpus
+		It is highly recommended to use a stoplisted, unigram corpus-- `corpus.get_stoplisted_unigram_corpus()`
+	category : str
+	category_name : str
+	not_category_name : str
+	not_categories : list
+	characteristic_scorer : CharacteristicScorer
+	term_ranker
+	term_scorer
+	term_acceptance_re : SRE_Pattern
+		Regular expression to identify valid terms
+	kwargs : dict
+		remaining produce_scattertext_explorer keywords
+
+	Returns
+	-------
+	str HTML of visualization
+
+	'''
+	if not_categories is None:
+		not_categories = [c for c in corpus.get_categories() if c != category]
+
+
+	category_name, not_category_name = get_category_names(category, category_name, not_categories, not_category_name)
+
+	zero_point, characteristic_scores = characteristic_scorer.get_scores(corpus)
+	corpus = corpus.remove_terms(set(corpus.get_terms()) - set(characteristic_scores.index))
+	characteristic_scores = characteristic_scores.loc[corpus.get_terms()]
+	term_freq_df = term_ranker(corpus).get_ranks()
+	scores = term_scorer.get_scores(
+		term_freq_df[category + ' freq'],
+		term_freq_df[[c + ' freq' for c in not_categories]].sum(axis=1)
+	)
+	kwargs['scores'] = kwargs.get('scores', scores)
+	max_score = np.floor(np.max(kwargs['scores']) * 100) / 100
+	min_score = np.ceil(np.min(kwargs['scores']) * 100) / 100
+	if min_score < 0 and max_score > 0:
+		central = 0
+	else:
+		central = 0.5
+	scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
+	html = produce_scattertext_explorer(
+		corpus=corpus,
+		category=category,
+		category_name=category_name,
+		not_category_name=not_category_name,
+		not_categories=not_categories,
+		minimum_term_frequency=0,
+		sort_by_dist=False,
+		x_coords=characteristic_scores,
+		y_coords=scores_scaled_for_charting,
+		y_axis_labels=kwargs.get('y_axis_labels',
+		                         ['More ' + not_category_name,
+		                          'Even',
+		                          'More ' + category_name]),
+		x_label=kwargs.get('x_label', 'Characteristic to Corpus'),
+		y_label=kwargs.get('y_label', term_scorer.get_name()),
+		vertical_lines=kwargs.get('vertical_lines', []),
+		characteristic_scorer=kwargs.get('characteristic_scorer', characteristic_scorer),
 		**kwargs
 	)
 	return html

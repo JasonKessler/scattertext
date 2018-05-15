@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.26.1
+# Scattertext 0.0.2.27
 ### Updates
 
 Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is 
@@ -16,12 +16,22 @@ overview of the additions.
 
 Removed pkg_resources from Phrasemachine, corrected demo_phrase_machine.py 
 
+Now compatible with Gensim 3.4.0.
+
+Added characteristic explorer, `produce_characteristic_explorer`, to plot terms with their characteristic scores on 
+the x-axis and their class-association scores on the y-axis. See [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness) for more details.
+
 **Table of Contents**
 
 - [Installation](#installation)
 - [Citation](#citation)
 - [Overview](#overview)
 - [Tutorial](#tutorial)
+    - [Help! I don't know Python but I still want to use Scattertext](#help-i-dont-know-python-but-i-still-want-to-use-scattertext)
+    - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#using-scattertext-as-a-text-analysis-library-finding-characteristic-terms-and-their-associations)
+    - [Visualizing term associations](#visualizing-term-associations)
+    - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
+    - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Advanced Uses](#advanced-uses)
     - [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies)
@@ -58,7 +68,7 @@ with `word_similarity_explorer`, and the tokenization and sentence boundary dete
 capabilities will be low-performance regular expressions. See `demo_without_spacy.py`
 for an example. 
 
-It is recommended you install `jieba`, `spacy`, `empath`, `gensim` and `umap` in order to 
+It is recommended you install `jieba`, `spacy`, `empath`, `gensim` and `umap-learn` in order to 
 take full advantage of Scattertext. 
 
 Python 2.7 support is experimental.  Many things will break.
@@ -311,6 +321,37 @@ topic model.
 
 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
+
+### Ordering Terms by Corpus Characteristicness
+Often the terms of most interest are ones that are characteristic to the corpus as a whole.  These are terms which occur 
+frequently in all sets of documents being studied, but relatively infrequent compared to general term frequencies.
+
+We can produce a plot with a characteristic score on the x-axis and class-association scores on the y-axis using the 
+function `produce_characteristic_explorer`.  
+
+```python
+import scattertext as st
+
+corpus = (st.CorpusFromPandas(st.SampleCorpora.ConventionData2012.get_data(),
+                              category_col='party',
+                              text_col='text',
+                              nlp=st.whitespace_nlp_with_sentences)
+          .build()
+          .get_unigram_corpus()
+          .compact(st.ClassPercentageCompactor(term_count=2,
+                                               term_ranker=st.OncePerDocFrequencyRanker)))
+html = st.produce_characteristic_explorer(
+	corpus,
+	category='democrat',
+	category_name='Democratic',
+	not_category_name='Republican',
+	metadata=corpus.get_df()['speaker']
+)
+open('demo_characteristic_chart.html', 'wb').write(html.encode('utf-8'))
+```
+
+[![demo_characteristic_chart.html](https://jasonkessler.github.io/demo_characteristic_chart.png)](https://jasonkessler.github.io/demo_characteristic_chart.html)
+
 
 ### Understanding Scaled F-Score
 
