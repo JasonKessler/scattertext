@@ -292,7 +292,6 @@ class ScatterChart:
 		if background_scorer:
 			bg_scores = background_scorer.get_scores(self.term_doc_matrix)
 			json_df['bg'] = bg_scores[1].loc[json_df.term].values
-			import pdb; pdb.set_trace()
 		elif not self.scatterchartdata.use_non_text_features:
 			json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
 

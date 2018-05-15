@@ -4,7 +4,7 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.27
+# Scattertext 0.0.2.27.1
 ### Updates
 
 Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is 

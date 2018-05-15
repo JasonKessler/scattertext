@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
 
-version = [0, 0, 2, 27]
+version = [0, 0, 2, 27, 1]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
