@@ -1,0 +1,429 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.TermDocMatrixFactory &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.TermDocMatrixFactory</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.CSRMatrixTools</span> <span class="k">import</span> <span class="n">CSRMatrixFactory</span>
+<span class="kn">from</span> <span class="nn">scattertext.TermDocMatrix</span> <span class="k">import</span> <span class="n">TermDocMatrix</span>
+<span class="kn">from</span> <span class="nn">scattertext.features.FeatsFromSpacyDoc</span> <span class="k">import</span> <span class="n">FeatsFromSpacyDoc</span>
+<span class="kn">from</span> <span class="nn">scattertext.indexstore.IndexStore</span> <span class="k">import</span> <span class="n">IndexStore</span>
+
+
+<div class="viewcode-block" id="CategoryTextIterNotSetError"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.CategoryTextIterNotSetError">[docs]</a><span class="k">class</span> <span class="nc">CategoryTextIterNotSetError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="TermDocMatrixFactory"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory">[docs]</a><span class="k">class</span> <span class="nc">TermDocMatrixFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">category_text_iter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">clean_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+	             <span class="n">nlp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">feats_from_spacy_doc</span><span class="o">=</span><span class="kc">None</span>
+	             <span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Class for easy construction of a term document matrix.</span>
+<span class="sd">	   This class let&#39;s you define an iterator for each document (text_iter),</span>
+<span class="sd">	   an iterator for each document&#39;s category name (category_iter),</span>
+<span class="sd">	   and a document cleaning function that&#39;s applied to each document</span>
+<span class="sd">	   before it&#39;s parsed.</span>
+
+<span class="sd">	   Parameters</span>
+<span class="sd">	   ----------</span>
+<span class="sd">	   category_text_iter : iter&lt;str: category, unicode: document)&gt;</span>
+<span class="sd">	       An iterator of pairs. The first element is a string category</span>
+<span class="sd">	       name, the second the text of a document.  You can also set this</span>
+<span class="sd">	       using the function set_category_text_iter.</span>
+<span class="sd">	   clean_function : function (default lambda x: x)</span>
+<span class="sd">	       A function that strips invalid characters out of a string, returning</span>
+<span class="sd">	       the new string.</span>
+<span class="sd">	   post_nlp_clean_function : function (default lambda x: x)</span>
+<span class="sd">	       A function that takes a spaCy Doc</span>
+<span class="sd">	   nlp : spacy.load(&#39;en&#39;) (default None)</span>
+<span class="sd">	       The spaCy parser used to parse documents.  If it&#39;s None,</span>
+<span class="sd">	       the class will go through the expensive operation of</span>
+<span class="sd">	       creating one to parse the text</span>
+<span class="sd">	   feats_from_spacy_doc : FeatsFromSpacyDoc (default None)</span>
+<span class="sd">	       Class for extraction of features from spacy</span>
+<span class="sd">	   Attributes</span>
+<span class="sd">	   ----------</span>
+<span class="sd">	   _clean_function : function</span>
+<span class="sd">	       function that takes a unicode document and returns</span>
+<span class="sd">	       a cleaned version of that document</span>
+<span class="sd">	   _text_iter : iter&lt;unicode&gt;</span>
+<span class="sd">	       an iterator that iterates through the unicode text of each</span>
+<span class="sd">	        document</span>
+<span class="sd">	   _category_iter : iter&lt;str&gt;</span>
+<span class="sd">	       an iterator the same size as text iter that gives a string or</span>
+<span class="sd">	       unicode name of each document catgory</span>
+<span class="sd">	   Examples</span>
+<span class="sd">	   --------</span>
+<span class="sd">	   &gt;&gt;&gt; import scattertext as ST</span>
+<span class="sd">	   &gt;&gt;&gt; documents = [u&#39;What art thou that usurp&#39;&#39;st this time of night,&#39;,</span>
+<span class="sd">	   ...u&#39;Together with that fair and warlike form&#39;,</span>
+<span class="sd">	   ...u&#39;In which the majesty of buried Denmark&#39;,</span>
+<span class="sd">	   ...u&#39;Did sometimes march? by heaven I charge thee, speak!&#39;,</span>
+<span class="sd">		 ...u&#39;Halt! Who goes there?&#39;,</span>
+<span class="sd">		 ...u&#39;[Intro]&#39;,</span>
+<span class="sd">		 ...u&#39;It is I sire Tone from Brooklyn.&#39;,</span>
+<span class="sd">		 ...u&#39;Well, speak up man what is it?&#39;,</span>
+<span class="sd">		 ...u&#39;News from the East sire! THE BEST OF BOTH WORLDS HAS RETURNED!&#39;]</span>
+<span class="sd">	   &gt;&gt;&gt; categories = [&#39;hamlet&#39;] * 4 + [&#39;jay-z/r. kelly&#39;] * 5</span>
+<span class="sd">	   &gt;&gt;&gt; clean_function = lambda text: &#39;&#39; if text.startswith(&#39;[&#39;) else text</span>
+<span class="sd">	   &gt;&gt;&gt; term_doc_mat = ST.TermDocMatrixFactory(category_text_iter = zip(categories, documents),clean_function = clean_function).build()</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_category_text_iter</span> <span class="o">=</span> <span class="n">category_text_iter</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_clean_function</span> <span class="o">=</span> <span class="n">clean_function</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nlp</span> <span class="o">=</span> <span class="n">nlp</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_entity_types_to_censor</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+		<span class="k">if</span> <span class="n">feats_from_spacy_doc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span> <span class="o">=</span> <span class="n">feats_from_spacy_doc</span>
+
+<div class="viewcode-block" id="TermDocMatrixFactory.set_category_text_iter"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory.set_category_text_iter">[docs]</a>	<span class="k">def</span> <span class="nf">set_category_text_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category_text_iter</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;Initializes the category_text_iter</span>
+
+<span class="sd">	   Paramters</span>
+<span class="sd">	   ----------</span>
+<span class="sd">	   category_text_iter : iter&lt;str: category, unicode: document)&gt;</span>
+<span class="sd">		       An iterator of pairs. The first element is a string category</span>
+<span class="sd">		       name, the second the text of a document.</span>
+
+<span class="sd">		 Returns</span>
+<span class="sd">		 ----------</span>
+<span class="sd">		 self: TermDocMatrixFactory</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_category_text_iter</span> <span class="o">=</span> <span class="n">category_text_iter</span>
+		<span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="TermDocMatrixFactory.set_nlp"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory.set_nlp">[docs]</a>	<span class="k">def</span> <span class="nf">set_nlp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nlp</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;Adds a spaCy-compatible nlp function</span>
+
+<span class="sd">	   Paramters</span>
+<span class="sd">	   ----------</span>
+<span class="sd">	   nlp : spacy model</span>
+
+<span class="sd">		 Returns</span>
+<span class="sd">		 ----------</span>
+<span class="sd">		 self: TermDocMatrixFactory</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nlp</span> <span class="o">=</span> <span class="n">nlp</span>
+		<span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="TermDocMatrixFactory.build"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory.build">[docs]</a>	<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;Generate a TermDocMatrix from data in parameters.</span>
+
+<span class="sd">		 Returns</span>
+<span class="sd">		 ----------</span>
+<span class="sd">		 term_doc_matrix : TermDocMatrix</span>
+<span class="sd">		    The object that this factory class builds.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_text_iter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">CategoryTextIterNotSetError</span><span class="p">()</span>
+		<span class="n">nlp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nlp</span><span class="p">()</span>
+
+		<span class="n">category_document_iter</span> <span class="o">=</span> <span class="p">(</span>
+			<span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_function</span><span class="p">(</span><span class="n">raw_text</span><span class="p">))</span>
+			<span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">raw_text</span>
+			<span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_text_iter</span>
+		<span class="p">)</span>
+		<span class="n">term_doc_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_from_category_spacy_doc_iter</span><span class="p">(</span>
+			<span class="p">(</span>
+				<span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+				<span class="k">for</span> <span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+				<span class="ow">in</span> <span class="n">category_document_iter</span>
+				<span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span>
+			<span class="p">)</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="n">term_doc_matrix</span></div>
+
+<div class="viewcode-block" id="TermDocMatrixFactory.get_nlp"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory.get_nlp">[docs]</a>	<span class="k">def</span> <span class="nf">get_nlp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">nlp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nlp</span>
+		<span class="k">if</span> <span class="n">nlp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="kn">import</span> <span class="nn">spacy</span>
+			<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">nlp</span></div>
+
+<div class="viewcode-block" id="TermDocMatrixFactory.censor_entity_types"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.TermDocMatrixFactory.censor_entity_types">[docs]</a>	<span class="k">def</span> <span class="nf">censor_entity_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity_types</span><span class="p">):</span>
+		<span class="c1"># type: (set) -&gt; TermDocMatrixFactory</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Entity types to exclude from feature construction. Terms matching</span>
+<span class="sd">		specificed entities, instead of labeled by their lower case orthographic</span>
+<span class="sd">		form or lemma, will be labeled by their entity type.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		entity_types : set of entity types outputted by spaCy</span>
+<span class="sd">		  &#39;TIME&#39;, &#39;WORK_OF_ART&#39;, &#39;PERSON&#39;, &#39;MONEY&#39;, &#39;ORG&#39;, &#39;ORDINAL&#39;, &#39;DATE&#39;,</span>
+<span class="sd">		  &#39;CARDINAL&#39;, &#39;LAW&#39;, &#39;QUANTITY&#39;, &#39;GPE&#39;, &#39;PERCENT&#39;</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		---------</span>
+<span class="sd">		self</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">entity_types</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_entity_types_to_censor</span> <span class="o">=</span> <span class="n">entity_types</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span>
+			<span class="n">use_lemmas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_use_lemmas</span><span class="p">,</span>
+			<span class="n">entity_types_to_censor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_entity_types_to_censor</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span></div>
+
+	<span class="k">def</span> <span class="nf">_build_from_category_spacy_doc_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category_doc_iter</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category_doc_iter : iterator of (string category name, spacy.tokens.doc.Doc) pairs</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		t : TermDocMatrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">term_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+		<span class="n">category_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+		<span class="n">metadata_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+		<span class="n">X</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_and_labels_from_documents_and_indexes</span> \
+			<span class="p">(</span><span class="n">category_doc_iter</span><span class="p">,</span>
+			 <span class="n">category_idx_store</span><span class="p">,</span>
+			 <span class="n">term_idx_store</span><span class="p">,</span>
+			 <span class="n">metadata_idx_store</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">TermDocMatrix</span><span class="p">(</span><span class="n">X</span><span class="p">,</span>
+		                     <span class="n">mX</span><span class="p">,</span>
+		                     <span class="n">y</span><span class="p">,</span>
+		                     <span class="n">term_idx_store</span><span class="o">=</span><span class="n">term_idx_store</span><span class="p">,</span>
+		                     <span class="n">category_idx_store</span><span class="o">=</span><span class="n">category_idx_store</span><span class="p">,</span>
+		                     <span class="n">metadata_idx_store</span><span class="o">=</span><span class="n">metadata_idx_store</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_features_and_labels_from_documents_and_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                                        <span class="n">category_doc_iter</span><span class="p">,</span>
+	                                                        <span class="n">category_idx_store</span><span class="p">,</span>
+	                                                        <span class="n">term_idx_store</span><span class="p">,</span>
+	                                                        <span class="n">metadata_idx_store</span><span class="p">):</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="n">X_factory</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+		<span class="n">mX_factory</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">document_index</span><span class="p">,</span> <span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">parsed_text</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">category_doc_iter</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_register_doc_and_category</span><span class="p">(</span><span class="n">X_factory</span><span class="p">,</span>
+			                                <span class="n">mX_factory</span><span class="p">,</span>
+			                                <span class="n">category</span><span class="p">,</span>
+			                                <span class="n">category_idx_store</span><span class="p">,</span>
+			                                <span class="n">document_index</span><span class="p">,</span>
+			                                <span class="n">parsed_text</span><span class="p">,</span>
+			                                <span class="n">term_idx_store</span><span class="p">,</span>
+			                                <span class="n">metadata_idx_store</span><span class="p">,</span>
+			                                <span class="n">y</span><span class="p">)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">X_factory</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">()</span>
+		<span class="n">mX</span> <span class="o">=</span> <span class="n">mX_factory</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">()</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">y</span>
+
+	<span class="k">def</span> <span class="nf">_old_register_doc_and_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                   <span class="n">X_factory</span><span class="p">,</span>
+	                                   <span class="n">category</span><span class="p">,</span> <span class="n">category_idx_store</span><span class="p">,</span>
+	                                   <span class="n">document_index</span><span class="p">,</span>
+	                                   <span class="n">parsed_text</span><span class="p">,</span>
+	                                   <span class="n">term_idx_store</span><span class="p">,</span>
+	                                   <span class="n">y</span><span class="p">):</span>
+		<span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
+		<span class="n">document_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_from_parsed_text</span><span class="p">(</span><span class="n">parsed_text</span><span class="p">,</span> <span class="n">term_idx_store</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_register_document_features_with_X_factory</span> \
+			<span class="p">(</span><span class="n">X_factory</span><span class="p">,</span> <span class="n">document_index</span><span class="p">,</span> <span class="n">document_features</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_register_doc_and_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                               <span class="n">X_factory</span><span class="p">,</span>
+	                               <span class="n">mX_factory</span><span class="p">,</span>
+	                               <span class="n">category</span><span class="p">,</span>
+	                               <span class="n">category_idx_store</span><span class="p">,</span>
+	                               <span class="n">document_index</span><span class="p">,</span>
+	                               <span class="n">parsed_text</span><span class="p">,</span>
+	                               <span class="n">term_idx_store</span><span class="p">,</span>
+	                               <span class="n">metadata_idx_store</span><span class="p">,</span>
+	                               <span class="n">y</span><span class="p">):</span>
+		<span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
+		<span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">parsed_text</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">term_idx</span> <span class="o">=</span> <span class="n">term_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
+			<span class="n">X_factory</span><span class="p">[</span><span class="n">document_index</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
+		<span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span><span class="o">.</span><span class="n">get_doc_metadata</span><span class="p">(</span><span class="n">parsed_text</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">meta_idx</span> <span class="o">=</span> <span class="n">metadata_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
+			<span class="n">mX_factory</span><span class="p">[</span><span class="n">document_index</span><span class="p">,</span> <span class="n">meta_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+	<span class="k">def</span> <span class="nf">_register_document_features_with_X_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_factory</span><span class="p">,</span> <span class="n">doci</span><span class="p">,</span> <span class="n">term_freq</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">word_idx</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">term_freq</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">X_factory</span><span class="p">[</span><span class="n">doci</span><span class="p">,</span> <span class="n">word_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq</span>
+
+	<span class="k">def</span> <span class="nf">_get_features_from_parsed_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsed_text</span><span class="p">,</span> <span class="n">term_idx_store</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">{</span><span class="n">term_idx_store</span><span class="o">.</span><span class="n">getidxstrict</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span>
+		        <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_feats_from_spacy_doc</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">parsed_text</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+		        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">term_idx_store</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="FeatsFromDoc"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.FeatsFromDoc">[docs]</a><span class="k">class</span> <span class="nc">FeatsFromDoc</span><span class="p">(</span><span class="n">TermDocMatrixFactory</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">term_idx_store</span><span class="p">,</span>
+	             <span class="n">clean_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+	             <span class="n">nlp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">feats_from_spacy_doc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;Class for extracting features from a new document.</span>
+
+<span class="sd">	   Parameters</span>
+<span class="sd">	   ----------</span>
+<span class="sd">	   term_idx_store : IndexStore (index -&gt; term)</span>
+<span class="sd">	   clean_function : function (default lambda x: x)</span>
+<span class="sd">	       A function that takes a unicode document and returns</span>
+<span class="sd">	       a cleaned version of that document</span>
+<span class="sd">	   post_nlp_clean_function : function (default lambda x: x)</span>
+<span class="sd">	       A function that takes a spaCy Doc</span>
+<span class="sd">	   nlp : spacy parser (default None)</span>
+<span class="sd">	       The spaCy parser used to parse documents.  If it&#39;s None,</span>
+<span class="sd">	       the class will go through the expensive operation of</span>
+<span class="sd">	       creating one to parse the text</span>
+<span class="sd">	   feats_from_spacy_doc : FeatsFromSpacyDoc (default None)</span>
+<span class="sd">	       Class for extraction of features from spacy</span>
+
+<span class="sd">	   &quot;&quot;&quot;</span>
+		<span class="n">TermDocMatrixFactory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+		                              <span class="n">clean_function</span><span class="o">=</span><span class="n">clean_function</span><span class="p">,</span>
+		                              <span class="n">nlp</span><span class="o">=</span><span class="n">nlp</span><span class="p">,</span>
+		                              <span class="n">feats_from_spacy_doc</span><span class="o">=</span><span class="n">feats_from_spacy_doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span> <span class="o">=</span> <span class="n">term_idx_store</span>
+
+<div class="viewcode-block" id="FeatsFromDoc.feats_from_doc"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.FeatsFromDoc.feats_from_doc">[docs]</a>	<span class="k">def</span> <span class="nf">feats_from_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_text</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		raw_text, uncleaned text for parsing out features</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		csr_matrix, feature matrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">parsed_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nlp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clean_function</span><span class="p">(</span><span class="n">raw_text</span><span class="p">))</span>
+		<span class="n">X_factory</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+		<span class="n">X_factory</span><span class="o">.</span><span class="n">set_last_col_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">getnumvals</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_from_parsed_text</span><span class="p">(</span><span class="n">parsed_text</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_register_document_features_with_X_factory</span><span class="p">(</span><span class="n">X_factory</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">term_freq</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">X_factory</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">()</span></div>
+
+	<span class="k">def</span> <span class="nf">_augment_term_freq_with_unigrams_and_bigrams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bigrams</span><span class="p">,</span> <span class="n">term_freq</span><span class="p">,</span> <span class="n">term_idx_store</span><span class="p">,</span> <span class="n">unigrams</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">unigrams</span> <span class="o">+</span> <span class="n">bigrams</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">term_idx_store</span><span class="p">:</span>
+				<span class="n">term_freq</span><span class="p">[</span><span class="n">term_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">term</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="build_from_category_whitespace_delimited_text"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrixFactory.build_from_category_whitespace_delimited_text">[docs]</a><span class="k">def</span> <span class="nf">build_from_category_whitespace_delimited_text</span><span class="p">(</span><span class="n">category_text_iter</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	category_text_iter iterator of (string category name, one line per sentence, whitespace-delimited text) pairs</span>
+
+<span class="sd">	Returns</span>
+<span class="sd">	-------</span>
+<span class="sd">	TermDocMatrix</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">X_factory</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+	<span class="n">term_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+	<span class="n">category_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+	<span class="n">mX_factory</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+	<span class="n">metadata_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+	<span class="k">for</span> <span class="n">doci</span><span class="p">,</span> <span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">category_text_iter</span><span class="p">):</span>
+		<span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">punctuation</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+			<span class="n">unigrams</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">sent</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+				<span class="n">unigrams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span>
+			<span class="n">bigrams</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">unigrams</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">unigrams</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+			<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">unigrams</span> <span class="o">+</span> <span class="n">bigrams</span><span class="p">:</span>
+				<span class="n">term_freq</span><span class="p">[</span><span class="n">term_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">term</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+		<span class="k">for</span> <span class="n">word_idx</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">term_freq</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">X_factory</span><span class="p">[</span><span class="n">doci</span><span class="p">,</span> <span class="n">word_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq</span>
+	<span class="n">metadata_idx_store</span> <span class="o">=</span> <span class="n">IndexStore</span><span class="p">()</span>
+	<span class="k">return</span> <span class="n">TermDocMatrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_factory</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">(),</span>
+	                     <span class="n">mX</span><span class="o">=</span><span class="n">mX_factory</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">(),</span>
+	                     <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+	                     <span class="n">term_idx_store</span><span class="o">=</span><span class="n">term_idx_store</span><span class="p">,</span>
+	                     <span class="n">metadata_idx_store</span><span class="o">=</span><span class="n">metadata_idx_store</span><span class="p">,</span>
+	                     <span class="n">category_idx_store</span><span class="o">=</span><span class="n">category_idx_store</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

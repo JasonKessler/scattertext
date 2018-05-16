@@ -1,0 +1,54 @@
+scattertext.termsignificance package
+====================================
+
+Submodules
+----------
+
+scattertext.termsignificance.LogOddsRatioAddOne module
+------------------------------------------------------
+
+.. automodule:: scattertext.termsignificance.LogOddsRatioAddOne
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror module
+-------------------------------------------------------------------------
+
+.. automodule:: scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior module
+---------------------------------------------------------------------------
+
+.. automodule:: scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.termsignificance.ScaledFScoreSignificance module
+------------------------------------------------------------
+
+.. automodule:: scattertext.termsignificance.ScaledFScoreSignificance
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.termsignificance.TermSignificance module
+----------------------------------------------------
+
+.. automodule:: scattertext.termsignificance.TermSignificance
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.termsignificance
+    :members:
+    :undoc-members:
+    :show-inheritance:

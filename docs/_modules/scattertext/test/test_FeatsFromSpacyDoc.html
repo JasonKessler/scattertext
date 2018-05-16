@@ -1,0 +1,194 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_FeatsFromSpacyDoc &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_FeatsFromSpacyDoc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">from</span> <span class="nn">scattertext</span> <span class="k">import</span> <span class="n">whitespace_nlp</span>
+<span class="kn">from</span> <span class="nn">scattertext.WhitespaceNLP</span> <span class="k">import</span> <span class="n">Tok</span><span class="p">,</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">_regex_parse_sentence</span><span class="p">,</span> <span class="n">whitespace_nlp_with_sentences</span>
+<span class="kn">from</span> <span class="nn">scattertext.features.FeatsFromSpacyDoc</span> <span class="k">import</span> <span class="n">FeatsFromSpacyDoc</span>
+<span class="kn">from</span> <span class="nn">scattertext.features.FeatsFromSpacyDocOnlyNounChunks</span> <span class="k">import</span> <span class="n">FeatsFromSpacyDocOnlyNounChunks</span>
+
+
+<div class="viewcode-block" id="bad_whitespace_nlp"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.bad_whitespace_nlp">[docs]</a><span class="k">def</span> <span class="nf">bad_whitespace_nlp</span><span class="p">(</span><span class="n">doc</span><span class="p">):</span>
+	<span class="n">toks</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+		<span class="n">pos</span> <span class="o">=</span> <span class="s1">&#39;WORD&#39;</span>
+		<span class="k">if</span> <span class="n">tok</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+			<span class="n">pos</span> <span class="o">=</span> <span class="s1">&#39;SPACE&#39;</span>
+		<span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^\W+$&#39;</span><span class="p">,</span> <span class="n">tok</span><span class="p">):</span>
+			<span class="n">pos</span> <span class="o">=</span> <span class="s1">&#39;PUNCT&#39;</span>
+		<span class="n">toks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Tok</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span>
+		                <span class="n">tok</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+		                <span class="n">tok</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+		                <span class="n">ent_type</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+		                <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">Doc</span><span class="p">([</span><span class="n">toks</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Span"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.Span">[docs]</a><span class="k">class</span> <span class="nc">Span</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">toks</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">lower_</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">toks</span><span class="p">])</span>
+	<span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="whitespace_nlp_with_fake_chunks"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.whitespace_nlp_with_fake_chunks">[docs]</a><span class="k">def</span> <span class="nf">whitespace_nlp_with_fake_chunks</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">entity_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tag_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">toks</span> <span class="o">=</span> <span class="n">_regex_parse_sentence</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">tag_type</span><span class="p">)</span>
+	<span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">toks</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">pos_</span> <span class="o">==</span> <span class="s1">&#39;WORD&#39;</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">Doc</span><span class="p">([</span><span class="n">toks</span><span class="p">])</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">Doc</span><span class="p">([</span><span class="n">toks</span><span class="p">],</span> <span class="n">noun_chunks</span><span class="o">=</span><span class="p">[</span><span class="n">Span</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">Span</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">])])</span></div>
+
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc">[docs]</a><span class="k">class</span> <span class="nc">TestFeatsFromSpacyDoc</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_main"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_main">[docs]</a>	<span class="k">def</span> <span class="nf">test_main</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;A a bb cc.&quot;</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">()</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a bb&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;bb cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_singleton_with_sentences"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_singleton_with_sentences">[docs]</a>	<span class="k">def</span> <span class="nf">test_singleton_with_sentences</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp_with_sentences</span><span class="p">(</span><span class="s2">&quot;Blah&quot;</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">()</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;blah&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_lemmas"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_lemmas">[docs]</a>	<span class="k">def</span> <span class="nf">test_lemmas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;A a bb ddddd.&quot;</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">use_lemmas</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a bb&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;dd&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;bb dd&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_feats_from_spacy_doc_only_chunks"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_feats_from_spacy_doc_only_chunks">[docs]</a>	<span class="k">def</span> <span class="nf">test_feats_from_spacy_doc_only_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp_with_fake_chunks</span><span class="p">(</span><span class="s1">&#39;This is a fake noun chunk generating sentence.&#39;</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDocOnlyNounChunks</span><span class="p">()</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">term_freq</span><span class="p">,</span> <span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;this is&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;is a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}))</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_empty"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_empty">[docs]</a>	<span class="k">def</span> <span class="nf">test_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">()</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">(),</span> <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_entity_types_to_censor_not_a_set"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_entity_types_to_censor_not_a_set">[docs]</a>	<span class="k">def</span> <span class="nf">test_entity_types_to_censor_not_a_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;A a bb cc.&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;bb&#39;</span><span class="p">:</span> <span class="s1">&#39;A&#39;</span><span class="p">})</span>
+		<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">AssertionError</span><span class="p">):</span>
+			<span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">entity_types_to_censor</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_entity_censor"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_entity_censor">[docs]</a>	<span class="k">def</span> <span class="nf">test_entity_censor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;A a bb cc.&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;bb&#39;</span><span class="p">:</span> <span class="s1">&#39;BAD&#39;</span><span class="p">})</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">entity_types_to_censor</span><span class="o">=</span><span class="nb">set</span><span class="p">([</span><span class="s1">&#39;BAD&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;a _BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_BAD cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_entity_tags"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_entity_tags">[docs]</a>	<span class="k">def</span> <span class="nf">test_entity_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">whitespace_nlp</span><span class="p">(</span><span class="s2">&quot;A a bb cc Bob.&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;bb&#39;</span><span class="p">:</span> <span class="s1">&#39;BAD&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;Bob&#39;</span><span class="p">:</span> <span class="s1">&#39;NNP&#39;</span><span class="p">})</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">entity_types_to_censor</span><span class="o">=</span><span class="nb">set</span><span class="p">([</span><span class="s1">&#39;BAD&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;a _BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+		                          <span class="s1">&#39;_BAD cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+		                          <span class="s1">&#39;a a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;bob&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc bob&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span>
+		<span class="n">term_freq</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">entity_types_to_censor</span><span class="o">=</span><span class="nb">set</span><span class="p">([</span><span class="s1">&#39;BAD&#39;</span><span class="p">]),</span>
+		                              <span class="n">tag_types_to_censor</span><span class="o">=</span><span class="nb">set</span><span class="p">([</span><span class="s1">&#39;NNP&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;a _BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+		                          <span class="s1">&#39;_BAD cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+		                          <span class="s1">&#39;a a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_BAD&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;NNP&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cc NNP&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+		                 <span class="n">term_freq</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestFeatsFromSpacyDoc.test_strip_final_period"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_FeatsFromSpacyDoc.TestFeatsFromSpacyDoc.test_strip_final_period">[docs]</a>	<span class="k">def</span> <span class="nf">test_strip_final_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">bad_whitespace_nlp</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;I CAN&#39;T ANSWER THAT</span>
+<span class="s1"> QUESTION.</span>
+<span class="s1"> I HAVE NOT ASKED THEM</span>
+<span class="s1"> SPECIFICALLY IF THEY HAVE</span>
+<span class="s1"> ENOUGH.&#39;&#39;&#39;</span><span class="p">)</span>
+		<span class="n">feats</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">()</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">Counter</span><span class="p">(</span>
+			<span class="p">{</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;have&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;that question.&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;answer&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;question.&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;enough.&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;i have&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;them specifically&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;have enough.&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;not asked&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;they have&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;have not&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;specifically&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;answer that&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;question. i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;if&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;they&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t answer&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;asked&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;them&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;if they&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;asked them&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;that&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;not&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;i can&#39;t&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;specifically if&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}))</span>
+		<span class="n">feats</span> <span class="o">=</span> <span class="n">FeatsFromSpacyDoc</span><span class="p">(</span><span class="n">strip_final_period</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">get_feats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">Counter</span><span class="p">(</span>
+			<span class="p">{</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;have&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;that question&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;answer&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;question&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;enough&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;i have&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;them specifically&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;have enough&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;not asked&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;they have&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;have not&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;specifically&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;answer that&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;question i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;if&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;they&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s2">&quot;can&#39;t answer&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;asked&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;them&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+			 <span class="s1">&#39;if they&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;asked them&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;that&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;not&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;i can&#39;t&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;specifically if&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

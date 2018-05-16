@@ -1,0 +1,390 @@
+scattertext.test package
+========================
+
+Submodules
+----------
+
+scattertext.test.test\_CSRMatrixTools module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_CSRMatrixTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_CornerScore module
+-----------------------------------------
+
+.. automodule:: scattertext.test.test_CornerScore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_CorpusFromParsedDocuments module
+-------------------------------------------------------
+
+.. automodule:: scattertext.test.test_CorpusFromParsedDocuments
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_FeatsFromSpacyDoc module
+-----------------------------------------------
+
+.. automodule:: scattertext.test.test_FeatsFromSpacyDoc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_HTMLSemioticSquareViz module
+---------------------------------------------------
+
+.. automodule:: scattertext.test.test_HTMLSemioticSquareViz
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_HTMLVisualizationAssembly module
+-------------------------------------------------------
+
+.. automodule:: scattertext.test.test_HTMLVisualizationAssembly
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_PMIFiltering module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_PMIFiltering
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_ParsedCorpus module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_ParsedCorpus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_PriorFactory module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_PriorFactory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_TermDocMat module
+----------------------------------------
+
+.. automodule:: scattertext.test.test_TermDocMat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_WhitespaceNLP module
+-------------------------------------------
+
+.. automodule:: scattertext.test.test_WhitespaceNLP
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_asiannlp module
+--------------------------------------
+
+.. automodule:: scattertext.test.test_asiannlp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_autoTermSelector module
+----------------------------------------------
+
+.. automodule:: scattertext.test.test_autoTermSelector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_classPercentageCompactor module
+------------------------------------------------------
+
+.. automodule:: scattertext.test.test_classPercentageCompactor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_compactTerms module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_compactTerms
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_corpusFromFeatureDict module
+---------------------------------------------------
+
+.. automodule:: scattertext.test.test_corpusFromFeatureDict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_corpusFromPandas module
+----------------------------------------------
+
+.. automodule:: scattertext.test.test_corpusFromPandas
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_corpusFromScikit module
+----------------------------------------------
+
+.. automodule:: scattertext.test.test_corpusFromScikit
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_denseRankCharacteristicness module
+---------------------------------------------------------
+
+.. automodule:: scattertext.test.test_denseRankCharacteristicness
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_docsAndLabelsFromCorpus module
+-----------------------------------------------------
+
+.. automodule:: scattertext.test.test_docsAndLabelsFromCorpus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_extract\_emoji module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_extract_emoji
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_featsFromSpacyDocAndEmpath module
+--------------------------------------------------------
+
+.. automodule:: scattertext.test.test_featsFromSpacyDocAndEmpath
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_featureLister module
+-------------------------------------------
+
+.. automodule:: scattertext.test.test_featureLister
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_fourSquareAxes module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_fourSquareAxes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_gensimPhraseAdder module
+-----------------------------------------------
+
+.. automodule:: scattertext.test.test_gensimPhraseAdder
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_indexStore module
+----------------------------------------
+
+.. automodule:: scattertext.test.test_indexStore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_indexStoreFromDict module
+------------------------------------------------
+
+.. automodule:: scattertext.test.test_indexStoreFromDict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_indexStoreFromList module
+------------------------------------------------
+
+.. automodule:: scattertext.test.test_indexStoreFromList
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_large\_int\_format module
+------------------------------------------------
+
+.. automodule:: scattertext.test.test_large_int_format
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_logOddsRatioUninformativeDirichletPrior module
+---------------------------------------------------------------------
+
+.. automodule:: scattertext.test.test_logOddsRatioUninformativeDirichletPrior
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_logOddsUninformativePriorScore module
+------------------------------------------------------------
+
+.. automodule:: scattertext.test.test_logOddsUninformativePriorScore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_oneClassScatterChart module
+--------------------------------------------------
+
+.. automodule:: scattertext.test.test_oneClassScatterChart
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_percentile\_lexicographic module
+-------------------------------------------------------
+
+.. automodule:: scattertext.test.test_percentile_lexicographic
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_phraseSelector module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_phraseSelector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_scaledFScore module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_scaledFScore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_scatterChart module
+------------------------------------------
+
+.. automodule:: scattertext.test.test_scatterChart
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_scatterChartExplorer module
+--------------------------------------------------
+
+.. automodule:: scattertext.test.test_scatterChartExplorer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_semioticSquare module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_semioticSquare
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termCategoryFrequencies module
+-----------------------------------------------------
+
+.. automodule:: scattertext.test.test_termCategoryFrequencies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termDocMatrixFactory module
+--------------------------------------------------
+
+.. automodule:: scattertext.test.test_termDocMatrixFactory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termDocMatrixFromFrequencies module
+----------------------------------------------------------
+
+.. automodule:: scattertext.test.test_termDocMatrixFromFrequencies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termDocMatrixFromPandas module
+-----------------------------------------------------
+
+.. automodule:: scattertext.test.test_termDocMatrixFromPandas
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termDocMatrixFromScikit module
+-----------------------------------------------------
+
+.. automodule:: scattertext.test.test_termDocMatrixFromScikit
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_termRanker module
+----------------------------------------
+
+.. automodule:: scattertext.test.test_termRanker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_unigramsFromSpacyDoc module
+--------------------------------------------------
+
+.. automodule:: scattertext.test.test_unigramsFromSpacyDoc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_vizDataAdapter module
+--------------------------------------------
+
+.. automodule:: scattertext.test.test_vizDataAdapter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.test.test\_word2VecFromParsedCorpus module
+------------------------------------------------------
+
+.. automodule:: scattertext.test.test_word2VecFromParsedCorpus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.test
+    :members:
+    :undoc-members:
+    :show-inheritance:

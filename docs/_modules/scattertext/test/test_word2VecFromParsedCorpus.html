@@ -1,0 +1,136 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_word2VecFromParsedCorpus &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_word2VecFromParsedCorpus</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.CorpusFromParsedDocuments</span> <span class="k">import</span> <span class="n">CorpusFromParsedDocuments</span>
+<span class="kn">from</span> <span class="nn">scattertext.WhitespaceNLP</span> <span class="k">import</span> <span class="n">whitespace_nlp</span>
+<span class="kn">from</span> <span class="nn">scattertext.representations.Word2VecFromParsedCorpus</span> <span class="k">import</span> <span class="n">Word2VecFromParsedCorpus</span><span class="p">,</span> \
+	<span class="n">Word2VecFromParsedCorpusBigrams</span>
+<span class="kn">from</span> <span class="nn">scattertext.test.test_corpusFromPandas</span> <span class="k">import</span> <span class="n">get_docs_categories</span>
+
+
+<div class="viewcode-block" id="TestWord2VecFromParsedCorpus"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_word2VecFromParsedCorpus.TestWord2VecFromParsedCorpus">[docs]</a><span class="k">class</span> <span class="nc">TestWord2VecFromParsedCorpus</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestWord2VecFromParsedCorpus.setUp"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_word2VecFromParsedCorpus.TestWord2VecFromParsedCorpus.setUp">[docs]</a>	<span class="nd">@classmethod</span>
+	<span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+		<span class="bp">cls</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">documents</span> <span class="o">=</span> <span class="n">get_docs_categories</span><span class="p">()</span>
+		<span class="bp">cls</span><span class="o">.</span><span class="n">parsed_docs</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">documents</span><span class="p">:</span>
+			<span class="bp">cls</span><span class="o">.</span><span class="n">parsed_docs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">whitespace_nlp</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+		<span class="bp">cls</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;category&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span>
+		                       <span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span>
+		                                  <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">],</span>
+		                       <span class="s1">&#39;parsed&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parsed_docs</span><span class="p">,</span>
+		                       <span class="s1">&#39;document_lengths&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">documents</span><span class="p">]})</span>
+		<span class="bp">cls</span><span class="o">.</span><span class="n">corpus</span> <span class="o">=</span> <span class="n">CorpusFromParsedDocuments</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;parsed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TestWord2VecFromParsedCorpus.test_make"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_word2VecFromParsedCorpus.TestWord2VecFromParsedCorpus.test_make">[docs]</a>	<span class="k">def</span> <span class="nf">test_make</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">False</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">word2vec</span>
+			<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">True</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="k">if</span> <span class="n">gensim_is_present_and_working</span><span class="p">:</span>
+			<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+				<span class="n">Word2VecFromParsedCorpus</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+			<span class="n">Word2VecFromParsedCorpus</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">)</span>
+			<span class="n">Word2VecFromParsedCorpus</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">,</span> <span class="n">word2vec</span><span class="o">.</span><span class="n">Word2Vec</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="TestWord2VecFromParsedCorpus.test_train"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_word2VecFromParsedCorpus.TestWord2VecFromParsedCorpus.test_train">[docs]</a>	<span class="k">def</span> <span class="nf">test_train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">False</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">word2vec</span>
+			<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">True</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="k">if</span> <span class="n">gensim_is_present_and_working</span><span class="p">:</span>
+			<span class="n">Word2VecFromParsedCorpus</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TestWord2VecFromParsedCorpus.test_bigrams"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_word2VecFromParsedCorpus.TestWord2VecFromParsedCorpus.test_bigrams">[docs]</a>	<span class="k">def</span> <span class="nf">test_bigrams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">False</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">word2vec</span>
+			<span class="n">gensim_is_present_and_working</span> <span class="o">=</span> <span class="kc">True</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="k">if</span> <span class="n">gensim_is_present_and_working</span><span class="p">:</span>
+			<span class="n">Word2VecFromParsedCorpusBigrams</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

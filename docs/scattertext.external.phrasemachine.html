@@ -1,0 +1,231 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.external.phrasemachine package &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scattertext-external-phrasemachine-package">
+<h1>scattertext.external.phrasemachine package<a class="headerlink" href="#scattertext-external-phrasemachine-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-scattertext.external.phrasemachine.phrasemachine">
+<span id="scattertext-external-phrasemachine-phrasemachine-module"></span><h2>scattertext.external.phrasemachine.phrasemachine module<a class="headerlink" href="#module-scattertext.external.phrasemachine.phrasemachine" title="Permalink to this headline">¶</a></h2>
+<p>Noun phrase extraction using Python’s regular expression library.
+Only for the “SimpleNP” grammar.</p>
+<dl class="class">
+<dt id="scattertext.external.phrasemachine.phrasemachine.NLTKTagger">
+<em class="property">class </em><code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">NLTKTagger</code><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#NLTKTagger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.NLTKTagger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>class that supplies part of speech tags using NLTK
+note: avoids the NLTK downloader (see __init__ method)</p>
+<dl class="method">
+<dt id="scattertext.external.phrasemachine.phrasemachine.NLTKTagger.tag_text">
+<code class="descname">tag_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#NLTKTagger.tag_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.NLTKTagger.tag_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>take input text and return tokens w/ part of speech tags using NLTK</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.external.phrasemachine.phrasemachine.NLTKTagger.tag_tokens">
+<code class="descname">tag_tokens</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#NLTKTagger.tag_tokens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.NLTKTagger.tag_tokens" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.external.phrasemachine.phrasemachine.SpacyTagger">
+<em class="property">class </em><code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">SpacyTagger</code><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#SpacyTagger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.SpacyTagger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="scattertext.external.phrasemachine.phrasemachine.SpacyTagger.tag_text">
+<code class="descname">tag_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#SpacyTagger.tag_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.SpacyTagger.tag_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.external.phrasemachine.phrasemachine.SpacyTagger.tag_tokens">
+<code class="descname">tag_tokens</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#SpacyTagger.tag_tokens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.SpacyTagger.tag_tokens" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.coarse_tag_str">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">coarse_tag_str</code><span class="sig-paren">(</span><em>pos_seq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#coarse_tag_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.coarse_tag_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert POS sequence to our coarse system, formatted as a string.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.extract_JK">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">extract_JK</code><span class="sig-paren">(</span><em>pos_seq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#extract_JK"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.extract_JK" title="Permalink to this definition">¶</a></dt>
+<dd><p>The ‘JK’ method in Handler et al. 2016.
+Returns token positions of valid ngrams.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.extract_finditer">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">extract_finditer</code><span class="sig-paren">(</span><em>pos_seq</em>, <em>regex='(A|N)*N(PD*(A|N)*N)*'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#extract_finditer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.extract_finditer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The “GreedyFSA” method in Handler et al. 2016.
+Returns token position spans of valid ngrams.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.extract_ngram_filter">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">extract_ngram_filter</code><span class="sig-paren">(</span><em>pos_seq</em>, <em>regex='(A|N)*N(PD*(A|N)*N)*'</em>, <em>minlen=1</em>, <em>maxlen=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#extract_ngram_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.extract_ngram_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>The “FilterFSA” method in Handler et al. 2016.
+Returns token position spans of valid ngrams.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.get_phrases">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">get_phrases</code><span class="sig-paren">(</span><em>text=None</em>, <em>tokens=None</em>, <em>postags=None</em>, <em>tagger='nltk'</em>, <em>grammar='SimpleNP'</em>, <em>regex=None</em>, <em>minlen=2</em>, <em>maxlen=8</em>, <em>output='counts'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#get_phrases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.get_phrases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Give a text (or POS tag sequence), return the phrases matching the given
+grammar.  Works on documents or sentences.
+Returns a dict with one or more keys with the phrase information.</p>
+<p>text: the text of the document.  If supplied, we will try to POS tag it.</p>
+<p>You can also do your own tokenzation and/or tagging and supply them as
+‘tokens’ and/or ‘postags’, which are lists of strings (of the same length).</p>
+<blockquote>
+<div><ul class="simple">
+<li>Must supply both to get phrase counts back.</li>
+<li>With only postags, can get phrase token spans back.</li>
+<li>With only tokens, we will try to POS-tag them if possible.</li>
+</ul>
+</div></blockquote>
+<dl class="docutils">
+<dt>output: a string, or list of strings, of information to return. Options include:</dt>
+<dd><ul class="first last simple">
+<li>counts: a Counter with phrase frequencies.  (default)</li>
+<li><dl class="first docutils">
+<dt>token_spans: a list of the token spans of each matched phrase.  This is</dt>
+<dd>a list of (start,end) pairs of integers, which refer to token positions.</dd>
+</dl>
+</li>
+<li>pos, tokens can be returned too.</li>
+</ul>
+</dd>
+</dl>
+<p>tagger: if you’re passing in raw text, can supply your own tagger, from one
+of the get_*_tagger() functions.  If this is not supplied, we will try to load one.</p>
+<p>grammar: the grammar to use.  Only one option right now…</p>
+<p>regex: a custom regex to use, instead of a premade grammar.  Currently,
+this must work on the 5-tag system described near the top of this file.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.get_stdeng_nltk_tagger">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">get_stdeng_nltk_tagger</code><span class="sig-paren">(</span><em>suppress_errors=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#get_stdeng_nltk_tagger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.get_stdeng_nltk_tagger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.get_stdeng_spacy_tagger">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">get_stdeng_spacy_tagger</code><span class="sig-paren">(</span><em>suppress_errors=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#get_stdeng_spacy_tagger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.get_stdeng_spacy_tagger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.logmsg">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">logmsg</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#logmsg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.logmsg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.safejoin">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">safejoin</code><span class="sig-paren">(</span><em>list_of_str_or_unicode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#safejoin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.safejoin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="scattertext.external.phrasemachine.phrasemachine.unicodify">
+<code class="descclassname">scattertext.external.phrasemachine.phrasemachine.</code><code class="descname">unicodify</code><span class="sig-paren">(</span><em>s</em>, <em>encoding='utf8'</em>, <em>errors='ignore'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/external/phrasemachine/phrasemachine.html#unicodify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.external.phrasemachine.phrasemachine.unicodify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.external.phrasemachine">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-scattertext.external.phrasemachine" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">scattertext.external.phrasemachine package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-scattertext.external.phrasemachine.phrasemachine">scattertext.external.phrasemachine.phrasemachine module</a></li>
+<li><a class="reference internal" href="#module-scattertext.external.phrasemachine">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scattertext.external.phrasemachine.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/scattertext.external.phrasemachine.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

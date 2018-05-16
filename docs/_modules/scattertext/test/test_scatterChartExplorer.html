@@ -1,0 +1,225 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_scatterChartExplorer &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_scatterChartExplorer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.ScatterChartExplorer</span> <span class="k">import</span> <span class="n">ScatterChartExplorer</span>
+<span class="kn">from</span> <span class="nn">scattertext.test.test_semioticSquare</span> <span class="k">import</span> <span class="n">get_test_corpus</span>
+<span class="kn">from</span> <span class="nn">scattertext.test.test_termDocMatrixFactory</span> <span class="k">import</span> <span class="n">build_hamlet_jz_corpus</span><span class="p">,</span> <span class="n">build_hamlet_jz_corpus_with_meta</span><span class="p">,</span> \
+	<span class="n">build_hamlet_jz_corpus_with_alt_text</span>
+
+
+<div class="viewcode-block" id="TestScatterChartExplorer"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer">[docs]</a><span class="k">class</span> <span class="nc">TestScatterChartExplorer</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestScatterChartExplorer.test_to_dict"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer.test_to_dict">[docs]</a>	<span class="k">def</span> <span class="nf">test_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+		<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+		<span class="n">corpus</span> <span class="o">=</span> <span class="n">build_hamlet_jz_corpus</span><span class="p">()</span>
+		<span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span>
+		                          <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;docs&#39;</span><span class="p">]))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+		                 <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;not_category_name&#39;</span><span class="p">,</span> <span class="s1">&#39;category_name&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;category_terms&#39;</span><span class="p">,</span> <span class="s1">&#39;not_category_internal_names&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;not_category_terms&#39;</span><span class="p">,</span> <span class="s1">&#39;category_internal_name&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;categories&#39;</span><span class="p">,</span> <span class="s1">&#39;neutral_category_name&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;extra_category_name&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;neutral_category_internal_names&#39;</span><span class="p">,</span>
+		                      <span class="s1">&#39;extra_category_internal_names&#39;</span><span class="p">]))</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]),</span>
+		                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;texts&#39;</span><span class="p">]),</span>
+		                 <span class="p">[</span><span class="s2">&quot;what art thou that usurp&#39;st this time of night,&quot;</span><span class="p">,</span>
+		                  <span class="s1">&#39;together with that fair and warlike form&#39;</span><span class="p">,</span>
+		                  <span class="s1">&#39;in which the majesty of buried denmark&#39;</span><span class="p">,</span>
+		                  <span class="s1">&#39;did sometimes march? by heaven i charge thee, speak!&#39;</span><span class="p">,</span>
+		                  <span class="s1">&#39;halt! who goes there?&#39;</span><span class="p">,</span> <span class="s1">&#39;it is i sire tone from brooklyn.&#39;</span><span class="p">,</span>
+		                  <span class="s1">&#39;well, speak up man what is it?&#39;</span><span class="p">,</span>
+		                  <span class="s1">&#39;news from the east sire! the best of both worlds has returned!&#39;</span><span class="p">])</span>
+		<span class="n">expected</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;ncat&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ncat25k&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;bg&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+		            <span class="s1">&#39;cat&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;term&#39;</span><span class="p">:</span> <span class="s1">&#39;art&#39;</span><span class="p">,</span> <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="mf">0.5192</span><span class="p">,</span> <span class="s1">&#39;extra&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;extra25k&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+		            <span class="s1">&#39;cat25k&#39;</span><span class="p">:</span> <span class="mi">758</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.06</span><span class="p">,</span> <span class="s1">&#39;neut&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;neut25k&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ox&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;oy&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+
+		<span class="n">actual</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">j</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">t</span><span class="p">[</span><span class="s1">&#39;term&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;art&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		for var in expected.keys():</span>
+<span class="sd">			try:</span>
+<span class="sd">				#np.testing.assert_almost_equal(actual[var], expected[var],decimal=1)</span>
+<span class="sd">			except TypeError:</span>
+<span class="sd">				self.assertEqual(actual[var], expected[var])</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">expected</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">set</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">expected</span><span class="p">[</span><span class="s1">&#39;term&#39;</span><span class="p">],</span> <span class="n">actual</span><span class="p">[</span><span class="s1">&#39;term&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="p">{</span><span class="s1">&#39;texts&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="s1">&#39;categories&#39;</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="TestScatterChartExplorer.test_multi_categories"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer.test_multi_categories">[docs]</a>	<span class="k">def</span> <span class="nf">test_multi_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">corpus</span> <span class="o">=</span> <span class="n">get_test_corpus</span><span class="p">()</span>
+		<span class="n">j_vs_all</span> <span class="o">=</span> <span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="o">=</span><span class="n">corpus</span><span class="p">,</span> <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> \
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">)</span>
+		<span class="n">j_vs_swift</span> <span class="o">=</span> <span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="o">=</span><span class="n">corpus</span><span class="p">,</span> <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> \
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="n">not_categories</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;swift&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">j_vs_all</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">][</span><span class="s1">&#39;not_category_internal_names&#39;</span><span class="p">]),</span>
+		                    <span class="nb">set</span><span class="p">(</span><span class="n">j_vs_swift</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">][</span><span class="s1">&#39;not_category_internal_names&#39;</span><span class="p">]))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">j_vs_all</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]),</span> <span class="nb">list</span><span class="p">(</span><span class="n">j_vs_swift</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">j_vs_all</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;categories&#39;</span><span class="p">]),</span> <span class="nb">list</span><span class="p">(</span><span class="n">j_vs_swift</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;categories&#39;</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="TestScatterChartExplorer.test_metadata"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer.test_metadata">[docs]</a>	<span class="k">def</span> <span class="nf">test_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">corpus</span> <span class="o">=</span> <span class="n">build_hamlet_jz_corpus</span><span class="p">()</span>
+		<span class="n">meta</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">,</span> <span class="s1">&#39;four&#39;</span><span class="p">,</span> <span class="s1">&#39;five&#39;</span><span class="p">,</span> <span class="s1">&#39;six&#39;</span><span class="p">,</span> <span class="s1">&#39;seven&#39;</span><span class="p">,</span> <span class="s1">&#39;eight&#39;</span><span class="p">]</span>
+		<span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span>
+		                          <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">maxDiff</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">],</span>
+		                 <span class="p">{</span><span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+		                  <span class="s1">&#39;categories&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="s1">&#39;jay-z/r. kelly&#39;</span><span class="p">],</span>
+		                  <span class="s1">&#39;meta&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;two&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;three&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;four&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;five&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;six&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;seven&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;eight&#39;</span><span class="p">],</span>
+		                  <span class="s1">&#39;texts&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;what art thou that usurp&#39;st this time of night,&quot;</span><span class="p">,</span>
+		                            <span class="s1">&#39;together with that fair and warlike form&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;in which the majesty of buried denmark&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;did sometimes march? by heaven i charge thee, speak!&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;halt! who goes there?&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;it is i sire tone from brooklyn.&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;well, speak up man what is it?&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;news from the east sire! the best of both worlds has returned!&#39;</span><span class="p">]}</span>
+		                 <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestScatterChartExplorer.test_alternative_text"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer.test_alternative_text">[docs]</a>	<span class="k">def</span> <span class="nf">test_alternative_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">corpus</span> <span class="o">=</span> <span class="n">build_hamlet_jz_corpus_with_alt_text</span><span class="p">()</span>
+		<span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span>
+		                          <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="o">=</span><span class="s1">&#39;alt&#39;</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;texts&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;texts&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+
+		<span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span>
+		                          <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;texts&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;texts&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="TestScatterChartExplorer.test_extra_features"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_scatterChartExplorer.TestScatterChartExplorer.test_extra_features">[docs]</a>	<span class="k">def</span> <span class="nf">test_extra_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">corpus</span> <span class="o">=</span> <span class="n">build_hamlet_jz_corpus_with_meta</span><span class="p">()</span>
+		<span class="n">meta</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">,</span> <span class="s1">&#39;four&#39;</span><span class="p">,</span> <span class="s1">&#39;five&#39;</span><span class="p">,</span> <span class="s1">&#39;six&#39;</span><span class="p">,</span> <span class="s1">&#39;seven&#39;</span><span class="p">,</span> <span class="s1">&#39;eight&#39;</span><span class="p">]</span>
+		<span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">ScatterChartExplorer</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span>
+		                          <span class="n">minimum_term_frequency</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+		                          <span class="n">use_non_text_features</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
+		<span class="n">extras</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;cat3&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cat4&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat4&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat3&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;cat5&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat6&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;cat9&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat3&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;cat4&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat1&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;cat2&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat2&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;cat5&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+		          <span class="p">{</span><span class="s1">&#39;cat3&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;cat4&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}]</span>
+		<span class="n">extras</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;cat1&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}]</span> <span class="o">*</span> <span class="mi">8</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">maxDiff</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">],</span>
+		                 <span class="p">{</span><span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+		                  <span class="s1">&#39;categories&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;hamlet&#39;</span><span class="p">,</span> <span class="s1">&#39;jay-z/r. kelly&#39;</span><span class="p">],</span>
+		                  <span class="s1">&#39;extra&#39;</span><span class="p">:</span> <span class="n">extras</span><span class="p">,</span>
+		                  <span class="s1">&#39;meta&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;two&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;three&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;four&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;five&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;six&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;seven&#39;</span><span class="p">,</span>
+		                           <span class="s1">&#39;eight&#39;</span><span class="p">],</span>
+		                  <span class="s1">&#39;texts&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;what art thou that usurp&#39;st this time of night,&quot;</span><span class="p">,</span>
+		                            <span class="s1">&#39;together with that fair and warlike form&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;in which the majesty of buried denmark&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;did sometimes march? by heaven i charge thee, speak!&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;halt! who goes there?&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;it is i sire tone from brooklyn.&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;well, speak up man what is it?&#39;</span><span class="p">,</span>
+		                            <span class="s1">&#39;news from the east sire! the best of both worlds has returned!&#39;</span><span class="p">]}</span>
+		                 <span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

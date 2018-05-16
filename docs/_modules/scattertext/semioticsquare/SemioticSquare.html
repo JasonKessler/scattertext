@@ -1,0 +1,278 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.semioticsquare.SemioticSquare &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.semioticsquare.SemioticSquare</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.termranking</span> <span class="k">import</span> <span class="n">AbsoluteFrequencyRanker</span>
+<span class="kn">from</span> <span class="nn">scattertext.termscoring.RankDifference</span> <span class="k">import</span> <span class="n">RankDifference</span>
+
+
+<div class="viewcode-block" id="EmptyNeutralCategoriesError"><a class="viewcode-back" href="../../../scattertext.semioticsquare.html#scattertext.semioticsquare.SemioticSquare.EmptyNeutralCategoriesError">[docs]</a><span class="k">class</span> <span class="nc">EmptyNeutralCategoriesError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="k">pass</span></div>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">!!! Need to properly segregate interfaces</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="SemioticSquare"><a class="viewcode-back" href="../../../scattertext.semioticsquare.html#scattertext.semioticsquare.SemioticSquare.SemioticSquare">[docs]</a><span class="k">class</span> <span class="nc">SemioticSquare</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	Create a visualization of a semiotic square.  Requires Corpus to have</span>
+<span class="sd">	at least three categories.</span>
+<span class="sd">	&gt;&gt;&gt; newsgroups_train = fetch_20newsgroups(subset=&#39;train&#39;,</span>
+<span class="sd">	...   remove=(&#39;headers&#39;, &#39;footers&#39;, &#39;quotes&#39;))</span>
+<span class="sd">	&gt;&gt;&gt; vectorizer = CountVectorizer()</span>
+<span class="sd">	&gt;&gt;&gt; X = vectorizer.fit_transform(newsgroups_train.data)</span>
+<span class="sd">	&gt;&gt;&gt; corpus = st.CorpusFromScikit(</span>
+<span class="sd">	... 	X=X,</span>
+<span class="sd">	... 	y=newsgroups_train.target,</span>
+<span class="sd">	... 	feature_vocabulary=vectorizer.vocabulary_,</span>
+<span class="sd">	... 	category_names=newsgroups_train.target_names,</span>
+<span class="sd">	... 	raw_texts=newsgroups_train.data</span>
+<span class="sd">	... 	).build()</span>
+<span class="sd">	&gt;&gt;&gt; semseq = SemioticSquare(corpus,</span>
+<span class="sd">	... 	category_a = &#39;alt.atheism&#39;,</span>
+<span class="sd">	... 	category_b = &#39;soc.religion.christian&#39;,</span>
+<span class="sd">	... 	neutral_categories = [&#39;talk.religion.misc&#39;]</span>
+<span class="sd">	... )</span>
+<span class="sd">	&gt;&gt;&gt; # A simple HTML table</span>
+<span class="sd">	&gt;&gt;&gt; html = SemioticSquareViz(semseq).to_html()</span>
+<span class="sd">	&gt;&gt;&gt; # The table with an interactive scatterplot below it</span>
+<span class="sd">	&gt;&gt;&gt; html = st.produce_semiotic_square_explorer(semiotic_square,</span>
+<span class="sd">	...                                            x_label=&#39;More Atheism, Less Xtnity&#39;,</span>
+<span class="sd">	...                                            y_label=&#39;General Religious Talk&#39;)</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">term_doc_matrix</span><span class="p">,</span>
+	             <span class="n">category_a</span><span class="p">,</span>
+	             <span class="n">category_b</span><span class="p">,</span>
+	             <span class="n">neutral_categories</span><span class="p">,</span>
+	             <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">term_ranker</span><span class="o">=</span><span class="n">AbsoluteFrequencyRanker</span><span class="p">,</span>
+	             <span class="n">scorer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		term_doc_matrix : TermDocMatrix</span>
+<span class="sd">			TermDocMatrix (or descendant) which will be used in constructing square.</span>
+<span class="sd">		category_a : str</span>
+<span class="sd">			Category name for term A</span>
+<span class="sd">		category_b : str</span>
+<span class="sd">			Category name for term B (in opposition to A)</span>
+<span class="sd">		neutral_categories : list[str]</span>
+<span class="sd">			List of category names that A and B will be contrasted to.  Should be in same domain.</span>
+<span class="sd">		labels : dict</span>
+<span class="sd">			None by default. Labels are dictionary of {&#39;a_and_b&#39;: &#39;A and B&#39;, ...} to be shown</span>
+<span class="sd">			above each category.</span>
+<span class="sd">		term_ranker : TermRanker</span>
+<span class="sd">			Class for returning a term-frequency df</span>
+<span class="sd">		scorer : termscoring class, optional</span>
+<span class="sd">			Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="n">category_a</span> <span class="ow">in</span> <span class="n">term_doc_matrix</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()</span>
+		<span class="k">assert</span> <span class="n">category_b</span> <span class="ow">in</span> <span class="n">term_doc_matrix</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">neutral_categories</span><span class="p">:</span>
+			<span class="k">assert</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">term_doc_matrix</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neutral_categories</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">EmptyNeutralCategoriesError</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">category_a_</span> <span class="o">=</span> <span class="n">category_a</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">category_b_</span> <span class="o">=</span> <span class="n">category_b</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">neutral_categories_</span> <span class="o">=</span> <span class="n">neutral_categories</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_build_square</span><span class="p">(</span><span class="n">term_doc_matrix</span><span class="p">,</span> <span class="n">term_ranker</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">scorer</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_build_square</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_doc_matrix</span><span class="p">,</span> <span class="n">term_ranker</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">scorer</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">term_doc_matrix_</span> <span class="o">=</span> <span class="n">term_doc_matrix</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">term_ranker</span> <span class="o">=</span> <span class="n">term_ranker</span><span class="p">(</span><span class="n">term_doc_matrix</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">RankDifference</span><span class="p">()</span> \
+			<span class="k">if</span> <span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">scorer</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_axes</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_lexicons</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+<div class="viewcode-block" id="SemioticSquare.get_axes"><a class="viewcode-back" href="../../../scattertext.semioticsquare.html#scattertext.semioticsquare.SemioticSquare.SemioticSquare.get_axes">[docs]</a>	<span class="k">def</span> <span class="nf">get_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="n">scorer</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_axes</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span></div>
+
+<div class="viewcode-block" id="SemioticSquare.get_lexicons"><a class="viewcode-back" href="../../../scattertext.semioticsquare.html#scattertext.semioticsquare.SemioticSquare.SemioticSquare.get_lexicons">[docs]</a>	<span class="k">def</span> <span class="nf">get_lexicons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_terms</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		num_terms, int</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dict</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span><span class="n">num_terms</span><span class="p">]</span>
+		        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+<div class="viewcode-block" id="SemioticSquare.get_labels"><a class="viewcode-back" href="../../../scattertext.semioticsquare.html#scattertext.semioticsquare.SemioticSquare.SemioticSquare.get_labels">[docs]</a>	<span class="k">def</span> <span class="nf">get_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_a_label</span><span class="p">()</span>
+		<span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_b_label</span><span class="p">()</span>
+		<span class="n">default_labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+		                  <span class="s1">&#39;not_a&#39;</span><span class="p">:</span> <span class="s1">&#39;Not &#39;</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span>
+		                  <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+		                  <span class="s1">&#39;not_b&#39;</span><span class="p">:</span> <span class="s1">&#39;Not &#39;</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span>
+		                  <span class="s1">&#39;a_and_b&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="s1">&#39; + &#39;</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span>
+		                  <span class="s1">&#39;not_a_and_not_b&#39;</span><span class="p">:</span> <span class="s1">&#39;Not &#39;</span> <span class="o">+</span> <span class="n">a</span> <span class="o">+</span> <span class="s1">&#39; + Not &#39;</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span>
+		                  <span class="s1">&#39;a_and_not_b&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="s1">&#39; + Not &#39;</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span>
+		                  <span class="s1">&#39;b_and_not_a&#39;</span><span class="p">:</span> <span class="s1">&#39;Not &#39;</span> <span class="o">+</span> <span class="n">a</span> <span class="o">+</span> <span class="s1">&#39; + &#39;</span> <span class="o">+</span> <span class="n">b</span><span class="p">}</span>
+		<span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span>
+		<span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">return</span> <span class="p">{</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_label&#39;</span><span class="p">:</span> <span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default_labels</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+		        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">default_labels</span><span class="p">}</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_default_b_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_b_</span>
+
+	<span class="k">def</span> <span class="nf">_get_default_a_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_a_</span>
+
+	<span class="k">def</span> <span class="nf">_build_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span>
+		<span class="n">tdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_term_doc_count_df</span><span class="p">()</span>
+		<span class="n">counts</span> <span class="o">=</span> <span class="n">tdf</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_x_axis</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">tdf</span><span class="p">)</span>
+		<span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_default_score</span><span class="p">()</span>
+		<span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_y_axis</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">tdf</span><span class="p">)</span>
+		<span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_default_score</span><span class="p">()</span>
+		<span class="n">tdf</span><span class="p">[</span><span class="s1">&#39;counts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts</span>
+		<span class="k">return</span> <span class="n">tdf</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;counts&#39;</span><span class="p">]]</span>
+
+	<span class="k">def</span> <span class="nf">_get_x_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer</span><span class="p">,</span> <span class="n">tdf</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">scorer</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span>
+			<span class="n">tdf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">category_a_</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">],</span>
+			<span class="n">tdf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">category_b_</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">]</span>
+		<span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_y_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer</span><span class="p">,</span> <span class="n">tdf</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">scorer</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span>
+			<span class="n">tdf</span><span class="p">[[</span><span class="n">t</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">category_a_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_b_</span><span class="p">]]]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+			<span class="n">tdf</span><span class="p">[[</span><span class="n">t</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">neutral_categories_</span><span class="p">]]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_term_doc_count_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_ranker</span><span class="o">.</span><span class="n">get_ranks</span><span class="p">()</span>
+		<span class="p">[[</span><span class="n">t</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_all_categories</span><span class="p">()]])</span>
+
+	<span class="k">def</span> <span class="nf">_get_all_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">category_a_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_b_</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">neutral_categories_</span>
+
+	<span class="k">def</span> <span class="nf">_build_lexicons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span>
+		<span class="n">x_max</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+		<span class="n">y_max</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+		<span class="n">x_min</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+		<span class="n">y_min</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+		<span class="n">x_baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_x_baseline</span><span class="p">()</span>
+		<span class="n">y_baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_y_baseline</span><span class="p">()</span>
+
+		<span class="k">def</span> <span class="nf">dist</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">x_bound</span><span class="p">,</span> <span class="n">y_bound</span><span class="p">):</span>
+			<span class="k">return</span> <span class="p">((</span><span class="n">x_bound</span> <span class="o">-</span> <span class="n">candidates</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y_bound</span> <span class="o">-</span> <span class="n">candidates</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">x_baseline</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;not_a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x_baseline</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">y_min</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x_baseline</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;not_b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">x_baseline</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;a_and_b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_baseline</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;not_a_and_not_b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">y_baseline</span><span class="p">)],</span> <span class="n">x_baseline</span><span class="p">,</span> <span class="n">y_min</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;a_and_not_b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">x_baseline</span><span class="p">)],</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_baseline</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span><span class="p">[</span><span class="s1">&#39;b_and_not_a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="n">ax</span><span class="p">[(</span><span class="n">ax</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x_baseline</span><span class="p">)],</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">y_baseline</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lexicons</span>
+
+	<span class="k">def</span> <span class="nf">_get_y_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_default_score</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">_get_x_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_default_score</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

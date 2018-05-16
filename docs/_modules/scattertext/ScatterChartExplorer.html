@@ -1,0 +1,211 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.ScatterChartExplorer &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.ScatterChartExplorer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">scattertext</span> <span class="k">import</span> <span class="n">ScatterChart</span><span class="p">,</span> <span class="n">TermCategoryFrequencies</span>
+<span class="kn">from</span> <span class="nn">scattertext</span> <span class="k">import</span> <span class="n">percentile_alphabetical</span>
+<span class="kn">from</span> <span class="nn">scattertext.Corpus</span> <span class="k">import</span> <span class="n">Corpus</span>
+<span class="kn">from</span> <span class="nn">scattertext.DocsAndLabelsFromCorpus</span> <span class="k">import</span> <span class="n">DocsAndLabelsFromCorpus</span><span class="p">,</span> <span class="n">DocsAndLabelsFromCorpusSample</span>
+
+
+<div class="viewcode-block" id="ScatterChartExplorer"><a class="viewcode-back" href="../../scattertext.html#scattertext.ScatterChartExplorer.ScatterChartExplorer">[docs]</a><span class="k">class</span> <span class="nc">ScatterChartExplorer</span><span class="p">(</span><span class="n">ScatterChart</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">corpus</span><span class="p">,</span>
+	             <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.</span>
+
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">Corpus</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">TermCategoryFrequencies</span><span class="p">))</span>
+		<span class="n">ScatterChart</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScatterChartExplorer.to_dict"><a class="viewcode-back" href="../../scattertext.html#scattertext.ScatterChartExplorer.ScatterChartExplorer.to_dict">[docs]</a>	<span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	            <span class="n">category</span><span class="p">,</span>
+	            <span class="n">category_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">not_category_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">scores</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">max_docs_per_category</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">transform</span><span class="o">=</span><span class="n">percentile_alphabetical</span><span class="p">,</span>
+	            <span class="n">alternative_text_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">title_case_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	            <span class="n">not_categories</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">neutral_categories</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">extra_categories</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">neutral_category_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">extra_category_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">background_scorer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			Category to annotate.  Exact value of category.</span>
+<span class="sd">		category_name : str, optional</span>
+<span class="sd">			Name of category which will appear on web site. Default None is same as category.</span>
+<span class="sd">		not_category_name : str, optional</span>
+<span class="sd">			Name of ~category which will appear on web site. Default None is same as &quot;not &quot; + category.</span>
+<span class="sd">		scores : np.array, optional</span>
+<span class="sd">			Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))</span>
+<span class="sd">		metadata, None or array-like.</span>
+<span class="sd">		  List of metadata for each document.  Defaults to a list of blank strings.</span>
+<span class="sd">		max_docs_per_category, None or int, optional</span>
+<span class="sd">		  Maximum number of documents to store per category.  Defaults to 4.</span>
+<span class="sd">		transform : function, optional</span>
+<span class="sd">			Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.</span>
+<span class="sd">		alternative_text_field : str or None, optional</span>
+<span class="sd">			Field in from dataframe used to make corpus to display in place of parsed text. Only</span>
+<span class="sd">			can be used if corpus is a ParsedCorpus instance.</span>
+<span class="sd">		title_case_names : bool, default False</span>
+<span class="sd">		  Should the program title-case the category and not-category names?</span>
+<span class="sd">		not_categories : list, optional</span>
+<span class="sd">			List of categories to use as &quot;not category&quot;.  Defaults to all others.</span>
+<span class="sd">		neutral_categories : list, optional</span>
+<span class="sd">			List of categories to use as neutral.  Defaults [].</span>
+<span class="sd">		extra_categories : list, optional</span>
+<span class="sd">			List of categories to use as extra.  Defaults [].</span>
+<span class="sd">		neutral_category_name : str</span>
+<span class="sd">			&quot;Neutral&quot; by default. Only active if show_neutral is True.  Name of the neutral</span>
+<span class="sd">			column.</span>
+<span class="sd">		extra_category_name : str</span>
+<span class="sd">			&quot;Extra&quot; by default. Only active if show_neutral and show_extra are true. Name of the</span>
+<span class="sd">			extra column.</span>
+<span class="sd">		background_scorer : CharacteristicScorer, optional</span>
+<span class="sd">			Used for bg scores</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dictionary {info: {&#39;category_name&#39;: full category name, ...},</span>
+<span class="sd">												 docs: {&#39;texts&#39;: [doc1text, ...],</span>
+<span class="sd">												        &#39;labels&#39;: [1, 0, ...],</span>
+<span class="sd">												        &#39;meta&#39;: [&#39;&lt;b&gt;blah&lt;/b&gt;&#39;, &#39;&lt;b&gt;blah&lt;/b&gt;&#39;]}</span>
+<span class="sd">		                     data: {term:, x:frequency [0-1], y:frequency [0-1],</span>
+<span class="sd">		                            s: score,</span>
+<span class="sd">		                            bg: background score,</span>
+<span class="sd">		                            as: association score,</span>
+<span class="sd">		                            cat25k: freq per 25k in category,</span>
+<span class="sd">		                            cat: count in category,</span>
+<span class="sd">		                            ncat: count in non-category,</span>
+<span class="sd">		                            catdocs: [docnum, ...],</span>
+<span class="sd">		                            ncatdocs: [docnum, ...]</span>
+<span class="sd">		                            ncat25k: freq per 25k in non-category}}</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">j</span> <span class="o">=</span> <span class="n">ScatterChart</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+		                         <span class="n">category</span><span class="p">,</span>
+		                         <span class="n">category_name</span><span class="o">=</span><span class="n">category_name</span><span class="p">,</span>
+		                         <span class="n">not_category_name</span><span class="o">=</span><span class="n">not_category_name</span><span class="p">,</span>
+		                         <span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span>
+		                         <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+		                         <span class="n">title_case_names</span><span class="o">=</span><span class="n">title_case_names</span><span class="p">,</span>
+		                         <span class="n">not_categories</span><span class="o">=</span><span class="n">not_categories</span><span class="p">,</span>
+		                         <span class="n">neutral_categories</span><span class="o">=</span><span class="n">neutral_categories</span><span class="p">,</span>
+		                         <span class="n">extra_categories</span><span class="o">=</span><span class="n">extra_categories</span><span class="p">,</span>
+		                         <span class="n">background_scorer</span><span class="o">=</span><span class="n">background_scorer</span><span class="p">)</span>
+		<span class="n">docs_getter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_docs_getter</span><span class="p">(</span><span class="n">max_docs_per_category</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">neutral_category_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">neutral_category_name</span> <span class="o">=</span> <span class="s1">&#39;Neutral&#39;</span>
+		<span class="k">if</span> <span class="n">extra_category_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">extra_category_name</span> <span class="o">=</span> <span class="s1">&#39;Extra&#39;</span>
+		<span class="n">j</span><span class="p">[</span><span class="s1">&#39;docs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_docs_structure</span><span class="p">(</span><span class="n">docs_getter</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+		<span class="n">j</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">][</span><span class="s1">&#39;neutral_category_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neutral_category_name</span>
+		<span class="n">j</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">][</span><span class="s1">&#39;extra_category_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">extra_category_name</span>
+		<span class="k">return</span> <span class="n">j</span></div>
+
+	<span class="k">def</span> <span class="nf">_make_docs_getter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_docs_per_category</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">max_docs_per_category</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">docs_getter</span> <span class="o">=</span> <span class="n">DocsAndLabelsFromCorpus</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_doc_matrix</span><span class="p">,</span>
+			                                      <span class="n">alternative_text_field</span><span class="o">=</span><span class="n">alternative_text_field</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">docs_getter</span> <span class="o">=</span> <span class="n">DocsAndLabelsFromCorpusSample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_doc_matrix</span><span class="p">,</span>
+			                                            <span class="n">max_docs_per_category</span><span class="p">,</span>
+			                                            <span class="n">alternative_text_field</span><span class="o">=</span><span class="n">alternative_text_field</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatterchartdata</span><span class="o">.</span><span class="n">use_non_text_features</span><span class="p">:</span>
+			<span class="n">docs_getter</span> <span class="o">=</span> <span class="n">docs_getter</span><span class="o">.</span><span class="n">use_non_text_features</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">docs_getter</span>
+
+	<span class="k">def</span> <span class="nf">_get_docs_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs_getter</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">docs_getter</span><span class="o">.</span><span class="n">get_labels_and_texts_and_meta</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">metadata</span><span class="p">))</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">docs_getter</span><span class="o">.</span><span class="n">get_labels_and_texts</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">_add_term_freq_to_json_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_df</span><span class="p">,</span> <span class="n">term_freq_df</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="n">ScatterChart</span><span class="o">.</span><span class="n">_add_term_freq_to_json_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_df</span><span class="p">,</span> <span class="n">term_freq_df</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span>
+		<span class="n">json_df</span><span class="p">[</span><span class="s1">&#39;cat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">term_freq_df</span><span class="p">[</span><span class="n">category</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+		<span class="n">json_df</span><span class="p">[</span><span class="s1">&#39;ncat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">term_freq_df</span><span class="p">[</span><span class="s1">&#39;not cat freq&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,101 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_autoTermSelector &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_autoTermSelector</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.AutoTermSelector</span> <span class="k">import</span> <span class="n">AutoTermSelector</span>
+<span class="kn">from</span> <span class="nn">scattertext.test.test_TermDocMat</span> <span class="k">import</span> <span class="n">make_a_test_term_doc_matrix</span>
+
+
+<div class="viewcode-block" id="TestAutoTermSelector"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_autoTermSelector.TestAutoTermSelector">[docs]</a><span class="k">class</span> <span class="nc">TestAutoTermSelector</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestAutoTermSelector.test_reduce_terms"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_autoTermSelector.TestAutoTermSelector.test_reduce_terms">[docs]</a>	<span class="k">def</span> <span class="nf">test_reduce_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">tdm</span> <span class="o">=</span> <span class="n">make_a_test_term_doc_matrix</span><span class="p">()</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="n">tdm</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span>
+		<span class="n">new_tdm</span> <span class="o">=</span> <span class="n">AutoTermSelector</span><span class="o">.</span><span class="n">reduce_terms</span><span class="p">(</span>
+			<span class="n">tdm</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">num_term_to_keep</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertLessEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_tdm</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tdm</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="mi">58</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestAutoTermSelector.test_get_selected_terms"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_autoTermSelector.TestAutoTermSelector.test_get_selected_terms">[docs]</a>	<span class="k">def</span> <span class="nf">test_get_selected_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">tdm</span> <span class="o">=</span> <span class="n">make_a_test_term_doc_matrix</span><span class="p">()</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="n">tdm</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span>
+		<span class="n">selected_terms</span> <span class="o">=</span> <span class="n">AutoTermSelector</span><span class="o">.</span><span class="n">get_selected_terms</span><span class="p">(</span><span class="n">tdm</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">num_term_to_keep</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertLessEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_terms</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tdm</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="mi">58</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

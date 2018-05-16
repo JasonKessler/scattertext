@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.DocsAndLabelsFromCorpus &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.DocsAndLabelsFromCorpus</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">scattertext</span> <span class="k">import</span> <span class="n">TermCategoryFrequencies</span>
+<span class="kn">from</span> <span class="nn">scattertext.Corpus</span> <span class="k">import</span> <span class="n">Corpus</span>
+<span class="kn">from</span> <span class="nn">scattertext.ParsedCorpus</span> <span class="k">import</span> <span class="n">ParsedCorpus</span>
+
+
+<div class="viewcode-block" id="CorpusShouldBeParsedCorpusException"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.CorpusShouldBeParsedCorpusException">[docs]</a><span class="k">class</span> <span class="nc">CorpusShouldBeParsedCorpusException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpus"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpus">[docs]</a><span class="k">class</span> <span class="nc">DocsAndLabelsFromCorpus</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus, Corpus: Corpus to extract documents and labels from</span>
+<span class="sd">		alternative_text_field, str or None: if str, corpus must be parsed corpus</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">Corpus</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">TermCategoryFrequencies</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_texts_to_display</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="n">alternative_text_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">):</span>
+				<span class="k">raise</span> <span class="n">CorpusShouldBeParsedCorpusException</span><span class="p">(</span>
+					<span class="s1">&#39;Corpus type needs to be ParsedCorpus to use the alternative text field.&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_texts_to_display</span> <span class="o">=</span> <span class="n">corpus</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">alternative_text_field</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span> <span class="o">=</span> <span class="kc">False</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span> <span class="o">=</span> <span class="n">corpus</span>
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpus.use_non_text_features"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpus.use_non_text_features">[docs]</a>	<span class="k">def</span> <span class="nf">use_non_text_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span> <span class="o">=</span> <span class="kc">True</span>
+		<span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpus.get_labels_and_texts"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpus.get_labels_and_texts">[docs]</a>	<span class="k">def</span> <span class="nf">get_labels_and_texts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="c1"># type: () -&gt; dict</span>
+		<span class="n">texts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_texts_to_display</span><span class="p">()</span>
+		<span class="n">to_ret</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;categories&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">get_categories</span><span class="p">(),</span>
+		          <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">get_doc_indices</span><span class="p">(),</span>
+		          <span class="s1">&#39;texts&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_list_from_texts</span><span class="p">(</span><span class="n">texts</span><span class="p">)}</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span><span class="p">:</span>
+			<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;extra&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">list_extra_features</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">to_ret</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_list_from_texts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">texts</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">unicode</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">texts</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">_get_texts_to_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_there_are_no_alternative_texts_to_display</span><span class="p">():</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">get_texts</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_to_display</span>
+
+	<span class="k">def</span> <span class="nf">_there_are_no_alternative_texts_to_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_to_display</span> <span class="ow">is</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpus.get_labels_and_texts_and_meta"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpus.get_labels_and_texts_and_meta">[docs]</a>	<span class="k">def</span> <span class="nf">get_labels_and_texts_and_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+		<span class="c1"># type: (np.array) -&gt; dict</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_labels_and_texts</span><span class="p">()</span>
+		<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">])</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">data</span></div></div>
+
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpusSample"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpusSample">[docs]</a><span class="k">class</span> <span class="nc">DocsAndLabelsFromCorpusSample</span><span class="p">(</span><span class="n">DocsAndLabelsFromCorpus</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">,</span> <span class="n">max_per_category</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="n">DocsAndLabelsFromCorpus</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">,</span> <span class="n">alternative_text_field</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_per_category</span> <span class="o">=</span> <span class="n">max_per_category</span>
+		<span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpusSample.get_labels_and_texts"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpusSample.get_labels_and_texts">[docs]</a>	<span class="k">def</span> <span class="nf">get_labels_and_texts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		metadata : (array like or None)</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		{&#39;labels&#39;:[], &#39;texts&#39;: []} or {&#39;labels&#39;:[], &#39;texts&#39;: [], &#39;meta&#39;: []}</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">to_ret</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;categories&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">get_categories</span><span class="p">(),</span> <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;texts&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+		<span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">_y</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+		<span class="n">texts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_texts_to_display</span><span class="p">()</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span><span class="p">:</span>
+			<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;extra&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">extrafeats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">list_extra_features</span><span class="p">()</span>
+		<span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">label_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_corpus</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="p">)):</span>
+			<span class="n">label_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))[</span><span class="n">labels</span> <span class="o">==</span> <span class="n">label_i</span><span class="p">]</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_per_category</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_indices</span><span class="p">):</span>
+				<span class="n">label_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">label_indices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_per_category</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+				<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">[</span><span class="n">label_indices</span><span class="p">]])</span>
+				<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;texts&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">[</span><span class="n">label_indices</span><span class="p">])</span>
+				<span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+					<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">metadata</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">label_indices</span><span class="p">]</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span><span class="p">:</span>
+					<span class="n">to_ret</span><span class="p">[</span><span class="s1">&#39;extra&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">extrafeats</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">label_indices</span><span class="p">]</span>
+
+		<span class="k">return</span> <span class="n">to_ret</span></div>
+
+<div class="viewcode-block" id="DocsAndLabelsFromCorpusSample.get_labels_and_texts_and_meta"><a class="viewcode-back" href="../../scattertext.html#scattertext.DocsAndLabelsFromCorpus.DocsAndLabelsFromCorpusSample.get_labels_and_texts_and_meta">[docs]</a>	<span class="k">def</span> <span class="nf">get_labels_and_texts_and_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_labels_and_texts</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

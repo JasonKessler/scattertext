@@ -1,0 +1,38 @@
+scattertext.viz package
+=======================
+
+Submodules
+----------
+
+scattertext.viz.HTMLSemioticSquareViz module
+--------------------------------------------
+
+.. automodule:: scattertext.viz.HTMLSemioticSquareViz
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.viz.HTMLVisualizationAssembly module
+------------------------------------------------
+
+.. automodule:: scattertext.viz.HTMLVisualizationAssembly
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.viz.VizDataAdapter module
+-------------------------------------
+
+.. automodule:: scattertext.viz.VizDataAdapter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.viz
+    :members:
+    :undoc-members:
+    :show-inheritance:

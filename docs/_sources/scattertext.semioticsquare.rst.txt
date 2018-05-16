@@ -1,0 +1,38 @@
+scattertext.semioticsquare package
+==================================
+
+Submodules
+----------
+
+scattertext.semioticsquare.FourSquare module
+--------------------------------------------
+
+.. automodule:: scattertext.semioticsquare.FourSquare
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.semioticsquare.FourSquareAxis module
+------------------------------------------------
+
+.. automodule:: scattertext.semioticsquare.FourSquareAxis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.semioticsquare.SemioticSquare module
+------------------------------------------------
+
+.. automodule:: scattertext.semioticsquare.SemioticSquare
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.semioticsquare
+    :members:
+    :undoc-members:
+    :show-inheritance:

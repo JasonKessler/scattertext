@@ -1,0 +1,109 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_asiannlp &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_asiannlp</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.AsianNLP</span> <span class="k">import</span> <span class="n">chinese_nlp</span><span class="p">,</span> <span class="n">japanese_nlp</span>
+
+
+<div class="viewcode-block" id="TestAsianNLP"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_asiannlp.TestAsianNLP">[docs]</a><span class="k">class</span> <span class="nc">TestAsianNLP</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestAsianNLP.setUp"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_asiannlp.TestAsianNLP.setUp">[docs]</a>	<span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">chinese_text</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;&#39;&#39;总理主持召开的这场座谈会，旨在听取专家学者和企业界人士对《政府工作报告（征求意见稿）》的意见建议。胡玮炜和另外6名不同专业、领域的专家、企业家受邀参加。</span><span class="se">\n</span><span class="s1">李克强对胡玮炜的细致提问始终围绕虚拟经济和实体经济，以及新旧动能转换。他关心自行车制造材料，也询问所采用的互联网技术。 “摩拜单车听起来是经营方式的革命，但基础还是自行车，还是要靠实体经济支撑。反过来，实体经济也要靠服务变革来带动。”总理指出。</span><span class="se">\n</span><span class="s1">当听到这家共享智能单车企业在不到一年的时间发展为拥有80万辆自行车的规模后，李克强充分肯定此类互联网企业对实体经济的带动作用，“某个自行车企业可能就被你带活了，新兴服务业的发展给制造业创造了巨大的市场空间”。</span><span class="se">\n</span><span class="s1">相关资料显示，受益于共享单车，国内传统的自行车产业正在迎来春天，至少带动了160万辆以上自行车的制造生产。甚至有生产自行车零部件的上市公司因此股票涨停。美国彭博新闻社网站注意到这一现象，评价说“中国正重新成为自行车大国”。&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">japanese_text</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;&#39;&#39;（淸實《きよざね》）私共《わたくしども》は、唯《たゞ》君《きみ》の仰《おほ》せのままに、此處《こゝ》までお供《とも》致《いた》して參《まゐ》つたのでござります。丁度《ちやうど》今日《けふ》の午頃《ひるごろ》のこと、わが君《きみ》には急《きふ》に靑褪《あをざ》めた顏《かほ》をなすつて、「都《みやこ》に居《ゐ》ては命《いのち》が危《あやう》い故《ゆゑ》、一刻《いつこく》も早《はや》くわしを何處《どこ》かの山奧《やまおく》へ伴《つ》れて行《い》つて、隱《かく》してくれい。」と仰《おつ》しやりました。それで私共《わたくしども》は取《と》る物《もの》も取《と》り敢《あ》へず、深《ふか》い仔細《しさい》も承《うけたまは》らずに、君《きみ》をお伴《つ》れ申《まを》して、一《ひ》と先《ま》づ田原《たはら》の奧《おく》の大道寺《だいだうじ》の所領《しよりやう》まで逃《に》げのびたのでござりました。すると君《きみ》には、「いや、まだ此處《こゝ》では安心《あんしん》が出來《でき》ない。もつと人里《ひとざと》を離《はな》れた、もつと寂《さび》しい處《ところ》へ行《ゆ》かねばならぬ。」と仰《おつ》しやつて、たうとうこんな山奧《やまおく》へ參《まゐ》つたのでござります。&#39;&#39;&#39;</span></div>
+
+<div class="viewcode-block" id="TestAsianNLP.test_chinese"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_asiannlp.TestAsianNLP.test_chinese">[docs]</a>	<span class="k">def</span> <span class="nf">test_chinese</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">doc</span> <span class="o">=</span> <span class="n">chinese_nlp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chinese_text</span><span class="p">)</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="n">sent1</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sent1</span><span class="p">),</span> <span class="sa">u</span><span class="s1">&#39;总理 主持 召开 的 这场 座谈会 ， 旨在 听取 专家学者 和 企业界 人士 对 《 政府 工作 报告 （ 征求意见 稿 ） 》 的 意见建议 。&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">),</span> <span class="mi">11</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestAsianNLP.test_japanese"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_asiannlp.TestAsianNLP.test_japanese">[docs]</a>	<span class="k">def</span> <span class="nf">test_japanese</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;tinysegmenter&#39;</span><span class="p">)</span>
+		<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="n">doc</span> <span class="o">=</span> <span class="n">japanese_nlp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">japanese_text</span><span class="p">)</span>
+		<span class="n">sent1</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sent1</span><span class="p">)),</span> <span class="mi">10</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">),</span> <span class="mi">7</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

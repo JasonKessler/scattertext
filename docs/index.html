@@ -1,0 +1,643 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to Scattertext’s documentation! &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-scattertext-s-documentation">
+<h1>Welcome to Scattertext’s documentation!<a class="headerlink" href="#welcome-to-scattertext-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+<div class="section" id="module-scattertext">
+<span id="documentation"></span><h1>Documentation<a class="headerlink" href="#module-scattertext" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="scattertext.produce_characteristic_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_characteristic_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>not_categories=None</em>, <em>characteristic_scorer=&lt;scattertext.characteristic.DenseRankCharacteristicness.DenseRankCharacteristicness object&gt;</em>, <em>term_ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em>, <em>term_scorer=&lt;scattertext.termscoring.RankDifference.RankDifference object&gt;</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_characteristic_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_characteristic_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>It is highly recommended to use a stoplisted, unigram corpus– <cite>corpus.get_stoplisted_unigram_corpus()</cite></dd>
+</dl>
+<p>category : str
+category_name : str
+not_category_name : str
+not_categories : list
+characteristic_scorer : CharacteristicScorer
+term_ranker
+term_scorer
+term_acceptance_re : SRE_Pattern</p>
+<blockquote>
+<div>Regular expression to identify valid terms</div></blockquote>
+<dl class="docutils">
+<dt>kwargs <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>remaining produce_scattertext_explorer keywords</dd>
+</dl>
+<p>str HTML of visualization</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_fightin_words_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_fightin_words_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>term_ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em>, <em>alpha=0.01</em>, <em>use_term_significance=False</em>, <em>term_scorer=None</em>, <em>not_categories=None</em>, <em>grey_threshold=1.96</em>, <em>y_axis_values=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#scattertext.produce_fightin_words_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a Monroe et al. style visualization, with the x-axis being the log frequency</p>
+<dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”
+Defaults to category</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.
+Defaults to “Not ” + category_name</dd>
+<dt>term_ranker <span class="classifier-delimiter">:</span> <span class="classifier">TermRanker</span></dt>
+<dd>TermRanker class for determining term frequency ranks.</dd>
+<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.01</span></dt>
+<dd>Uniform dirichlet prior for p-value calculation</dd>
+<dt>use_term_significance <span class="classifier-delimiter">:</span> <span class="classifier">bool, True by default</span></dt>
+<dd>Use term scorer</dd>
+<dt>term_scorer <span class="classifier-delimiter">:</span> <span class="classifier">TermSignificance</span></dt>
+<dd>Subclass of TermSignificance to use as for scores and significance</dd>
+<dt>not_categories <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>All categories other than category by default.  Documents labeled
+with remaining category.</dd>
+<dt>grey_threshold <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>Score to grey points. Default is 1.96</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>Custom y-axis values. Defaults to linspace</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.’
+Returns
+——-</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_four_square_axes_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_four_square_axes_explorer</code><span class="sig-paren">(</span><em>four_square_axes</em>, <em>x_label=None</em>, <em>y_label=None</em>, <em>num_terms_semiotic_square=None</em>, <em>get_tooltip_content=None</em>, <em>x_axis_values=None</em>, <em>y_axis_values=None</em>, <em>color_func=None</em>, <em>axis_scaler=&lt;function scale_neg_1_to_1_with_zero_mean&gt;</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_four_square_axes_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_four_square_axes_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a semiotic square visualization.</p>
+<dl class="docutils">
+<dt>four_square <span class="classifier-delimiter">:</span> <span class="classifier">FourSquareAxes</span></dt>
+<dd>The basis of the visualization</dd>
+<dt>x_label <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The x-axis label in the scatter plot.  Relationship between <cite>category_a</cite> and <cite>category_b</cite>.</dd>
+<dt>y_label</dt>
+<dd>The y-axis label in the scatter plot.  Relationship neutral term and complex term.</dd>
+<dt>not_b_category_name: str or None</dt>
+<dd>Name of neutral set of data.  Defaults to “Extra”.</dd>
+<dt>num_terms_semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>10 by default. Number of terms to show in semiotic square.</dd>
+<dt>get_tooltip_content <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Defaults to tooltip showing z-scores on both axes.</dd>
+<dt>x_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>color_func <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Javascript function to control color of a point.  Function takes a parameter
+which is a dictionary entry produced by <cite>ScatterChartExplorer.to_dict</cite> and
+returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.</dd>
+<dt>axis_scaler <span class="classifier-delimiter">:</span> <span class="classifier">lambda, default scale_neg_1_to_1_with_zero_mean_abs_max</span></dt>
+<dd>Scale values to fit axis</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_four_square_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_four_square_explorer</code><span class="sig-paren">(</span><em>four_square</em>, <em>x_label=None</em>, <em>y_label=None</em>, <em>a_category_name=None</em>, <em>b_category_name=None</em>, <em>not_a_category_name=None</em>, <em>not_b_category_name=None</em>, <em>num_terms_semiotic_square=None</em>, <em>get_tooltip_content=None</em>, <em>x_axis_values=None</em>, <em>y_axis_values=None</em>, <em>color_func=None</em>, <em>axis_scaler=&lt;function scale_neg_1_to_1_with_zero_mean&gt;</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_four_square_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_four_square_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a semiotic square visualization.</p>
+<dl class="docutils">
+<dt>four_square <span class="classifier-delimiter">:</span> <span class="classifier">FourSquare</span></dt>
+<dd>The basis of the visualization</dd>
+<dt>x_label <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The x-axis label in the scatter plot.  Relationship between <cite>category_a</cite> and <cite>category_b</cite>.</dd>
+<dt>y_label</dt>
+<dd>The y-axis label in the scatter plot.  Relationship neutral term and complex term.</dd>
+<dt>a_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of category to use.  Defaults to category_a.</dd>
+<dt>b_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of everything that isn’t in category.  Defaults to category_b.</dd>
+<dt>not_a_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of neutral set of data.  Defaults to “Neutral”.</dd>
+<dt>not_b_category_name: str or None</dt>
+<dd>Name of neutral set of data.  Defaults to “Extra”.</dd>
+<dt>num_terms_semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>10 by default. Number of terms to show in semiotic square.</dd>
+<dt>get_tooltip_content <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Defaults to tooltip showing z-scores on both axes.</dd>
+<dt>x_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>color_func <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Javascript function to control color of a point.  Function takes a parameter
+which is a dictionary entry produced by <cite>ScatterChartExplorer.to_dict</cite> and
+returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.</dd>
+<dt>axis_scaler <span class="classifier-delimiter">:</span> <span class="classifier">lambda, default scale_neg_1_to_1_with_zero_mean_abs_max</span></dt>
+<dd>Scale values to fit axis</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_frequency_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_frequency_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>term_ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em>, <em>alpha=0.01</em>, <em>use_term_significance=False</em>, <em>term_scorer=None</em>, <em>not_categories=None</em>, <em>grey_threshold=1.96</em>, <em>y_axis_values=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_frequency_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_frequency_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a Monroe et al. style visualization, with the x-axis being the log frequency</p>
+<dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”
+Defaults to category</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.
+Defaults to “Not ” + category_name</dd>
+<dt>term_ranker <span class="classifier-delimiter">:</span> <span class="classifier">TermRanker</span></dt>
+<dd>TermRanker class for determining term frequency ranks.</dd>
+<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.01</span></dt>
+<dd>Uniform dirichlet prior for p-value calculation</dd>
+<dt>use_term_significance <span class="classifier-delimiter">:</span> <span class="classifier">bool, True by default</span></dt>
+<dd>Use term scorer</dd>
+<dt>term_scorer <span class="classifier-delimiter">:</span> <span class="classifier">TermSignificance</span></dt>
+<dd>Subclass of TermSignificance to use as for scores and significance</dd>
+<dt>not_categories <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>All categories other than category by default.  Documents labeled
+with remaining category.</dd>
+<dt>grey_threshold <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>Score to grey points. Default is 1.96</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>Custom y-axis values. Defaults to linspace</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.’
+Returns
+——-</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_projection_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_projection_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>word2vec_model=None</em>, <em>projection_model=None</em>, <em>embeddings=None</em>, <em>term_acceptance_re=re.compile('[a-z]{3</em>, <em>}')</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_projection_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_projection_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>It is highly recommended to use a stoplisted, unigram corpus– <cite>corpus.get_stoplisted_unigram_corpus()</cite></dd>
+</dl>
+<p>category : str
+word2vec_model : Word2Vec</p>
+<blockquote>
+<div>A gensim word2vec model.  A default model will be used instead.</div></blockquote>
+<dl class="docutils">
+<dt>projection_model <span class="classifier-delimiter">:</span> <span class="classifier">sklearn-style dimensionality reduction model.</span></dt>
+<dd><blockquote class="first">
+<div>By default: umap.UMAP(min_dist=0.5, metric=’cosine’)</div></blockquote>
+<p class="last">You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init=’pca’, n_iter=2500, random_state=23)</p>
+</dd>
+<dt>embeddings <span class="classifier-delimiter">:</span> <span class="classifier">array[len(corpus.get_terms()), X]</span></dt>
+<dd>Word embeddings.  If None (default), wil train them using word2vec Model</dd>
+<dt>term_acceptance_re <span class="classifier-delimiter">:</span> <span class="classifier">SRE_Pattern</span></dt>
+<dd>Regular expression to identify valid terms</dd>
+<dt>kwargs <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>remaining produce_scattertext_explorer keywords</dd>
+</dl>
+<p>str
+HTML of visualization</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_scattertext_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_scattertext_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>protocol='https'</em>, <em>pmi_threshold_coefficient=3</em>, <em>minimum_term_frequency=8</em>, <em>minimum_not_category_term_frequency=0</em>, <em>max_terms=None</em>, <em>filter_unigrams=False</em>, <em>height_in_pixels=None</em>, <em>width_in_pixels=None</em>, <em>max_snippets=None</em>, <em>max_docs_per_category=None</em>, <em>metadata=None</em>, <em>scores=None</em>, <em>x_coords=None</em>, <em>y_coords=None</em>, <em>original_x=None</em>, <em>original_y=None</em>, <em>rescale_x=None</em>, <em>rescale_y=None</em>, <em>singleScoreMode=False</em>, <em>sort_by_dist=True</em>, <em>reverse_sort_scores_for_not_category=True</em>, <em>use_full_doc=False</em>, <em>transform=&lt;function percentile_alphabetical&gt;</em>, <em>jitter=0</em>, <em>gray_zero_scores=False</em>, <em>term_ranker=None</em>, <em>asian_mode=False</em>, <em>use_non_text_features=False</em>, <em>show_top_terms=True</em>, <em>show_characteristic=True</em>, <em>word_vec_use_p_vals=False</em>, <em>max_p_val=0.1</em>, <em>p_value_colors=False</em>, <em>term_significance=None</em>, <em>save_svg_button=False</em>, <em>x_label=None</em>, <em>y_label=None</em>, <em>d3_url=None</em>, <em>d3_scale_chromatic_url=None</em>, <em>pmi_filter_thresold=None</em>, <em>alternative_text_field=None</em>, <em>terms_to_include=None</em>, <em>semiotic_square=None</em>, <em>num_terms_semiotic_square=None</em>, <em>not_categories=None</em>, <em>neutral_categories=[]</em>, <em>extra_categories=[]</em>, <em>show_neutral=False</em>, <em>neutral_category_name=None</em>, <em>get_tooltip_content=None</em>, <em>x_axis_values=None</em>, <em>y_axis_values=None</em>, <em>color_func=None</em>, <em>term_scorer=None</em>, <em>show_axes=True</em>, <em>show_extra=False</em>, <em>extra_category_name=None</em>, <em>censor_points=True</em>, <em>center_label_over_points=False</em>, <em>x_axis_labels=None</em>, <em>y_axis_labels=None</em>, <em>topic_model_term_lists=None</em>, <em>topic_model_preview_size=10</em>, <em>vertical_lines=None</em>, <em>characteristic_scorer=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_scattertext_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_scattertext_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns html code of visualization.</p>
+<dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”
+Optional, defaults to category name.</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.
+Optional defaults to “N(n)ot ” + category_name, with the case of the ‘n’ dependent
+on the case of the first letter in category_name.</dd>
+<dt>protocol <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd>Protocol to use.  Either http or https.  Default is https.</dd>
+<dt>pmi_threshold_coefficient <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Filter out bigrams with a PMI of &lt; 2 * pmi_threshold_coefficient. Default is 6</dd>
+<dt>minimum_term_frequency <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Minimum number of times word needs to appear to make it into visualization.</dd>
+<dt>minimum_not_category_term_frequency <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><dl class="first last docutils">
+<dt>If an n-gram does not occur in the category, minimum times it</dt>
+<dd>must been seen to be included. Default is 0.</dd>
+</dl>
+</dd>
+<dt>max_terms <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Maximum number of terms to include in visualization.</dd>
+<dt>filter_unigrams <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Default False, do we filter out unigrams that only occur in one bigram</dd>
+<dt>width_in_pixels <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Width of viz in pixels, if None, default to JS’s choice</dd>
+<dt>height_in_pixels <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Height of viz in pixels, if None, default to JS’s choice</dd>
+<dt>max_snippets <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Maximum number of snippets to show when term is clicked.  If None, all are shown.</dd>
+<dt>max_docs_per_category: int, optional</dt>
+<dd>Maximum number of documents to store per category.  If None, by default, all are stored.</dd>
+<dt>metadata <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
+<dd>list of meta data strings that will be included for each document</dd>
+<dt>scores <span class="classifier-delimiter">:</span> <span class="classifier">np.array, optional</span></dt>
+<dd>Array of term scores or None.</dd>
+<dt>x_coords <span class="classifier-delimiter">:</span> <span class="classifier">np.array, optional</span></dt>
+<dd>Array of term x-axis positions or None.  Must be in [0,1].
+If present, y_coords must also be present.</dd>
+<dt>y_coords <span class="classifier-delimiter">:</span> <span class="classifier">np.array, optional</span></dt>
+<dd>Array of term y-axis positions or None.  Must be in [0,1].
+If present, x_coords must also be present.</dd>
+<dt>original_x <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd>Original, unscaled x-values.  Defaults to x_coords</dd>
+<dt>original_y <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd>Original, unscaled y-values.  Defaults to y_coords</dd>
+<dt>rescale_x <span class="classifier-delimiter">:</span> <span class="classifier">lambda list[0,1]: list[0,1], optional</span></dt>
+<dd>Array of term x-axis positions or None.  Must be in [0,1].
+Rescales x-axis after filtering</dd>
+<dt>rescale_y <span class="classifier-delimiter">:</span> <span class="classifier">lambda list[0,1]: list[0,1], optional</span></dt>
+<dd>Array of term y-axis positions or None.  Must be in [0,1].
+Rescales y-axis after filtering</dd>
+<dt>singleScoreMode <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Label terms based on score vs distance from corner.  Good for topic scores. Show only one color.</dd>
+<dt>sort_by_dist: bool, optional</dt>
+<dd>Label terms based distance from corner. True by default.  Negated by singleScoreMode.</dd>
+<dt>reverse_sort_scores_for_not_category: bool, optional</dt>
+<dd>If using a custom score, score the not-category class by
+lowest-score-as-most-predictive. Turn this off for word vector
+or topic similarity. Default True.</dd>
+<dt>use_full_doc <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Use the full document in snippets.  False by default.</dd>
+<dt>transform <span class="classifier-delimiter">:</span> <span class="classifier">function, optional</span></dt>
+<dd>not recommended for editing.  change the way terms are ranked.  default is st.Scalers.percentile_ordinal</dd>
+<dt>jitter <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd>percentage of axis to jitter each point.  default is 0.</dd>
+<dt>gray_zero_scores <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>If True, color points with zero-scores a light shade of grey.  False by default.</dd>
+<dt>term_ranker <span class="classifier-delimiter">:</span> <span class="classifier">TermRanker, optional</span></dt>
+<dd>TermRanker class for determining term frequency ranks.</dd>
+<dt>asian_mode <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Use a special Javascript regular expression that’s specific to chinese or japanese</dd>
+<dt>use_non_text_features <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Show non-bag-of-words features (e.g., Empath) instead of text.  False by default.</dd>
+<dt>show_top_terms <span class="classifier-delimiter">:</span> <span class="classifier">bool, default True</span></dt>
+<dd>Show top terms on the left-hand side of the visualization</dd>
+<dt>show_characteristic: bool, default True</dt>
+<dd>Show characteristic terms on the far left-hand side of the visualization</dd>
+<dt>word_vec_use_p_vals: bool, default False</dt>
+<dd>Sort by harmonic mean of score and distance.</dd>
+<dt>max_p_val <span class="classifier-delimiter">:</span> <span class="classifier">float, default 0.1</span></dt>
+<dd>If word_vec_use_p_vals, the minimum p val to use.</dd>
+<dt>p_value_colors <span class="classifier-delimiter">:</span> <span class="classifier">bool, default False</span></dt>
+<dd><dl class="first last docutils">
+<dt>Color points differently if p val is above 1-max_p_val, below max_p_val, or</dt>
+<dd>in between.</dd>
+</dl>
+</dd>
+<dt>term_significance <span class="classifier-delimiter">:</span> <span class="classifier">TermSignificance instance or None</span></dt>
+<dd>Way of getting signfiance scores.  If None, p values will not be added.</dd>
+<dt>save_svg_button <span class="classifier-delimiter">:</span> <span class="classifier">bool, default False</span></dt>
+<dd>Add a save as SVG button to the page.</dd>
+<dt>x_label <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Custom x-axis label</dd>
+<dt>y_label <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Custom y-axis label</dd>
+<dt>d3_url, str, None by default.  The url (or path) of d3.</dt>
+<dd><blockquote class="first">
+<div>URL of d3, to be inserted into &lt;script src=”…”/&gt;.  Overrides <cite>protocol</cite>.</div></blockquote>
+<p class="last">By default, this is <cite>DEFAULT_D3_URL</cite> declared in <cite>HTMLVisualizationAssembly</cite>.</p>
+</dd>
+<dt>d3_scale_chromatic_url, str, None by default.  Overrides <cite>protocol</cite>.</dt>
+<dd>URL of d3 scale chromatic, to be inserted into &lt;script src=”…”/&gt;
+By default, this is <cite>DEFAULT_D3_SCALE_CHROMATIC</cite> declared in <cite>HTMLVisualizationAssembly</cite>.</dd>
+<dt>pmi_filter_thresold <span class="classifier-delimiter">:</span> <span class="classifier">(DEPRECATED) int, None by default</span></dt>
+<dd>DEPRECATED.  Use pmi_threshold_coefficient instead.</dd>
+<dt>alternative_text_field <span class="classifier-delimiter">:</span> <span class="classifier">str or None, optional</span></dt>
+<dd>Field in from dataframe used to make corpus to display in place of parsed text. Only
+can be used if corpus is a ParsedCorpus instance.</dd>
+<dt>terms_to_include <span class="classifier-delimiter">:</span> <span class="classifier">list or None, optional</span></dt>
+<dd>Whitelist of terms to include in visualization.</dd>
+<dt>semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">SemioticSquare</span></dt>
+<dd>None by default.  SemioticSquare based on corpus.  Includes square above visualization.</dd>
+<dt>num_terms_semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>10 by default. Number of terms to show in semiotic square.
+Only active if semiotic square is present.</dd>
+<dt>not_categories <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>All categories other than category by default.  Documents labeled
+with remaining category.</dd>
+<dt>neutral_categories <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>[] by default.  Documents labeled neutral.</dd>
+<dt>extra_categories <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>[] by default.  Documents labeled extra.</dd>
+<dt>show_neutral <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>False by default.  Show a third column listing contexts in the
+neutral categories.</dd>
+<dt>neutral_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>“Neutral” by default. Only active if show_neutral is True.  Name of the neutral
+column.</dd>
+<dt>get_tooltip_content <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Javascript function to control content of tooltip.  Function takes a parameter
+which is a dictionary entry produced by <cite>ScatterChartExplorer.to_dict</cite> and
+returns a string.</dd>
+<dt>x_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on x-axis. Low, medium, high are defaults.</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on y-axis. Low, medium, high are defaults.</dd>
+<dt>color_func <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Javascript function to control color of a point.  Function takes a parameter
+which is a dictionary entry produced by <cite>ScatterChartExplorer.to_dict</cite> and
+returns a string.</dd>
+<dt>term_scorer <span class="classifier-delimiter">:</span> <span class="classifier">Object, default None</span></dt>
+<dd>In lieu of scores, object with a get_scores(a,b) function that returns a set of scores,
+where a and b are term counts.  Scorer optionally has a get_term_freqs function.</dd>
+<dt>show_axes <span class="classifier-delimiter">:</span> <span class="classifier">bool, default True</span></dt>
+<dd>Show the ticked axes on the plot.  If false, show inner axes as a crosshair.</dd>
+<dt>show_extra <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>False by default.  Show a fourth column listing contexts in the
+extra categories.</dd>
+<dt>extra_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>“Extra” by default. Only active if show_neutral is True and show_extra is True.  Name
+of the extra column.</dd>
+<dt>censor_points <span class="classifier-delimiter">:</span> <span class="classifier">bool, default True</span></dt>
+<dd>Don’t label over points.</dd>
+<dt>center_label_over_points <span class="classifier-delimiter">:</span> <span class="classifier">bool, default False</span></dt>
+<dd>Center a label over points, or try to find a position near a point that
+doesn’t overlap anything else.</dd>
+<dt>x_axis_labels: list, default None</dt>
+<dd>List of string value-labels to show at evenly spaced intervals on the x-axis.
+Low, medium, high are defaults.</dd>
+<dt>y_axis_labels <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>List of string value-labels to show at evenly spaced intervals on the y-axis.
+Low, medium, high are defaults.</dd>
+<dt>topic_model_term_lists <span class="classifier-delimiter">:</span> <span class="classifier">dict default None</span></dt>
+<dd>Dict of metadata name (str) -&gt; List of string terms in metatdata. These will be bolded
+in query in context results.</dd>
+<dt>topic_model_preview_size <span class="classifier-delimiter">:</span> <span class="classifier">int default 10</span></dt>
+<dd>Number of terms in topic model to show as a preview.</dd>
+<dt>vertical_lines <span class="classifier-delimiter">:</span> <span class="classifier">list default None</span></dt>
+<dd>List of floats corresponding to points on the x-axis to draw vertical lines</dd>
+<dt>characteristic_scorer <span class="classifier-delimiter">:</span> <span class="classifier">CharacteristicScorer default None</span></dt>
+<dd>Used for bg scores</dd>
+</dl>
+<p>str
+html of visualization</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_scattertext_html">
+<code class="descclassname">scattertext.</code><code class="descname">produce_scattertext_html</code><span class="sig-paren">(</span><em>term_doc_matrix</em>, <em>category</em>, <em>category_name</em>, <em>not_category_name</em>, <em>protocol='https'</em>, <em>minimum_term_frequency=3</em>, <em>pmi_threshold_coefficient=8</em>, <em>max_terms=None</em>, <em>filter_unigrams=False</em>, <em>height_in_pixels=None</em>, <em>width_in_pixels=None</em>, <em>term_ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_scattertext_html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_scattertext_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns html code of visualization.</p>
+<dl class="docutils">
+<dt>term_doc_matrix <span class="classifier-delimiter">:</span> <span class="classifier">TermDocMatrix</span></dt>
+<dd>Corpus to use</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>name of category column</dd>
+<dt>category_name: str</dt>
+<dd>name of category to mine for</dd>
+<dt>not_category_name: str</dt>
+<dd>name of everything that isn’t in category</dd>
+<dt>protocol <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>optional, used prototcol of , http or https</dd>
+<dt>minimum_term_frequency <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Minimum number of times word needs to appear to make it into visualization.</dd>
+<dt>pmi_threshold_coefficient <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Filter out bigrams with a PMI of &lt; 2 * pmi_threshold_coefficient. Default is 6.</dd>
+<dt>max_terms <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Maximum number of terms to include in visualization.</dd>
+<dt>filter_unigrams <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>default False, do we filter unigrams that only occur in one bigram</dd>
+<dt>width_in_pixels: int</dt>
+<dd>width of viz in pixels, if None, default to JS’s choice</dd>
+<dt>height_in_pixels: int</dt>
+<dd>height of viz in pixels, if None, default to JS’s choice</dd>
+<dt>term_ranker <span class="classifier-delimiter">:</span> <span class="classifier">TermRanker</span></dt>
+<dd>TermRanker class for determining term frequency ranks.</dd>
+</dl>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.produce_semiotic_square_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">produce_semiotic_square_explorer</code><span class="sig-paren">(</span><em>semiotic_square</em>, <em>x_label</em>, <em>y_label</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>neutral_category_name=None</em>, <em>num_terms_semiotic_square=None</em>, <em>get_tooltip_content=None</em>, <em>x_axis_values=None</em>, <em>y_axis_values=None</em>, <em>color_func=None</em>, <em>axis_scaler=&lt;function scale_neg_1_to_1_with_zero_mean&gt;</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#produce_semiotic_square_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.produce_semiotic_square_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a semiotic square visualization.</p>
+<dl class="docutils">
+<dt>semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">SemioticSquare</span></dt>
+<dd>The basis of the visualization</dd>
+<dt>x_label <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The x-axis label in the scatter plot.  Relationship between <cite>category_a</cite> and <cite>category_b</cite>.</dd>
+<dt>y_label</dt>
+<dd>The y-axis label in the scatter plot.  Relationship neutral term and complex term.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of category to use.  Defaults to category_a.</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of everything that isn’t in category.  Defaults to category_b.</dd>
+<dt>neutral_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Name of neutral set of data.  Defaults to “Neutral”.</dd>
+<dt>num_terms_semiotic_square <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>10 by default. Number of terms to show in semiotic square.</dd>
+<dt>get_tooltip_content <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>Defaults to tooltip showing z-scores on both axes.</dd>
+<dt>x_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on x-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>y_axis_values <span class="classifier-delimiter">:</span> <span class="classifier">list, default None</span></dt>
+<dd>Value-labels to show on y-axis. [-2.58, -1.96, 0, 1.96, 2.58] is the default</dd>
+<dt>color_func <span class="classifier-delimiter">:</span> <span class="classifier">str, default None</span></dt>
+<dd>Javascript function to control color of a point.  Function takes a parameter
+which is a dictionary entry produced by <cite>ScatterChartExplorer.to_dict</cite> and
+returns a string. Defaults to RdYlBl on x-axis, and varying saturation on y-axis.</dd>
+<dt>axis_scaler <span class="classifier-delimiter">:</span> <span class="classifier">lambda, default scale_neg_1_to_1_with_zero_mean_abs_max</span></dt>
+<dd>Scale values to fit axis</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.sparse_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">sparse_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>scores</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#sparse_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.sparse_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.</dd>
+<dt>scores <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Scores to display in visualization.  Zero scores are grey.</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.word_similarity_explorer">
+<code class="descclassname">scattertext.</code><code class="descname">word_similarity_explorer</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>category_name</em>, <em>not_category_name</em>, <em>target_term</em>, <em>nlp=None</em>, <em>alpha=0.01</em>, <em>max_p_val=0.1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#word_similarity_explorer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.word_similarity_explorer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.</dd>
+<dt>target_term <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Word or phrase for semantic similarity comparison</dd>
+<dt>nlp <span class="classifier-delimiter">:</span> <span class="classifier">spaCy-like parsing function</span></dt>
+<dd>E.g., spacy.load(‘en’), whitespace_nlp, etc…</dd>
+<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.01</span></dt>
+<dd>Uniform dirichlet prior for p-value calculation</dd>
+<dt>max_p_val <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.1</span></dt>
+<dd>Max p-val to use find set of terms for similarity calculation</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.
+Returns
+——-</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.word_similarity_explorer_gensim">
+<code class="descclassname">scattertext.</code><code class="descname">word_similarity_explorer_gensim</code><span class="sig-paren">(</span><em>corpus</em>, <em>category</em>, <em>target_term</em>, <em>category_name=None</em>, <em>not_category_name=None</em>, <em>word2vec=None</em>, <em>alpha=0.01</em>, <em>max_p_val=0.1</em>, <em>term_significance=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext.html#word_similarity_explorer_gensim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.word_similarity_explorer_gensim" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>corpus <span class="classifier-delimiter">:</span> <span class="classifier">Corpus</span></dt>
+<dd>Corpus to use.</dd>
+<dt>category <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category column as it appears in original data frame.</dd>
+<dt>category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of category to use.  E.g., “5-star reviews.”</dd>
+<dt>not_category_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of everything that isn’t in category.  E.g., “Below 5-star reviews”.</dd>
+<dt>target_term <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Word or phrase for semantic similarity comparison</dd>
+<dt>word2vec <span class="classifier-delimiter">:</span> <span class="classifier">word2vec.Word2Vec</span></dt>
+<dd>Gensim-compatible Word2Vec model of lower-cased corpus. If none, o
+ne will be trained using Word2VecFromParsedCorpus(corpus).train()</dd>
+<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.01</span></dt>
+<dd>Uniform dirichlet prior for p-value calculation</dd>
+<dt>max_p_val <span class="classifier-delimiter">:</span> <span class="classifier">float, default = 0.1</span></dt>
+<dd>Max p-val to use find set of terms for similarity calculation</dd>
+<dt>term_significance <span class="classifier-delimiter">:</span> <span class="classifier">TermSignificance</span></dt>
+<dd>Significance finder</dd>
+</dl>
+<p>Remaining arguments are from <cite>produce_scattertext_explorer</cite>.
+Returns
+——-</p>
+<blockquote>
+<div>str, html of visualization</div></blockquote>
+</dd></dl>
+
+<span class="target" id="module-scattertext.viz"></span></div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Scattertext’s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#module-scattertext">Documentation</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

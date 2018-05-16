@@ -1,0 +1,187 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.representations package &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scattertext-representations-package">
+<h1>scattertext.representations package<a class="headerlink" href="#scattertext-representations-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-scattertext.representations.Word2VecFromParsedCorpus">
+<span id="scattertext-representations-word2vecfromparsedcorpus-module"></span><h2>scattertext.representations.Word2VecFromParsedCorpus module<a class="headerlink" href="#module-scattertext.representations.Word2VecFromParsedCorpus" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">CorpusAdapterForGensim</code><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#CorpusAdapterForGensim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="staticmethod">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim.get_sentences">
+<em class="property">static </em><code class="descname">get_sentences</code><span class="sig-paren">(</span><em>corpus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#CorpusAdapterForGensim.get_sentences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim.get_sentences" title="Permalink to this definition">¶</a></dt>
+<dd><p>corpus, ParsedCorpus</p>
+<p>iter: [sentence1word1, …], [sentence2word1, …]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">CorpusSentenceIterator</code><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#CorpusSentenceIterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="staticmethod">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator.get_sentences">
+<em class="property">static </em><code class="descname">get_sentences</code><span class="sig-paren">(</span><em>corpus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#CorpusSentenceIterator.get_sentences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator.get_sentences" title="Permalink to this definition">¶</a></dt>
+<dd><p>corpus, ParsedCorpus</p>
+<p>iter: [sentence1word1, …], [sentence2word1, …]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">FeatsFromGensim</code><span class="sig-paren">(</span><em>phrases</em>, <em>gram_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#FeatsFromGensim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_doc_metadata">
+<code class="descname">get_doc_metadata</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#FeatsFromGensim.get_doc_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_doc_metadata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_feats">
+<code class="descname">get_feats</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#FeatsFromGensim.get_feats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_feats" title="Permalink to this definition">¶</a></dt>
+<dd><p>doc, Spacy Docs</p>
+<p>Counter (unigram, bigram) -&gt; count</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">GensimPhraseAdder</code><span class="sig-paren">(</span><em>max_tokens_per_phrase=3</em>, <em>phrases=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#GensimPhraseAdder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder.add_phrases">
+<code class="descname">add_phrases</code><span class="sig-paren">(</span><em>corpus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#GensimPhraseAdder.add_phrases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder.add_phrases" title="Permalink to this definition">¶</a></dt>
+<dd><p>corpus: Corpus for phrase augmentation</p>
+<p>New ParsedCorpus containing unigrams in corpus and new phrases</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">Word2VecFromParsedCorpus</code><span class="sig-paren">(</span><em>corpus</em>, <em>word2vec_model=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#Word2VecFromParsedCorpus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus.train">
+<code class="descname">train</code><span class="sig-paren">(</span><em>epochs=2000</em>, <em>training_iterations=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#Word2VecFromParsedCorpus.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus.train" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>epochs <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>Number of epochs to train for.  Default is 2000.</dd>
+<dt>training_iterations <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>Number of times to repeat training process. Default is training_iterations.</dd>
+</dl>
+<p>A trained word2vec model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpusBigrams">
+<em class="property">class </em><code class="descclassname">scattertext.representations.Word2VecFromParsedCorpus.</code><code class="descname">Word2VecFromParsedCorpusBigrams</code><span class="sig-paren">(</span><em>corpus</em>, <em>word2vec_model=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/representations/Word2VecFromParsedCorpus.html#Word2VecFromParsedCorpusBigrams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpusBigrams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus" title="scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.representations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-scattertext.representations" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">scattertext.representations package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-scattertext.representations.Word2VecFromParsedCorpus">scattertext.representations.Word2VecFromParsedCorpus module</a></li>
+<li><a class="reference internal" href="#module-scattertext.representations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scattertext.representations.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/scattertext.representations.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,230 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.Scalers &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.Scalers</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">rankdata</span>
+
+
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="k">return</span> <span class="p">(</span><span class="n">vec</span> <span class="o">-</span> <span class="n">vec</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">vec</span><span class="o">.</span><span class="n">min</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="scale_neg_1_to_1_with_zero_mean_abs_max"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale_neg_1_to_1_with_zero_mean_abs_max">[docs]</a><span class="k">def</span> <span class="nf">scale_neg_1_to_1_with_zero_mean_abs_max</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+	<span class="n">max_abs</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="o">-</span><span class="n">vec</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+	<span class="k">return</span> <span class="p">((((</span><span class="n">vec</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">vec</span> <span class="o">/</span> <span class="n">max_abs</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+	        <span class="o">+</span> <span class="p">((</span><span class="n">vec</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">vec</span> <span class="o">/</span> <span class="n">max_abs</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="scale_neg_1_to_1_with_zero_mean"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale_neg_1_to_1_with_zero_mean">[docs]</a><span class="k">def</span> <span class="nf">scale_neg_1_to_1_with_zero_mean</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+	<span class="k">return</span> <span class="p">((((</span><span class="n">vec</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">vec</span> <span class="o">/</span> <span class="n">vec</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+	        <span class="o">+</span> <span class="p">((</span><span class="n">vec</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">vec</span> <span class="o">/</span> <span class="p">(</span><span class="o">-</span><span class="n">vec</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="scale_neg_1_to_1_with_zero_mean_rank_abs_max"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale_neg_1_to_1_with_zero_mean_rank_abs_max">[docs]</a><span class="k">def</span> <span class="nf">scale_neg_1_to_1_with_zero_mean_rank_abs_max</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+	<span class="n">rankv</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+	<span class="n">pos_v</span> <span class="o">=</span> <span class="n">rankv</span><span class="p">[</span><span class="n">rankv</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+	<span class="n">pos_v</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">pos_v</span><span class="p">,</span> <span class="s1">&#39;dense&#39;</span><span class="p">)</span>
+	<span class="n">pos_v</span> <span class="o">=</span> <span class="n">pos_v</span> <span class="o">/</span> <span class="n">pos_v</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+	<span class="n">neg_v</span> <span class="o">=</span> <span class="n">rankv</span><span class="p">[</span><span class="n">rankv</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+	<span class="n">neg_v</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">neg_v</span><span class="p">,</span> <span class="s1">&#39;dense&#39;</span><span class="p">)</span>
+	<span class="n">neg_v</span> <span class="o">=</span> <span class="n">neg_v</span> <span class="o">/</span> <span class="n">neg_v</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+	<span class="n">rankv</span><span class="p">[</span><span class="n">rankv</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos_v</span>
+	<span class="n">rankv</span><span class="p">[</span><span class="n">rankv</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="p">(</span><span class="n">neg_v</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">neg_v</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">scale_neg_1_to_1_with_zero_mean_abs_max</span><span class="p">(</span><span class="n">rankv</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="scale_neg_1_to_1_with_zero_mean_log_abs_max"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale_neg_1_to_1_with_zero_mean_log_abs_max">[docs]</a><span class="k">def</span> <span class="nf">scale_neg_1_to_1_with_zero_mean_log_abs_max</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	!!! not working</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;v&#39;</span><span class="p">:</span><span class="n">v</span><span class="p">,</span>
+	                   <span class="s1">&#39;sign&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">})</span>
+	<span class="n">df</span><span class="p">[</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.96</span><span class="p">)</span>
+	<span class="n">df</span><span class="p">[</span><span class="s1">&#39;exclude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">lg</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isneginf</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">lg</span><span class="p">))</span>
+	<span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;sign&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;exclude&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">),</span>
+	             <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;sign&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;exclude&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)]:</span>
+		<span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span>
+	<span class="n">df</span><span class="p">[</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;sign&#39;</span><span class="p">]</span>
+	<span class="n">df</span><span class="p">[</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;exclude&#39;</span><span class="p">]][</span><span class="s1">&#39;lg&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+	<span class="c1">#to_rescale = df[&#39;lg&#39;].reindex(v.index)</span>
+	<span class="n">df</span><span class="p">[</span><span class="s1">&#39;to_out&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="n">scale_neg_1_to_1_with_zero_mean_abs_max</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;lg&#39;</span><span class="p">])</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;lg&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;lg&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:])</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;to_out&#39;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;to_out&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;to_out&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:])</span>
+	<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()))</span>
+	<span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;to_out&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="scale_standardize"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.scale_standardize">[docs]</a><span class="k">def</span> <span class="nf">scale_standardize</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">to_ret</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec</span> <span class="o">-</span> <span class="n">vec</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">vec</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+	<span class="n">to_ret</span> <span class="o">+=</span> <span class="n">to_ret</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+	<span class="c1"># to_ret = np.log(to_ret)/np.log(2)</span>
+	<span class="n">to_ret</span> <span class="o">+=</span> <span class="n">to_ret</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+	<span class="k">return</span> <span class="n">to_ret</span></div>
+
+
+<div class="viewcode-block" id="log_scale_standardize"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.log_scale_standardize">[docs]</a><span class="k">def</span> <span class="nf">log_scale_standardize</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">vec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_ss</span> <span class="o">-</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sqrt_scale_standardize"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.sqrt_scale_standardize">[docs]</a><span class="k">def</span> <span class="nf">sqrt_scale_standardize</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_ss</span> <span class="o">-</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="power_scale_standardize_factory"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.power_scale_standardize_factory">[docs]</a><span class="k">def</span> <span class="nf">power_scale_standardize_factory</span><span class="p">(</span><span class="n">alpha</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">)</span>
+		<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_ss</span> <span class="o">-</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">f</span></div>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">from statsmodels.distributions import ECDF</span>
+<span class="sd">def ecdf_scale_standardize(vec):</span>
+<span class="sd">	vec_ss = ECDF(vec)(vec)</span>
+<span class="sd">	vec_ss = (vec_ss - vec_ss.min()) / (vec_ss.max() - vec_ss.min())</span>
+<span class="sd">	return vec_ss</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="power_scale_factory"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.power_scale_factory">[docs]</a><span class="k">def</span> <span class="nf">power_scale_factory</span><span class="p">(</span><span class="n">alpha</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">))</span>
+
+	<span class="k">return</span> <span class="n">f</span></div>
+
+
+<div class="viewcode-block" id="sqrt_scale"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.sqrt_scale">[docs]</a><span class="k">def</span> <span class="nf">sqrt_scale</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="log_scale"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.log_scale">[docs]</a><span class="k">def</span> <span class="nf">log_scale</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="percentile"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.percentile">[docs]</a><span class="k">def</span> <span class="nf">percentile</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dense_rank"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.dense_rank">[docs]</a><span class="k">def</span> <span class="nf">dense_rank</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;dense&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+<span class="n">percentile_dense</span> <span class="o">=</span> <span class="n">dense_rank</span>
+
+<div class="viewcode-block" id="percentile_ordinal"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.percentile_ordinal">[docs]</a><span class="k">def</span> <span class="nf">percentile_ordinal</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ordinal&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="percentile_min"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.percentile_min">[docs]</a><span class="k">def</span> <span class="nf">percentile_min</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;min&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="percentile_alphabetical"><a class="viewcode-back" href="../../scattertext.html#scattertext.Scalers.percentile_alphabetical">[docs]</a><span class="k">def</span> <span class="nf">percentile_alphabetical</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">terms</span><span class="p">,</span> <span class="n">other_vec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="n">scale_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;scores&#39;</span><span class="p">:</span> <span class="n">vec</span><span class="p">,</span> <span class="s1">&#39;terms&#39;</span><span class="p">:</span> <span class="n">terms</span><span class="p">})</span>
+	<span class="k">if</span> <span class="n">other_vec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">scale_df</span><span class="p">[</span><span class="s1">&#39;others&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">other_vec</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">scale_df</span><span class="p">[</span><span class="s1">&#39;others&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">scale_df</span>
+		<span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scores&#39;</span><span class="p">,</span> <span class="s1">&#39;terms&#39;</span><span class="p">,</span> <span class="s1">&#39;others&#39;</span><span class="p">],</span>
+	               <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
+		<span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+		<span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+		<span class="o">.</span><span class="n">index</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_scale_0_to_1</span><span class="p">(</span><span class="n">vec_ss</span><span class="p">):</span>
+	<span class="n">vec_ss</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_ss</span> <span class="o">-</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="n">vec_ss</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">vec_ss</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+	<span class="k">return</span> <span class="n">vec_ss</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,284 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.representations.Word2VecFromParsedCorpus &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.representations.Word2VecFromParsedCorpus</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.ParsedCorpus</span> <span class="k">import</span> <span class="n">ParsedCorpus</span>
+
+
+<div class="viewcode-block" id="FeatsFromGensim"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim">[docs]</a><span class="k">class</span> <span class="nc">FeatsFromGensim</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrases</span><span class="p">,</span> <span class="n">gram_size</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		phrases : list[gensim.models.Phrases]</span>
+<span class="sd">		gram_size : int, maximum number of words per phrase</span>
+<span class="sd">		kwargs : parameters for FeatsFromSpacyDoc.init</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">Phrases</span>
+
+		<span class="n">phrases</span> <span class="o">=</span> <span class="n">phrases</span>
+		<span class="n">gram_size</span> <span class="o">=</span> <span class="n">gram_size</span>
+		<span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">phrases</span><span class="p">)</span> <span class="o">==</span> <span class="n">Phrases</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">gram_size</span> <span class="o">=</span> <span class="n">gram_size</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">phrases</span> <span class="o">=</span> <span class="n">phrases</span>
+
+<div class="viewcode-block" id="FeatsFromGensim.get_doc_metadata"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_doc_metadata">[docs]</a>	<span class="k">def</span> <span class="nf">get_doc_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">Counter</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FeatsFromGensim.get_feats"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.FeatsFromGensim.get_feats">[docs]</a>	<span class="k">def</span> <span class="nf">get_feats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		doc, Spacy Docs</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		Counter (unigram, bigram) -&gt; count</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">ngram_counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+			<span class="n">ngrams</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phrases</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sent</span><span class="p">)]</span>
+			<span class="k">for</span> <span class="n">subphrases</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phrases</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+				<span class="n">ngrams</span> <span class="o">=</span> <span class="n">subphrases</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sent</span><span class="p">)]</span>
+			<span class="k">for</span> <span class="n">ngram</span> <span class="ow">in</span> <span class="n">ngrams</span><span class="p">:</span>
+				<span class="n">ngram_counter</span><span class="p">[</span><span class="n">ngram</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+		<span class="k">return</span> <span class="n">ngram_counter</span></div></div>
+
+
+<div class="viewcode-block" id="GensimPhraseAdder"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder">[docs]</a><span class="k">class</span> <span class="nc">GensimPhraseAdder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_tokens_per_phrase</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		max_tokens_per_phrase: int, must be &gt; 1.  Default 3</span>
+<span class="sd">		phrases: Instance of Gensim phrases class, default None</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_tokens_per_phrase</span> <span class="o">=</span> <span class="n">max_tokens_per_phrase</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">phrases</span> <span class="o">=</span> <span class="n">phrases</span>
+
+<div class="viewcode-block" id="GensimPhraseAdder.add_phrases"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.GensimPhraseAdder.add_phrases">[docs]</a>	<span class="k">def</span> <span class="nf">add_phrases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus: Corpus for phrase augmentation</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		New ParsedCorpus containing unigrams in corpus and new phrases</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">Phrases</span>
+
+		<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">phrases</span> <span class="o">=</span> <span class="p">[</span><span class="n">Phrases</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="n">corpus</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)]</span>
+
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens_per_phrase</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">phrases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Phrases</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phrases</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="n">corpus</span><span class="p">)]))</span>
+
+		<span class="k">return</span> <span class="bp">self</span></div></div>
+
+
+<div class="viewcode-block" id="CorpusAdapterForGensim"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim">[docs]</a><span class="k">class</span> <span class="nc">CorpusAdapterForGensim</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorpusAdapterForGensim.get_sentences"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.CorpusAdapterForGensim.get_sentences">[docs]</a>	<span class="nd">@staticmethod</span>
+	<span class="k">def</span> <span class="nf">get_sentences</span><span class="p">(</span><span class="n">corpus</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus, ParsedCorpus</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		iter: [sentence1word1, ...], [sentence2word1, ...]</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[[[</span><span class="n">t</span><span class="o">.</span><span class="n">lower_</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sent</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">is_punct</span><span class="p">]</span>
+		                          <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">]</span>
+		                         <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">corpus</span><span class="o">.</span><span class="n">get_parsed_docs</span><span class="p">()])</span></div></div>
+
+
+<div class="viewcode-block" id="CorpusSentenceIterator"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator">[docs]</a><span class="k">class</span> <span class="nc">CorpusSentenceIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorpusSentenceIterator.get_sentences"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.CorpusSentenceIterator.get_sentences">[docs]</a>	<span class="nd">@staticmethod</span>
+	<span class="k">def</span> <span class="nf">get_sentences</span><span class="p">(</span><span class="n">corpus</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus, ParsedCorpus</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		iter: [sentence1word1, ...], [sentence2word1, ...]</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[[[</span><span class="n">corpus</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">getidxstrict</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">lower_</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sent</span>
+		                           <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">is_punct</span><span class="p">]</span>
+		                          <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">]</span>
+		                         <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">corpus</span><span class="o">.</span><span class="n">get_parsed_docs</span><span class="p">()])</span></div></div>
+
+
+<div class="viewcode-block" id="Word2VecFromParsedCorpus"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus">[docs]</a><span class="k">class</span> <span class="nc">Word2VecFromParsedCorpus</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">,</span> <span class="n">word2vec_model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus: ParsedCorpus</span>
+<span class="sd">		  from which to build word2vec model</span>
+<span class="sd">		word2vec_model: word2vec.Word2Vec</span>
+<span class="sd">			Gensim instance to be used to train word2vec model</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">word2vec</span>
+		<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">)</span>
+		<span class="k">assert</span> <span class="n">word2vec_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">word2vec_model</span><span class="p">,</span> <span class="n">word2vec</span><span class="o">.</span><span class="n">Word2Vec</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corpus</span> <span class="o">=</span> <span class="n">corpus</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_word2vec_model</span><span class="p">(</span><span class="n">word2vec_model</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Word2VecFromParsedCorpus.train"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpus.train">[docs]</a>	<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">training_iterations</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		epochs : int</span>
+<span class="sd">		  Number of epochs to train for.  Default is 2000.</span>
+<span class="sd">		training_iterations : int</span>
+<span class="sd">			Number of times to repeat training process. Default is training_iterations.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A trained word2vec model.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_scan_and_build_vocab</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">training_iterations</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">),</span>
+			                 <span class="n">total_examples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">corpus_count</span><span class="p">,</span>
+			                 <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">)</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),</span>
+<span class="sd">		                 total_examples=self.model.corpus_count,</span>
+<span class="sd">		                 epochs=epochs)</span>
+<span class="sd">		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),</span>
+<span class="sd">		                 total_examples=self.model.corpus_count,</span>
+<span class="sd">		                 epochs=epochs)</span>
+<span class="sd">		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),</span>
+<span class="sd">		                 total_examples=self.model.corpus_count,</span>
+<span class="sd">		                 epochs=epochs)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_word2vec_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word2vec_model</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_word2vec_model</span><span class="p">()</span>
+		        <span class="k">if</span> <span class="n">word2vec_model</span> <span class="ow">is</span> <span class="kc">None</span>
+		        <span class="k">else</span> <span class="n">word2vec_model</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_default_word2vec_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">word2vec</span>
+		<span class="k">return</span> <span class="n">word2vec</span><span class="o">.</span><span class="n">Word2Vec</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+		                         <span class="n">alpha</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span>
+		                         <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+		                         <span class="n">min_count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+		                         <span class="n">max_vocab_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+		                         <span class="n">sample</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+		                         <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+		                         <span class="n">workers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+		                         <span class="n">min_alpha</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span>
+		                         <span class="n">sg</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+		                         <span class="n">hs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+		                         <span class="n">negative</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+		                         <span class="n">cbow_mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+		                         <span class="nb">iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+		                         <span class="n">null_word</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+		                         <span class="n">trim_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+		                         <span class="n">sorted_vocab</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_scan_and_build_vocab</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scan_vocab</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">))</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">build_vocab</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Word2VecFromParsedCorpusBigrams"><a class="viewcode-back" href="../../../scattertext.representations.html#scattertext.representations.Word2VecFromParsedCorpus.Word2VecFromParsedCorpusBigrams">[docs]</a><span class="k">class</span> <span class="nc">Word2VecFromParsedCorpusBigrams</span><span class="p">(</span><span class="n">Word2VecFromParsedCorpus</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">_scan_and_build_vocab</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="kn">from</span> <span class="nn">gensim.models</span> <span class="k">import</span> <span class="n">Phrases</span>
+		<span class="n">bigram_transformer</span> <span class="o">=</span> <span class="n">Phrases</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">))</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scan_vocab</span><span class="p">(</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">))</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">build_vocab</span><span class="p">(</span><span class="n">bigram_transformer</span><span class="p">[</span><span class="n">CorpusAdapterForGensim</span><span class="o">.</span><span class="n">get_sentences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="p">)])</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

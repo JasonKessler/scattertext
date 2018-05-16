@@ -1,0 +1,22 @@
+scattertext.diachronic package
+==============================
+
+Submodules
+----------
+
+scattertext.diachronic.GanttChart module
+----------------------------------------
+
+.. automodule:: scattertext.diachronic.GanttChart
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.diachronic
+    :members:
+    :undoc-members:
+    :show-inheritance:

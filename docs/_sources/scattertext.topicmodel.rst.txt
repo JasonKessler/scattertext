@@ -1,0 +1,22 @@
+scattertext.topicmodel package
+==============================
+
+Submodules
+----------
+
+scattertext.topicmodel.SentencesForTopicModeling module
+-------------------------------------------------------
+
+.. automodule:: scattertext.topicmodel.SentencesForTopicModeling
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.topicmodel
+    :members:
+    :undoc-members:
+    :show-inheritance:

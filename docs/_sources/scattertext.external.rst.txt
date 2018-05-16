@@ -1,0 +1,17 @@
+scattertext.external package
+============================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    scattertext.external.phrasemachine
+
+Module contents
+---------------
+
+.. automodule:: scattertext.external
+    :members:
+    :undoc-members:
+    :show-inheritance:

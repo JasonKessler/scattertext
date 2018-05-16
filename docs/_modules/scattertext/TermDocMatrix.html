@@ -1,0 +1,1084 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.TermDocMatrix &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.TermDocMatrix</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">StringIO</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pandas.core.common</span> <span class="k">import</span> <span class="n">SettingWithCopyWarning</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">csr_matrix</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">hmean</span><span class="p">,</span> <span class="n">fisher_exact</span><span class="p">,</span> <span class="n">rankdata</span><span class="p">,</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.stop_words</span> <span class="k">import</span> <span class="n">ENGLISH_STOP_WORDS</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="k">import</span> <span class="n">TfidfTransformer</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">ElasticNet</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">RidgeClassifierCV</span><span class="p">,</span> <span class="n">LassoCV</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.CSRMatrixTools</span> <span class="k">import</span> <span class="n">delete_columns</span>
+<span class="kn">from</span> <span class="nn">scattertext.Common</span> <span class="k">import</span> <span class="n">DEFAULT_BETA</span><span class="p">,</span> <span class="n">DEFAULT_SCALER_ALGO</span><span class="p">,</span> <span class="n">DEFAULT_BACKGROUND_SCALER_ALGO</span><span class="p">,</span> \
+	<span class="n">DEFAULT_BACKGROUND_BETA</span>
+<span class="kn">from</span> <span class="nn">scattertext.FeatureOuput</span> <span class="k">import</span> <span class="n">FeatureLister</span>
+<span class="kn">from</span> <span class="nn">scattertext.frequencyreaders.DefaultBackgroundFrequencies</span> <span class="k">import</span> <span class="n">DefaultBackgroundFrequencies</span>
+<span class="kn">from</span> <span class="nn">scattertext.indexstore</span> <span class="k">import</span> <span class="n">IndexStore</span>
+<span class="kn">from</span> <span class="nn">scattertext.termranking</span> <span class="k">import</span> <span class="n">AbsoluteFrequencyRanker</span>
+<span class="kn">from</span> <span class="nn">scattertext.termscoring.CornerScore</span> <span class="k">import</span> <span class="n">CornerScore</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">SettingWithCopyWarning</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.termscoring.ScaledFScore</span> <span class="k">import</span> <span class="n">InvalidScalerException</span><span class="p">,</span> <span class="n">ScaledFScore</span>
+
+<span class="n">SPACY_ENTITY_TAGS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;person&#39;</span><span class="p">,</span> <span class="s1">&#39;norp&#39;</span><span class="p">,</span> <span class="s1">&#39;facility&#39;</span><span class="p">,</span> <span class="s1">&#39;org&#39;</span><span class="p">,</span> <span class="s1">&#39;gpe&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;loc&#39;</span><span class="p">,</span> <span class="s1">&#39;product&#39;</span><span class="p">,</span> <span class="s1">&#39;event&#39;</span><span class="p">,</span> <span class="s1">&#39;work_of_art&#39;</span><span class="p">,</span> <span class="s1">&#39;language&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;percent&#39;</span><span class="p">,</span> <span class="s1">&#39;money&#39;</span><span class="p">,</span> <span class="s1">&#39;quantity&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;ordinal&#39;</span><span class="p">,</span> <span class="s1">&#39;cardinal&#39;</span><span class="p">]</span>
+
+<span class="n">MY_ENGLISH_STOP_WORDS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ENGLISH_STOP_WORDS</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="s1">&#39;hasn&#39;</span><span class="p">,</span> <span class="s1">&#39;won&#39;</span><span class="p">,</span> <span class="s1">&#39;don&#39;</span><span class="p">,</span> <span class="s1">&#39;haven&#39;</span><span class="p">,</span> <span class="s1">&#39;shouldn&#39;</span><span class="p">,</span> <span class="s1">&#39;isn&#39;</span><span class="p">,</span> <span class="s1">&#39;couldn&#39;</span><span class="p">,</span> <span class="s1">&#39;wouldn&#39;</span><span class="p">,</span>
+                                                   <span class="s1">&#39;aren&#39;</span><span class="p">,</span> <span class="s1">&#39;didn&#39;</span><span class="p">,</span> <span class="s1">&#39;wasn&#39;</span><span class="p">,</span> <span class="s1">&#39;dosen&#39;</span><span class="p">,</span> <span class="s1">&#39;weren&#39;</span><span class="p">,</span> <span class="s1">&#39;doesn&#39;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="CannotCreateATermDocMatrixWithASignleCategoryException"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.CannotCreateATermDocMatrixWithASignleCategoryException">[docs]</a><span class="k">class</span> <span class="nc">CannotCreateATermDocMatrixWithASignleCategoryException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="TermDocMatrix"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix">[docs]</a><span class="k">class</span> <span class="nc">TermDocMatrix</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	!!! to do: refactor score functions into classes</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">X</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+	             <span class="n">term_idx_store</span><span class="p">,</span>
+	             <span class="n">category_idx_store</span><span class="p">,</span>
+	             <span class="n">metadata_idx_store</span><span class="p">,</span>
+	             <span class="n">unigram_frequency_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		X : csr_matrix</span>
+<span class="sd">			term document matrix</span>
+<span class="sd">		mX : csr_matrix</span>
+<span class="sd">			metadata-document matrix</span>
+<span class="sd">		y : np.array</span>
+<span class="sd">			category index array</span>
+<span class="sd">		term_idx_store : IndexStore</span>
+<span class="sd">			Term indices</span>
+<span class="sd">		category_idx_store : IndexStore</span>
+<span class="sd">			Catgory indices</span>
+<span class="sd">		metadata_idx : IndexStore</span>
+<span class="sd">		  Document metadata indices</span>
+<span class="sd">		unigram_frequency_path : str or None</span>
+<span class="sd">			Path to term frequency file.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+			<span class="k">raise</span> <span class="n">CannotCreateATermDocMatrixWithASignleCategoryException</span><span class="p">(</span>
+				<span class="s1">&#39;Documents must be labeled with more than one category. All documents were labeled &#39;</span>
+				<span class="s1">&#39;with category: &quot;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">category_idx_store</span><span class="o">.</span><span class="n">getval</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span> <span class="o">=</span> \
+			<span class="n">X</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">term_idx_store</span><span class="p">,</span> <span class="n">category_idx_store</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span> <span class="o">=</span> <span class="n">metadata_idx_store</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span> <span class="o">=</span> <span class="n">unigram_frequency_path</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_default_stoplist"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_default_stoplist">[docs]</a>	<span class="k">def</span> <span class="nf">get_default_stoplist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">MY_ENGLISH_STOP_WORDS</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.compact"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.compact">[docs]</a>	<span class="k">def</span> <span class="nf">compact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compactor</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Compact term document matrix.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		compactor : object</span>
+<span class="sd">			Object that takes a Term Doc Matrix as its first argument, and has a compact function which returns a</span>
+<span class="sd">			Term Doc Matrix like argument</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		New Term Doc Matrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">compactor</span><span class="o">.</span><span class="n">compact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_num_terms"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_num_terms">[docs]</a>	<span class="k">def</span> <span class="nf">get_num_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		The number of terms registered in the term doc matrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TermDocMatrix.get_categories"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_categories">[docs]</a>	<span class="k">def</span> <span class="nf">get_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		list</span>
+<span class="sd">		Category names</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">values</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_num_docs"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_num_docs">[docs]</a>	<span class="k">def</span> <span class="nf">get_num_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		int, number of documents</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_total_unigram_count"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_total_unigram_count">[docs]</a>	<span class="k">def</span> <span class="nf">get_total_unigram_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_unigram_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_unigram_term_freq_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_corpus_unigram_freq</span><span class="p">(</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.old_get_term_freq_df"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.old_get_term_freq_df">[docs]</a>	<span class="k">def</span> <span class="nf">old_get_term_freq_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;term&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">_i2val</span><span class="p">}</span>
+		<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">d</span><span class="p">[</span><span class="n">category</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+		<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;term&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_freq_df"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_freq_df">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_freq_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_append</span><span class="o">=</span><span class="s1">&#39; freq&#39;</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		-------</span>
+<span class="sd">		label_append : str</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame indexed on terms, with columns giving frequencies for each</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		row = self._row_category_ids()</span>
+<span class="sd">		newX = csr_matrix((self._X.data, (row, self._X.indices)))</span>
+<span class="sd">		return self._term_freq_df_from_matrix(newX)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_freq_mat</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span>
+		                    <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_terms</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;term&#39;</span><span class="p">),</span>
+		                    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">label_append</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()])</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_freq_mat"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_freq_mat">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_freq_mat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array with columns as categories and rows as terms</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">freq_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_terms</span><span class="p">()),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">cat_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">_i2val</span><span class="p">)):</span>
+			<span class="n">freq_mat</span><span class="p">[:,</span> <span class="n">cat_i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">==</span> <span class="n">cat_i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">freq_mat</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_count_mat"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_count_mat">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_count_mat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array with columns as categories and rows as terms</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">freq_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_terms</span><span class="p">()),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">cat_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">_i2val</span><span class="p">)):</span>
+			<span class="n">X</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">==</span> <span class="n">cat_i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+			<span class="n">freq_mat</span><span class="p">[:,</span> <span class="n">cat_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">freq_mat</span></div>
+
+	<span class="k">def</span> <span class="nf">get_term_doc_count_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_append</span><span class="o">=</span><span class="s1">&#39; freq&#39;</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame indexed on terms, with columns the number of documents each term appeared in</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># row = self._row_category_ids()</span>
+		<span class="c1"># newX = csr_matrix(((self._X.data &gt; 0).astype(int), (row, self._X.indices)))</span>
+		<span class="c1"># return self._term_freq_df_from_matrix(newX)</span>
+		<span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_count_mat</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span>
+		                    <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_terms</span><span class="p">(),</span>
+		                    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">label_append</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()])</span>
+
+	<span class="k">def</span> <span class="nf">_term_freq_df_from_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catX</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_freq_df_using_idx_store</span><span class="p">(</span><span class="n">catX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_freq_df_using_idx_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catX</span><span class="p">,</span> <span class="n">idx_store</span><span class="p">):</span>
+		<span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;term&#39;</span><span class="p">:</span> <span class="n">idx_store</span><span class="o">.</span><span class="n">_i2val</span><span class="p">}</span>
+		<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">d</span><span class="p">[</span><span class="n">cat</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">catX</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+			<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_fix_problem_when_final_category_index_has_no_terms</span><span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">catX</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;term&#39;</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_fix_problem_when_final_category_index_has_no_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cat</span><span class="p">,</span> <span class="n">catX</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+		<span class="n">d</span><span class="p">[</span><span class="n">cat</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">catX</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_metadata_freq_df"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_metadata_freq_df">[docs]</a>	<span class="k">def</span> <span class="nf">get_metadata_freq_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame indexed on metadata, with columns giving frequencies for each</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_row_category_ids_for_meta</span><span class="p">()</span>
+		<span class="n">newX</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="o">.</span><span class="n">indices</span><span class="p">)))</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_freq_df_from_matrix</span><span class="p">(</span><span class="n">newX</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_row_category_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span><span class="o">.</span><span class="n">row</span>
+		<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">):</span>
+			<span class="n">row</span><span class="p">[</span><span class="n">row</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span>
+		<span class="k">return</span> <span class="n">row</span>
+
+	<span class="k">def</span> <span class="nf">_row_category_ids_for_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span><span class="o">.</span><span class="n">row</span>
+		<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">):</span>
+			<span class="n">row</span><span class="p">[</span><span class="n">row</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span>
+		<span class="k">return</span> <span class="n">row</span>
+
+	<span class="k">def</span> <span class="nf">_metadata_freq_df_from_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catX</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_freq_df_using_idx_store</span><span class="p">(</span><span class="n">catX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_terms"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_terms">[docs]</a>	<span class="k">def</span> <span class="nf">get_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array of unique terms</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">_i2val</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_category_names_by_row"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_category_names_by_row">[docs]</a>	<span class="k">def</span> <span class="nf">get_category_names_by_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array of the category name for each row</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_unigram_corpus"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_unigram_corpus">[docs]</a>	<span class="k">def</span> <span class="nf">get_unigram_corpus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">terms_to_ignore</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_unigrams</span><span class="p">()</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms</span><span class="p">(</span><span class="n">terms_to_ignore</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_non_unigrams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">term</span> <span class="k">for</span> <span class="n">term</span>
+		        <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">_i2val</span>
+		        <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">term</span> <span class="ow">or</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">in</span> <span class="n">term</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_infrequent_words"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_infrequent_words">[docs]</a>	<span class="k">def</span> <span class="nf">remove_infrequent_words</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">minimum_term_count</span><span class="p">,</span> <span class="n">term_ranker</span><span class="o">=</span><span class="n">AbsoluteFrequencyRanker</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A new TermDocumentMatrix consisting of only terms which occur at least minimum_term_count.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">tdf</span> <span class="o">=</span> <span class="n">term_ranker</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_ranks</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">tdf</span><span class="p">[</span><span class="n">tdf</span> <span class="o">&lt;=</span> <span class="n">minimum_term_count</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_entity_tags"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_entity_tags">[docs]</a>	<span class="k">def</span> <span class="nf">remove_entity_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A new TermDocumentMatrix consisting of only terms in the current TermDocumentMatrix</span>
+<span class="sd">		 that aren&#39;t spaCy entity tags.</span>
+
+<span class="sd">		Note: Used if entity types are censored using FeatsFromSpacyDoc(tag_types_to_censor=...).</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">terms_to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="n">term</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">_i2val</span>
+		                   <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">word</span> <span class="ow">in</span> <span class="n">SPACY_ENTITY_TAGS</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">term</span><span class="o">.</span><span class="n">split</span><span class="p">()])]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms</span><span class="p">(</span><span class="n">terms_to_remove</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_stoplisted_unigram_corpus"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_stoplisted_unigram_corpus">[docs]</a>	<span class="k">def</span> <span class="nf">get_stoplisted_unigram_corpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stoplist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		-------</span>
+<span class="sd">		stoplist : list, optional</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="n">stoplist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">stoplist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_stoplist</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">stoplist</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">stoplist</span><span class="p">]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_terms_from_list</span><span class="p">(</span><span class="n">stoplist</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_stoplisted_unigram_corpus_and_custom"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_stoplisted_unigram_corpus_and_custom">[docs]</a>	<span class="k">def</span> <span class="nf">get_stoplisted_unigram_corpus_and_custom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                             <span class="n">custom_stoplist</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		-------</span>
+<span class="sd">		stoplist : list of lower-cased words, optional</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">custom_stoplist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+			<span class="n">custom_stoplist</span> <span class="o">=</span> <span class="p">[</span><span class="n">custom_stoplist</span><span class="p">]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_terms_from_list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_default_stoplist</span><span class="p">())</span>
+		                                    <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">custom_stoplist</span><span class="p">))</span></div>
+
+	<span class="k">def</span> <span class="nf">_remove_terms_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stoplist</span><span class="p">):</span>
+		<span class="n">terms_to_ignore</span> <span class="o">=</span> <span class="p">[</span><span class="n">term</span> <span class="k">for</span> <span class="n">term</span>
+		                   <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">_i2val</span>
+		                   <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">term</span> <span class="ow">or</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">in</span> <span class="n">term</span>
+		                   <span class="ow">or</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">stoplist</span><span class="p">]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms</span><span class="p">(</span><span class="n">terms_to_ignore</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.term_doc_lists"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.term_doc_lists">[docs]</a>	<span class="k">def</span> <span class="nf">term_doc_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dict</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">doc_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">tolil</span><span class="p">()</span><span class="o">.</span><span class="n">rows</span>
+		<span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+		<span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">terms</span><span class="p">,</span> <span class="n">doc_ids</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_doc_count_df"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_doc_count_df">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_doc_count_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame indexed on terms, with columns giving the</span>
+<span class="sd">		 number of docs containing each term</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_row_category_ids</span><span class="p">()</span>
+		<span class="n">catX</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_change_document_type_in_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_freq_df_from_matrix</span><span class="p">(</span><span class="n">catX</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_change_document_type_in_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">new_doc_ids</span><span class="p">):</span>
+		<span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_all_positive_data_ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+		<span class="n">newX</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="n">new_data</span><span class="p">,</span> <span class="p">(</span><span class="n">new_doc_ids</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">indices</span><span class="p">)))</span>
+		<span class="k">return</span> <span class="n">newX</span>
+
+	<span class="k">def</span> <span class="nf">_make_all_positive_data_ones</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newX</span><span class="p">):</span>
+		<span class="c1"># type: (sparse_matrix) -&gt; sparse_matrix</span>
+		<span class="k">return</span> <span class="p">(</span><span class="n">newX</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_terms"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_terms">[docs]</a>	<span class="k">def</span> <span class="nf">remove_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terms</span><span class="p">,</span> <span class="n">ignore_absences</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;Non destructive term removal.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		terms : list</span>
+<span class="sd">			list of terms to remove</span>
+<span class="sd">		ignore_absences : bool, False by default</span>
+<span class="sd">			if term does not appear, don&#39;t raise an error, just move on.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		TermDocMatrix, new object with terms removed.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">idx_to_delete_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_index_list</span><span class="p">(</span><span class="n">ignore_absences</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms_by_indices</span><span class="p">(</span><span class="n">idx_to_delete_list</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_build_term_index_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore_absences</span><span class="p">,</span> <span class="n">terms</span><span class="p">):</span>
+		<span class="n">idx_to_delete_list</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">term</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">:</span>
+				<span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_absences</span><span class="p">:</span>
+					<span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Term </span><span class="si">%s</span><span class="s1"> not found&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">term</span><span class="p">))</span>
+				<span class="k">continue</span>
+			<span class="n">idx_to_delete_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">term</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">idx_to_delete_list</span>
+
+<div class="viewcode-block" id="TermDocMatrix.keep_only_these_categories"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.keep_only_these_categories">[docs]</a>	<span class="k">def</span> <span class="nf">keep_only_these_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">categories</span><span class="p">,</span> <span class="n">ignore_absences</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Non destructive category removal.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		categories : list</span>
+<span class="sd">			list of categories to keep</span>
+<span class="sd">		ignore_absences : bool, False by default</span>
+<span class="sd">			if categories does not appear, don&#39;t raise an error, just move on.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		TermDocMatrix, new object with categories removed.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_absences</span><span class="p">:</span>
+			<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+		<span class="n">categories_to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_categories</span><span class="p">(</span><span class="n">categories_to_remove</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_categories"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_categories">[docs]</a>	<span class="k">def</span> <span class="nf">remove_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">categories</span><span class="p">,</span> <span class="n">ignore_absences</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Non destructive category removal.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		categories : list</span>
+<span class="sd">			list of categories to remove</span>
+<span class="sd">		ignore_absences : bool, False by default</span>
+<span class="sd">			if categories does not appear, don&#39;t raise an error, just move on.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		TermDocMatrix, new object with categories removed.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">idx_to_delete_list</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="n">existing_categories</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())</span>
+		<span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_categories</span><span class="p">:</span>
+				<span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_absences</span><span class="p">:</span>
+					<span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Category </span><span class="si">%s</span><span class="s1"> not found&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">category</span><span class="p">))</span>
+				<span class="k">continue</span>
+			<span class="n">idx_to_delete_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
+		<span class="n">new_category_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">batch_delete_idx</span><span class="p">(</span><span class="n">idx_to_delete_list</span><span class="p">)</span>
+
+		<span class="n">columns_to_delete</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">))</span>
+		<span class="n">new_X</span> <span class="o">=</span> <span class="n">delete_columns</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">columns_to_delete</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+		<span class="n">new_mX</span> <span class="o">=</span> <span class="n">delete_columns</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">columns_to_delete</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+		<span class="n">intermediate_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">)]</span>
+		<span class="n">old_y_to_new_y</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+		                  <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">new_category_idx_store</span><span class="o">.</span><span class="n">_i2val</span><span class="p">]</span>
+		<span class="n">new_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">old_y_to_new_y</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">old_y_to_new_y</span> <span class="k">else</span> <span class="kc">None</span>
+		                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">intermediate_y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])[</span><span class="n">intermediate_y</span><span class="p">]</span>
+
+		<span class="n">new_metadata_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_in_use</span><span class="p">():</span>
+			<span class="n">meta_idx_to_delete</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">new_mX</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+			<span class="n">new_metadata_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span><span class="o">.</span><span class="n">batch_delete_idx</span><span class="p">(</span><span class="n">meta_idx_to_delete</span><span class="p">)</span>
+
+		<span class="n">term_idx_to_delete</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">new_X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">new_term_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">batch_delete_idx</span><span class="p">(</span><span class="n">term_idx_to_delete</span><span class="p">)</span>
+		<span class="n">new_X</span> <span class="o">=</span> <span class="n">delete_columns</span><span class="p">(</span><span class="n">new_X</span><span class="p">,</span> <span class="n">term_idx_to_delete</span><span class="p">)</span>
+
+		<span class="n">term_doc_mat_to_ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_new_term_doc_matrix</span><span class="p">(</span><span class="n">new_X</span><span class="p">,</span>
+		                                                     <span class="n">new_mX</span><span class="p">,</span>
+		                                                     <span class="n">new_y</span><span class="p">,</span>
+		                                                     <span class="n">new_term_idx_store</span><span class="p">,</span>
+		                                                     <span class="n">new_category_idx_store</span><span class="p">,</span>
+		                                                     <span class="n">new_metadata_idx_store</span><span class="p">,</span>
+		                                                     <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">term_doc_mat_to_ret</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.metadata_in_use"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.metadata_in_use">[docs]</a>	<span class="k">def</span> <span class="nf">metadata_in_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns True if metadata values are in term doc matrix.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		bool</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_terms_by_indices"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_terms_by_indices">[docs]</a>	<span class="k">def</span> <span class="nf">remove_terms_by_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		idx_to_delete_list, list</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		TermDocMatrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">new_X</span><span class="p">,</span> <span class="n">new_term_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_X_after_delete_terms</span><span class="p">(</span><span class="n">idx_to_delete_list</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_new_term_doc_matrix</span><span class="p">(</span><span class="n">new_X</span><span class="p">,</span>
+		                                      <span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="p">,</span>
+		                                      <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span>
+		                                      <span class="n">new_term_idx_store</span><span class="p">,</span>
+		                                      <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="p">,</span>
+		                                      <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span><span class="p">,</span>
+		                                      <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_X_after_delete_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">):</span>
+		<span class="n">new_term_idx_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="o">.</span><span class="n">batch_delete_idx</span><span class="p">(</span><span class="n">idx_to_delete_list</span><span class="p">)</span>
+		<span class="n">new_X</span> <span class="o">=</span> <span class="n">delete_columns</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">idx_to_delete_list</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">new_X</span><span class="p">,</span> <span class="n">new_term_idx_store</span>
+
+<div class="viewcode-block" id="TermDocMatrix.remove_terms_used_in_less_than_num_docs"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.remove_terms_used_in_less_than_num_docs">[docs]</a>	<span class="k">def</span> <span class="nf">remove_terms_used_in_less_than_num_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		threshold: int</span>
+<span class="sd">			Minimum number of documents term should appear in to be kept</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		TermDocMatrix, new object with terms removed.</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">term_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">terms_to_remove</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">term_counts</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_terms_by_indices</span><span class="p">(</span><span class="n">terms_to_remove</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_make_new_term_doc_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                              <span class="n">new_X</span><span class="p">,</span>
+	                              <span class="n">new_mX</span><span class="p">,</span>
+	                              <span class="n">new_y</span><span class="p">,</span>
+	                              <span class="n">new_term_idx_store</span><span class="p">,</span>
+	                              <span class="n">new_category_idx_store</span><span class="p">,</span>
+	                              <span class="n">new_metadata_idx_store</span><span class="p">,</span>
+	                              <span class="n">new_y_mask</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">TermDocMatrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span>
+		                     <span class="n">mX</span><span class="o">=</span><span class="n">new_mX</span><span class="p">,</span>
+		                     <span class="n">y</span><span class="o">=</span><span class="n">new_y</span><span class="p">,</span>
+		                     <span class="n">term_idx_store</span><span class="o">=</span><span class="n">new_term_idx_store</span><span class="p">,</span>
+		                     <span class="n">category_idx_store</span><span class="o">=</span><span class="n">new_category_idx_store</span><span class="p">,</span>
+		                     <span class="n">metadata_idx_store</span><span class="o">=</span><span class="n">new_metadata_idx_store</span><span class="p">,</span>
+		                     <span class="n">unigram_frequency_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_posterior_mean_ratio_scores"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_posterior_mean_ratio_scores">[docs]</a>	<span class="k">def</span> <span class="nf">get_posterior_mean_ratio_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39; Computes posterior mean score.</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			np.array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior_mean_ratio_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_corner_scores"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_corner_scores">[docs]</a>	<span class="k">def</span> <span class="nf">get_corner_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39; Computes corner score, which is inversely correlated</span>
+<span class="sd">		to the Rudder score to the nearest upper-left or lower-right corner.</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			np.array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">CornerScore</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span>
+			<span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_catetgory_and_non_category_word_counts</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_rudder_scores"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_rudder_scores">[docs]</a>	<span class="k">def</span> <span class="nf">get_rudder_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39; Computes Rudder score.</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			np.array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">category_percentiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_term_percentiles_in_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">not_category_percentiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_term_percentiles_not_in_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">rudder_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_rudder_scores_for_percentile_pair</span><span class="p">(</span><span class="n">category_percentiles</span><span class="p">,</span>
+		                                                            <span class="n">not_category_percentiles</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">rudder_scores</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_posterior_mean_ratio_from_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_catetgory_and_non_category_word_counts</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior_mean_ratio_from_counts</span><span class="p">(</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_posterior_mean_ratio_from_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">):</span>
+		<span class="n">cat_posterior_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior_mean_from_counts</span><span class="p">(</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">)</span>
+		<span class="n">not_cat_posterior_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior_mean_from_counts</span><span class="p">(</span><span class="n">not_cat_word_counts</span><span class="p">,</span> <span class="n">cat_word_counts</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cat_posterior_mean</span> <span class="o">/</span> <span class="n">not_cat_posterior_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_posterior_mean_from_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">):</span>
+		<span class="n">a</span> <span class="o">=</span> <span class="n">cat_word_counts</span>
+		<span class="n">b</span> <span class="o">=</span> <span class="n">cat_word_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">cat_word_counts</span>
+		<span class="n">beta</span> <span class="o">=</span> <span class="p">((</span><span class="n">cat_word_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">not_cat_word_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+		        <span class="o">/</span> <span class="p">(</span><span class="n">cat_word_counts</span> <span class="o">+</span> <span class="n">not_cat_word_counts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+		<span class="n">posterior_mean</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="n">beta</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">posterior_mean</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_logistic_regression_coefs_l2"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_logistic_regression_coefs_l2">[docs]</a>	<span class="k">def</span> <span class="nf">get_logistic_regression_coefs_l2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span>
+	                                     <span class="n">clf</span><span class="o">=</span><span class="n">RidgeClassifierCV</span><span class="p">()):</span>
+		<span class="sd">&#39;&#39;&#39; Computes l2-penalized logistic regression score.</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			(coefficient array, accuracy, majority class baseline accuracy)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="k">import</span> <span class="n">cross_val_predict</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">TfidfTransformer</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span>
+		<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+		<span class="n">y_hat</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+		<span class="n">acc</span><span class="p">,</span> <span class="n">baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_accuracy_and_baseline_accuracy</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">clf</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">acc</span><span class="p">,</span> <span class="n">baseline</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_accuracy_and_baseline_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">):</span>
+		<span class="n">acc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">y_hat</span> <span class="o">==</span> <span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="n">baseline</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">y</span><span class="p">)])</span> <span class="o">*</span> <span class="mf">1.</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">acc</span><span class="p">,</span> <span class="n">baseline</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_logistic_regression_coefs_l1"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_logistic_regression_coefs_l1">[docs]</a>	<span class="k">def</span> <span class="nf">get_logistic_regression_coefs_l1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span>
+	                                     <span class="n">clf</span><span class="o">=</span><span class="n">LassoCV</span><span class="p">(</span><span class="n">alphas</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">],</span>
+	                                                 <span class="n">max_iter</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+	                                                 <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)):</span>
+		<span class="sd">&#39;&#39;&#39; Computes l1-penalized logistic regression score.</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			(coefficient array, accuracy, majority class baseline accuracy)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="k">import</span> <span class="n">cross_val_predict</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">y_continuous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_continuous_version_boolean_y</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="c1"># X = TfidfTransformer().fit_transform(self._X)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
+
+		<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_continuous</span><span class="p">)</span>
+		<span class="n">y_hat</span> <span class="o">=</span> <span class="p">(</span><span class="n">cross_val_predict</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y_continuous</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="n">acc</span><span class="p">,</span> <span class="n">baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_accuracy_and_baseline_accuracy</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">)</span>
+		<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_continuous</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">clf</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">baseline</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_regression_coefs"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_regression_coefs">[docs]</a>	<span class="k">def</span> <span class="nf">get_regression_coefs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">clf</span><span class="o">=</span><span class="n">ElasticNet</span><span class="p">()):</span>
+		<span class="sd">&#39;&#39;&#39; Computes regression score of tdfidf transformed features</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+<span class="sd">		clf : sklearn regressor</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		coefficient array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_fit_tfidf_model</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">clf</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">clf</span><span class="o">.</span><span class="n">coef_</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_logreg_coefs"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_logreg_coefs">[docs]</a>	<span class="k">def</span> <span class="nf">get_logreg_coefs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">clf</span><span class="o">=</span><span class="n">LogisticRegression</span><span class="p">()):</span>
+		<span class="sd">&#39;&#39;&#39; Computes regression score of tdfidf transformed features</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+<span class="sd">		clf : sklearn regressor</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		coefficient array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_fit_tfidf_model</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">clf</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">clf</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+	<span class="k">def</span> <span class="nf">_fit_tfidf_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">clf</span><span class="p">):</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">y_continuous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_continuous_version_boolean_y</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">TfidfTransformer</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span>
+		<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_continuous</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_continuous_version_boolean_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_bool</span><span class="p">):</span>
+		<span class="k">return</span> <span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="n">y_bool</span> <span class="o">*</span> <span class="mf">2.</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_doc_lengths"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_doc_lengths">[docs]</a>	<span class="k">def</span> <span class="nf">get_doc_lengths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns a list of document lengths in words</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">idx_to_delete_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_index_list</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_unigrams</span><span class="p">())</span>
+		<span class="n">unigram_X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_X_after_delete_terms</span><span class="p">(</span><span class="n">idx_to_delete_list</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">unigram_X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_scaled_f_scores"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_scaled_f_scores">[docs]</a>	<span class="k">def</span> <span class="nf">get_scaled_f_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                        <span class="n">category</span><span class="p">,</span>
+	                        <span class="n">scaler_algo</span><span class="o">=</span><span class="n">DEFAULT_SCALER_ALGO</span><span class="p">,</span>
+	                        <span class="n">beta</span><span class="o">=</span><span class="n">DEFAULT_BETA</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39; Computes scaled-fscores</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category : str</span>
+<span class="sd">			category name to score</span>
+<span class="sd">		scaler_algo : str</span>
+<span class="sd">		  Function that scales an array to a range \in [0 and 1]. Use &#39;percentile&#39;, &#39;normcdf&#39;. Default.</span>
+<span class="sd">		beta : float</span>
+<span class="sd">			Beta in (1+B^2) * (Scale(P(w|c)) * Scale(P(c|w)))/(B^2*Scale(P(w|c)) + Scale(P(c|w))). Default.</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			np.array of harmonic means of scaled P(word|category) and scaled P(category|word)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+
+		<span class="k">assert</span> <span class="n">beta</span> <span class="o">&gt;</span> <span class="mi">0</span>
+		<span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_catetgory_and_non_category_word_counts</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scaled_f_score_from_counts</span><span class="p">(</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">,</span> <span class="n">scaler_algo</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_scaled_f_score_from_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">,</span> <span class="n">scaler_algo</span><span class="p">,</span>
+	                                    <span class="n">beta</span><span class="o">=</span><span class="n">DEFAULT_BETA</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		scaler = self._get_scaler_function(scaler_algo)</span>
+<span class="sd">		p_word_given_category = cat_word_counts.astype(np.float64) / cat_word_counts.sum()</span>
+<span class="sd">		p_category_given_word = cat_word_counts.astype(np.float64) / (cat_word_counts + not_cat_word_counts)</span>
+<span class="sd">		scores \</span>
+<span class="sd">			= self._computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms(</span>
+<span class="sd">			cat_word_counts, p_category_given_word, p_word_given_category, scaler</span>
+<span class="sd">		)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">ScaledFScore</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">,</span> <span class="n">scaler_algo</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_computer_harmoic_mean_of_probabilities_over_non_zero_in_category_count_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                                                                  <span class="n">cat_word_counts</span><span class="p">,</span>
+	                                                                                  <span class="n">p_category_given_word</span><span class="p">,</span>
+	                                                                                  <span class="n">p_word_given_category</span><span class="p">,</span>
+	                                                                                  <span class="n">scaler</span><span class="p">):</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+			<span class="s1">&#39;cat_word_counts&#39;</span><span class="p">:</span> <span class="n">cat_word_counts</span><span class="p">,</span>
+			<span class="s1">&#39;p_word_given_category&#39;</span><span class="p">:</span> <span class="n">p_word_given_category</span><span class="p">,</span>
+			<span class="s1">&#39;p_category_given_word&#39;</span><span class="p">:</span> <span class="n">p_category_given_word</span>
+		<span class="p">})</span>
+		<span class="n">df_with_count</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;cat_word_counts&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+		<span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_word_given_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaler</span><span class="p">(</span><span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;p_word_given_category&#39;</span><span class="p">])</span>
+		<span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_category_given_word&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaler</span><span class="p">(</span><span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;p_category_given_word&#39;</span><span class="p">])</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;scale p_word_given_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_with_count</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;scale p_word_given_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_word_given_category&#39;</span><span class="p">]</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;scale p_category_given_word&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_with_count</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;scale p_category_given_word&#39;</span><span class="p">]</span> \
+			<span class="o">=</span> <span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_category_given_word&#39;</span><span class="p">]</span>
+		<span class="n">score</span> <span class="o">=</span> <span class="n">hmean</span><span class="p">([</span><span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_category_given_word&#39;</span><span class="p">],</span>
+		               <span class="n">df_with_count</span><span class="p">[</span><span class="s1">&#39;scale p_word_given_category&#39;</span><span class="p">]])</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_with_count</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+		<span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+	<span class="k">def</span> <span class="nf">_get_scaler_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaler_algo</span><span class="p">):</span>
+		<span class="n">scaler</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="n">scaler_algo</span> <span class="o">==</span> <span class="s1">&#39;percentile&#39;</span><span class="p">:</span>
+			<span class="n">scaler</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+		<span class="k">elif</span> <span class="n">scaler_algo</span> <span class="o">==</span> <span class="s1">&#39;normcdf&#39;</span><span class="p">:</span>
+			<span class="c1"># scaler = lambda x: ECDF(x[cat_word_counts != 0])(x)</span>
+			<span class="n">scaler</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">())</span>
+		<span class="k">elif</span> <span class="n">scaler_algo</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+			<span class="n">scaler</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">InvalidScalerException</span><span class="p">(</span><span class="s2">&quot;Invalid scaler alogrithm.  Must be either percentile or normcdf.&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">scaler</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_fisher_scores"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_fisher_scores">[docs]</a>	<span class="k">def</span> <span class="nf">get_fisher_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_catetgory_and_non_category_word_counts</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fisher_scores_from_counts</span><span class="p">(</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_fisher_scores_vs_background"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_fisher_scores_vs_background">[docs]</a>	<span class="k">def</span> <span class="nf">get_fisher_scores_vs_background</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			pd.DataFrame of fisher scores vs background</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_and_background_counts</span><span class="p">()</span>
+		<span class="n">odds_ratio</span><span class="p">,</span> <span class="n">p_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fisher_scores_from_counts</span><span class="p">(</span>
+			<span class="n">df</span><span class="p">[</span><span class="s1">&#39;corpus&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">])</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Odds ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">odds_ratio</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Bonferroni-corrected p-values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_values</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+		<span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Bonferroni-corrected p-values&#39;</span><span class="p">,</span> <span class="s1">&#39;Odds ratio&#39;</span><span class="p">],</span>
+		               <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_posterior_mean_ratio_scores_vs_background"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_posterior_mean_ratio_scores_vs_background">[docs]</a>	<span class="k">def</span> <span class="nf">get_posterior_mean_ratio_scores_vs_background</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">			pd.DataFrame of posterior mean  scores vs background</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_and_background_counts</span><span class="p">()</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Log Posterior Mean Ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior_mean_ratio_from_counts</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;corpus&#39;</span><span class="p">],</span>
+		                                                                            <span class="n">df</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;Log Posterior Mean Ratio&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_catetgory_and_non_category_word_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_validate_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="n">cat_word_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+		<span class="n">not_cat_word_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">)]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+		<span class="k">return</span> <span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span>
+
+	<span class="k">def</span> <span class="nf">_validate_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">():</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid category: </span><span class="si">%s</span><span class="s2">, valid: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">()))</span>
+
+	<span class="k">def</span> <span class="nf">_get_fisher_scores_from_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">):</span>
+		<span class="n">cat_not_word_counts</span> <span class="o">=</span> <span class="n">cat_word_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">cat_word_counts</span>
+		<span class="n">not_cat_not_word_counts</span> <span class="o">=</span> <span class="n">not_cat_word_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">not_cat_word_counts</span>
+
+		<span class="k">def</span> <span class="nf">do_fisher_exact</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="n">fisher_exact</span><span class="p">([[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]]],</span> <span class="n">alternative</span><span class="o">=</span><span class="s1">&#39;greater&#39;</span><span class="p">)</span>
+
+		<span class="n">odds_ratio</span><span class="p">,</span> <span class="n">p_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span>
+			<span class="n">do_fisher_exact</span><span class="p">,</span>
+			<span class="mi">0</span><span class="p">,</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cat_word_counts</span><span class="p">,</span> <span class="n">cat_not_word_counts</span><span class="p">,</span> <span class="n">not_cat_word_counts</span><span class="p">,</span> <span class="n">not_cat_not_word_counts</span><span class="p">]))</span>
+		<span class="k">return</span> <span class="n">odds_ratio</span><span class="p">,</span> <span class="n">p_values</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_rudder_scores_vs_background"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_rudder_scores_vs_background">[docs]</a>	<span class="k">def</span> <span class="nf">get_rudder_scores_vs_background</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">    pd.DataFrame of rudder scores vs background</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_and_background_counts</span><span class="p">()</span>
+		<span class="n">corpus_percentiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_percentiles_from_freqs</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;corpus&#39;</span><span class="p">])</span>
+		<span class="n">background_percentiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_percentiles_from_freqs</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">])</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Rudder&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_rudder_scores_for_percentile_pair</span><span class="p">(</span><span class="n">corpus_percentiles</span><span class="p">,</span>
+		                                                            <span class="n">background_percentiles</span><span class="p">))</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;Rudder&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">df</span></div>
+
+	<span class="k">def</span> <span class="nf">_rescale_labels_to_neg_one_pos_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">))</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="TermDocMatrix.set_background_corpus"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.set_background_corpus">[docs]</a>	<span class="k">def</span> <span class="nf">set_background_corpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">background</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		background</span>
+
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">background</span><span class="p">),</span> <span class="n">TermDocMatrix</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">background</span>
+			                                       <span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span>
+			                                       <span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+			                                       <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">]</span>
+		<span class="k">elif</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">background</span><span class="p">)</span> <span class="o">==</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+		      <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">background</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">])):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span> <span class="o">=</span> <span class="n">background</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;The argument named background must be a subclass of TermDocMatrix or a &#39;</span> \
+			                <span class="o">+</span> <span class="s1">&#39;DataFrame with columns &quot;word&quot; and &quot;background&quot;, where &quot;word&quot; &#39;</span> \
+			                <span class="o">+</span> <span class="s1">&#39;is the term text, and &quot;background&quot; is its frequency.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_background_corpus"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_background_corpus">[docs]</a>	<span class="k">def</span> <span class="nf">get_background_corpus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_corpus</span>
+		<span class="k">return</span> <span class="n">DefaultBackgroundFrequencies</span><span class="o">.</span><span class="n">get_background_frequency_df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_and_background_counts"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_and_background_counts">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_and_background_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A pd.DataFrame consisting of unigram term counts of words occurring</span>
+<span class="sd">		 in the TermDocumentMatrix and their corresponding background corpus</span>
+<span class="sd">		 counts.  The dataframe has two columns, corpus and background.</span>
+
+<span class="sd">		&gt;&gt;&gt; corpus.get_unigram_corpus.get_term_and_background_counts()</span>
+<span class="sd">		                  corpus  background</span>
+<span class="sd">		obama              702.0    565739.0</span>
+<span class="sd">		romney             570.0    695398.0</span>
+<span class="sd">		barack             248.0    227861.0</span>
+<span class="sd">		...</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">background_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_background_unigram_frequencies</span><span class="p">()</span>
+		<span class="n">term_freq_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_freq_df</span><span class="p">()</span>
+		<span class="n">corpus_freq_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;corpus&#39;</span><span class="p">:</span> <span class="n">term_freq_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)})</span>
+		<span class="n">corpus_unigram_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_corpus_unigram_freq</span><span class="p">(</span><span class="n">corpus_freq_df</span><span class="p">)</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="n">corpus_unigram_freq</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">background_df</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+		<span class="k">del</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
+		<span class="k">return</span> <span class="n">df</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_corpus_unigram_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus_freq_df</span><span class="p">):</span>
+		<span class="n">unigram_validator</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;^[A-Za-z]+$&#39;</span><span class="p">)</span>
+		<span class="n">corpus_unigram_freq</span> <span class="o">=</span> <span class="n">corpus_freq_df</span><span class="o">.</span><span class="n">ix</span><span class="p">[[</span><span class="n">term</span> <span class="k">for</span> <span class="n">term</span>
+		                                         <span class="ow">in</span> <span class="n">corpus_freq_df</span><span class="o">.</span><span class="n">index</span>
+		                                         <span class="k">if</span> <span class="n">unigram_validator</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]]</span>
+		<span class="k">return</span> <span class="n">corpus_unigram_freq</span>
+
+	<span class="k">def</span> <span class="nf">_get_background_unigram_frequencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_background_corpus</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_background_corpus</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">DefaultBackgroundFrequencies</span><span class="o">.</span><span class="n">get_background_frequency_df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.list_extra_features"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.list_extra_features">[docs]</a>	<span class="k">def</span> <span class="nf">list_extra_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		List of dicts.  One dict for each document, keys are metadata, values are counts</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">FeatureLister</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mX</span><span class="p">,</span>
+		                     <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_idx_store</span><span class="p">,</span>
+		                     <span class="bp">self</span><span class="o">.</span><span class="n">get_num_docs</span><span class="p">())</span><span class="o">.</span><span class="n">output</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_scaled_f_scores_vs_background"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_scaled_f_scores_vs_background">[docs]</a>	<span class="k">def</span> <span class="nf">get_scaled_f_scores_vs_background</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                      <span class="n">scaler_algo</span><span class="o">=</span><span class="n">DEFAULT_BACKGROUND_SCALER_ALGO</span><span class="p">,</span>
+	                                      <span class="n">beta</span><span class="o">=</span><span class="n">DEFAULT_BACKGROUND_BETA</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		scaler_algo : str</span>
+<span class="sd">			see get_scaled_f_scores, default &#39;none&#39;</span>
+<span class="sd">		beta : float</span>
+<span class="sd">		  default 1.</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame of scaled_f_score scores compared to background corpus</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_and_background_counts</span><span class="p">()</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Scaled f-score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ScaledFScore</span><span class="o">.</span><span class="n">get_scores_for_category</span><span class="p">(</span>
+			<span class="n">df</span><span class="p">[</span><span class="s1">&#39;corpus&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">],</span> <span class="n">scaler_algo</span><span class="p">,</span> <span class="n">beta</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;Scaled f-score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_rudder_scores_for_percentile_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category_percentiles</span><span class="p">,</span> <span class="n">not_category_percentiles</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+		                      <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">category_percentiles</span><span class="p">,</span> <span class="n">not_category_percentiles</span><span class="p">))),</span>
+		                      <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_term_percentiles_in_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mask_from_category</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frequency_percentiles</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_mask_from_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_term_percentiles_not_in_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+		<span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="o">.</span><span class="n">getidx</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frequency_percentiles</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_get_frequency_percentiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+		<span class="n">freqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+		<span class="n">percentiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_percentiles_from_freqs</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">percentiles</span>
+
+	<span class="k">def</span> <span class="nf">_get_percentiles_from_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_category_frequencies"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_category_frequencies">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_category_frequencies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scatterchartdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Applies the ranker in scatterchartdata to term-category frequencies.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		scatterchartdata : ScatterChartData</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">term_ranker</span> <span class="o">=</span> <span class="n">scatterchartdata</span><span class="o">.</span><span class="n">term_ranker</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">scatterchartdata</span><span class="o">.</span><span class="n">use_non_text_features</span><span class="p">:</span>
+			<span class="n">term_ranker</span><span class="o">.</span><span class="n">use_non_text_features</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">term_ranker</span><span class="o">.</span><span class="n">get_ranks</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.apply_ranker"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.apply_ranker">[docs]</a>	<span class="k">def</span> <span class="nf">apply_ranker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_ranker</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		term_ranker : TermRanker</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.Dataframe</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="n">term_ranker</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_ranks</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_category_ids"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_category_ids">[docs]</a>	<span class="k">def</span> <span class="nf">get_category_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns array of category ids</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span></div>
+
+<div class="viewcode-block" id="TermDocMatrix.get_term_counts_from_term_as_category"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermDocMatrix.TermDocMatrix.get_term_counts_from_term_as_category">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_counts_from_term_as_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		term : str</span>
+<span class="sd">			Term to use as a category marker</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">sel</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

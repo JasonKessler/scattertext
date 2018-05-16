@@ -1,0 +1,167 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.DeployedClassifier &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.DeployedClassifier</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">PassiveAggressiveClassifier</span>
+<span class="kn">from</span> <span class="nn">statsmodels.distributions</span> <span class="k">import</span> <span class="n">ECDF</span>
+
+
+<div class="viewcode-block" id="DeployedClassifier"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.DeployedClassifier">[docs]</a><span class="k">class</span> <span class="nc">DeployedClassifier</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">target_category</span><span class="p">,</span>
+	             <span class="n">category_idx_store</span><span class="p">,</span>
+	             <span class="n">term_idx_store</span><span class="p">,</span>
+	             <span class="n">entity_types_to_censor</span><span class="p">,</span>
+	             <span class="n">use_lemmas</span><span class="p">,</span>
+	             <span class="n">clean_function</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;Not working</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		target_category</span>
+<span class="sd">		category_idx_store</span>
+<span class="sd">		term_idx_store</span>
+<span class="sd">		entity_types_to_censor</span>
+<span class="sd">		use_lemmas</span>
+<span class="sd">		clean_function</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_target_category</span> <span class="o">=</span> <span class="n">target_category</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span> <span class="o">=</span> <span class="n">category_idx_store</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span> <span class="o">=</span> <span class="n">term_idx_store</span><span class="p">,</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_entity_types_to_censor</span> <span class="o">=</span> <span class="n">entity_types_to_censor</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_use_lemmas</span> <span class="o">=</span> <span class="n">use_lemmas</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_clean_function</span> <span class="o">=</span> <span class="n">clean_function</span>
+
+<div class="viewcode-block" id="DeployedClassifier.classify"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.DeployedClassifier.classify">[docs]</a>	<span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">nlp</span><span class="p">):</span>
+		<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_and_labels_from_documents_and_indexes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_category_doc_iter</span><span class="p">,</span>
+		                                                                <span class="bp">self</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="p">,</span>
+		                                                                <span class="bp">self</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="NeedToTrainExceptionBeforeDeployingException"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.NeedToTrainExceptionBeforeDeployingException">[docs]</a><span class="k">class</span> <span class="nc">NeedToTrainExceptionBeforeDeployingException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DeployedClassifierFactory"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.DeployedClassifierFactory">[docs]</a><span class="k">class</span> <span class="nc">DeployedClassifierFactory</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_doc_matrix</span><span class="p">,</span> <span class="n">term_doc_matrix_factory</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">nlp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;This is a class that enables one to train and save a classification model.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		term_doc_matrix : TermDocMatrix</span>
+<span class="sd">		term_doc_matrix_factory : TermDocMatrixFactory</span>
+<span class="sd">		category : str</span>
+<span class="sd">			Category name</span>
+<span class="sd">		nlp : spacy parser</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span> <span class="o">=</span> <span class="n">term_doc_matrix</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix_factory</span> <span class="o">=</span> <span class="n">term_doc_matrix_factory</span>
+		<span class="k">assert</span> <span class="n">term_doc_matrix_factory</span><span class="o">.</span><span class="n">_nlp</span> <span class="ow">is</span> <span class="kc">None</span>
+		<span class="k">assert</span> <span class="n">term_doc_matrix_factory</span><span class="o">.</span><span class="n">category_text_iter</span> <span class="ow">is</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_category</span> <span class="o">=</span> <span class="n">category</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_clf</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_proba</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DeployedClassifierFactory.passive_aggressive_train"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.DeployedClassifierFactory.passive_aggressive_train">[docs]</a>	<span class="k">def</span> <span class="nf">passive_aggressive_train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;Trains passive aggressive classifier</span>
+
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_clf</span> <span class="o">=</span> <span class="n">PassiveAggressiveClassifier</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span><span class="o">.</span><span class="n">_y</span><span class="p">)</span>
+		<span class="n">y_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clf</span><span class="o">.</span><span class="n">decision_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span>
+		<span class="n">pos_ecdf</span> <span class="o">=</span> <span class="n">ECDF</span><span class="p">(</span><span class="n">y_dist</span><span class="p">[</span><span class="n">y_dist</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">])</span>
+		<span class="n">neg_ecdf</span> <span class="o">=</span> <span class="n">ECDF</span><span class="p">(</span><span class="n">y_dist</span><span class="p">[</span><span class="n">y_dist</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">])</span>
+
+		<span class="k">def</span> <span class="nf">proba_function</span><span class="p">(</span><span class="n">distance_from_hyperplane</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">distance_from_hyperplane</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="k">return</span> <span class="n">pos_ecdf</span><span class="p">(</span><span class="n">distance_from_hyperplane</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">+</span> <span class="mf">0.5</span>
+			<span class="k">elif</span> <span class="n">distance_from_hyperplane</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="k">return</span> <span class="n">pos_ecdf</span><span class="p">(</span><span class="n">distance_from_hyperplane</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+			<span class="k">return</span> <span class="mf">0.5</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_proba</span> <span class="o">=</span> <span class="n">proba_function</span>
+		<span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="DeployedClassifierFactory.build"><a class="viewcode-back" href="../../scattertext.html#scattertext.DeployedClassifier.DeployedClassifierFactory.build">[docs]</a>	<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;Builds Depoyed Classifier</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">NeedToTrainExceptionBeforeDeployingException</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">DeployedClassifier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_category</span><span class="p">,</span>
+		                          <span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span><span class="o">.</span><span class="n">_category_idx_store</span><span class="p">,</span>
+		                          <span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix</span><span class="o">.</span><span class="n">_term_idx_store</span><span class="p">,</span>
+		                          <span class="bp">self</span><span class="o">.</span><span class="n">_term_doc_matrix_factory</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

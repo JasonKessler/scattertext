@@ -1,0 +1,303 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scattertext">
+<h1>scattertext<a class="headerlink" href="#scattertext" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="scattertext.html">scattertext package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.characteristic.html">scattertext.characteristic package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.characteristic.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.characteristic.html#module-scattertext.characteristic.DenseRankCharacteristicness">scattertext.characteristic.DenseRankCharacteristicness module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.characteristic.html#module-scattertext.characteristic">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.diachronic.html">scattertext.diachronic package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.diachronic.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.diachronic.html#module-scattertext.diachronic.GanttChart">scattertext.diachronic.GanttChart module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.diachronic.html#module-scattertext.diachronic">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.emojis.html">scattertext.emojis package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.emojis.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.emojis.html#module-scattertext.emojis.EmojiExtractor">scattertext.emojis.EmojiExtractor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.emojis.html#module-scattertext.emojis.ProcessedEmojiStructure">scattertext.emojis.ProcessedEmojiStructure module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.emojis.html#module-scattertext.emojis">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.external.html">scattertext.external package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.external.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.external.html#module-scattertext.external">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.features.html">scattertext.features package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromGeneralInquirer">scattertext.features.FeatsFromGeneralInquirer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromOnlyEmpath">scattertext.features.FeatsFromOnlyEmpath module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromSpacyDoc">scattertext.features.FeatsFromSpacyDoc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromSpacyDocAndEmpath">scattertext.features.FeatsFromSpacyDocAndEmpath module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromSpacyDocOnlyEmoji">scattertext.features.FeatsFromSpacyDocOnlyEmoji module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromSpacyDocOnlyNounChunks">scattertext.features.FeatsFromSpacyDocOnlyNounChunks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.FeatsFromTopicModel">scattertext.features.FeatsFromTopicModel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.PhraseMachinePhrases">scattertext.features.PhraseMachinePhrases module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features.UnigramsFromSpacyDoc">scattertext.features.UnigramsFromSpacyDoc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.features.html#module-scattertext.features">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.frequencyreaders.html">scattertext.frequencyreaders package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.frequencyreaders.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.frequencyreaders.html#module-scattertext.frequencyreaders.DefaultBackgroundFrequencies">scattertext.frequencyreaders.DefaultBackgroundFrequencies module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.frequencyreaders.html#module-scattertext.frequencyreaders">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.indexstore.html">scattertext.indexstore package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.indexstore.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.indexstore.html#module-scattertext.indexstore.IndexStore">scattertext.indexstore.IndexStore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.indexstore.html#module-scattertext.indexstore.IndexStoreFromDict">scattertext.indexstore.IndexStoreFromDict module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.indexstore.html#module-scattertext.indexstore.IndexStoreFromList">scattertext.indexstore.IndexStoreFromList module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.indexstore.html#module-scattertext.indexstore">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.representations.html">scattertext.representations package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.representations.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.representations.html#module-scattertext.representations.Word2VecFromParsedCorpus">scattertext.representations.Word2VecFromParsedCorpus module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.representations.html#module-scattertext.representations">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.semioticsquare.html">scattertext.semioticsquare package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.semioticsquare.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.semioticsquare.html#module-scattertext.semioticsquare.FourSquare">scattertext.semioticsquare.FourSquare module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.semioticsquare.html#module-scattertext.semioticsquare.FourSquareAxis">scattertext.semioticsquare.FourSquareAxis module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.semioticsquare.html#module-scattertext.semioticsquare.SemioticSquare">scattertext.semioticsquare.SemioticSquare module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.semioticsquare.html#module-scattertext.semioticsquare">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.termcompaction.html">scattertext.termcompaction package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termcompaction.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termcompaction.html#module-scattertext.termcompaction.ClassPercentageCompactor">scattertext.termcompaction.ClassPercentageCompactor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termcompaction.html#module-scattertext.termcompaction.CompactTerms">scattertext.termcompaction.CompactTerms module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termcompaction.html#module-scattertext.termcompaction.PhraseSelector">scattertext.termcompaction.PhraseSelector module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termcompaction.html#module-scattertext.termcompaction">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.termranking.html">scattertext.termranking package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking.AbsoluteFrequencyRanker">scattertext.termranking.AbsoluteFrequencyRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking.DocLengthDividedFrequencyRanker">scattertext.termranking.DocLengthDividedFrequencyRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking.DocLengthNormalizedFrequencyRanker">scattertext.termranking.DocLengthNormalizedFrequencyRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking.OncePerDocFrequencyRanker">scattertext.termranking.OncePerDocFrequencyRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking.TermRanker">scattertext.termranking.TermRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termranking.html#module-scattertext.termranking">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.termscoring.html">scattertext.termscoring package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.BM25Difference">scattertext.termscoring.BM25Difference module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.CornerScore">scattertext.termscoring.CornerScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.LogOddsUniformativePriorScore">scattertext.termscoring.LogOddsUniformativePriorScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.OLSUngnarStyle">scattertext.termscoring.OLSUngnarStyle module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.RankDifference">scattertext.termscoring.RankDifference module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring.ScaledFScore">scattertext.termscoring.ScaledFScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termscoring.html#module-scattertext.termscoring">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.termsignificance.html">scattertext.termsignificance package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance.LogOddsRatioAddOne">scattertext.termsignificance.LogOddsRatioAddOne module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror">scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior">scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance.ScaledFScoreSignificance">scattertext.termsignificance.ScaledFScoreSignificance module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance.TermSignificance">scattertext.termsignificance.TermSignificance module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.termsignificance.html#module-scattertext.termsignificance">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.test.html">scattertext.test package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_CSRMatrixTools">scattertext.test.test_CSRMatrixTools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_CornerScore">scattertext.test.test_CornerScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_CorpusFromParsedDocuments">scattertext.test.test_CorpusFromParsedDocuments module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_FeatsFromSpacyDoc">scattertext.test.test_FeatsFromSpacyDoc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_HTMLSemioticSquareViz">scattertext.test.test_HTMLSemioticSquareViz module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_HTMLVisualizationAssembly">scattertext.test.test_HTMLVisualizationAssembly module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_PMIFiltering">scattertext.test.test_PMIFiltering module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_ParsedCorpus">scattertext.test.test_ParsedCorpus module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_PriorFactory">scattertext.test.test_PriorFactory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_TermDocMat">scattertext.test.test_TermDocMat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_WhitespaceNLP">scattertext.test.test_WhitespaceNLP module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_asiannlp">scattertext.test.test_asiannlp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_autoTermSelector">scattertext.test.test_autoTermSelector module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_classPercentageCompactor">scattertext.test.test_classPercentageCompactor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_compactTerms">scattertext.test.test_compactTerms module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_corpusFromFeatureDict">scattertext.test.test_corpusFromFeatureDict module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_corpusFromPandas">scattertext.test.test_corpusFromPandas module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_corpusFromScikit">scattertext.test.test_corpusFromScikit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_denseRankCharacteristicness">scattertext.test.test_denseRankCharacteristicness module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_docsAndLabelsFromCorpus">scattertext.test.test_docsAndLabelsFromCorpus module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_extract_emoji">scattertext.test.test_extract_emoji module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_featsFromSpacyDocAndEmpath">scattertext.test.test_featsFromSpacyDocAndEmpath module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_featureLister">scattertext.test.test_featureLister module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_fourSquareAxes">scattertext.test.test_fourSquareAxes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_gensimPhraseAdder">scattertext.test.test_gensimPhraseAdder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_indexStore">scattertext.test.test_indexStore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_indexStoreFromDict">scattertext.test.test_indexStoreFromDict module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_indexStoreFromList">scattertext.test.test_indexStoreFromList module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_large_int_format">scattertext.test.test_large_int_format module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_logOddsRatioUninformativeDirichletPrior">scattertext.test.test_logOddsRatioUninformativeDirichletPrior module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_logOddsUninformativePriorScore">scattertext.test.test_logOddsUninformativePriorScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_oneClassScatterChart">scattertext.test.test_oneClassScatterChart module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_percentile_lexicographic">scattertext.test.test_percentile_lexicographic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_phraseSelector">scattertext.test.test_phraseSelector module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_scaledFScore">scattertext.test.test_scaledFScore module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_scatterChart">scattertext.test.test_scatterChart module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_scatterChartExplorer">scattertext.test.test_scatterChartExplorer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_semioticSquare">scattertext.test.test_semioticSquare module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termCategoryFrequencies">scattertext.test.test_termCategoryFrequencies module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termDocMatrixFactory">scattertext.test.test_termDocMatrixFactory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termDocMatrixFromFrequencies">scattertext.test.test_termDocMatrixFromFrequencies module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termDocMatrixFromPandas">scattertext.test.test_termDocMatrixFromPandas module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termDocMatrixFromScikit">scattertext.test.test_termDocMatrixFromScikit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_termRanker">scattertext.test.test_termRanker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_unigramsFromSpacyDoc">scattertext.test.test_unigramsFromSpacyDoc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_vizDataAdapter">scattertext.test.test_vizDataAdapter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test.test_word2VecFromParsedCorpus">scattertext.test.test_word2VecFromParsedCorpus module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.test.html#module-scattertext.test">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.topicmodel.html">scattertext.topicmodel package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.topicmodel.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.topicmodel.html#module-scattertext.topicmodel.SentencesForTopicModeling">scattertext.topicmodel.SentencesForTopicModeling module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.topicmodel.html#module-scattertext.topicmodel">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scattertext.viz.html">scattertext.viz package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.viz.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.viz.html#module-scattertext.viz.HTMLSemioticSquareViz">scattertext.viz.HTMLSemioticSquareViz module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.viz.html#module-scattertext.viz.HTMLVisualizationAssembly">scattertext.viz.HTMLVisualizationAssembly module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.viz.html#module-scattertext.viz.VizDataAdapter">scattertext.viz.VizDataAdapter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scattertext.viz.html#module-scattertext.viz">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.AsianNLP">scattertext.AsianNLP module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.AutoTermSelector">scattertext.AutoTermSelector module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CLI">scattertext.CLI module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CSRMatrixTools">scattertext.CSRMatrixTools module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.Common">scattertext.Common module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.Corpus">scattertext.Corpus module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CorpusDF">scattertext.CorpusDF module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CorpusFromFeatureDict">scattertext.CorpusFromFeatureDict module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CorpusFromPandas">scattertext.CorpusFromPandas module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CorpusFromParsedDocuments">scattertext.CorpusFromParsedDocuments module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.CorpusFromScikit">scattertext.CorpusFromScikit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.DeployedClassifier">scattertext.DeployedClassifier module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.DocsAndLabelsFromCorpus">scattertext.DocsAndLabelsFromCorpus module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.FeatureOuput">scattertext.FeatureOuput module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.Formatter">scattertext.Formatter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.GensimPhraseAugmenter">scattertext.GensimPhraseAugmenter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.OneClassScatterChart">scattertext.OneClassScatterChart module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.PValGetter">scattertext.PValGetter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.ParsedCorpus">scattertext.ParsedCorpus module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.PriorFactory">scattertext.PriorFactory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.SampleCorpora">scattertext.SampleCorpora module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.Scalers">scattertext.Scalers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.ScatterChart">scattertext.ScatterChart module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.ScatterChartData">scattertext.ScatterChartData module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.ScatterChartExplorer">scattertext.ScatterChartExplorer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermCategoryFrequencies">scattertext.TermCategoryFrequencies module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrix">scattertext.TermDocMatrix module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrixFactory">scattertext.TermDocMatrixFactory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrixFilter">scattertext.TermDocMatrixFilter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrixFromFrequencies">scattertext.TermDocMatrixFromFrequencies module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrixFromPandas">scattertext.TermDocMatrixFromPandas module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.TermDocMatrixFromScikit">scattertext.TermDocMatrixFromScikit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext.WhitespaceNLP">scattertext.WhitespaceNLP module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scattertext.html#module-scattertext">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/modules.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/modules.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

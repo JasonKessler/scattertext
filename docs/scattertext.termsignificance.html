@@ -1,0 +1,373 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.termsignificance package &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scattertext-termsignificance-package">
+<h1>scattertext.termsignificance package<a class="headerlink" href="#scattertext-termsignificance-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-scattertext.termsignificance.LogOddsRatioAddOne">
+<span id="scattertext-termsignificance-logoddsratioaddone-module"></span><h2>scattertext.termsignificance.LogOddsRatioAddOne module<a class="headerlink" href="#module-scattertext.termsignificance.LogOddsRatioAddOne" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne">
+<em class="property">class </em><code class="descclassname">scattertext.termsignificance.LogOddsRatioAddOne.</code><code class="descname">LogOddsRatioAddOne</code><span class="sig-paren">(</span><em>alpha_w=1</em>, <em>ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scattertext.termsignificance.TermSignificance.TermSignificance" title="scattertext.termsignificance.TermSignificance.TermSignificance"><code class="xref py py-class docutils literal notranslate"><span class="pre">scattertext.termsignificance.TermSignificance.TermSignificance</span></code></a></p>
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_default_score">
+<code class="descname">get_default_score</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_default_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_default_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_p_vals">
+<code class="descname">get_p_vals</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_p_vals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_p_vals" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>X <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+positive class, while X[:,1] is the negative class. None by default</dd>
+</dl>
+<p>np.array of p-values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_p_vals_given_separate_counts">
+<code class="descname">get_p_vals_given_separate_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_p_vals_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_p_vals_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>Returns
+np.array of p-values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_scores">
+<code class="descname">get_scores</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_scores"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same function as get_zeta_i_j_given_separate_counts</p>
+<dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_zeta_i_j">
+<code class="descname">get_zeta_i_j</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_zeta_i_j"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_zeta_i_j" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>X <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+positive class, while X[:,1] is the negative class. None by default</dd>
+</dl>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_zeta_i_j_given_separate_counts">
+<code class="descname">get_zeta_i_j_given_separate_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#LogOddsRatioAddOne.get_zeta_i_j_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.LogOddsRatioAddOne.get_zeta_i_j_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positi ve class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.termsignificance.LogOddsRatioAddOne.z_to_p_val">
+<code class="descclassname">scattertext.termsignificance.LogOddsRatioAddOne.</code><code class="descname">z_to_p_val</code><span class="sig-paren">(</span><em>z_scores</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioAddOne.html#z_to_p_val"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioAddOne.z_to_p_val" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror">
+<span id="scattertext-termsignificance-logoddsratioinformativedirichletpiror-module"></span><h2>scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror module<a class="headerlink" href="#module-scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior">
+<em class="property">class </em><code class="descclassname">scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.</code><code class="descname">LogOddsRatioInformativeDirichletPrior</code><span class="sig-paren">(</span><em>priors</em>, <em>sigma=10</em>, <em>scale_type='none'</em>, <em>prior_power=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioInformativeDirichletPiror.html#LogOddsRatioInformativeDirichletPrior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior" title="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior"><code class="xref py py-class docutils literal notranslate"><span class="pre">scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior</span></code></a></p>
+<dl class="docutils">
+<dt>Implements the log-odds-ratio with an uninformative dirichlet prior from</dt>
+<dd>Monroe, B. L., Colaresi, M. P., &amp; Quinn, K. M. (2008). Fightin’ words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.</dd>
+</dl>
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioInformativeDirichletPiror.html#LogOddsRatioInformativeDirichletPrior.get_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_priors">
+<code class="descname">get_priors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioInformativeDirichletPiror.html#LogOddsRatioInformativeDirichletPrior.get_priors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_priors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_zeta_i_j_given_separate_counts">
+<code class="descname">get_zeta_i_j_given_separate_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioInformativeDirichletPiror.html#LogOddsRatioInformativeDirichletPrior.get_zeta_i_j_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.LogOddsRatioInformativeDirichletPrior.get_zeta_i_j_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.z_to_p_val">
+<code class="descclassname">scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.</code><code class="descname">z_to_p_val</code><span class="sig-paren">(</span><em>z_scores</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioInformativeDirichletPiror.html#z_to_p_val"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror.z_to_p_val" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior">
+<span id="scattertext-termsignificance-logoddsratiouninformativedirichletprior-module"></span><h2>scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior module<a class="headerlink" href="#module-scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior">
+<em class="property">class </em><code class="descclassname">scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.</code><code class="descname">LogOddsRatioUninformativeDirichletPrior</code><span class="sig-paren">(</span><em>alpha_w=0.001</em>, <em>ranker=&lt;class 'scattertext.termranking.AbsoluteFrequencyRanker.AbsoluteFrequencyRanker'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scattertext.termsignificance.TermSignificance.TermSignificance" title="scattertext.termsignificance.TermSignificance.TermSignificance"><code class="xref py py-class docutils literal notranslate"><span class="pre">scattertext.termsignificance.TermSignificance.TermSignificance</span></code></a></p>
+<dl class="docutils">
+<dt>Implements the log-odds-ratio with an uninformative dirichlet prior from</dt>
+<dd>Monroe, B. L., Colaresi, M. P., &amp; Quinn, K. M. (2008). Fightin’ words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis, 16(4), 372–403.</dd>
+</dl>
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_default_score">
+<code class="descname">get_default_score</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_default_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_default_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_vals">
+<code class="descname">get_p_vals</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_p_vals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_vals" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>X <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+positive class, while X[:,1] is the negative class. None by default</dd>
+</dl>
+<p>np.array of p-values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_vals_given_separate_counts">
+<code class="descname">get_p_vals_given_separate_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_p_vals_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_vals_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>Returns
+np.array of p-values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_values_from_counts">
+<code class="descname">get_p_values_from_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_p_values_from_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_p_values_from_counts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_scores">
+<code class="descname">get_scores</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_scores"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same function as get_zeta_i_j_given_separate_counts</p>
+<dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j">
+<code class="descname">get_zeta_i_j</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>X <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+positive class, while X[:,1] is the negative class. None by default</dd>
+</dl>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j_given_separate_counts">
+<code class="descname">get_zeta_i_j_given_separate_counts</code><span class="sig-paren">(</span><em>y_i</em>, <em>y_j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.LogOddsRatioUninformativeDirichletPrior.get_zeta_i_j_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>y_i, np.array(int)</dt>
+<dd>Arrays of word counts of words occurring in positive class</dd>
+</dl>
+<p>y_j, np.array(int)</p>
+<p>np.array of z-scores</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.z_to_p_val">
+<code class="descclassname">scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.</code><code class="descname">z_to_p_val</code><span class="sig-paren">(</span><em>z_scores</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/LogOddsRatioUninformativeDirichletPrior.html#z_to_p_val"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior.z_to_p_val" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.termsignificance.ScaledFScoreSignificance">
+<span id="scattertext-termsignificance-scaledfscoresignificance-module"></span><h2>scattertext.termsignificance.ScaledFScoreSignificance module<a class="headerlink" href="#module-scattertext.termsignificance.ScaledFScoreSignificance" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance">
+<em class="property">class </em><code class="descclassname">scattertext.termsignificance.ScaledFScoreSignificance.</code><code class="descname">ScaledFScoreSignificance</code><span class="sig-paren">(</span><em>scaler_algo='normcdf'</em>, <em>beta=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/ScaledFScoreSignificance.html#ScaledFScoreSignificance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scattertext.termsignificance.TermSignificance.TermSignificance" title="scattertext.termsignificance.TermSignificance.TermSignificance"><code class="xref py py-class docutils literal notranslate"><span class="pre">scattertext.termsignificance.TermSignificance.TermSignificance</span></code></a></p>
+<dl class="method">
+<dt id="scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/ScaledFScoreSignificance.html#ScaledFScoreSignificance.get_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_p_vals">
+<code class="descname">get_p_vals</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/ScaledFScoreSignificance.html#ScaledFScoreSignificance.get_p_vals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_p_vals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imputes p-values from the Z-scores of <cite>ScaledFScore</cite> scores.  Assuming incorrectly
+that the scaled f-scores are normally distributed.</p>
+<dl class="docutils">
+<dt>X <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Array of word counts, shape (N, 2) where N is the vocab size.  X[:,0] is the
+positive class, while X[:,1] is the negative class.</dd>
+</dl>
+<p>np.array of p-values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_zeta_i_j_given_separate_counts">
+<code class="descname">get_zeta_i_j_given_separate_counts</code><span class="sig-paren">(</span><em>cat</em>, <em>ncat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/ScaledFScoreSignificance.html#ScaledFScoreSignificance.get_zeta_i_j_given_separate_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.ScaledFScoreSignificance.ScaledFScoreSignificance.get_zeta_i_j_given_separate_counts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>cat <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>In category word counts</dd>
+<dt>ncat <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
+<dd>Out of category word counts</dd>
+</dl>
+<dl class="docutils">
+<dt>np.array</dt>
+<dd>Z-scores</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.termsignificance.TermSignificance">
+<span id="scattertext-termsignificance-termsignificance-module"></span><h2>scattertext.termsignificance.TermSignificance module<a class="headerlink" href="#module-scattertext.termsignificance.TermSignificance" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="scattertext.termsignificance.TermSignificance.TermSignificance">
+<em class="property">class </em><code class="descclassname">scattertext.termsignificance.TermSignificance.</code><code class="descname">TermSignificance</code><a class="reference internal" href="_modules/scattertext/termsignificance/TermSignificance.html#TermSignificance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.TermSignificance.TermSignificance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="scattertext.termsignificance.TermSignificance.TermSignificance.get_p_vals">
+<code class="descname">get_p_vals</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scattertext/termsignificance/TermSignificance.html#TermSignificance.get_p_vals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scattertext.termsignificance.TermSignificance.TermSignificance.get_p_vals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-scattertext.termsignificance">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-scattertext.termsignificance" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">scattertext.termsignificance package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance.LogOddsRatioAddOne">scattertext.termsignificance.LogOddsRatioAddOne module</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror">scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror module</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior">scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior module</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance.ScaledFScoreSignificance">scattertext.termsignificance.ScaledFScoreSignificance module</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance.TermSignificance">scattertext.termsignificance.TermSignificance module</a></li>
+<li><a class="reference internal" href="#module-scattertext.termsignificance">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scattertext.termsignificance.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/scattertext.termsignificance.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

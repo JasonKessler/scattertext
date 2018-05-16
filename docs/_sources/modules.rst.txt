@@ -1,0 +1,7 @@
+scattertext
+===========
+
+.. toctree::
+   :maxdepth: 4
+
+   scattertext

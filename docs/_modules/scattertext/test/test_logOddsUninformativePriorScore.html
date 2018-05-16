@@ -1,0 +1,132 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.test.test_logOddsUninformativePriorScore &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.test.test_logOddsUninformativePriorScore</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scattertext.termsignificance</span> <span class="k">import</span> <span class="n">LogOddsRatioUninformativeDirichletPrior</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.termscoring.LogOddsUniformativePriorScore</span> <span class="k">import</span> <span class="n">LogOddsUninformativePriorScore</span>
+
+
+<div class="viewcode-block" id="TestLogOddsUninformativePriorScore"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_logOddsUninformativePriorScore.TestLogOddsUninformativePriorScore">[docs]</a><span class="k">class</span> <span class="nc">TestLogOddsUninformativePriorScore</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestLogOddsUninformativePriorScore.test_get_score"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_logOddsUninformativePriorScore.TestLogOddsUninformativePriorScore.test_get_score">[docs]</a>	<span class="k">def</span> <span class="nf">test_get_score</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_counts</span><span class="p">()</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="n">LogOddsUninformativePriorScore</span><span class="o">.</span><span class="n">get_score</span><span class="p">(</span><span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span><span class="p">)</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_almost_equal</span><span class="p">(</span>
+			<span class="n">scores</span><span class="p">,</span>
+			<span class="c1">#np.array([ 0.0590679,  0.1006782,  0.0590679, -0.1475645])</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">0.4447054</span><span class="p">,</span>  <span class="mf">0.9433088</span><span class="p">,</span>  <span class="mf">0.4447054</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.9971462</span><span class="p">])</span>
+		<span class="p">)</span></div>
+
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	def test_get_delta_hats(self):</span>
+<span class="sd">		cat_counts, not_cat_counts = self._get_counts()</span>
+<span class="sd">		scores = LogOddsUninformativePriorScore.get_delta_hats(cat_counts, not_cat_counts)</span>
+<span class="sd">		np.testing.assert_almost_equal(scores,</span>
+<span class="sd">		                               np.array([-0.6095321, -1.0345766, -0.6095321,  1.5201005]))</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="TestLogOddsUninformativePriorScore.test_get_score_threshold"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_logOddsUninformativePriorScore.TestLogOddsUninformativePriorScore.test_get_score_threshold">[docs]</a>	<span class="k">def</span> <span class="nf">test_get_score_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">cat_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">2</span><span class="p">,</span>      <span class="mi">7</span><span class="p">,</span>   <span class="mi">10</span><span class="p">])</span>
+		<span class="n">not_cat_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span>   <span class="mi">1</span><span class="p">,</span>    <span class="mi">5</span><span class="p">,</span>     <span class="mi">10</span><span class="p">])</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="n">LogOddsUninformativePriorScore</span>\
+			<span class="o">.</span><span class="n">get_thresholded_score</span><span class="p">(</span><span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span><span class="p">,</span> <span class="n">alpha_w</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_almost_equal</span><span class="p">(</span>
+			<span class="n">scores</span><span class="p">,</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.9593012</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.</span>       <span class="p">,</span>  <span class="mf">0.</span>       <span class="p">,</span>  <span class="mf">0.8197493</span><span class="p">,</span>  <span class="mf">0.</span>       <span class="p">])</span>
+		<span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestLogOddsUninformativePriorScore.test__turn_pvals_into_scores"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_logOddsUninformativePriorScore.TestLogOddsUninformativePriorScore.test__turn_pvals_into_scores">[docs]</a>	<span class="k">def</span> <span class="nf">test__turn_pvals_into_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">p_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
+		<span class="n">scores</span> <span class="o">=</span> <span class="n">LogOddsUninformativePriorScore</span><span class="o">.</span><span class="n">_turn_pvals_into_scores</span><span class="p">(</span><span class="n">p_vals</span><span class="p">)</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_almost_equal</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.98</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.98</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.8</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="TestLogOddsUninformativePriorScore.test__turn_counts_into_matrix"><a class="viewcode-back" href="../../../scattertext.test.html#scattertext.test.test_logOddsUninformativePriorScore.TestLogOddsUninformativePriorScore.test__turn_counts_into_matrix">[docs]</a>	<span class="k">def</span> <span class="nf">test__turn_counts_into_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_counts</span><span class="p">()</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">LogOddsUninformativePriorScore</span><span class="o">.</span><span class="n">_turn_counts_into_matrix</span><span class="p">(</span><span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span><span class="p">)</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_almost_equal</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>
+		                                            <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">510</span><span class="p">],</span>
+		                                            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>
+		                                            <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">199</span><span class="p">]]))</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">cat_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>
+		<span class="n">not_cat_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">100</span><span class="p">,</span> <span class="mi">510</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">199</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">cat_counts</span><span class="p">,</span> <span class="n">not_cat_counts</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

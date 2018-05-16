@@ -1,0 +1,296 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.TermCategoryFrequencies &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.TermCategoryFrequencies</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">StringIO</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.Common</span> <span class="k">import</span> <span class="n">DEFAULT_BACKGROUND_SCALER_ALGO</span><span class="p">,</span> <span class="n">DEFAULT_BACKGROUND_BETA</span>
+<span class="kn">from</span> <span class="nn">scattertext.termscoring</span> <span class="k">import</span> <span class="n">ScaledFScore</span>
+
+
+<div class="viewcode-block" id="TermCategoryFrequencies"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies">[docs]</a><span class="k">class</span> <span class="nc">TermCategoryFrequencies</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	This class allows you to produce scatter plots of raw term frequency counts.</span>
+
+<span class="sd">	Occasionally, only term frequency statistics are available. This may happen in the case of very large,</span>
+<span class="sd">	lost, or proprietary data sets. `TermCategoryFrequencies` is a corpus representation,that can accept this</span>
+<span class="sd">	sort of data, along with any categorized documents that happen to be available.</span>
+
+<span class="sd">	Let use the [Corpus of Contemporary American English](https://corpus.byu.edu/coca/) as an example.</span>
+<span class="sd">	We&#39;ll construct a visualization</span>
+<span class="sd">	to analyze the difference between spoken American English and English that occurs in fiction.</span>
+
+<span class="sd">	```python</span>
+<span class="sd">	df = (pd.read_excel(&#39;https://www.wordfrequency.info/files/genres_sample.xls&#39;)</span>
+<span class="sd">		      .dropna()</span>
+<span class="sd">		      .set_index(&#39;lemma&#39;)[[&#39;SPOKEN&#39;, &#39;FICTION&#39;]]</span>
+<span class="sd">		      .iloc[:1000])</span>
+<span class="sd">	df.head()</span>
+<span class="sd">	          SPOKEN    FICTION</span>
+<span class="sd">	lemma</span>
+<span class="sd">	the    3859682.0  4092394.0</span>
+<span class="sd">	I      1346545.0  1382716.0</span>
+<span class="sd">	they   609735.0   352405.0</span>
+<span class="sd">	she    212920.0   798208.0</span>
+<span class="sd">	would  233766.0   229865.0</span>
+<span class="sd">	```</span>
+
+<span class="sd">	Transforming this into a visualization is extremely easy. Just pass a dataframe indexed on</span>
+<span class="sd">	terms with columns indicating category-counts into the the `TermCategoryFrequencies` constructor.</span>
+
+<span class="sd">	```python</span>
+<span class="sd">	term_cat_freq = st.TermCategoryFrequencies(df)</span>
+<span class="sd">	```</span>
+
+<span class="sd">	And call `produce_scattertext_explorer` normally:</span>
+
+<span class="sd">	```python</span>
+<span class="sd">	html = st.produce_scattertext_explorer(</span>
+<span class="sd">		term_cat_freq,</span>
+<span class="sd">		category=&#39;SPOKEN&#39;,</span>
+<span class="sd">		category_name=&#39;Spoken&#39;,</span>
+<span class="sd">		not_category_name=&#39;Fiction&#39;,</span>
+<span class="sd">	)</span>
+<span class="sd">	```</span>
+
+
+<span class="sd">	[![demo_category_frequencies.html](https://jasonkessler.github.io/demo_category_frequencies.png)](https://jasonkessler.github.io/demo_category_frequencies.html)</span>
+
+<span class="sd">	If you&#39;d like to incorporate some documents into the visualization, you can add them into to the</span>
+<span class="sd">	`TermCategoyFrequencies` object.</span>
+
+<span class="sd">	First, let&#39;s extract some example Fiction and Spoken documents from the sample COCA corpus.</span>
+
+<span class="sd">	```python</span>
+<span class="sd">	import requests, zipfile, io</span>
+<span class="sd">	coca_sample_url = &#39;http://corpus.byu.edu/cocatext/samples/text.zip&#39;</span>
+<span class="sd">	zip_file = zipfile.ZipFile(io.BytesIO(requests.get(coca_sample_url).content))</span>
+
+<span class="sd">	document_df = pd.DataFrame(</span>
+<span class="sd">		[{&#39;text&#39;: zip_file.open(fn).read().decode(&#39;utf-8&#39;),</span>
+<span class="sd">		  &#39;category&#39;: &#39;SPOKEN&#39;}</span>
+<span class="sd">		 for fn in zip_file.filelist if fn.filename.startswith(&#39;w_spok&#39;)][:2]</span>
+<span class="sd">		+ [{&#39;text&#39;: zip_file.open(fn).read().decode(&#39;utf-8&#39;),</span>
+<span class="sd">		    &#39;category&#39;: &#39;FICTION&#39;}</span>
+<span class="sd">		   for fn in zip_file.filelist if fn.filename.startswith(&#39;w_fic&#39;)][:2])</span>
+<span class="sd">	```</span>
+
+<span class="sd">	And we&#39;ll pass the `documents_df` dataframe into `TermCategoryFrequencies` via the `document_category_df`</span>
+<span class="sd">	parameter.  Ensure the dataframe has two columns, &#39;text&#39; and &#39;category&#39;.  Afterward, we can</span>
+<span class="sd">	call `produce_scattertext_explorer` (or your visualization function of choice) normally.</span>
+
+<span class="sd">	```python</span>
+<span class="sd">	doc_term_cat_freq = st.TermCategoryFrequencies(df, document_category_df=document_df)</span>
+
+<span class="sd">	html = st.produce_scattertext_explorer(</span>
+<span class="sd">		doc_term_cat_freq,</span>
+<span class="sd">		category=&#39;SPOKEN&#39;,</span>
+<span class="sd">		category_name=&#39;Spoken&#39;,</span>
+<span class="sd">		not_category_name=&#39;Fiction&#39;,</span>
+<span class="sd">	)</span>
+<span class="sd">	```</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">category_frequency_df</span><span class="p">,</span>
+	             <span class="n">document_category_df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">unigram_frequency_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		category_frequency_df : pd.DataFrame</span>
+<span class="sd">			Index is term, columns are categories, values are counts</span>
+<span class="sd">		document_category_df : pd.DataFrame, optional</span>
+<span class="sd">			Columns are text, category. Values are text (string) and category (string)</span>
+<span class="sd">		unigram_frequency_path : See TermDocMatrix</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="n">document_category_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">document_category_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_document_category_df</span> <span class="o">=</span> <span class="n">document_category_df</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span> <span class="o">=</span> <span class="n">category_frequency_df</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span> <span class="o">=</span> <span class="n">unigram_frequency_path</span>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_num_terms"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_num_terms">[docs]</a>	<span class="k">def</span> <span class="nf">get_num_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_categories"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_categories">[docs]</a>	<span class="k">def</span> <span class="nf">get_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_scaled_f_scores_vs_background"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_scaled_f_scores_vs_background">[docs]</a>	<span class="k">def</span> <span class="nf">get_scaled_f_scores_vs_background</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                                      <span class="n">scaler_algo</span><span class="o">=</span><span class="n">DEFAULT_BACKGROUND_SCALER_ALGO</span><span class="p">,</span>
+	                                      <span class="n">beta</span><span class="o">=</span><span class="n">DEFAULT_BACKGROUND_BETA</span><span class="p">):</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_and_background_counts</span><span class="p">()</span>
+		<span class="n">df</span><span class="p">[</span><span class="s1">&#39;Scaled f-score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ScaledFScore</span><span class="o">.</span><span class="n">get_scores_for_category</span><span class="p">(</span>
+			<span class="n">df</span><span class="p">[</span><span class="s1">&#39;corpus&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">],</span> <span class="n">scaler_algo</span><span class="p">,</span> <span class="n">beta</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;Scaled f-score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_term_and_background_counts"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_term_and_background_counts">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_and_background_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		A pd.DataFrame consisting of unigram term counts of words occurring</span>
+<span class="sd">		 in the TermDocumentMatrix and their corresponding background corpus</span>
+<span class="sd">		 counts.  The dataframe has two columns, corpus and background.</span>
+
+<span class="sd">		&gt;&gt;&gt; corpus.get_unigram_corpus.get_term_and_background_counts()</span>
+<span class="sd">		                  corpus  background</span>
+<span class="sd">		obama              702.0    565739.0</span>
+<span class="sd">		romney             570.0    695398.0</span>
+<span class="sd">		barack             248.0    227861.0</span>
+<span class="sd">		...</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">background_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_background_unigram_frequencies</span><span class="p">()</span>
+		<span class="n">corpus_freq_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;corpus&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)})</span>
+		<span class="n">corpus_unigram_freq</span> <span class="o">=</span> <span class="n">corpus_freq_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">corpus_freq_df</span><span class="o">.</span><span class="n">index</span> <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">w</span><span class="p">]]</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="n">corpus_unigram_freq</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">background_df</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+		<span class="k">del</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
+		<span class="k">return</span> <span class="n">df</span></div>
+
+	<span class="k">def</span> <span class="nf">_get_background_unigram_frequencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span><span class="p">:</span>
+			<span class="n">unigram_freq_table_buf</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unigram_frequency_path</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">unigram_freq_table_buf</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">(</span><span class="n">pkgutil</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s1">&#39;scattertext&#39;</span><span class="p">,</span> <span class="s1">&#39;data/count_1w.txt&#39;</span><span class="p">)</span>
+			                                  <span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+		<span class="n">to_ret</span> <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">unigram_freq_table_buf</span><span class="p">,</span>
+		                        <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">])</span>
+		          <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s1">&#39;background&#39;</span><span class="p">)</span>
+		          <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">([</span><span class="s1">&#39;word&#39;</span><span class="p">])</span>
+		          <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;word&#39;</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">to_ret</span>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.list_extra_features"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.list_extra_features">[docs]</a>	<span class="k">def</span> <span class="nf">list_extra_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Not implemented in TermCategoryFrequencies&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_doc_indices"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_doc_indices">[docs]</a>	<span class="k">def</span> <span class="nf">get_doc_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array</span>
+
+<span class="sd">		Integer document indices</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_document_category_df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+		<span class="n">categories_d</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_categories</span><span class="p">())}</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_document_category_df</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">categories_d</span><span class="o">.</span><span class="n">get</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_texts"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_texts">[docs]</a>	<span class="k">def</span> <span class="nf">get_texts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		np.array</span>
+
+<span class="sd">		Texts</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_document_category_df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_document_category_df</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">values</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.get_term_category_frequencies"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.get_term_category_frequencies">[docs]</a>	<span class="k">def</span> <span class="nf">get_term_category_frequencies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scatterchartdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		scatterchartdata : ScatterChartData</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.DataFrame</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+			<span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="o">+</span> <span class="s1">&#39; freq&#39;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_category_freq_df</span><span class="p">}</span>
+		<span class="p">)</span>
+		<span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;term&#39;</span>
+		<span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="TermCategoryFrequencies.apply_ranker"><a class="viewcode-back" href="../../scattertext.html#scattertext.TermCategoryFrequencies.TermCategoryFrequencies.apply_ranker">[docs]</a>	<span class="k">def</span> <span class="nf">apply_ranker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_ranker</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		term_ranker : TermRanker</span>
+<span class="sd">			We&#39;ll ignore this</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		pd.Dataframe</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_term_category_frequencies</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

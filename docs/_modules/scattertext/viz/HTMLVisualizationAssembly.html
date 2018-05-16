@@ -1,0 +1,385 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.viz.HTMLVisualizationAssembly &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.viz.HTMLVisualizationAssembly</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+
+<span class="kn">from</span> <span class="nn">scattertext.Common</span> <span class="k">import</span> <span class="n">DEFAULT_D3_URL</span><span class="p">,</span> <span class="n">DEFAULT_D3_SCALE_CHROMATIC</span>
+
+
+<div class="viewcode-block" id="InvalidProtocolException"><a class="viewcode-back" href="../../../scattertext.viz.html#scattertext.viz.HTMLVisualizationAssembly.InvalidProtocolException">[docs]</a><span class="k">class</span> <span class="nc">InvalidProtocolException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HTMLVisualizationAssembly"><a class="viewcode-back" href="../../../scattertext.viz.html#scattertext.viz.HTMLVisualizationAssembly.HTMLVisualizationAssembly">[docs]</a><span class="k">class</span> <span class="nc">HTMLVisualizationAssembly</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	             <span class="n">visualization_data</span><span class="p">,</span>
+	             <span class="n">width_in_pixels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">height_in_pixels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">max_snippets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">grey_zero_scores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">sort_by_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">reverse_sort_scores_for_not_category</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">use_full_doc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">asian_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">use_non_text_features</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">show_characteristic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">word_vec_use_p_vals</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">max_p_val</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+	             <span class="n">save_svg_button</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">p_value_colors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">x_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">y_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">full_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">show_top_terms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">show_neutral</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">get_tooltip_content</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">x_axis_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">y_axis_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">color_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">show_axes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">show_extra</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">do_censor_points</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	             <span class="n">center_label_over_points</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	             <span class="n">x_axis_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">y_axis_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	             <span class="n">topic_model_preview_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+	             <span class="n">vertical_lines</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		visualization_data : dict</span>
+<span class="sd">			From ScatterChart or a descendant</span>
+<span class="sd">		width_in_pixels : int, optional</span>
+<span class="sd">			width of viz in pixels, if None, default to 1000</span>
+<span class="sd">		height_in_pixels : int, optional</span>
+<span class="sd">			height of viz in pixels, if None, default to 600</span>
+<span class="sd">		max_snippets : int, optional</span>
+<span class="sd">			max snippets to snow when term is clicked, Defaults to show all</span>
+<span class="sd">		color : str, optional</span>
+<span class="sd">		  d3 color scheme</span>
+<span class="sd">		grey_zero_scores : bool, optional</span>
+<span class="sd">		  If True, color points with zero-scores a light shade of grey.  False by default.</span>
+<span class="sd">		sort_by_dist : bool, optional</span>
+<span class="sd">			sort by distance or score, default True</span>
+<span class="sd">		reverse_sort_scores_for_not_category : bool, optional</span>
+<span class="sd">			If using a custom score, score the not-category class by</span>
+<span class="sd">			lowest-score-as-most-predictive. Turn this off for word vectory</span>
+<span class="sd">			or topic similarity. Default True.</span>
+<span class="sd">		use_full_doc : bool, optional</span>
+<span class="sd">			use full document instead of sentence in snippeting</span>
+<span class="sd">		use_non_text_features : bool, default False</span>
+<span class="sd">			Show non-bag-of-words features (e.g., Empath) instaed of text.  False by default.</span>
+<span class="sd">		show_characteristic: bool, default True</span>
+<span class="sd">			Show characteristic terms on the far left-hand side of the visualization</span>
+<span class="sd">		word_vec_use_p_vals: bool, default False</span>
+<span class="sd">			Use category-associated p-values to determine which terms to give word</span>
+<span class="sd">			vec scores.</span>
+<span class="sd">		max_p_val : float, default = 0.1</span>
+<span class="sd">			Max p-val to use find set of terms for similarity calculation, if</span>
+<span class="sd">			word_vec_use_p_vals is True.</span>
+<span class="sd">		save_svg_button : bool, default False</span>
+<span class="sd">			Add a save as SVG button to the page.</span>
+<span class="sd">		p_value_colors : bool, default False</span>
+<span class="sd">		  Color points differently if p val is above 1-max_p_val, below max_p_val, or</span>
+<span class="sd">		   in between.</span>
+<span class="sd">		x_label : str, default None</span>
+<span class="sd">			If present, use as the x-axis label</span>
+<span class="sd">		y_label : str, default None</span>
+<span class="sd">			If present, use as the y-axis label</span>
+<span class="sd">		full_data : str, default None</span>
+<span class="sd">			Data used to create chart. By default &quot;getDataAndInfo()&quot;.</span>
+<span class="sd">		show_top_terms : bool, default True</span>
+<span class="sd">			Show the top terms sidebar</span>
+<span class="sd">		show_neutral : bool, default False</span>
+<span class="sd">			Show a third column for matches in neutral documents</span>
+<span class="sd">		get_tooltip_content : str, default None</span>
+<span class="sd">			Javascript function to control content of tooltip.  Function takes a parameter</span>
+<span class="sd">			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and</span>
+<span class="sd">			returns a string.</span>
+<span class="sd">		x_axis_values : list, default None</span>
+<span class="sd">			Numeric value-labels to show on x-axis which correspond to original x-values.</span>
+<span class="sd">		y_axis_values : list, default None</span>
+<span class="sd">			Numeric Value-labels to show on y-axis which correspond to original y-values.</span>
+<span class="sd">		color_func : str, default None</span>
+<span class="sd">			Javascript function to control color of a point.  Function takes a parameter</span>
+<span class="sd">			which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and</span>
+<span class="sd">			returns a string.</span>
+<span class="sd">		show_axes : bool, default True</span>
+<span class="sd">			Show x and y axes</span>
+<span class="sd">		show_extra : bool, default False</span>
+<span class="sd">			Show extra fourth column</span>
+<span class="sd">		do_censor_points  : bool, default True</span>
+<span class="sd">			Don&#39;t label over dots</span>
+<span class="sd">		center_label_over_points : bool, default False</span>
+<span class="sd">			Only put labels centered over point</span>
+<span class="sd">		x_axis_labels: list, default None</span>
+<span class="sd">			List of string value-labels to show at evenly spaced intervals on the x-axis.</span>
+<span class="sd">			Low, medium, high are defaults. This relies on d3&#39;s ticks function, which can</span>
+<span class="sd">			behave unpredictable. Caveat usor.</span>
+<span class="sd">		y_axis_labels : list, default None</span>
+<span class="sd">			List of string value-labels to show at evenly spaced intervals on the y-axis.</span>
+<span class="sd">			Low, medium, high are defaults.  This relies on d3&#39;s ticks function, which can</span>
+<span class="sd">			behave unpredictable. Caveat usor.</span>
+<span class="sd">		topic_model_preview_size : int, default 10</span>
+<span class="sd">			If topic models are being visualized, show the first topic_model_preview_size topics</span>
+<span class="sd">			in a preview.</span>
+<span class="sd">		vertical_lines: list, default None</span>
+<span class="sd">			List of scaled points along the x-axis to draw horizontal lines</span>
+
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_visualization_data</span> <span class="o">=</span> <span class="n">visualization_data</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_width_in_pixels</span> <span class="o">=</span> <span class="n">width_in_pixels</span> <span class="k">if</span> <span class="n">width_in_pixels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1000</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_height_in_pixels</span> <span class="o">=</span> <span class="n">height_in_pixels</span> <span class="k">if</span> <span class="n">height_in_pixels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">600</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_max_snippets</span> <span class="o">=</span> <span class="n">max_snippets</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_color</span> <span class="o">=</span> <span class="n">color</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_sort_by_dist</span> <span class="o">=</span> <span class="n">sort_by_dist</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_use_full_doc</span> <span class="o">=</span> <span class="n">use_full_doc</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_asian_mode</span> <span class="o">=</span> <span class="n">asian_mode</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_grey_zero_scores</span> <span class="o">=</span> <span class="n">grey_zero_scores</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span> <span class="o">=</span> <span class="n">use_non_text_features</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_show_characteristic</span> <span class="o">=</span> <span class="n">show_characteristic</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_word_vec_use_p_vals</span> <span class="o">=</span> <span class="n">word_vec_use_p_vals</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_max_p_val</span> <span class="o">=</span> <span class="n">max_p_val</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_save_svg_button</span> <span class="o">=</span> <span class="n">save_svg_button</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_reverse_sort_scores_for_not_category</span> <span class="o">=</span> <span class="n">reverse_sort_scores_for_not_category</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_p_value_colors</span> <span class="o">=</span> <span class="n">p_value_colors</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_x_label</span> <span class="o">=</span> <span class="n">x_label</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_y_label</span> <span class="o">=</span> <span class="n">y_label</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_full_data</span> <span class="o">=</span> <span class="n">full_data</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_show_top_terms</span> <span class="o">=</span> <span class="n">show_top_terms</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_show_neutral</span> <span class="o">=</span> <span class="n">show_neutral</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_get_tooltip_content</span> <span class="o">=</span> <span class="n">get_tooltip_content</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_x_axis_values</span> <span class="o">=</span> <span class="n">x_axis_values</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_y_axis_values</span> <span class="o">=</span> <span class="n">y_axis_values</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_x_axis_labels</span> <span class="o">=</span> <span class="n">x_axis_labels</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_y_axis_labels</span> <span class="o">=</span> <span class="n">y_axis_labels</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_color_func</span> <span class="o">=</span> <span class="n">color_func</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_show_axes</span> <span class="o">=</span> <span class="n">show_axes</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_show_extra</span> <span class="o">=</span> <span class="n">show_extra</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_do_censor_points</span> <span class="o">=</span> <span class="n">do_censor_points</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_center_label_over_points</span> <span class="o">=</span> <span class="n">center_label_over_points</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_topic_model_preview_size</span> <span class="o">=</span> <span class="n">topic_model_preview_size</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_vertical_lines</span> <span class="o">=</span> <span class="n">vertical_lines</span>
+
+<div class="viewcode-block" id="HTMLVisualizationAssembly.to_html"><a class="viewcode-back" href="../../../scattertext.viz.html#scattertext.viz.HTMLVisualizationAssembly.HTMLVisualizationAssembly.to_html">[docs]</a>	<span class="k">def</span> <span class="nf">to_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	            <span class="n">protocol</span><span class="o">=</span><span class="s1">&#39;http&#39;</span><span class="p">,</span>
+	            <span class="n">d3_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">d3_scale_chromatic_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	            <span class="n">html_base</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		protocol : str</span>
+<span class="sd">		 &#39;http&#39; or &#39;https&#39; for including external urls</span>
+<span class="sd">		d3_url, str</span>
+<span class="sd">		  None by default.  The url (or path) of</span>
+<span class="sd">		  d3, to be inserted into &lt;script src=&quot;...&quot;/&gt;</span>
+<span class="sd">		  By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.</span>
+<span class="sd">		d3_scale_chromatic_url : str</span>
+<span class="sd">		  None by default.</span>
+<span class="sd">		  URL of d3_scale_chromatic_url, to be inserted into &lt;script src=&quot;...&quot;/&gt;</span>
+<span class="sd">		  By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.</span>
+<span class="sd">		html_base : str</span>
+<span class="sd">			None by default.  HTML of semiotic square to be inserted above plot.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str, the html file representation</span>
+
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_ensure_valid_protocol</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
+		<span class="n">javascript_to_insert</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_full_content_of_javascript_files</span><span class="p">(),</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_visualization_data</span><span class="o">.</span><span class="n">to_javascript</span><span class="p">(),</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_call_build_visualization_in_javascript</span><span class="p">()</span>
+		<span class="p">])</span>
+
+		<span class="k">if</span> <span class="n">d3_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">d3_url</span> <span class="o">=</span> <span class="n">DEFAULT_D3_URL</span>
+
+		<span class="k">if</span> <span class="n">d3_scale_chromatic_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">d3_scale_chromatic_url</span> <span class="o">=</span> <span class="n">DEFAULT_D3_SCALE_CHROMATIC</span>
+
+		<span class="n">html_content</span> <span class="o">=</span> <span class="p">((</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_full_content_of_html_file</span><span class="p">()</span>
+			<span class="k">if</span> <span class="n">html_base</span> <span class="ow">is</span> <span class="kc">None</span>
+			<span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_html_base</span><span class="p">(</span><span class="n">html_base</span><span class="p">))</span>
+			<span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&lt;!-- INSERT SCRIPT --&gt;&#39;</span><span class="p">,</span> <span class="n">javascript_to_insert</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&lt;!--D3URL--&gt;&#39;</span><span class="p">,</span> <span class="n">d3_url</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&lt;!--D3SCALECHROMATIC--&gt;&#39;</span><span class="p">,</span> <span class="n">d3_scale_chromatic_url</span><span class="p">)</span>
+			<span class="c1"># .replace(&#39;&lt;!-- INSERT D3 --&gt;&#39;, self._get_packaged_file_content(&#39;d3.min.js&#39;), 1)</span>
+			<span class="p">)</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		if html_base is not None:</span>
+<span class="sd">			html_file = html_file.replace(&#39;&lt;!-- INSERT SEMIOTIC SQUARE --&gt;&#39;,</span>
+<span class="sd">			                              html_base)</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+
+		<span class="n">extra_libs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_svg_button</span><span class="p">:</span>
+			<span class="c1"># extra_libs = &#39;&lt;script src=&quot;https://cdn.rawgit.com/edeno/d3-save-svg/gh-pages/assets/d3-save-svg.min.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;&#39;</span>
+			<span class="n">extra_libs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+		<span class="n">html_content</span> <span class="o">=</span> <span class="p">(</span><span class="n">html_content</span>
+			<span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&lt;!-- EXTRA LIBS --&gt;&#39;</span><span class="p">,</span> <span class="n">extra_libs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">+</span> <span class="s1">&#39;://&#39;</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">html_content</span></div>
+
+	<span class="k">def</span> <span class="nf">_format_html_base</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html_base</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">html_base</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{width}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_width_in_pixels</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{height}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_height_in_pixels</span><span class="p">))</span>
+
+	<span class="k">def</span> <span class="nf">_ensure_valid_protocol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">protocol</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;https&#39;</span><span class="p">,</span> <span class="s1">&#39;http&#39;</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="n">InvalidProtocolException</span><span class="p">(</span>
+				<span class="s2">&quot;Invalid protocol: </span><span class="si">%s</span><span class="s2">.  Protocol must be either http or https.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">protocol</span><span class="p">))</span>
+
+	<span class="k">def</span> <span class="nf">_full_content_of_html_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s1">&#39;scattertext&#39;</span><span class="p">,</span>
+		                        <span class="s1">&#39;data/viz/scattertext.html&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_full_content_of_javascript_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s1">&#39;; </span><span class="se">\n</span><span class="s1"> </span><span class="se">\n</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_packaged_file_content</span><span class="p">(</span><span class="n">script_name</span><span class="p">)</span>
+		                        <span class="k">for</span> <span class="n">script_name</span> <span class="ow">in</span> <span class="p">[</span>
+			                        <span class="c1"># &#39;d3.min.js&#39;,</span>
+			                        <span class="c1"># &#39;d3-scale-chromatic.v1.min.js&#39;,</span>
+			                        <span class="s1">&#39;rectangle-holder.js&#39;</span><span class="p">,</span>  <span class="c1"># &#39;range-tree.js&#39;,</span>
+			                        <span class="s1">&#39;main.js&#39;</span><span class="p">,</span>
+		                        <span class="p">]])</span>
+
+	<span class="k">def</span> <span class="nf">_get_packaged_file_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s1">&#39;scattertext&#39;</span><span class="p">,</span>
+		                        <span class="s1">&#39;data/viz/scripts/&#39;</span> <span class="o">+</span> <span class="n">file_name</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_call_build_visualization_in_javascript</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">def</span> <span class="nf">js_default_value</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="s1">&#39;undefined&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+		<span class="k">def</span> <span class="nf">js_default_string</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="s1">&#39;undefined&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+		<span class="k">def</span> <span class="nf">js_default_value_to_null</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="s1">&#39;null&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+		<span class="k">def</span> <span class="nf">js_list_or_null</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="s1">&#39;null&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+		<span class="k">def</span> <span class="nf">js_bool</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="s1">&#39;true&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="k">else</span> <span class="s1">&#39;false&#39;</span>
+
+		<span class="k">def</span> <span class="nf">js_float</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+			<span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+		<span class="k">def</span> <span class="nf">js_default_full_data</span><span class="p">(</span><span class="n">full_data</span><span class="p">):</span>
+			<span class="k">return</span> <span class="n">full_data</span> <span class="k">if</span> <span class="n">full_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;getDataAndInfo()&quot;</span>
+
+		<span class="n">arguments</span> <span class="o">=</span> <span class="p">[</span><span class="n">js_default_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_width_in_pixels</span><span class="p">),</span>
+		             <span class="n">js_default_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_height_in_pixels</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_snippets</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_color</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sort_by_dist</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_use_full_doc</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_grey_zero_scores</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_asian_mode</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_use_non_text_features</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_show_characteristic</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_word_vec_use_p_vals</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_save_svg_button</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reverse_sort_scores_for_not_category</span><span class="p">),</span>
+		             <span class="n">js_float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_p_val</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p_value_colors</span><span class="p">),</span>
+		             <span class="n">js_default_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x_label</span><span class="p">),</span>
+		             <span class="n">js_default_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y_label</span><span class="p">),</span>
+		             <span class="n">js_default_full_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_data</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_show_top_terms</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_show_neutral</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_tooltip_content</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x_axis_values</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y_axis_values</span><span class="p">),</span>
+		             <span class="n">js_default_value_to_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_color_func</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_show_axes</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_show_extra</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_do_censor_points</span><span class="p">),</span>
+		             <span class="n">js_bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_center_label_over_points</span><span class="p">),</span>
+		             <span class="n">js_list_or_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x_axis_labels</span><span class="p">),</span>
+		             <span class="n">js_list_or_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y_axis_labels</span><span class="p">),</span>
+		             <span class="n">js_default_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_topic_model_preview_size</span><span class="p">),</span>
+		             <span class="n">js_list_or_null</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vertical_lines</span><span class="p">)]</span>
+		<span class="k">return</span> <span class="s1">&#39;plotInterface = buildViz(&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;);&#39;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

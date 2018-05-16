@@ -1,0 +1,22 @@
+scattertext.frequencyreaders package
+====================================
+
+Submodules
+----------
+
+scattertext.frequencyreaders.DefaultBackgroundFrequencies module
+----------------------------------------------------------------
+
+.. automodule:: scattertext.frequencyreaders.DefaultBackgroundFrequencies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.frequencyreaders
+    :members:
+    :undoc-members:
+    :show-inheritance:

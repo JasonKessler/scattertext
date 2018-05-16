@@ -1,0 +1,86 @@
+scattertext.features package
+============================
+
+Submodules
+----------
+
+scattertext.features.FeatsFromGeneralInquirer module
+----------------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromGeneralInquirer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromOnlyEmpath module
+-----------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromOnlyEmpath
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromSpacyDoc module
+---------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromSpacyDoc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromSpacyDocAndEmpath module
+------------------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromSpacyDocAndEmpath
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromSpacyDocOnlyEmoji module
+------------------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromSpacyDocOnlyEmoji
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromSpacyDocOnlyNounChunks module
+-----------------------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromSpacyDocOnlyNounChunks
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.FeatsFromTopicModel module
+-----------------------------------------------
+
+.. automodule:: scattertext.features.FeatsFromTopicModel
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.PhraseMachinePhrases module
+------------------------------------------------
+
+.. automodule:: scattertext.features.PhraseMachinePhrases
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.features.UnigramsFromSpacyDoc module
+------------------------------------------------
+
+.. automodule:: scattertext.features.UnigramsFromSpacyDoc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.features
+    :members:
+    :undoc-members:
+    :show-inheritance:

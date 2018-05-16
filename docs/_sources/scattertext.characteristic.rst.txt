@@ -1,0 +1,22 @@
+scattertext.characteristic package
+==================================
+
+Submodules
+----------
+
+scattertext.characteristic.DenseRankCharacteristicness module
+-------------------------------------------------------------
+
+.. automodule:: scattertext.characteristic.DenseRankCharacteristicness
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.characteristic
+    :members:
+    :undoc-members:
+    :show-inheritance:

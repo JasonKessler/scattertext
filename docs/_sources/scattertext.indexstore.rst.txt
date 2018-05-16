@@ -1,0 +1,38 @@
+scattertext.indexstore package
+==============================
+
+Submodules
+----------
+
+scattertext.indexstore.IndexStore module
+----------------------------------------
+
+.. automodule:: scattertext.indexstore.IndexStore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.indexstore.IndexStoreFromDict module
+------------------------------------------------
+
+.. automodule:: scattertext.indexstore.IndexStoreFromDict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+scattertext.indexstore.IndexStoreFromList module
+------------------------------------------------
+
+.. automodule:: scattertext.indexstore.IndexStoreFromList
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: scattertext.indexstore
+    :members:
+    :undoc-members:
+    :show-inheritance:

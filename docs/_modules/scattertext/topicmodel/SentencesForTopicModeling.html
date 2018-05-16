@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scattertext.topicmodel.SentencesForTopicModeling &#8212; Scattertext 0.0.2.9 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scattertext.topicmodel.SentencesForTopicModeling</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">NMF</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="k">import</span> <span class="n">TfidfTransformer</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="k">import</span> <span class="n">Pipeline</span>
+
+<span class="kn">from</span> <span class="nn">scattertext</span> <span class="k">import</span> <span class="n">CSRMatrixFactory</span>
+<span class="kn">from</span> <span class="nn">scattertext.ParsedCorpus</span> <span class="k">import</span> <span class="n">ParsedCorpus</span>
+<span class="kn">from</span> <span class="nn">scattertext.termscoring.RankDifference</span> <span class="k">import</span> <span class="n">RankDifference</span>
+
+
+<div class="viewcode-block" id="SentencesForTopicModeling"><a class="viewcode-back" href="../../../scattertext.topicmodel.html#scattertext.topicmodel.SentencesForTopicModeling.SentencesForTopicModeling">[docs]</a><span class="k">class</span> <span class="nc">SentencesForTopicModeling</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	Creates a topic model from a set of key terms based on sentence level co-occurrence.</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		corpus</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">ParsedCorpus</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corpus</span> <span class="o">=</span> <span class="n">corpus</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">termidxstore</span> <span class="o">=</span> <span class="n">corpus</span><span class="o">.</span><span class="n">_term_idx_store</span>
+		<span class="n">matfact</span> <span class="o">=</span> <span class="n">CSRMatrixFactory</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">doclabs</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">sentlabs</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">sentdocs</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="n">senti</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">for</span> <span class="n">doci</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corpus</span><span class="o">.</span><span class="n">get_parsed_docs</span><span class="p">()):</span>
+			<span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+				<span class="n">validsent</span> <span class="o">=</span> <span class="kc">False</span>
+				<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sent</span><span class="p">:</span>
+					<span class="k">try</span><span class="p">:</span>
+						<span class="n">termi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">termidxstore</span><span class="o">.</span><span class="n">getidxstrict</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">lower_</span><span class="p">)</span>
+					<span class="k">except</span><span class="p">:</span>
+						<span class="k">continue</span>
+					<span class="k">if</span> <span class="n">validsent</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+						<span class="n">senti</span> <span class="o">+=</span> <span class="mi">1</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">sentlabs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corpus</span><span class="o">.</span><span class="n">_y</span><span class="p">[</span><span class="n">doci</span><span class="p">])</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">sentdocs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doci</span><span class="p">)</span>
+						<span class="n">validsent</span> <span class="o">=</span> <span class="kc">True</span>
+					<span class="n">matfact</span><span class="p">[</span><span class="n">senti</span><span class="p">,</span> <span class="n">termi</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">sentX</span> <span class="o">=</span> <span class="n">matfact</span><span class="o">.</span><span class="n">get_csr_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SentencesForTopicModeling.get_topics_from_model"><a class="viewcode-back" href="../../../scattertext.topicmodel.html#scattertext.topicmodel.SentencesForTopicModeling.SentencesForTopicModeling.get_topics_from_model">[docs]</a>	<span class="k">def</span> <span class="nf">get_topics_from_model</span><span class="p">(</span>
+			<span class="bp">self</span><span class="p">,</span>
+			<span class="n">pipe</span><span class="o">=</span><span class="n">Pipeline</span><span class="p">([</span>
+				<span class="p">(</span><span class="s1">&#39;tfidf&#39;</span><span class="p">,</span> <span class="n">TfidfTransformer</span><span class="p">(</span><span class="n">sublinear_tf</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>
+				<span class="p">(</span><span class="s1">&#39;nmf&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">NMF</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">,</span> <span class="n">l1_ratio</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)))]),</span>
+			<span class="n">num_terms_per_topic</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		pipe : Pipeline</span>
+<span class="sd">			For example, `Pipeline([</span>
+<span class="sd">				(&#39;tfidf&#39;, TfidfTransformer(sublinear_tf=True)),</span>
+<span class="sd">				(&#39;nmf&#39;, (NMF(n_components=30, alpha=.1, l1_ratio=.5, random_state=0)))])`</span>
+<span class="sd">			The last transformer must populate a `components_` attribute when finished.</span>
+<span class="sd">		num_terms_per_topic : int</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dict: {term: [term1, ...], ...}</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">pipe</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sentX</span><span class="p">)</span>
+
+		<span class="n">topic_model</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">topic_idx</span><span class="p">,</span> <span class="n">topic</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pipe</span><span class="o">.</span><span class="n">_final_estimator</span><span class="o">.</span><span class="n">components_</span><span class="p">):</span>
+			<span class="n">term_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">termidxstore</span><span class="o">.</span><span class="n">getval</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+			             <span class="k">for</span> <span class="n">i</span>
+			             <span class="ow">in</span> <span class="n">topic</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[:</span><span class="o">-</span><span class="n">num_terms_per_topic</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+			             <span class="k">if</span> <span class="n">topic</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+			<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">term_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="n">topic_model</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">. </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">topic_idx</span><span class="p">,</span> <span class="n">term_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> <span class="n">term_list</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="ne">Warning</span><span class="p">(</span><span class="s2">&quot;Topic </span><span class="si">%s</span><span class="s2"> has no terms with scores &gt; 0. Omitting.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">topic_idx</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">topic_model</span></div>
+
+<div class="viewcode-block" id="SentencesForTopicModeling.get_topics_from_terms"><a class="viewcode-back" href="../../../scattertext.topicmodel.html#scattertext.topicmodel.SentencesForTopicModeling.SentencesForTopicModeling.get_topics_from_terms">[docs]</a>	<span class="k">def</span> <span class="nf">get_topics_from_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+	                          <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	                          <span class="n">num_terms_per_topic</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+	                          <span class="n">scorer</span><span class="o">=</span><span class="n">RankDifference</span><span class="p">()):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		terms : list or None</span>
+<span class="sd">			If terms is list, make these the seed terms for the topoics</span>
+<span class="sd">			If none, use the first 30 terms in get_scaled_f_scores_vs_background</span>
+<span class="sd">		num_terms_per_topic : int, default 10</span>
+<span class="sd">			Use this many terms per topic</span>
+<span class="sd">		scorer : TermScorer</span>
+<span class="sd">			Implements get_scores, default is RankDifferce, which tends to work best</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dict: {term: [term1, ...], ...}</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">topic_model</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="k">if</span> <span class="n">terms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">get_scaled_f_scores_vs_background</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span><span class="mi">30</span><span class="p">]</span>
+
+		<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+			<span class="n">termidx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">termidxstore</span><span class="o">.</span><span class="n">getidxstrict</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
+			<span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentX</span><span class="p">[:,</span> <span class="n">termidx</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span><span class="o">.</span><span class="n">A1</span>
+			<span class="n">poscnts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentX</span><span class="p">[</span><span class="n">labels</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+			<span class="n">negcnts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sentX</span><span class="p">[</span><span class="o">~</span><span class="n">labels</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+			<span class="n">scores</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">poscnts</span><span class="p">,</span> <span class="n">negcnts</span><span class="p">)</span>
+			<span class="n">topic_model</span><span class="p">[</span><span class="n">term</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">termidxstore</span><span class="o">.</span><span class="n">getval</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span>
+			                     <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">scores</span><span class="p">)[:</span><span class="n">num_terms_per_topic</span><span class="p">]]</span>
+		<span class="k">return</span> <span class="n">topic_model</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scattertext.html">scattertext</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Jason S. Kessler.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
