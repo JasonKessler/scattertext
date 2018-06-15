@@ -4,6 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+from scattertext.indexstore import IndexStore
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
@@ -190,7 +191,7 @@ class TestTermDocMat(TestCase):
 		                 ['another', 'blah', 'blah blah'])
 
 		# to do: come up with faster way of testing fisher
-		# self.assertEqual(list(df.sort_values(by='fisher pval', ascending=True).index[:3]),
+		# self.assertEqual(list(convention_df.sort_values(by='fisher pval', ascending=True).index[:3]),
 		#                 ['another', 'blah', 'blah blah'])
 
 		self.assertEqual(list(df.sort_values(by='rudder', ascending=True).index[:3]),
@@ -290,8 +291,8 @@ class TestTermDocMat(TestCase):
 		                 set(['word', 'background']))
 
 	# to do: come up with faster way of testing fisher
-	# df = hamlet.get_fisher_scores_vs_background()
-	# self.assertEqual(list(df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
+	# convention_df = hamlet.get_fisher_scores_vs_background()
+	# self.assertEqual(list(convention_df.sort_values(by='Bonferroni-corrected p-values', ascending=True).index[:3]),
 	#                 ['voltimand', 'knavish', 'mobled'])
 
 	def test_log_reg(self):
@@ -321,6 +322,26 @@ class TestTermDocMat(TestCase):
 		self.assertFalse(hamlet.metadata_in_use())
 		hamlet_meta = build_hamlet_jz_corpus_with_meta()
 		self.assertTrue(hamlet_meta.metadata_in_use())
+
+	def test_get_term_doc_mat(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		X = hamlet.get_term_doc_mat()
+		np.testing.assert_array_equal(X.shape, (hamlet.get_num_docs(), hamlet.get_num_terms()))
+
+	def test_get_category_index_store(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		idxstore = hamlet.get_category_index_store()
+		self.assertIsInstance(idxstore, IndexStore)
+		self.assertEquals(idxstore.getvals(), {'hamlet', 'not hamlet'})
+
+	def test_recategorize(self):
+		hamlet = get_hamlet_term_doc_matrix()
+		newcats = ['cat' + str(i % 3) for i in range(hamlet.get_num_docs())]
+		newhamlet = hamlet.recategorize(newcats)
+		self.assertEquals(set(newhamlet.get_term_freq_df('').columns),
+		                  {'cat0', 'cat1', 'cat2'})
+		self.assertEquals(set(hamlet.get_term_freq_df('').columns),
+		                  {'hamlet', 'not hamlet'})
 
 
 def get_hamlet_term_doc_matrix():

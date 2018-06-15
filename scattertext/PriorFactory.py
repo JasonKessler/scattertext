@@ -25,7 +25,7 @@ class PriorFactory(object):
 		starting_count : float
 			Default 0.01. Add this count to each term seen. If zero, terms not in background counts will be removed.
 		term_ranker : TermRanker
-			Function to get term frequency df
+			Function to get term frequency convention_df
 		'''
 		self.term_doc_mat = term_doc_mat
 		self.relevant_categories = []

@@ -1,7 +1,6 @@
-import pkgutil
+import re
 import re
 import warnings
-from io import StringIO
 
 import numpy as np
 import pandas as pd
@@ -19,7 +18,7 @@ from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGR
 	DEFAULT_BACKGROUND_BETA
 from scattertext.FeatureOuput import FeatureLister
 from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
-from scattertext.indexstore import IndexStore
+from scattertext.indexstore import IndexStore, IndexStoreFromList
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.CornerScore import CornerScore
 
@@ -95,6 +94,7 @@ class TermDocMatrix(object):
 
 		Returns
 		-------
+		TermDocMatrix
 		New Term Doc Matrix
 		'''
 		return compactor.compact(self)
@@ -106,7 +106,6 @@ class TermDocMatrix(object):
 		The number of terms registered in the term doc matrix
 		'''
 		return len(self._term_idx_store)
-
 
 	def get_categories(self):
 		'''
@@ -991,15 +990,47 @@ class TermDocMatrix(object):
 		'''
 		return self._y
 
-	def get_term_counts_from_term_as_category(self, term):
+	def get_term_doc_mat(self):
 		'''
-		Parameters
-		----------
-		term : str
-			Term to use as a category marker
+		Returns sparse matrix representation of term-doc-matrix
 
 		Returns
 		-------
-		pd.DataFrame
+		scipy.sparse.csr_matrix
 		'''
-		sel
+		return self._X
+
+	def get_category_index_store(self):
+		'''
+		Returns IndexStore object mapping categories to ids
+
+		Returns
+		-------
+		IndexStore
+		'''
+		return self._category_idx_store
+
+	def recategorize(self, new_categories):
+		'''
+		Parameters
+		----------
+		new_categories : array like
+		String names of new categories. Length should be equal to number of documents
+
+		Returns
+		-------
+		TermDocMatrix
+		'''
+		assert len(new_categories) == self.get_num_docs()
+
+		new_category_idx_store = IndexStoreFromList.build(set(new_categories))
+		new_y = np.array(new_category_idx_store.getidxstrictbatch(new_categories))
+
+		new_tdm = self._make_new_term_doc_matrix(self._X,
+		                                         self._mX,
+		                                         new_y,
+		                                         self._term_idx_store,
+		                                         new_category_idx_store,
+		                                         self._metadata_idx_store,
+		                                         new_y == new_y)
+		return new_tdm

@@ -22,14 +22,14 @@ class ParsedCorpus(Corpus):
 
 		Parameters
 		----------
-		df pd.DataFrame, contains parsed_col and metadata
+		convention_df pd.DataFrame, contains parsed_col and metadata
 		X, csr_matrix
 		mX csr_matrix
 		y, np.array
 		term_idx_store, IndexStore
 		category_idx_store, IndexStore
-		parsed_col str, column in df containing parsed documents
-		category_col str, columns in df containing category
+		parsed_col str, column in convention_df containing parsed documents
+		category_col str, columns in convention_df containing category
 		unigram_frequency_path str, None by default, path of unigram counts file
 		'''
 		self._df = df

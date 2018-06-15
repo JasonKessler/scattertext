@@ -1,25 +1,10 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
+[![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 [![Conda Install](https://anaconda.org/ioam/holoviews/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
-[![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
 
-# Scattertext 0.0.2.27.1
-### Updates
-
-Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is 
-clicked.  
-
-Enabled display of terms in topic models in explorer, along with the the display of 
-customized topic models.  Please see [Visualizing topic models](#visualizing-topic-models) for an
-overview of the additions.
-
-Removed pkg_resources from Phrasemachine, corrected demo_phrase_machine.py 
-
-Now compatible with Gensim 3.4.0.
-
-Added characteristic explorer, `produce_characteristic_explorer`, to plot terms with their characteristic scores on 
-the x-axis and their class-association scores on the y-axis. See [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness) for more details.
+# Scattertext 0.0.2.28
 
 **Table of Contents**
 
@@ -33,6 +18,7 @@ the x-axis and their class-association scores on the y-axis. See [Ordering Terms
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
+- [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [Advanced Uses](#advanced-uses)
     - [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies)
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
@@ -57,6 +43,11 @@ Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/
 
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
+## Citation
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
+
+Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
+
 ## Installation 
 Install Python 3.4 or higher and run:
 
@@ -75,11 +66,6 @@ Python 2.7 support is experimental.  Many things will break.
 
 The HTML outputs look best in Chrome and Safari.
 
-## Citation
-Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
-
-Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
-
 ```
 @article{kessler2017scattertext,
   author    = {Kessler, Jason S.},
@@ -90,6 +76,19 @@ Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
   publisher = {Association for Computational Linguistics},
 }
 ```
+
+## What's new
+In version 0.0.28, we added:
+
+A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)),
+`ZScores` (an implementation of
+
+
+## Style Guide
+The name of this project is Scattertext.  "Scattertext" is written as a single word
+and should be capitalized.  When used in Python, the package `scattertext` should be defined
+to the name `st`.
+
 ## Overview
  
 This is a tool that's intended for visualizing what words and phrases
@@ -374,6 +373,10 @@ html = produce_frequency_explorer(corpus,
 [![Scaled F-Score Viz](https://jasonkessler.github.io/demo_scaled_f_score.html.png)](https://jasonkessler.github.io/demo_scaled_f_score.html)
 
 
+### Alternative term scoring methods
+
+### 
+
 ## Advanced uses
 
 ### Visualizing differences based on only term frequencies
@@ -390,16 +393,7 @@ df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
 	      .dropna()
 	      .set_index('lemma')[['SPOKEN', 'FICTION']]
 	      .iloc[:1000])
-'''
->>> df.head()
-          SPOKEN    FICTION
-lemma                      
-the    3859682.0  4092394.0
-I      1346545.0  1382716.0
-they   609735.0   352405.0 
-she    212920.0   798208.0 
-would  233766.0   229865.0 
-'''	      
+convention_df	      
 ```
 
 Transforming this into a visualization is extremely easy. Just pass a dataframe indexed on 
@@ -1149,6 +1143,26 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 
 ## What's new
 
+### 0.0.2.28
+
+Added `DomainCompactor`.
+
+### 0.0.2.26-27.1
+Fixed bug [#31](https://github.com/JasonKessler/scattertext/issues/31), enabling context to show when metadata value is
+clicked.
+
+Enabled display of terms in topic models in explorer, along with the the display of
+customized topic models.  Please see [Visualizing topic models](#visualizing-topic-models) for an
+overview of the additions.
+
+Removed pkg_resources from Phrasemachine, corrected demo_phrase_machine.py
+
+Now compatible with Gensim 3.4.0.
+
+Added characteristic explorer, `produce_characteristic_explorer`, to plot terms with their characteristic scores on
+the x-axis and their class-association scores on the y-axis. See [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness) for more details.
+
+
 ### 0.0.2.24-25
 Added `TermCategoryFrequencies` in response to Issue 23.  Please see [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies) 
 for more details. 
@@ -1454,4 +1468,5 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Burt L. Monroe, Michael P. Colaresi, and Kevin M. Quinn. 2008. Fightin’ words: Lexical feature selection and evaluation for identifying the content of political conflict. Political Analysis.
 * Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.
 * Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
+* Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources. LREC 2014.
 

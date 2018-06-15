@@ -19,9 +19,9 @@ class CorpusFromParsedDocuments(object):
 		df : pd.DataFrame
 		 contains category_col, and parse_col, were parsed col is entirely spacy docs
 		category_col : str
-			name of category column in df
+			name of category column in convention_df
 		parsed_col : str
-			name of spacy parsed column in df
+			name of spacy parsed column in convention_df
 		feats_from_spacy_doc : FeatsFromSpacyDoc
 		'''
 		self._df = df.reset_index()

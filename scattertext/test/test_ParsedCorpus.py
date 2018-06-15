@@ -54,7 +54,7 @@ class TestParsedCorpus(TestCase):
 		'''
 		Returns
 		-------
-		return pd.DataFrame indexed on terms with columns giving how many attributes in df
+		return pd.DataFrame indexed on terms with columns giving how many attributes in convention_df
 
 		'''
 		group_df = self.corpus.term_group_freq_df('author')

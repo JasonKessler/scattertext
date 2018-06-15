@@ -98,7 +98,7 @@ class RottenTomatoes(object):
 		pd.DataFrame
 
 		I.e.,
-		>>> df.iloc[0]
+		>>> convention_df.iloc[0]
 		category                                                    plot
 		filename                 subjectivity_html/obj/2002/Abandon.html
 		text           A senior at an elite college (Katie Holmes), a...
@@ -121,7 +121,7 @@ class RottenTomatoes(object):
 		pd.DataFrame
 
 		I.e.,
-		>>> df.iloc[0]
+		>>> convention_df.iloc[0]
 		category                                                             plot
 		text                    Vijay Singh Rajput (Amitabh Bachchan) is a qui...
 		movie_name                                                        aankhen

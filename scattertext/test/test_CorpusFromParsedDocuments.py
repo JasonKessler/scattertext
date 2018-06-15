@@ -106,7 +106,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		        whitespace_nlp('bb aa a.')]
 		df = pd.DataFrame({'category': ['a', 'b'],
 		                   'parsed': docs})
-		# corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')
+		# corpus_fact = CorpusFromParsedDocuments(convention_df, 'category', 'parsed')
 		corpus_fact = CorpusFromParsedDocuments(df, category_col='category', parsed_col='parsed')
 		corpus = corpus_fact.build()
 

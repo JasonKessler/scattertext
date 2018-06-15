@@ -151,8 +151,8 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
 		return CorpusFactoryHelper.init_term_doc_matrix_variables()
 
 	def _clean_and_filter_nulls_and_empties_from_dataframe(self):
-		df = self.data_frame[[self._category_col, self._text_col]].dropna()
-		df = df[(df[self._text_col] != '')].reset_index()
+		df = self.data_frame.loc[self.data_frame[[self._category_col, self._text_col]].dropna().index]
+		df = df[df[self._text_col] != ''].reset_index()
 		return df
 
 

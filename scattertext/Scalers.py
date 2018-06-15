@@ -46,7 +46,7 @@ def scale_neg_1_to_1_with_zero_mean_log_abs_max(v):
 	df['lg'] *= df['sign']
 	df['lg'] = df['lg'].fillna(0)
 	print(df[df['exclude']]['lg'].values)
-	#to_rescale = df['lg'].reindex(v.index)
+	#to_rescale = convention_df['lg'].reindex(v.index)
 	df['to_out'] =  scale_neg_1_to_1_with_zero_mean_abs_max(df['lg'])
 	print('right')
 	print(df.sort_values(by='lg').iloc[:5])

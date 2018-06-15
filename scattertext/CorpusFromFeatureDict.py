@@ -21,15 +21,15 @@ class CorpusFromFeatureDict(object):
 		df : pd.DataFrame
 		 contains category_col, and parse_col, were parsed col is entirely spacy docs
 		category_col : str
-				name of category column in df
+				name of category column in convention_df
 		text_col : str
 				The name of the column which contains each document's raw text.
 		feature_col : str
-				name of column in df with a feature dictionary
+				name of column in convention_df with a feature dictionary
 		metadata_col : str, optional
-				name of column in df with a meatadata dictionary
+				name of column in convention_df with a meatadata dictionary
 		parsed_col : str, optional
-				name of column in df with parsed strings
+				name of column in convention_df with parsed strings
 		'''
 		self._df = df.reset_index()
 		self._category_col = category_col

@@ -423,7 +423,7 @@ class ScatterChart:
 		if scores is None:
 			scores = self._get_default_scores(category, other_categories, df)
 		# np.array(self.term_doc_matrix.get_rudder_scores(category))
-		# df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
+		# convention_df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
 		category_column_name = category + ' freq'
 		df['category score'] = CornerScore.get_scores_for_category(
 			df[category_column_name],

@@ -29,7 +29,7 @@ class FourSquare(SemioticSquare):
 			None by default. Labels are dictionary of {'a_and_b': 'A and B', ...} to be shown
 			above each category.
 		term_ranker : TermRanker
-			Class for returning a term-frequency df
+			Class for returning a term-frequency convention_df
 		scorer : termscoring class, optional
 			Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`
 		'''

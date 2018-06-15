@@ -20,11 +20,11 @@ class TermCategoryFrequencies(object):
 	to analyze the difference between spoken American English and English that occurs in fiction.
 
 	```python
-	df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
+	convention_df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
 		      .dropna()
 		      .set_index('lemma')[['SPOKEN', 'FICTION']]
 		      .iloc[:1000])
-	df.head()
+	convention_df.head()
 	          SPOKEN    FICTION
 	lemma
 	the    3859682.0  4092394.0
@@ -38,7 +38,7 @@ class TermCategoryFrequencies(object):
 	terms with columns indicating category-counts into the the `TermCategoryFrequencies` constructor.
 
 	```python
-	term_cat_freq = st.TermCategoryFrequencies(df)
+	term_cat_freq = st.TermCategoryFrequencies(convention_df)
 	```
 
 	And call `produce_scattertext_explorer` normally:
@@ -79,7 +79,7 @@ class TermCategoryFrequencies(object):
 	call `produce_scattertext_explorer` (or your visualization function of choice) normally.
 
 	```python
-	doc_term_cat_freq = st.TermCategoryFrequencies(df, document_category_df=document_df)
+	doc_term_cat_freq = st.TermCategoryFrequencies(convention_df, document_category_df=document_df)
 
 	html = st.produce_scattertext_explorer(
 		doc_term_cat_freq,

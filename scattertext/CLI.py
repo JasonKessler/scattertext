@@ -1,7 +1,6 @@
 import argparse
 
 import pandas as pd
-import spacy
 
 from scattertext import CorpusFromPandas, produce_scattertext_explorer, Common
 from scattertext.WhitespaceNLP import whitespace_nlp_with_sentences
@@ -77,6 +76,7 @@ def main():
 	if args.regex_parser:
 		nlp = whitespace_nlp_with_sentences
 	else:
+		import spacy
 		nlp = spacy.load(args.spacy_language_model)
 
 	term_ranker = None

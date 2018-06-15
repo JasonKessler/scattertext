@@ -1,8 +1,6 @@
 from __future__ import print_function
 
-from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
-
-version = [0, 0, 2, 27, 1]
+version = [0, 0, 2, 28]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -79,6 +77,11 @@ from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageC
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
 from scattertext.topicmodel.SentencesForTopicModeling import SentencesForTopicModeling
+from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
+from scattertext.termcompaction.DomainCompactor import DomainCompactor
+from scattertext.termscoring.ZScores import ZScores
+from scattertext.termscoring.RelativeEntropy import RelativeEntropy
+
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -164,7 +167,7 @@ def produce_scattertext_explorer(corpus,
                                  rescale_x=None,
                                  rescale_y=None,
                                  singleScoreMode=False,
-                                 sort_by_dist=True,
+                                 sort_by_dist=False,
                                  reverse_sort_scores_for_not_category=True,
                                  use_full_doc=False,
                                  transform=percentile_alphabetical,
@@ -209,7 +212,8 @@ def produce_scattertext_explorer(corpus,
                                  topic_model_term_lists=None,
                                  topic_model_preview_size=10,
                                  vertical_lines=None,
-                                 characteristic_scorer=None):
+                                 characteristic_scorer=None,
+                                 return_data=False):
 	'''Returns html code of visualization.
 
 	Parameters
@@ -381,6 +385,9 @@ def produce_scattertext_explorer(corpus,
 		List of floats corresponding to points on the x-axis to draw vertical lines
 	characteristic_scorer : CharacteristicScorer default None
 		Used for bg scores
+	return_data : bool default False
+		Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
+		an html.
 
 	Returns
 	-------
@@ -432,7 +439,7 @@ def produce_scattertext_explorer(corpus,
 	                                              term_ranker=term_ranker,
 	                                              use_non_text_features=use_non_text_features,
 	                                              term_significance=term_significance,
-	                                              terms_to_include=terms_to_include,)
+	                                              terms_to_include=terms_to_include, )
 	if ((x_coords is None and y_coords is not None)
 			or (y_coords is None and x_coords is not None)):
 		raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -463,6 +470,8 @@ def produce_scattertext_explorer(corpus,
 	                                                    neutral_categories=neutral_categories,
 	                                                    extra_categories=extra_categories,
 	                                                    background_scorer=characteristic_scorer)
+	if return_data:
+		return scatter_chart_data
 	return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data),
 	                                 width_in_pixels=width_in_pixels,
 	                                 height_in_pixels=height_in_pixels,
@@ -1205,8 +1214,8 @@ def produce_characteristic_explorer(corpus,
 	if not_categories is None:
 		not_categories = [c for c in corpus.get_categories() if c != category]
 
-
-	category_name, not_category_name = get_category_names(category, category_name, not_categories, not_category_name)
+	category_name, not_category_name = get_category_names(
+		category, category_name, not_categories, not_category_name)
 
 	zero_point, characteristic_scores = characteristic_scorer.get_scores(corpus)
 	corpus = corpus.remove_terms(set(corpus.get_terms()) - set(characteristic_scores.index))
