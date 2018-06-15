@@ -4,8 +4,11 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.sparse import vstack
-from future.utils import with_metaclass
+try:
 
+	from future.utils import with_metaclass
+except:
+	pass
 
 class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
 	def __init__(self, corpus, *args, **kwargs):
