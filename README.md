@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.28
+# Scattertext 0.0.2.29
 
 **Table of Contents**
 
@@ -29,6 +29,7 @@
     - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
     - [Visualizing topic models](#visualizing-topic-models)
     - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
+    - [Visualizing Changing Topics over Time](#visualizing-chaning-topics-over-time)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -354,28 +355,208 @@ open('demo_characteristic_chart.html', 'wb').write(html.encode('utf-8'))
 
 ### Understanding Scaled F-Score
 
-![Scaled F-Score Explanation 1](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score1.png)
+Let's use the Rotten Tomatoes corpus as an example for to explain how Scaled F-Score works. 
+This corpus contains excerpts of positive and negative movie reviews.
 
-![Scaled F-Score Explanation 2](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaled_f_score2.png)
+Please see [Scaled F Score Explanation](http://nbviewer.jupyter.org/github/JasonKessler/GlobalAI2018/blob/master/notebook/Scaled-F-Score-Explanation.ipynb) 
+for a notebook version of this analysis. 
 
 ```python
-html = produce_frequency_explorer(corpus,
-                                  category='democrat',
-                                  category_name='Democratic',
-                                  not_category_name='Republican',
-                                  minimum_term_frequency=5,
-                                  width_in_pixels=1000,
-                                  term_scorer=ScaledFScorePresetsNeg1To1(beta=1, scaler_algo='normcdf'),
-                                  grey_threshold=0,
-                                  y_axis_values=[-1, 0, 1],
-                                  metadata=convention_df['speaker'])
+rdf = st.SampleCorpora.RottenTomatoes.get_data()
+rdf['category_name'] = rdf['category'].apply(lambda x: {'plot': 'Plot', 'rotten': 'Negative', 'fresh': 'Positive'}[x])
+corpus = (st.CorpusFromPandas(rdf, 
+                              category_col='category_name', 
+                              text_col='text',
+                              nlp = st.whitespace_nlp_with_sentences)
+          .build().get_unigram_corpus())
+``` 
+
+![Scaled F-Score Explanation 1](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs1.png)
+
+```python
+from scipy.stats import hmean
+
+term_freq_df = corpus.get_unigram_corpus().get_term_freq_df()[['Positive freq', 'Negative freq']]
+term_freq_df = term_freq_df[term_freq_df.sum(axis=1) > 0]
+
+term_freq_df['pos_precision'] = (term_freq_df['Positive freq'] * 1./
+                                 (term_freq_df['Positive freq'] + term_freq_df['Negative freq']))
+
+term_freq_df['pos_freq_pct'] = (term_freq_df['Positive freq'] * 1.
+                                /term_freq_df['Positive freq'].sum())
+
+term_freq_df['pos_hmean'] = (term_freq_df
+                             .apply(lambda x: (hmean([x['pos_precision'], x['pos_freq_pct']])
+                                               if x['pos_precision'] > 0 and x['pos_freq_pct'] > 0 
+                                               else 0), axis=1))
+term_freq_df.sort_values(by='pos_hmean', ascending=False).iloc[:10]
 ```
-[![Scaled F-Score Viz](https://jasonkessler.github.io/demo_scaled_f_score.html.png)](https://jasonkessler.github.io/demo_scaled_f_score.html)
+![SFS2](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs2.png)
+
+If we plot term frequency on the x-axis and the percentage of a term's occurrences 
+which are in positive documents (i.e., its precision) on the y-axis, we can see 
+that low-frequency terms have a much higher variation in the precision. Given these terms have 
+low frequencies, the harmonic means are low.  Thus, the only terms which have a high harmonic mean 
+are extremely frequent words which tend to all have near average precisions.
+
+
+```python
+freq = term_freq_df.pos_freq_pct.values
+prec = term_freq_df.pos_precision.values
+html = st.produce_scattertext_explorer(
+    corpus.remove_terms(set(corpus.get_terms()) - set(term_freq_df.index)),
+    category='Positive',
+    not_category_name='Negative',
+    not_categories=['Negative'],
+    
+    x_label = 'Portion of words used in positive reviews',
+    original_x = freq,
+    x_coords = (freq - freq.min())/freq.max(),
+    x_axis_values = [int(freq.min()*1000)/1000., 
+                     int(freq.max() * 1000)/1000.],
+    
+    y_label = 'Portion of documents containing word that are positive',    
+    original_y = prec,
+    y_coords = (prec - prec.min())/prec.max(),
+    y_axis_values = [int(prec.min() * 1000)/1000., 
+                     int((prec.max()/2.)*1000)/1000., 
+                     int(prec.max() * 1000)/1000.],
+    scores = term_freq_df.pos_hmean.values,
+    
+    sort_by_dist=False,
+    show_characteristic=False
+)
+file_name = 'not_normed_freq_prec.html'
+open(file_name, 'wb').write(html.encode('utf-8'))
+IFrame(src=file_name, width = 1300, height=700)
+```
+
+![SFS3](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs3.png)
+
+![SFS4](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs4.png)
+
+```python
+from scipy.stats import norm
+
+def normcdf(x):
+    return norm.cdf(x, x.mean(), x.std ())
+
+term_freq_df['pos_precision_normcdf'] = normcdf(term_freq_df.pos_precision)
+
+term_freq_df['pos_freq_pct_normcdf'] = normcdf(term_freq_df.pos_freq_pct.values)
+
+term_freq_df['pos_scaled_f_score'] = hmean([term_freq_df['pos_precision_normcdf'], term_freq_df['pos_freq_pct_normcdf']])
+
+term_freq_df.sort_values(by='pos_scaled_f_score', ascending=False).iloc[:10]
+```
+
+![SFS5](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs5.png)
+
+```python
+freq = term_freq_df.pos_freq_pct_normcdf.values
+prec = term_freq_df.pos_precision_normcdf.values
+html = st.produce_scattertext_explorer(
+    corpus.remove_terms(set(corpus.get_terms()) - set(term_freq_df.index)),
+    category='Positive',
+    not_category_name='Negative',
+    not_categories=['Negative'],
+    
+    x_label = 'Portion of words used in positive reviews (norm-cdf)',
+    original_x = freq,
+    x_coords = (freq - freq.min())/freq.max(),
+    x_axis_values = [int(freq.min()*1000)/1000., 
+                     int(freq.max() * 1000)/1000.],
+    
+    y_label = 'documents containing word that are positive (norm-cdf)',    
+    original_y = prec,
+    y_coords = (prec - prec.min())/prec.max(),
+    y_axis_values = [int(prec.min() * 1000)/1000., 
+                     int((prec.max()/2.)*1000)/1000., 
+                     int(prec.max() * 1000)/1000.],
+    scores = term_freq_df.pos_scaled_f_score.values,
+    
+    sort_by_dist=False,
+    show_characteristic=False
+)
+```
+![SFS6](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs6.png)
+
+![SFS7](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs7.png)
+```python
+term_freq_df['neg_precision_normcdf'] = normcdf((term_freq_df['Negative freq'] * 1./
+                                 (term_freq_df['Negative freq'] + term_freq_df['Positive freq'])))
+
+term_freq_df['neg_freq_pct_normcdf'] = normcdf((term_freq_df['Negative freq'] * 1.
+                                /term_freq_df['Negative freq'].sum()))
+
+term_freq_df['neg_scaled_f_score'] = hmean([term_freq_df['neg_precision_normcdf'],  term_freq_df['neg_freq_pct_normcdf']])
+
+term_freq_df['scaled_f_score'] = 0
+term_freq_df.loc[term_freq_df['pos_scaled_f_score'] > term_freq_df['neg_scaled_f_score'], 
+                 'scaled_f_score'] = term_freq_df['pos_scaled_f_score']
+term_freq_df.loc[term_freq_df['pos_scaled_f_score'] < term_freq_df['neg_scaled_f_score'], 
+                 'scaled_f_score'] = 1-term_freq_df['neg_scaled_f_score']
+term_freq_df['scaled_f_score'] = 2 * (term_freq_df['scaled_f_score'] - 0.5)
+term_freq_df.sort_values(by='scaled_f_score', ascending=True).iloc[:10]
+```
+![SFS8](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs8.png)
+```python
+is_pos = term_freq_df.pos_scaled_f_score > term_freq_df.neg_scaled_f_score
+freq = term_freq_df.pos_freq_pct_normcdf*is_pos - term_freq_df.neg_freq_pct_normcdf*~is_pos
+prec = term_freq_df.pos_precision_normcdf*is_pos - term_freq_df.neg_precision_normcdf*~is_pos
+def scale(ar): 
+    return (ar - ar.min())/(ar.max() - ar.min())
+def close_gap(ar): 
+    ar[ar > 0] -= ar[ar > 0].min()
+    ar[ar < 0] -= ar[ar < 0].max()
+    return ar
+
+html = st.produce_scattertext_explorer(
+    corpus.remove_terms(set(corpus.get_terms()) - set(term_freq_df.index)),
+    category='Positive',
+    not_category_name='Negative',
+    not_categories=['Negative'],
+    
+    x_label = 'Frequency',
+    original_x = freq,
+    x_coords = scale(close_gap(freq)),
+    x_axis_labels = ['Frequent in Neg', 
+                     'Not Frequent', 
+                     'Frequent in Pos'],
+    
+    y_label = 'Precision',    
+    original_y = prec,
+    y_coords = scale(close_gap(prec)),
+    y_axis_labels = ['Neg Precise', 
+                     'Imprecise', 
+                     'Pos Precise'],
+    
+    
+    scores = (term_freq_df.scaled_f_score.values + 1)/2,
+    sort_by_dist=False,
+    show_characteristic=False
+)
+```
+![SFS9](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs9.png)
+
+We can use `st.ScaledFScorePresets` as a term scorer to display terms' Scaled F-Score on the y-axis and 
+term frequencies on the x-axis.  
+
+```python
+html = st.produce_frequency_explorer(
+    corpus.remove_terms(set(corpus.get_terms()) - set(term_freq_df.index)),
+    category='Positive',
+    not_category_name='Negative',
+    not_categories=['Negative'],
+    term_scorer=st.ScaledFScorePresets(beta=1, one_to_neg_one=True),
+    metadata = rdf['movie_name'],
+    grey_threshold=0
+)
+```
+![SFS10](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs10.png)
 
 
 ### Alternative term scoring methods
-
-### 
 
 ## Advanced uses
 
@@ -1116,6 +1297,13 @@ html = st.produce_projection_explorer(corpus,
 ```
 
 [![t-sne style plot](https://jasonkessler.github.io/demo_tsne_style.png)](https://jasonkessler.github.io/demo_tsne_style.html)
+
+## Visualizing Changing Topics over Time
+
+I've begun work on an extension to Scattertext allow the visualization the
+rise and fall of trending topics.
+
+This is still under development. Check back for more details.   
 
 ## Examples 
 

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 28]
+
+version = [0, 0, 2, 29]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -9,11 +10,12 @@ import numpy as np
 import pandas as pd
 import scattertext.viz
 
+from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
+from scattertext.diachronic.DiachronicTermMiner import DiachronicTermMiner
 from scattertext.characteristic.DenseRankCharacteristicness import DenseRankCharacteristicness
 from scattertext.CorpusDF import CorpusDF
 from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
-from scattertext.diachronic import GanttChart
 from scattertext.features.FeatsFromTopicModel import FeatsFromTopicModel
 from scattertext.termscoring.BM25Difference import BM25Difference
 from scattertext import SampleCorpora
@@ -81,7 +83,6 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
-
 
 def produce_scattertext_html(term_doc_matrix,
                              category,

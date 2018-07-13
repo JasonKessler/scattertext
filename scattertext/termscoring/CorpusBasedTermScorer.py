@@ -5,10 +5,9 @@ import pandas as pd
 from scipy import stats
 from scipy.sparse import vstack
 try:
-
 	from future.utils import with_metaclass
 except:
-	pass
+	from six import with_metaclass
 
 class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
 	def __init__(self, corpus, *args, **kwargs):
