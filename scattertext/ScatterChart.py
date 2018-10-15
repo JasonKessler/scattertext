@@ -133,7 +133,10 @@ class ScatterChart:
 		self.original_y = y_coords if original_y is None else original_y
 
 	def _verify_coordinates(self, coords, name):
-		if len(coords) != self.term_doc_matrix.get_num_terms():
+		if self.scatterchartdata.use_non_text_features and len(coords) != len(self.term_doc_matrix.get_metadata()):
+			raise CoordinatesNotRightException("Length of %s_cords must be the same as the number "
+											   "of non-text features in the term_doc_matrix." % (name))
+		if not self.scatterchartdata.use_non_text_features and len(coords) != self.term_doc_matrix.get_num_terms():
 			raise CoordinatesNotRightException("Length of %s_cords must be the same as the number "
 			                                   "of terms in the term_doc_matrix." % (name))
 		if max(coords) > 1:

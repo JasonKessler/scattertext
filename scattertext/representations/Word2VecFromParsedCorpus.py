@@ -1,4 +1,5 @@
 import itertools
+import warnings
 from collections import Counter
 
 from scattertext.ParsedCorpus import ParsedCorpus
@@ -94,25 +95,6 @@ class CorpusAdapterForGensim(object):
 		                         for doc in corpus.get_parsed_docs()])
 
 
-class CorpusSentenceIterator(object):
-	@staticmethod
-	def get_sentences(corpus):
-		'''
-		Parameters
-		----------
-		corpus, ParsedCorpus
-
-		Returns
-		-------
-		iter: [sentence1word1, ...], [sentence2word1, ...]
-		'''
-		assert isinstance(corpus, ParsedCorpus)
-		return itertools.chain(*[[[corpus._term_idx_store.getidxstrict(t.lower_) for t in sent
-		                           if not t.is_punct]
-		                          for sent in doc.sents]
-		                         for doc in corpus.get_parsed_docs()])
-
-
 class Word2VecFromParsedCorpus(object):
 	def __init__(self, corpus, word2vec_model=None):
 		'''
@@ -123,9 +105,12 @@ class Word2VecFromParsedCorpus(object):
 		word2vec_model: word2vec.Word2Vec
 			Gensim instance to be used to train word2vec model
 		'''
-		from gensim.models import word2vec
+		try:
+			from gensim.models import word2vec
+			assert word2vec_model is None or isinstance(word2vec_model, word2vec.Word2Vec)
+		except:
+			warnings.warn("You should really install gensim, but we're going to duck-type your model and pray it works")
 		assert isinstance(corpus, ParsedCorpus)
-		assert word2vec_model is None or isinstance(word2vec_model, word2vec.Word2Vec)
 		self.corpus = corpus
 		self.model = self._get_word2vec_model(word2vec_model)
 
@@ -148,17 +133,6 @@ class Word2VecFromParsedCorpus(object):
 			self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
 			                 total_examples=self.model.corpus_count,
 			                 epochs=epochs)
-		'''
-		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
-		                 total_examples=self.model.corpus_count,
-		                 epochs=epochs)
-		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
-		                 total_examples=self.model.corpus_count,
-		                 epochs=epochs)
-		self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
-		                 total_examples=self.model.corpus_count,
-		                 epochs=epochs)
-		'''
 		return self.model
 
 	def _get_word2vec_model(self, word2vec_model):

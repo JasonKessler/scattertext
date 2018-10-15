@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.2.29',
+      version='0.0.2.30',
       description='An NLP package to visualize interesting terms in text.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
@@ -14,6 +14,7 @@ setup(name='scattertext',
 	      'scikit-learn',
 	      'pandas',
 	      'six',
+          'mock'
 	      #'spacy',
 	      #'jieba',
 	      #'tinysegmenter',

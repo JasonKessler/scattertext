@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.29
+# Scattertext 0.0.2.30
 
 **Table of Contents**
 
@@ -79,11 +79,20 @@ The HTML outputs look best in Chrome and Safari.
 ```
 
 ## What's new
-In version 0.0.28, we added:
 
-A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)),
-`ZScores` (an implementation of
 
+In version 0.0.28-30, we added:
+
+A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)), and
+`ZScores` and implementation of the Z-Score model used in Frankhauser et al.
+
+`TermDocMatrix.get_metadata_freq_df()` returns a metadata-doc corpus.
+
+`CorpusBasedTermScorer.set_ranker` allows you to use a different term ranker when finding corpus-based scores.  This not only
+lets these scorers with metadata, but also allows you to integrate once-per-document counts.
+
+Fixed `produce_projection_explorer` such that it can work with a predefined set of term embeddings.  This can allow, 
+for example, the easy exploration of one hot-encoded term embeddings using selected dimensions of PCA.  See `demo_bow_pca.py` for an example.
 
 ## Style Guide
 The name of this project is Scattertext.  "Scattertext" is written as a single word

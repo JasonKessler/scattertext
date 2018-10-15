@@ -40,21 +40,21 @@ class BM25Difference(CorpusBasedTermScorer):
 		-------
 		np.array, scores
 		'''
-		if self.tdf is None:
+		if self.tdf_ is None:
 			raise Exception("Use set_category_name('category name', ['not category name', ...]) " +
 			                "to set the category of interest")
 
-		avgdl = self.tdf.sum(axis=0).mean()
+		avgdl = self.tdf_.sum(axis=0).mean()
 
 		def idf(cat):
 			# Number of categories with term
-			n_q = (self.tdf > 0).astype(int).max(axis=1).sum()
-			N = len(self.tdf)
+			n_q = (self.tdf_ > 0).astype(int).max(axis=1).sum()
+			N = len(self.tdf_)
 			return (N - n_q + 0.5) / (n_q + 0.5)
 
 		def length_adjusted_tf(cat):
-			tf = self.tdf[cat]
-			dl = self.tdf[cat].sum()
+			tf = self.tdf_[cat]
+			dl = self.tdf_[cat].sum()
 			return ((tf * (self.k1 + 1))
 			        / (tf + self.k1 * (1 - self.b + self.b * (dl / avgdl))))
 

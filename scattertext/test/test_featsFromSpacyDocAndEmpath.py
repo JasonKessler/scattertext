@@ -2,7 +2,6 @@ import sys
 from collections import Counter
 from unittest import TestCase
 
-from mock import Mock
 
 from scattertext import whitespace_nlp
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
@@ -46,6 +45,10 @@ def mock_empath_analyze(doc, **kwargs):
 
 class TestFeatsFsromSpacyDocAndEmpath(TestCase):
 	def test_main(self):
+		try:
+			from mock import Mock
+		except:
+			from unittest.mock import Mock
 		feat_getter = FeatsFromSpacyDocAndEmpath(empath_analyze_function=mock_empath_analyze)
 		sys.modules['empath'] = Mock(analyze=mock_empath_analyze)
 		FeatsFromSpacyDocAndEmpath()
@@ -72,6 +75,11 @@ class TestFeatsFsromSpacyDocAndEmpath(TestCase):
 
 class TestFeatsFromOnlyEmpath(TestCase):
 	def test_main(self):
+		try:
+			from mock import Mock
+		except:
+			from unittest.mock import Mock
+
 		sys.modules['empath'] = Mock(analyze=mock_empath_analyze)
 		FeatsFromOnlyEmpath()
 		feat_getter = FeatsFromOnlyEmpath(empath_analyze_function=mock_empath_analyze)

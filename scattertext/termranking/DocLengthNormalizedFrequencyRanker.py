@@ -11,7 +11,7 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 
 	def get_ranks(self):
 		row = self._get_row_category_ids()
-		X = self._get_X()
+		X = self.get_X()
 		doc_lengths = X.sum(axis=1)
 		normX = self._get_normalized_X(X, doc_lengths)
 		categoryX = csr_matrix((normX.data, (row, normX.indices)))
@@ -25,7 +25,7 @@ class VarianceSensitiveFrequencyRanker(TermRanker):
 	'''Rank terms by their mean document frequency divided by the standard errors.'''
 
 	def get_ranks(self):
-		X = self._get_X()
+		X = self.get_X()
 		d = {}
 		y = self._term_doc_matrix._y
 		for idx, cat in self._term_doc_matrix._category_idx_store.items():

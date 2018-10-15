@@ -8,6 +8,7 @@ from scattertext.Common import GENERAL_INQUIRER_URL
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 
+
 class FeatsFromGeneralInquirer(FeatsFromSpacyDoc):
 	def __init__(self,
 	             use_lemmas=False,
@@ -54,12 +55,12 @@ class FeatsFromGeneralInquirer(FeatsFromSpacyDoc):
 		return text_df
 
 	def get_doc_metadata(self, doc, prefix=''):
-		empath_counter = Counter()
+		topic_counter = Counter()
 		if version_info[0] >= 3:
 			doc = str(doc)
-		for empath_category, score in self._analyze(doc).to_dict()[0].items():
-			empath_counter[prefix + empath_category] = int(score)
-		return empath_counter
+		for topic_category, score in self._analyze(doc).to_dict()[0].items():
+			topic_counter[prefix + topic_category] = int(score)
+		return topic_counter
 
 	def has_metadata_term_list(self):
 		return True

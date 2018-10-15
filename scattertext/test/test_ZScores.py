@@ -2,8 +2,9 @@ from unittest import TestCase
 
 import pandas as pd
 
+from scattertext import OncePerDocFrequencyRanker
 from scattertext.termscoring.ZScores import ZScores
-from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus
+from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus, build_hamlet_jz_corpus_with_meta
 
 
 class TestZScores(TestCase):
@@ -18,3 +19,9 @@ class TestZScores(TestCase):
 
 	def test_get_name(self):
 		self.assertEquals(ZScores(self.corpus).set_categories('hamlet').get_name(), "Z-Score from Welch's T-Test")
+
+	def test_get_ranks_meta(self):
+		corpus = build_hamlet_jz_corpus_with_meta()
+		self.assertEquals(ZScores(corpus)
+						  .set_term_ranker(OncePerDocFrequencyRanker)
+						  .set_categories('hamlet').get_name(), "Z-Score from Welch's T-Test")

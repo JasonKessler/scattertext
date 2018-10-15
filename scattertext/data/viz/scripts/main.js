@@ -212,10 +212,8 @@ buildViz = function (d3) {
             var wordCounts = {}; // word -> [cat counts, not-cat-counts]
             var wordCountSums = [0, 0];
             fullData.docs.texts.forEach(function (text, i) {
-
                 text.toLowerCase().trim().split(/\W+/).forEach(function (word) {
                     if (word.trim() !== '') {
-
                         if (!(word in wordCounts))
                             wordCounts[word] = [0, 0];
                         wordCounts[word][binaryLabels[i]]++;
@@ -563,10 +561,12 @@ buildViz = function (d3) {
                     if (pattern !== null) {
                         text = text.replace(pattern, '<b>$&</b>');
                     }
-                    var curMatch = {'id': i, 'snippets': [text], 'strength': strength};
-
-                    curMatch['meta'] = fullData.docs.meta[i];
-
+                    var curMatch = {
+                        'id': i,
+                        'snippets': [text],
+                        'strength': strength,
+                        'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
+                    }
 
                     matches[numericLabel].push(curMatch);
                 }

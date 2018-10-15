@@ -6,7 +6,7 @@ from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 class RelativeEntropy(CorpusBasedTermScorer):
 	'''
 	Implements relative entropy approach from
-	Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources.
+	Peter Fankhauser, Jorg Knappen, Elke Teich. Exploring and visualizing variation in language resources.
 	LREC 2014.
 
 	```
@@ -44,8 +44,8 @@ class RelativeEntropy(CorpusBasedTermScorer):
 		'''
 
 		def jelinek_mercer_smoothing(cat):
-			p_hat_w = self.tdf[cat] * 1. / self.tdf[cat].sum()
-			c_hat_w = (self.smoothing_lambda_) * self.tdf.sum(axis=1) * 1. / self.tdf.sum().sum()
+			p_hat_w = self.tdf_[cat] * 1. / self.tdf_[cat].sum()
+			c_hat_w = (self.smoothing_lambda_) * self.tdf_.sum(axis=1) * 1. / self.tdf_.sum().sum()
 			return (1 - self.smoothing_lambda_) * p_hat_w + self.smoothing_lambda_ * c_hat_w
 
 		p_w = jelinek_mercer_smoothing('cat')

@@ -28,7 +28,8 @@ class ZScores(CorpusBasedTermScorer):
 		pass
 
 	def get_scores(self, *args):
-		return pd.Series(self.get_t_statistics()[0], index=self.corpus.get_terms())
+		return pd.Series(self.get_t_statistics()[0],
+						 index=self._get_index())
 
 	def get_name(self):
 		return "Z-Score from Welch's T-Test"

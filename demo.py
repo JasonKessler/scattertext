@@ -19,8 +19,8 @@ html = produce_scattertext_explorer(
 	width_in_pixels=1000,
 	metadata=convention_df['speaker'],
 	#term_scorer=ScaledFScorePresets(one_to_neg_one=True, beta=1),
-	d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-	d3_url='scattertext/data/viz/scripts/d3.min.js',
+	#d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
+	#d3_url='scattertext/data/viz/scripts/d3.min.js',
 )
 
 open('./demo.html', 'wb').write(html.encode('utf-8'))

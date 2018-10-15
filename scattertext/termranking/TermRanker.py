@@ -27,7 +27,10 @@ class TermRanker:
 		'''
 		self._use_non_text_features = True
 
-	def _get_X(self):
+	def get_X(self):
+		'''
+		:return: term freq matrix or metadata freq matrix
+		'''
 		if self._use_non_text_features:
 			return self._term_doc_matrix._mX
 		else:

@@ -247,6 +247,14 @@ class TermDocMatrix(object):
 		'''
 		return self._term_idx_store._i2val
 
+	def get_metadata(self):
+		'''
+		Returns
+		-------
+		np.array of unique metadata
+		'''
+		return self._metadata_idx_store._i2val
+
 	def get_category_names_by_row(self):
 		'''
 		Returns
@@ -603,7 +611,10 @@ class TermDocMatrix(object):
 		-------
 			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
-		from sklearn.cross_validation import cross_val_predict
+		try:
+			from sklearn.cross_validation import cross_val_predict
+		except:
+			from sklearn.model_selection import cross_val_predict
 		y = self._get_mask_from_category(category)
 		X = TfidfTransformer().fit_transform(self._X)
 		clf.fit(X, y)
@@ -630,7 +641,10 @@ class TermDocMatrix(object):
 		-------
 			(coefficient array, accuracy, majority class baseline accuracy)
 		'''
-		from sklearn.cross_validation import cross_val_predict
+		try:
+			from sklearn.cross_validation import cross_val_predict
+		except:
+			from sklearn.model_selection import cross_val_predict
 		y = self._get_mask_from_category(category)
 		y_continuous = self._get_continuous_version_boolean_y(y)
 		# X = TfidfTransformer().fit_transform(self._X)
@@ -999,6 +1013,16 @@ class TermDocMatrix(object):
 		scipy.sparse.csr_matrix
 		'''
 		return self._X
+
+	def get_metadata_doc_mat(self):
+		'''
+		Returns sparse matrix representation of term-doc-matrix
+
+		Returns
+		-------
+		scipy.sparse.csr_matrix
+		'''
+		return self._mX
 
 	def get_category_index_store(self):
 		'''

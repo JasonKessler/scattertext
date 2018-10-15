@@ -328,6 +328,15 @@ class TestTermDocMat(TestCase):
 		X = hamlet.get_term_doc_mat()
 		np.testing.assert_array_equal(X.shape, (hamlet.get_num_docs(), hamlet.get_num_terms()))
 
+	def test_get_metadata_doc_mat(self):
+		hamlet_meta = build_hamlet_jz_corpus_with_meta()
+		mX = hamlet_meta.get_metadata_doc_mat()
+		np.testing.assert_array_equal(mX.shape, (hamlet_meta.get_num_docs(), len(hamlet_meta.get_metadata_freq_df())))
+
+	def test_get_metadata(self):
+		hamlet_meta = build_hamlet_jz_corpus_with_meta()
+		self.assertEqual(hamlet_meta.get_metadata(), ['cat1'])
+
 	def test_get_category_index_store(self):
 		hamlet = get_hamlet_term_doc_matrix()
 		idxstore = hamlet.get_category_index_store()
