@@ -258,7 +258,7 @@ And Republicans:
 ```pydocstring
 >>> term_freq_df['Republican Score'] = \
 ...  corpus.get_scaled_f_scores('republican')
->>> pprint(list(term_freq_df.sort_values(by='Democratic Score', 
+>>> pprint(list(term_freq_df.sort_values(by='Republican Score', 
 ...                                      ascending=False).index[:10]))
 ['big government',
  "n't build",
