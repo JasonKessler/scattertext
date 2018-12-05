@@ -73,6 +73,7 @@ class ScatterChart:
 		self._rescale_y = None
 		self.used = False
 		self.metadata_term_lists = None
+		self.metadata_descriptions = None
 
 	def inject_metadata_term_lists(self, term_dict):
 		'''
@@ -92,6 +93,36 @@ class ScatterChart:
 			raise TermDocMatrixHasNoMetadataException("No metadata is present in the term document matrix")
 
 		self.metadata_term_lists = term_dict
+		return self
+
+	def inject_metadata_descriptions(self, term_dict):
+		'''
+		Inserts a set of descriptions of meta data terms.  These will be displayed
+		below the scatter plot when a meta data term is clicked. All keys in the term dict
+		must occur as meta data.
+
+		Parameters
+		----------
+		term_dict: dict {metadataname: str: 'explanation to insert', ...}
+
+		Returns
+		-------
+		self: ScatterChart
+		'''
+		assert type(term_dict) == dict
+		if not self.term_doc_matrix.metadata_in_use():
+			raise TermDocMatrixHasNoMetadataException("No metadata is present in the term document matrix")
+		if set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()) != set():
+			raise Exception('The following meta data terms are not present: '
+							+ ', '.join(list(set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()))))
+
+		if sys.version_info[0] == 2:
+			assert set([type(v) for v in term_dict.values()]) - set([str, unicode]) == set()
+		else:
+			assert set([type(v) for v in term_dict.values()]) - set([str]) == set()
+
+
+		self.metadata_descriptions = term_dict
 		return self
 
 	def inject_coordinates(self,
@@ -328,6 +359,8 @@ class ScatterChart:
 		              'extra_category_internal_names': extra_categories}}
 		if self.metadata_term_lists is not None:
 			j['metalists'] = self.metadata_term_lists
+		if self.metadata_descriptions is not None:
+			j['metadescriptions'] = self.metadata_descriptions
 		j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
 		return j
 

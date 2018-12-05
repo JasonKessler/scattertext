@@ -1,9 +1,11 @@
 from __future__ import print_function
 
+import pandas as pd
+
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termscoring.CohensD import CohensD
 
-version = [0, 0, 2, 30]
+version = [0, 0, 2, 31]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -67,7 +69,7 @@ from scattertext.termranking import OncePerDocFrequencyRanker, DocLengthDividedF
 from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, \
     ScaledFZScore, ScaledFZScorePrior, ScaledFScorePresetsNeg1To1
-from scattertext.termsignificance.LogOddsRatioAddOne import LogOddsRatioAddOne
+from scattertext.termsignificance.LogOddsRatioSmoothed import LogOddsRatioSmoothed
 from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror \
     import LogOddsRatioInformativeDirichletPrior
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior \
@@ -207,6 +209,8 @@ def produce_scattertext_explorer(corpus,
                                  color_func=None,
                                  term_scorer=None,
                                  show_axes=True,
+                                 horizontal_line_y_position=None,
+                                 vertical_line_x_position=None,
                                  show_extra=False,
                                  extra_category_name=None,
                                  censor_points=True,
@@ -215,6 +219,7 @@ def produce_scattertext_explorer(corpus,
                                  y_axis_labels=None,
                                  topic_model_term_lists=None,
                                  topic_model_preview_size=10,
+                                 metadata_descriptions=None,
                                  vertical_lines=None,
                                  characteristic_scorer=None,
                                  return_data=False):
@@ -363,6 +368,9 @@ def produce_scattertext_explorer(corpus,
         where a and b are term counts.  Scorer optionally has a get_term_freqs function.
     show_axes : bool, default True
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
+    vertical_line_x_position : float, default None
+    horizontal_line_y_position : float, default None
+
     show_extra : bool
         False by default.  Show a fourth column listing contexts in the
         extra categories.
@@ -381,10 +389,13 @@ def produce_scattertext_explorer(corpus,
         List of string value-labels to show at evenly spaced intervals on the y-axis.
         Low, medium, high are defaults.
     topic_model_term_lists : dict default None
-        Dict of metadata name (str) -> List of string terms in metatdata. These will be bolded
+        Dict of metadata name (str) -> List of string terms in metadata. These will be bolded
         in query in context results.
     topic_model_preview_size : int default 10
         Number of terms in topic model to show as a preview.
+    metadata_descriptions : dict default None
+        Dict of metadata name (str) -> str of metadata description. These will be shown when a meta data term is
+        clicked.
     vertical_lines : list default None
         List of floats corresponding to points on the x-axis to draw vertical lines
     characteristic_scorer : CharacteristicScorer default None
@@ -392,7 +403,6 @@ def produce_scattertext_explorer(corpus,
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
-
     Returns
     -------
     str
@@ -456,6 +466,8 @@ def produce_scattertext_explorer(corpus,
                                                   original_y=original_y)
     if topic_model_term_lists is not None:
         scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
+    if metadata_descriptions is not None:
+        scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
     html_base = None
     if semiotic_square:
         html_base = get_semiotic_square_html(num_terms_semiotic_square,
@@ -507,7 +519,9 @@ def produce_scattertext_explorer(corpus,
                                      x_axis_labels=x_axis_labels,
                                      y_axis_labels=y_axis_labels,
                                      topic_model_preview_size=topic_model_preview_size,
-                                     vertical_lines=vertical_lines) \
+                                     vertical_lines=vertical_lines,
+                                     horizontal_line_y_position=horizontal_line_y_position,
+                                     vertical_line_x_position=vertical_line_x_position) \
         .to_html(protocol=protocol,
                  d3_url=d3_url,
                  d3_scale_chromatic_url=d3_scale_chromatic_url,
@@ -1118,8 +1132,7 @@ def produce_projection_explorer(corpus,
                                 projection_model=None,
                                 embeddings=None,
                                 term_acceptance_re=re.compile('[a-z]{3,}'),
-                                x_dim=0,
-                                y_dim=1,
+                                show_axes=False,
                                 **kwargs):
     '''
     Parameters
@@ -1128,7 +1141,8 @@ def produce_projection_explorer(corpus,
         It is highly recommended to use a stoplisted, unigram corpus-- `corpus.get_stoplisted_unigram_corpus()`
     category : str
     word2vec_model : Word2Vec
-        A gensim word2vec model.  A default model will be used instead.
+        A gensim word2vec model.  A default model will be used instead. See Word2VecFromParsedCorpus for the default
+        model.
     projection_model : sklearn-style dimensionality reduction model.
         By default: umap.UMAP(min_dist=0.5, metric='cosine')
       You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init='pca', n_iter=2500, random_state=23)
@@ -1136,12 +1150,10 @@ def produce_projection_explorer(corpus,
         Word embeddings.  If None (default), wil train them using word2vec Model
     term_acceptance_re : SRE_Pattern,
         Regular expression to identify valid terms
-    x_dim : int, default 0
-        Dimension of transformation matrix for x-axis
-    y_dim : int, default 1
-        Dimension of transformation matrix for y-axis
+    show_axes : bool, default False
+        Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     kwargs : dict
-        Remaining produce_scattertext_explorer keywords
+        Remaining produce_scattertext_explorer keywords get_tooltip_content
 
     Returns
     -------
@@ -1154,7 +1166,7 @@ def produce_projection_explorer(corpus,
         embeddings_resolover.set_embeddings(embeddings)
     else:
         embeddings_resolover.set_embeddings_model(word2vec_model, term_acceptance_re)
-    corpus, word_axes = embeddings_resolover.project_embeddings(projection_model, x_dim=x_dim, y_dim=y_dim)
+    corpus, word_axes = embeddings_resolover.project_embeddings(projection_model, x_dim=0, y_dim=1)
     html = produce_scattertext_explorer(
         corpus=corpus,
         category=category,
@@ -1164,10 +1176,94 @@ def produce_projection_explorer(corpus,
         y_coords=scale(word_axes['y']),
         y_label='',
         x_label='',
+        show_axes=show_axes,
         **kwargs
     )
     return html
 
+
+def produce_pca_explorer(corpus,
+                         category,
+                         word2vec_model=None,
+                         projection_model=None,
+                         embeddings=None,
+                         projection=None,
+                         term_acceptance_re=re.compile('[a-z]{3,}'),
+                         x_dim=0,
+                         y_dim=1,
+                         scaler=scale,
+                         show_axes=False,
+                         show_dimensions_on_tooltip=True,
+                         **kwargs):
+    """
+    Parameters
+    ----------
+    corpus : ParsedCorpus
+        It is highly recommended to use a stoplisted, unigram corpus-- `corpus.get_stoplisted_unigram_corpus()`
+    category : str
+    word2vec_model : Word2Vec
+        A gensim word2vec model.  A default model will be used instead. See Word2VecFromParsedCorpus for the default
+        model.
+    projection_model : sklearn-style dimensionality reduction model. Ignored if 'projection' is presents
+        By default: umap.UMAP(min_dist=0.5, metric='cosine') unless projection is present. If so,
+        You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init='pca', n_iter=2500, random_state=23)
+    embeddings : array[len(corpus.get_terms()), X]
+        Word embeddings.  If None (default), and no value is passed into projection, use word2vec_model
+    projection : DataFrame('x': array[len(corpus.get_terms())], 'y': array[len(corpus.get_terms())])
+        If None (default), produced using projection_model
+    term_acceptance_re : SRE_Pattern,
+        Regular expression to identify valid terms
+    x_dim : int, default 0
+        Dimension of transformation matrix for x-axis
+    y_dim : int, default 1
+        Dimension of transformation matrix for y-axis
+    scalers : function , default scattertext.Scalers.scale
+        Function used to scale projection
+    show_axes : bool, default False
+        Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
+    show_dimensions_on_tooltip : bool, False by default
+        If true, shows dimension positions on tooltip, along with term name. Otherwise, default to the
+         get_tooltip_content parameter.
+    kwargs : dict
+        Remaining produce_scattertext_explorer keywords get_tooltip_content
+
+    Returns
+    -------
+    str
+    HTML of visualization
+    """
+    if projection is None:
+        embeddings_resolover = EmbeddingsResolver(corpus)
+        if embeddings is not None:
+            embeddings_resolover.set_embeddings(embeddings)
+        else:
+            embeddings_resolover.set_embeddings_model(word2vec_model, term_acceptance_re)
+        corpus, projection = embeddings_resolover.project_embeddings(projection_model, x_dim=x_dim, y_dim=y_dim)
+    else:
+        assert type(projection) == pd.DataFrame
+        assert 'x' in projection and 'y' in projection
+        assert set(projection.index) == set(corpus.get_terms())
+    if show_dimensions_on_tooltip:
+        kwargs['get_tooltip_content'] = '''(function(d) {
+     return  d.term + "<br/>Dim %s: " + Math.round(d.ox*1000)/1000 + "<br/>Dim %s: " + Math.round(d.oy*1000)/1000 
+    })''' % (x_dim, y_dim)
+    html = produce_scattertext_explorer(
+        corpus=corpus,
+        category=category,
+        minimum_term_frequency=0,
+        sort_by_dist=False,
+        original_x=projection['x'],
+        original_y=projection['y'],
+        x_coords=scaler(projection['x']),
+        y_coords=scaler(projection['y']),
+        y_label='',
+        x_label='',
+        show_axes=show_axes,
+        horizontal_line_y_position=0,
+        vertical_line_x_position=0,
+        **kwargs
+    )
+    return html
 
 def produce_characteristic_explorer(corpus,
                                     category,

@@ -30,7 +30,9 @@ buildViz = function (d3) {
                      xAxisLabels = null,
                      yAxisLabels = null,
                      topic_model_preview_size=10,
-                     verticalLines = null) {
+                     verticalLines = null,
+                     horizontal_line_y_position = null,
+                     vertical_line_x_position = null) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -713,6 +715,12 @@ buildViz = function (d3) {
                                 return x + ', ' + y
                             }));
             }
+            if ('metadescriptions' in fullData && info.term in fullData.metadescriptions) {
+                d3.select('#termstats')
+                    .attr("class", "topic_preview")
+                    .append('div')
+                    .html("<b>Description</b>: " + fullData.metadescriptions[info.term]);
+            }
             var message = '';
             var cat_name = fullData.info.category_name;
             var ncat_name = fullData.info.not_category_name;
@@ -1038,7 +1046,6 @@ buildViz = function (d3) {
                     message += getDefaultTooltipContent(d);
                 }
             }
-
             pageX -= (svg.node().getBoundingClientRect().left) - origSVGLeft;
             pageY -= (svg.node().getBoundingClientRect().top) - origSVGTop;
             tooltip.transition()
@@ -1047,7 +1054,7 @@ buildViz = function (d3) {
                 .style("z-index", 10000000);
             tooltip.html(message)
                 .style("left", (pageX - 40) + "px")
-                .style("top", (pageY - 85) + "px");
+                .style("top", (pageY - 85 > 0 ? pageY - 85 : 0) + "px");
             tooltip.on('click', function () {
                 tooltip.transition()
                     .style('opacity', 0)
@@ -1517,16 +1524,56 @@ buildViz = function (d3) {
                     .text(getLabelText('y'));
                 registerFigureBBox(yLabel);
             } else {
-
+                horizontal_line_y_position_translated = 0.5;
+                if(horizontal_line_y_position !== null) {
+                   var loOy = null, hiOy = null, loY = null, hiY = null;
+                   for(i in fullData.data) {
+                        var curOy = fullData.data[i].oy;
+                        if(curOy < horizontal_line_y_position && (curOy > loOy || loOy === null)) {
+                              loOy = curOy;
+                              loY = fullData.data[i].y
+                        }
+                        if(curOy > horizontal_line_y_position && (curOy < hiOy || hiOy === null)) {
+                              hiOy = curOy;
+                              hiY = fullData.data[i].y
+                        }
+                   }
+                   horizontal_line_y_position_translated = loY + (hiY - loY)/2.
+                   if(loY === null) {
+                        horizontal_line_y_position_translated = 0;
+                   }
+                }
+                if(vertical_line_x_position === null) {
+                    vertical_line_x_position_translated = 0.5;
+                } else {
+                    if(vertical_line_x_position !== null) {
+                       var loOx = null, hiOx = null, loX = null, hiX = null;
+                       for(i in fullData.data) {
+                            var curOx = fullData.data[i].ox;
+                            if(curOx < vertical_line_x_position && (curOx > loOx || loOx === null)) {
+                                  loOx = curOx;
+                                  loX = fullData.data[i].x;
+                            }
+                            if(curOx > vertical_line_x_position && (curOx < hiOx || hiOx === null)) {
+                                  hiOx = curOx;
+                                  hiX = fullData.data[i].x
+                            }
+                       }
+                       vertical_line_x_position_translated = loX + (hiX - loX)/2.
+                       if(loX === null) {
+                            vertical_line_x_position_translated = 0;
+                       }
+                    }
+                }
                 var x_line = svg.append("g")
-                    .attr("transform", "translate(0, " + y(0.5) + ")")
+                    .attr("transform", "translate(0, " + y(horizontal_line_y_position_translated) + ")")
                     .append("line")
                     .attr("x2", width)
                     .style("stroke", "#cccccc")
                     .style("stroke-width", "1px")
                     .moveToBack();
                 var y_line = svg.append("g")
-                    .attr("transform", "translate(" + x(0.5) + ", 0)")
+                    .attr("transform", "translate(" + x(vertical_line_x_position_translated) + ", 0)")
                     .append("line")
                     .attr("y2", height)
                     .style("stroke", "#cccccc")

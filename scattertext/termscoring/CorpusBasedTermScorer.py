@@ -81,7 +81,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return self
 
     def _get_X(self):
-        return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.corpus_.get_term_doc_mat()
+        return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.term_ranker_.get_X()
 
     def get_t_statistics(self):
         '''

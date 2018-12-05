@@ -36,7 +36,9 @@ class HTMLVisualizationAssembly(object):
 	             y_axis_values=None,
 	             color_func=None,
 	             show_axes=True,
-	             show_extra=False,
+				 horizontal_line_y_position=None,
+				 vertical_line_x_position=None,
+				 show_extra=False,
 	             do_censor_points=True,
 	             center_label_over_points=False,
 	             x_axis_labels=None,
@@ -106,6 +108,10 @@ class HTMLVisualizationAssembly(object):
 			returns a string.
 		show_axes : bool, default True
 			Show x and y axes
+		horizontal_line_y_position : float, default None
+			If x and y axes markers are shown, the position of the horizontal axis marker
+		vertical_line_x_position : float, default None
+			If x and y axes markers are shown, the position of the vertical axis marker
 		show_extra : bool, default False
 			Show extra fourth column
 		do_censor_points  : bool, default True
@@ -155,6 +161,8 @@ class HTMLVisualizationAssembly(object):
 		self._y_axis_labels = y_axis_labels
 		self._color_func = color_func
 		self._show_axes = show_axes
+		self._horizontal_line_y_position = horizontal_line_y_position
+		self._vertical_line_x_position = vertical_line_x_position
 		self._show_extra = show_extra
 		self._do_censor_points = do_censor_points
 		self._center_label_over_points = center_label_over_points
@@ -302,5 +310,7 @@ class HTMLVisualizationAssembly(object):
 		             js_list_or_null(self._x_axis_labels),
 		             js_list_or_null(self._y_axis_labels),
 		             js_default_value(self._topic_model_preview_size),
-		             js_list_or_null(self._vertical_lines)]
+		             js_list_or_null(self._vertical_lines),
+					 js_default_value_to_null(self._horizontal_line_y_position),
+					 js_default_value_to_null(self._vertical_line_x_position)]
 		return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

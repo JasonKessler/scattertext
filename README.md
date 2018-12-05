@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.30
+# Scattertext 0.0.2.31
 
 **Table of Contents**
 
@@ -29,7 +29,7 @@
     - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
     - [Visualizing topic models](#visualizing-topic-models)
     - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
-    - [Visualizing Changing Topics over Time](#visualizing-chaning-topics-over-time)
+    - [Using SVD to visualize any kind of word embeddings](#using-svd-to-visualize-any-kind-of-word-embeddings)
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -80,8 +80,7 @@ The HTML outputs look best in Chrome and Safari.
 
 ## What's new
 
-
-In version 0.0.28-30, we added:
+In version 0.0.28-31, we added:
 
 A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)), and
 `ZScores` and implementation of the Z-Score model used in Frankhauser et al.
@@ -92,12 +91,18 @@ A number of new term scoring approaches including `RelativeEntropy` (a direct im
 lets these scorers with metadata, but also allows you to integrate once-per-document counts.
 
 Fixed `produce_projection_explorer` such that it can work with a predefined set of term embeddings.  This can allow, 
-for example, the easy exploration of one hot-encoded term embeddings using selected dimensions of PCA.  See `demo_bow_pca.py` for an example.
+for example, the easy exploration of one hot-encoded term embeddings in addition to 
+arbitrary lower-dimensional embeddings.  
+
+Added `add_metadata` to `TermDocMatrix` in order to inject meta data after a TermDocMatrix object
+has been created.  
+
+Made sure tooltip never started above the top of the web page.
 
 ## Style Guide
 The name of this project is Scattertext.  "Scattertext" is written as a single word
 and should be capitalized.  When used in Python, the package `scattertext` should be defined
-to the name `st`.
+to the name `st`, i.e., `import scattertext as st`.
 
 ## Overview
  
@@ -238,10 +243,8 @@ Here are the terms that are most associated with Democrats:
 
 ```pydocstring
 >>> term_freq_df = corpus.get_term_freq_df()
->>> term_freq_df['Democratic Score'] = \
-...  corpus.get_scaled_f_scores('democrat')
->>> pprint(list(term_freq_df.sort_values(by='Democratic Score', 
-...                                      ascending=False).index[:10]))
+>>> term_freq_df['Democratic Score'] = corpus.get_scaled_f_scores('democrat')
+>>> pprint(list(term_freq_df.sort_values(by='Democratic Score', ascending=False).index[:10]))
 ['auto',
  'america forward',
  'auto industry',
@@ -256,10 +259,8 @@ Here are the terms that are most associated with Democrats:
 
 And Republicans:
 ```pydocstring
->>> term_freq_df['Republican Score'] = \
-...  corpus.get_scaled_f_scores('republican')
->>> pprint(list(term_freq_df.sort_values(by='Democratic Score', 
-...                                      ascending=False).index[:10]))
+>>> term_freq_df['Republican Score'] = corpus.get_scaled_f_scores('republican')
+>>> pprint(list(term_freq_df.sort_values(by='Republican Score', ascending=False).index[:10]))
 ['big government',
  "n't build",
  'mitt was',
@@ -328,8 +329,54 @@ topic model.
 >>> open("Convention-Visualization-Empath.html", 'wb').write(html.encode('utf-8'))
 ``` 
 
-
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
+
+### Visualizing General Inquirer Tag Categories and Document Categories
+
+Scattertext also includes a feature builder to explore the relationship between General Inquirer Tag Categoires 
+and Document Categories. We'll use a slightly different approach, looking at relationship of GI Tag Categories to political parties by using the
+Z-Scores of the Log-Odds-Ratio with Uninformative Dirichlet Priors (Monroe 2008). We'll use the `produce_frequency_explorer` plot 
+variation to visualize this relationship, setting the x-axis as the number of times a word in the tag category occurs, 
+and the y-axis as the z-score.  
+
+For more information on the General Inquirer, please see the [General Inquirer Home Page](http://www.wjh.harvard.edu/~inquirer/).
+
+We'll use the same data set as before, except we'll use the `FeatsFromGeneralInquirer` feature builder.
+
+```pydocstring
+>>> general_inquirer_feature_builder = st.FeatsFromGeneralInquirer()
+>>> corpus = st.CorpusFromPandas(convention_df,
+...                              category_col='party',
+...                              text_col='text',
+...                              nlp=st.whitespace_nlp_with_sentences,
+...                              feats_from_spacy_doc=general_inquirer_feature_builder).build()
+```
+
+Next, we'll call `produce_frequency_explorer` in a similar way we called `produce_scattertext_explorer` in the previous section.
+There are a few differences, however. First, we specify the `LogOddsRatioUninformativeDirichletPrior` term scorer, which
+scores the relationships between the categories.  The `grey_threshold` indicates the points scoring between [-1.96, 1.96]
+(i.e., p > 0.05) should be colored gray. The argument `metadata_descriptions=general_inquirer_feature_builder.get_definitions()`
+indicates that a dictionary mapping the tag name to a string definition is passed. When a tag is clicked, the definition
+in the dictionary will be shown below the plot, as shown in the image following the snippet. 
+```pydocstring
+>>> html = st.produce_frequency_explorer(corpus,
+...                                      category='democrat',
+...                                      category_name='Democratic',
+...                                      not_category_name='Republican',
+...                                      metadata=convention_df['speaker'],
+...                                      use_non_text_features=True,
+...                                      use_full_doc=True,
+...                                      term_scorer=st.LogOddsRatioUninformativeDirichletPrior(),
+...                                      grey_threshold=1.96,
+...                                      width_in_pixels=1000,
+...                                      topic_model_term_lists=general_inquirer_feature_builder.get_top_model_term_lists(),
+...                                      metadata_descriptions=general_inquirer_feature_builder.get_definitions())
+```
+Here's the resulting chart.  
+[![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
+   
+[![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer2.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
+
 
 ### Ordering Terms by Corpus Characteristicness
 Often the terms of most interest are ones that are characteristic to the corpus as a whole.  These are terms which occur 
@@ -337,6 +384,10 @@ frequently in all sets of documents being studied, but relatively infrequent com
 
 We can produce a plot with a characteristic score on the x-axis and class-association scores on the y-axis using the 
 function `produce_characteristic_explorer`.  
+
+Corpus characteristicness is the difference in dense term ranks between the words in all of the documents in the study 
+and a general English-language frequency list.  See this [Talk on Term-Class Association Scores](http://nbviewer.jupyter.org/github/JasonKessler/PuPPyTalk/blob/master/notebooks/Class-Association-Scores.ipynb)
+for a more thorough explanation. 
 
 ```python
 import scattertext as st
@@ -567,6 +618,12 @@ html = st.produce_frequency_explorer(
 
 ### Alternative term scoring methods
 
+Scaled F-Score is not the only scoring method included in Scattertext.  Please click on one of the links below to 
+view a notebook which describes how other class association scores work and can be visualized through Scattertext. 
+
+* [Google Colab Notebook](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS) (recommend).
+* [Jupyter Notebook via NBViewer](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS).
+
 ## Advanced uses
 
 ### Visualizing differences based on only term frequencies
@@ -583,7 +640,16 @@ df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
 	      .dropna()
 	      .set_index('lemma')[['SPOKEN', 'FICTION']]
 	      .iloc[:1000])
-convention_df	      
+df.head()	      
+'''
+       SPOKEN    FICTION
+lemma
+the    3859682.0  4092394.0
+I      1346545.0  1382716.0
+they   609735.0   352405.0
+she    212920.0   798208.0
+would  233766.0   229865.0
+'''
 ```
 
 Transforming this into a visualization is extremely easy. Just pass a dataframe indexed on 
@@ -1245,7 +1311,7 @@ one doesn't occur.
 
 Given a custom term list, the `SentencesForTopicModeling.get_topics_from_terms` will
 generate a series of topics.  Note that the dense rank difference (`RankDifference`) works 
-particularly well for this task, and is the default paramter.
+particularly well for this task, and is the default parameter.
 
 ```python
 term_list = ['obama', 'romney', 'democrats', 'republicans', 'health', 'military', 'taxes',
@@ -1267,6 +1333,7 @@ topic_feature_builder = st.FeatsFromTopicModel(topic_model)
 ```
 
 [![demo_word_list_topic_model.html](https://jasonkessler.github.io/demo_word_list_topic_model.png)](https://jasonkessler.github.io/demo_word_list_topic_model.html)
+
 
 
 ### Creating T-SNE-style word embedding projection plots
@@ -1307,12 +1374,120 @@ html = st.produce_projection_explorer(corpus,
 
 [![t-sne style plot](https://jasonkessler.github.io/demo_tsne_style.png)](https://jasonkessler.github.io/demo_tsne_style.html)
 
-## Visualizing Changing Topics over Time
+### Using SVD to visualize any kind of word embeddings
 
-I've begun work on an extension to Scattertext allow the visualization the
-rise and fall of trending topics.
+Term positions can also be determined by the positions of terms according to the output of principal component analysis, 
+and `produce_projection_explorer` also supports this functionality. We'll look at how axes transformations ("scalers" 
+in Scattertext terminology) can make it easier to inspect the output of PCA. 
 
-This is still under development. Check back for more details.   
+We'll use the 2012 Conventions corpus for these visualizations.  Only unigrams occurring in at least three documents 
+will be considered. 
+
+```pydocstring
+>>> convention_df = st.SampleCorpora.ConventionData2012.get_data()
+>>> convention_df['parse'] = convention_df['text'].apply(st.whitespace_nlp_with_sentences)
+>>> corpus = (st.CorpusFromParsedDocuments(convention_df,
+...                                        category_col='party',
+...                                        parsed_col='parse')
+...           .build()
+...           .get_stoplisted_unigram_corpus()
+...           .remove_infrequent_words(minimum_term_count=3, term_ranker=st.OncePerDocFrequencyRanker))
+```
+
+Next, we use scikit-learn's tf-idf transformer to find very simple, sparse embeddings for all of these words. Since, 
+we input a #docs x #terms matrix to the transformer, we can transpose it to get a proper term-embeddings matrix, where each row
+corresponds to a term, and the columns correspond to document-specific tf-idf scores.      
+```pydocstring
+>>> from sklearn.feature_extraction.text import TfidfTransformer
+>>> embeddings = TfidfTransformer().fit_transform(corpus.get_term_doc_mat())
+>>> embeddings.shape
+(189, 2159)
+>>> corpus.get_num_docs(), corpus.get_num_terms()
+(189, 2159) 
+>>> embeddings = embeddings.T
+>>> embeddings.shape
+(2159, 189)
+```
+
+Given these spare embeddings, we can apply sparse singular value decomposition to extract three factors. SVD outputs 
+factorizes the term embeddings matrix into three matrices, U, Σ, and VT. Importantly, the matrix U provides the singular values 
+for each term, and VT provides them for each document, and Σ is a vector of the singular values.   
+```pydocstring
+>>> from scipy.sparse.linalg import svds
+>>> U, S, VT = svds(embeddings, k = 3, maxiter=20000, which='LM')
+>>> U.shape
+(2159, 3)
+>>> S.shape
+(3,)
+>>> VT.shape
+(3, 189)
+```
+
+We'll look at the first two singluar values, plotting each term such that the x-axis position is the first singular
+value, and the y-axis term is the second.  To do this, we make a "projection" data frame, where the `x` and `y` 
+columns store the first two singular values, and key the data frame on each term.  This controls the term positions
+on the chart. 
+```pydocstring
+>>> x_dim = 0; y_dim = 1;
+>>> projection = pd.DataFrame({'term':corpus.get_terms(),
+...                            'x':U.T[x_dim],
+...                            'y':U.T[y_dim]}).set_index('term')
+```
+
+We'll use the `produce_pca_explorer` function to visualize these.  Note we include the projection object, and specify 
+which singular values were used for x and y (`x_dim` and `y_dim`) so we they can be labeled in the interactive
+visualization. 
+
+```pydocstring
+html = st.produce_pca_explorer(corpus,
+                               category='democrat',
+                               category_name='Democratic',
+                               not_category_name='Republican',
+                               projection=projection,
+                               metadata=convention_df['speaker'],
+                               width_in_pixels=1000,
+                               x_dim=x_dim,
+                               y_dim=y_dim)
+```
+
+Click for an interactive visualization.  
+[![pca](https://jasonkessler.github.io/svd1.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1.html)
+
+We can easily re-scale the plot in order to make more efficient use of space.  For example, passing in 
+`scaler=scale_neg_1_to_1_with_zero_mean` will make all four quadrants take equal area.
+
+```pydocstring
+html = st.produce_pca_explorer(corpus,
+                               category='democrat',
+                               category_name='Democratic',
+                               not_category_name='Republican',
+                               projection=projection,
+                               metadata=convention_df['speaker'],
+                               width_in_pixels=1000,
+                               scaler=st.scale_neg_1_to_1_with_zero_mean,
+                               x_dim=x_dim,
+                               y_dim=y_dim)
+```
+
+Click for an interactive visualization.  
+[![pca](https://jasonkessler.github.io/svd2.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1_scale_neg_1_to_1_with_zero_mean.html)
+
+```pydocstring
+html = st.produce_pca_explorer(corpus,
+                               category='democrat',
+                               category_name='Democratic',
+                               not_category_name='Republican',
+                               projection=projection,
+                               metadata=convention_df['speaker'],
+                               width_in_pixels=1000,
+                               scaler=st.scale_neg_1_to_1_with_zero_mean,
+                               x_dim=x_dim,
+                               y_dim=y_dim)
+```
+
+Click for an interactive visualization.  
+[![pca](https://jasonkessler.github.io/svd2.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1_scale_neg_1_to_1_with_zero_mean.html)
+
 
 ## Examples 
 
@@ -1666,4 +1841,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.
 * Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
 * Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources. LREC 2014.
-
+* Kirk Roberts, Michael A. Roach, Joseph Johnson, Josh Guthrie, Sanda M. Harabagiu. EmpaTweet: Annotating and Detecting Emotions on Twitter. LREC 2012.

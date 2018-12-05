@@ -19,7 +19,5 @@ ROTTEN_TOMATOES_DATA_FULL_URL = 'https://gitcdn.xyz/repo/JasonKessler/scattertex
 GENERAL_INQUIRER_URL = 'http://www.wjh.harvard.edu/~inquirer/inqtabs.txt'
 
 # For sample corpus
-DEFAULT_D3_URL \
-	= 'http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js'
-DEFAULT_D3_SCALE_CHROMATIC \
-	= 'http://d3js.org/d3-scale-chromatic.v1.min.js'
+DEFAULT_D3_URL = 'http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js'
+DEFAULT_D3_SCALE_CHROMATIC = 'http://d3js.org/d3-scale-chromatic.v1.min.js'

@@ -12,7 +12,7 @@ def z_to_p_val(z_scores):
 	return ndtr(z_scores)
 
 
-class LogOddsRatioAddOne(TermSignificance):
+class LogOddsRatioSmoothed(TermSignificance):
 	def __init__(self, alpha_w=1, ranker=AbsoluteFrequencyRanker):
 		'''
 		Parameters

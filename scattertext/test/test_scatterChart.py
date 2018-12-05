@@ -1,3 +1,4 @@
+import sys
 from unittest import TestCase
 
 import numpy as np
@@ -160,6 +161,20 @@ class TestScatterChart(TestCase):
 		                      'extra_category_internal_names',
 		                      'neutral_category_internal_names',
 		                      'categories']))
+
+	def test_inject_metadata_descriptions(self):
+		tdm = build_hamlet_jz_corpus_with_meta()
+		scatter_chart = ScatterChart(term_doc_matrix=tdm, minimum_term_frequency=0)
+		with self.assertRaises(AssertionError):
+			scatter_chart.inject_metadata_descriptions(3323)
+		if (sys.version_info > (3, 0)):
+			with self.assertRaisesRegex(Exception, 'The following meta data terms are not present: blah'):
+				scatter_chart.inject_metadata_descriptions({'blah': 'asjdkflasdjklfsadjk jsdkafsd'})
+			with self.assertRaisesRegex(Exception, 'The following meta data terms are not present: cat2'):
+				scatter_chart.inject_metadata_descriptions({'cat1': 'asjdkflasdjklfsadjk jsdkafsd', 'cat2': 'asdf'})
+		assert scatter_chart == scatter_chart.inject_metadata_descriptions({'cat1': 'asjdkflasdjklfsadjk jsdkafsd'})
+		j = scatter_chart.to_dict('hamlet')
+		self.assertEqual(set(j.keys()), set(['info', 'data', 'metadescriptions']))
 
 	def test_inject_coordinates_original(self):
 		tdm = build_hamlet_jz_term_doc_mat()

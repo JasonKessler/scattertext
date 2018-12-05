@@ -2,6 +2,8 @@ import re
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
+from scipy.stats import pearsonr
 
 from scattertext.representations import Word2VecFromParsedCorpus
 
@@ -47,6 +49,7 @@ class EmbeddingsResolver:
         self.vocab_ = model.wv.vocab
         return self
 
+
     def project_embeddings(self, projection_model, x_dim=0, y_dim=1):
         '''
 
@@ -56,16 +59,7 @@ class EmbeddingsResolver:
         :param y_dim: int, default 1, dimension of transformation matrix for y-axis
         :return:
         '''
-        if self.embeddings_ is None:
-            raise Exception("Run set_embeddings_model or set_embeddings to get embeddings")
-
-        if projection_model is None:
-            try:
-                import umap
-            except:
-                raise Exception("Please install umap (pip install umap-learn) to use the default projection_model.")
-            projection_model = umap.UMAP(min_dist=0.5, metric='cosine')
-        axes = projection_model.fit_transform(self.embeddings_)
+        axes = self.project(projection_model)
         word_axes = (pd.DataFrame({'term': [w for w in self.vocab_],
                                    'x': axes.T[x_dim],
                                    'y': axes.T[y_dim]})
@@ -74,4 +68,30 @@ class EmbeddingsResolver:
                      .dropna())
         self.corpus_ = self.corpus_.remove_terms(set(self.corpus_.get_terms()) - set(word_axes.index))
         word_axes = word_axes.reindex(self.corpus_.get_terms()).dropna()
+
         return self.corpus_, word_axes
+
+    '''
+    def get_svd(self, num_dims, category):
+        U, s, V = sparse.linalg.svds(self.corpus_._X.astype('d'), k=num_dims)
+        Y = self.corpus_.get_category_ids() == category
+        [pearsonr(U.T[i], ) for i in range(num_dims)]
+    '''
+
+    def project(self, projection_model):
+        '''
+        :param projection_model: sklearn unsupervised model (e.g., PCA) by default the recommended model is umap.UMAP,
+        which requires UMAP in to be installed
+
+        :return: array, shape (num dimension, vocab size)
+        '''
+        if self.embeddings_ is None:
+            raise Exception("Run set_embeddings_model or set_embeddings to get embeddings")
+        if projection_model is None:
+            try:
+                import umap
+            except:
+                raise Exception("Please install umap (pip install umap-learn) to use the default projection_model.")
+            projection_model = umap.UMAP(min_dist=0.5, metric='cosine')
+        axes = projection_model.fit_transform(self.embeddings_)
+        return axes

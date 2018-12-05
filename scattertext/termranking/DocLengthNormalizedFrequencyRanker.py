@@ -12,6 +12,9 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 	def get_ranks(self):
 		row = self._get_row_category_ids()
 		X = self.get_X()
+		return self.get_ranks_from_mat(X, row)
+
+	def get_ranks_from_mat(self, X, row):
 		doc_lengths = X.sum(axis=1)
 		normX = self._get_normalized_X(X, doc_lengths)
 		categoryX = csr_matrix((normX.data, (row, normX.indices)))

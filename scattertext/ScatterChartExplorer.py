@@ -11,7 +11,7 @@ class ScatterChartExplorer(ScatterChart):
 	             corpus,
 	             **kwargs):
 		'''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
-
+		Running the `to_dict` function outputs
 		'''
 		assert (isinstance(corpus, Corpus)) or (isinstance(corpus, TermCategoryFrequencies))
 		ScatterChart.__init__(self, corpus, **kwargs)

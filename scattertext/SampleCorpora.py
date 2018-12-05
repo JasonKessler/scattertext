@@ -19,7 +19,7 @@ import pandas as pd
 class ConventionData2012(object):
 	@staticmethod
 	def _speaker_name_factory():
-		name_re = re.compile(r'.*(\n|^)(?P<name>[A-Z0-9 ]+):\w*.+', re.M)
+		name_re = re.compile(r'.*(\n|^)(?P<name>[A-Z0-9 \.\']+):\w*.+', re.M)
 
 		def speaker_name(text):
 			for _, name in name_re.findall(text):
@@ -31,7 +31,7 @@ class ConventionData2012(object):
 	@staticmethod
 	def _clean_function_factory():
 		only_speaker_text_re = re.compile(
-			r'((^|\n)((ANNOUNCER|AUDIENCE MEMBERS?): .+)($|\n)|(\n|^)((([A-Z\.()\- ]+): ))|\(.+\) *)',
+			r'((^|\n)((ANNOUNCER|AUDIENCE MEMBERS?): .+)($|\n)|(\n|^)((([A-Z\.()\-\' ]+): ))|\(.+\) *)',
 			re.M)
 		assert only_speaker_text_re.sub('', 'AUDIENCE MEMBERS: (Chanting.) USA! USA! USA! USA!') == ''
 		assert only_speaker_text_re.sub('', 'AUDIENCE MEMBER: (Chanting.) USA! USA! USA! USA!') == ''

@@ -25,22 +25,6 @@ class ScaledFScoreSignificance(TermSignificance):
 	def get_name(self):
 		return "Scaled F-Score"
 
-	def get_zeta_i_j_given_separate_counts(self, cat, ncat):
-		'''
-		Parameters
-		----------
-		cat : np.array
-			In category word counts
-		ncat : np.array
-			Out of category word counts
-
-		Returns
-		-------
-		np.array
-			Z-scores
-		'''
-		return ScaledFZScore(self.scaler_algo, self.beta).get_scores(cat, ncat)
-
 	def get_p_vals(self, X):
 		'''
 		Imputes p-values from the Z-scores of `ScaledFScore` scores.  Assuming incorrectly

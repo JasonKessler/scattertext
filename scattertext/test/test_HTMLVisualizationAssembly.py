@@ -14,7 +14,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
 		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
-		          'null', 'null', '10', 'null']
+		          'null', 'null', '10', 'null', 'null', 'null']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -354,3 +354,17 @@ class TestHTMLVisualizationAssembly(TestCase):
 		 ._call_build_visualization_in_javascript())
 		self.assertEqual(params,
 		                 self.get_params({31: '[20, 31]'}))
+
+	def test_horizontal_line_y_position(self):
+		visualization_data = self.make_adapter()
+		params = (HTMLVisualizationAssembly(visualization_data,
+											horizontal_line_y_position=0)
+		 ._call_build_visualization_in_javascript())
+		self.assertEqual(params, self.get_params({32: '0'}))
+
+	def test_vertical_line_x_position(self):
+		visualization_data = self.make_adapter()
+		params = (HTMLVisualizationAssembly(visualization_data,
+											vertical_line_x_position=3)
+		 ._call_build_visualization_in_javascript())
+		self.assertEqual(params, self.get_params({33: '3'}))

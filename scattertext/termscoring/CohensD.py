@@ -32,6 +32,7 @@ class CohensD(CorpusBasedTermScorer):
 
     def get_cohens_d_scores(self):
         X = self._get_X()
+
         cat_X, ncat_X = self._get_cat_and_ncat(X)
         n1, n2 = cat_X.shape[1], ncat_X.shape[1]
         pooled_sd = np.sqrt(((n1 - 1) * sparse_var(cat_X) + (n2 - 1) * sparse_var(ncat_X))
