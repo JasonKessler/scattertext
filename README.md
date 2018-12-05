@@ -1841,4 +1841,3 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.
 * Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
 * Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources. LREC 2014.
-* Kirk Roberts, Michael A. Roach, Joseph Johnson, Josh Guthrie, Sanda M. Harabagiu. EmpaTweet: Annotating and Detecting Emotions on Twitter. LREC 2012.
