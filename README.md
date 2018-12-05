@@ -1472,23 +1472,6 @@ html = st.produce_pca_explorer(corpus,
 Click for an interactive visualization.  
 [![pca](https://jasonkessler.github.io/svd2.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1_scale_neg_1_to_1_with_zero_mean.html)
 
-```pydocstring
-html = st.produce_pca_explorer(corpus,
-                               category='democrat',
-                               category_name='Democratic',
-                               not_category_name='Republican',
-                               projection=projection,
-                               metadata=convention_df['speaker'],
-                               width_in_pixels=1000,
-                               scaler=st.scale_neg_1_to_1_with_zero_mean,
-                               x_dim=x_dim,
-                               y_dim=y_dim)
-```
-
-Click for an interactive visualization.  
-[![pca](https://jasonkessler.github.io/svd2.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1_scale_neg_1_to_1_with_zero_mean.html)
-
-
 ## Examples 
 
 Please see the examples in the [PyData 2017 Tutorial](https://github.com/JasonKessler/Scattertext-PyData) on Scattertext.
