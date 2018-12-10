@@ -1434,6 +1434,7 @@ on the chart.
 ...                            'y':U.T[y_dim]}).set_index('term')
 ```
 
+
 We'll use the `produce_pca_explorer` function to visualize these.  Note we include the projection object, and specify 
 which singular values were used for x and y (`x_dim` and `y_dim`) so we they can be labeled in the interactive
 visualization. 
