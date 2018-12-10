@@ -1423,7 +1423,7 @@ for each term, and VT provides them for each document, and Σ is a vector of the
 (3, 189)
 ```
 
-We'll look at the first two singluar values, plotting each term such that the x-axis position is the first singular
+We'll look at the first two singular values, plotting each term such that the x-axis position is the first singular
 value, and the y-axis term is the second.  To do this, we make a "projection" data frame, where the `x` and `y` 
 columns store the first two singular values, and key the data frame on each term.  This controls the term positions
 on the chart. 
