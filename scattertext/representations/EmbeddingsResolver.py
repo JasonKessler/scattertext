@@ -27,7 +27,7 @@ class EmbeddingsResolver:
         self.vocab_ = self.corpus_.get_terms()
         return self
 
-    def set_embeddings_model(self, model, term_acceptance_re=re.compile('[a-z]{3,}')):
+    def set_embeddings_model(self, model=None, term_acceptance_re=re.compile('[a-z]{3,}')):
         '''
 
         :param model: gensim word2vec.Word2Vec model
@@ -50,7 +50,7 @@ class EmbeddingsResolver:
         return self
 
 
-    def project_embeddings(self, projection_model, x_dim=0, y_dim=1):
+    def project_embeddings(self, projection_model=None, x_dim=0, y_dim=1):
         '''
 
         :param projection_model: sklearn unsupervised model (e.g., PCA) by default the recommended model is umap.UMAP,
@@ -78,7 +78,7 @@ class EmbeddingsResolver:
         [pearsonr(U.T[i], ) for i in range(num_dims)]
     '''
 
-    def project(self, projection_model):
+    def project(self, projection_model=None):
         '''
         :param projection_model: sklearn unsupervised model (e.g., PCA) by default the recommended model is umap.UMAP,
         which requires UMAP in to be installed

@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.31
+# Scattertext 0.0.2.32
 
 **Table of Contents**
 
@@ -17,6 +17,7 @@
     - [Visualizing term associations](#visualizing-term-associations)
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
+    - [Document-Based Scatterplots](#document-based-scatterplots) 
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [Advanced Uses](#advanced-uses)
@@ -80,24 +81,9 @@ The HTML outputs look best in Chrome and Safari.
 
 ## What's new
 
-In version 0.0.28-31, we added:
-
-A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)), and
-`ZScores` and implementation of the Z-Score model used in Frankhauser et al.
-
-`TermDocMatrix.get_metadata_freq_df()` returns a metadata-doc corpus.
-
-`CorpusBasedTermScorer.set_ranker` allows you to use a different term ranker when finding corpus-based scores.  This not only
-lets these scorers with metadata, but also allows you to integrate once-per-document counts.
-
-Fixed `produce_projection_explorer` such that it can work with a predefined set of term embeddings.  This can allow, 
-for example, the easy exploration of one hot-encoded term embeddings in addition to 
-arbitrary lower-dimensional embeddings.  
-
-Added `add_metadata` to `TermDocMatrix` in order to inject meta data after a TermDocMatrix object
-has been created.  
-
-Made sure tooltip never started above the top of the web page.
+In 0.0.2.32 we added a series of objects to handle uncategorized corpora. Added section on 
+ [Document-Based Scatterplots](#document-based-scatterplots), and the add_doc_names_as_metadata function.
+`CategoryColorAssigner` was also added to assign colors to a qualitative categories. 
 
 ## Style Guide
 The name of this project is Scattertext.  "Scattertext" is written as a single word
@@ -412,6 +398,66 @@ open('demo_characteristic_chart.html', 'wb').write(html.encode('utf-8'))
 
 [![demo_characteristic_chart.html](https://jasonkessler.github.io/demo_characteristic_chart.png)](https://jasonkessler.github.io/demo_characteristic_chart.html)
 
+### Document-Based Scatterplots
+
+In addition to words, phases and topics, we can make each point correspond to a document.  Let's first create
+a corpus object for the 2012 Conventions data set.  This explanation follows `demo_pca_documents.py`
+
+```python
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfTransformer
+import scattertext as st
+from scipy.sparse.linalg import svds
+
+convention_df = st.SampleCorpora.ConventionData2012.get_data()
+convention_df['parse'] = convention_df['text'].apply(st.whitespace_nlp_with_sentences)
+corpus = (st.CorpusFromParsedDocuments(convention_df,
+                                       category_col='party',
+                                       parsed_col='parse')
+          .build()
+          .get_stoplisted_unigram_corpus())
+```
+
+Next, let's add the document names as meta data in the corpus object. The `add_doc_names_as_metadata` function
+takes an array of document names, and populates a new corpus' meta data with those names. If two documents have the
+same name, it appends a number (starting with 1) to the name.   
+
+```python
+corpus = corpus.add_doc_names_as_metadata(corpus.get_df()['speaker'])
+```
+
+Next, we find tf.idf scores for the corpus' term-document matrix, run sparse SVD, and add them to a projection 
+data frame, making the x and y-axes the first two singular values, and indexing it on the corpus' meta data, which
+corresponds to the document names. 
+
+```python
+embeddings = TfidfTransformer().fit_transform(corpus.get_term_doc_mat())
+u, s, vt = svds(embeddings, k=3, maxiter=20000, which='LM')
+projection = pd.DataFrame({'term': corpus.get_metadata(), 'x': u.T[0], 'y': u.T[1]}).set_index('term')
+```
+
+Finally, set scores as 1 for Democrats and 0 for Republicans, rendering Republican documents as red points and
+Democratic documents as blue.  For more on the `produce_pca_explorer` function, 
+see [Using SVD to visualize any kind of word embeddings](#using-svd-to-visualize-any-kind-of-word-embeddings).
+
+```python
+category = 'democrat'
+scores = (corpus.get_category_ids() == corpus.get_categories().index(category)).astype(int)
+html = st.produce_pca_explorer(corpus,
+                               category=category,
+                               category_name='Democratic',
+                               not_category_name='Republican',
+                               metadata=convention_df['speaker'],
+                               width_in_pixels=1000,
+                               show_axes=False,
+                               use_non_text_features=True,
+                               use_full_doc=True,
+                               projection=projection,
+                               scores=scores,
+                               show_top_terms=False)
+```
+Click for an interactive version
+[![docpca](https://jasonkessler.github.io/doc_pca.png)]![docpca](https://jasonkessler.github.io/demo_pca_documents.html)
 
 ### Understanding Scaled F-Score
 
@@ -1498,6 +1544,26 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+
+## 0.0.28-31
+
+A number of new term scoring approaches including `RelativeEntropy` (a direct implementation of Frankhauser et al. (2014)), and
+`ZScores` and implementation of the Z-Score model used in Frankhauser et al.
+
+`TermDocMatrix.get_metadata_freq_df()` returns a metadata-doc corpus.
+
+`CorpusBasedTermScorer.set_ranker` allows you to use a different term ranker when finding corpus-based scores.  This not only
+lets these scorers with metadata, but also allows you to integrate once-per-document counts.
+
+Fixed `produce_projection_explorer` such that it can work with a predefined set of term embeddings.  This can allow, 
+for example, the easy exploration of one hot-encoded term embeddings in addition to 
+arbitrary lower-dimensional embeddings.  
+
+Added `add_metadata` to `TermDocMatrix` in order to inject meta data after a TermDocMatrix object
+has been created.  
+
+Made sure tooltip never started above the top of the web page.
+
 
 ### 0.0.2.28
 

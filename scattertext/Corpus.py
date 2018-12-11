@@ -96,11 +96,11 @@ class Corpus(TermDocMatrix):
 	                              new_category_idx_store,
 	                              new_metadata_idx_store,
 	                              new_y_mask):
-		return Corpus(X=new_X,
-		              mX=new_mX,
-		              y=new_y,
-		              term_idx_store=new_term_idx_store,
-		              category_idx_store=new_category_idx_store,
-		              metadata_idx_store=new_metadata_idx_store,
-		              raw_texts=np.array(self.get_texts())[new_y_mask],
+		return Corpus(X=new_X if new_X is not None else self._X,
+		              mX=new_mX if new_mX is not None else self._mX,
+		              y=new_y if new_y is not None else self._y,
+		              term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
+		              category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
+		              metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
+		              raw_texts=np.array(self.get_texts())[new_y_mask] if new_y_mask is not None else self.get_texts(),
 		              unigram_frequency_path=self._unigram_frequency_path)

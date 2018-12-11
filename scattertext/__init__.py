@@ -2,10 +2,11 @@ from __future__ import print_function
 
 import pandas as pd
 
+from scattertext.CategoryColorAssigner import CategoryColorAssigner
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termscoring.CohensD import CohensD
 
-version = [0, 0, 2, 31]
+version = [0, 0, 2, 32]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -87,7 +88,6 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
-
 
 def produce_scattertext_html(term_doc_matrix,
                              category,
@@ -222,6 +222,7 @@ def produce_scattertext_explorer(corpus,
                                  metadata_descriptions=None,
                                  vertical_lines=None,
                                  characteristic_scorer=None,
+                                 term_colors=None,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -370,7 +371,6 @@ def produce_scattertext_explorer(corpus,
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     vertical_line_x_position : float, default None
     horizontal_line_y_position : float, default None
-
     show_extra : bool
         False by default.  Show a fourth column listing contexts in the
         extra categories.
@@ -400,6 +400,8 @@ def produce_scattertext_explorer(corpus,
         List of floats corresponding to points on the x-axis to draw vertical lines
     characteristic_scorer : CharacteristicScorer default None
         Used for bg scores
+    term_colors : dict, default None
+        Dictionary mapping term to color
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -468,6 +470,8 @@ def produce_scattertext_explorer(corpus,
         scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
     if metadata_descriptions is not None:
         scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
+    if term_colors is not None:
+        scatter_chart_explorer.inject_term_colors(term_colors)
     html_base = None
     if semiotic_square:
         html_base = get_semiotic_square_html(num_terms_semiotic_square,
@@ -1242,7 +1246,10 @@ def produce_pca_explorer(corpus,
     else:
         assert type(projection) == pd.DataFrame
         assert 'x' in projection and 'y' in projection
-        assert set(projection.index) == set(corpus.get_terms())
+        if kwargs.get('use_non_text_features', False):
+            assert set(projection.index) == set(corpus.get_metadata())
+        else:
+            assert set(projection.index) == set(corpus.get_terms())
     if show_dimensions_on_tooltip:
         kwargs['get_tooltip_content'] = '''(function(d) {
      return  d.term + "<br/>Dim %s: " + Math.round(d.ox*1000)/1000 + "<br/>Dim %s: " + Math.round(d.oy*1000)/1000 

@@ -1130,7 +1130,7 @@ buildViz = function (d3) {
         }
 
         function processData(fullData) {
-            var modelInfo = fullData['info'];
+            modelInfo = fullData['info'];
             /*
              categoryTermList.data(modelInfo['category_terms'])
              .enter()

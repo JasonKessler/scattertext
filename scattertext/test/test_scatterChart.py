@@ -176,6 +176,15 @@ class TestScatterChart(TestCase):
 		j = scatter_chart.to_dict('hamlet')
 		self.assertEqual(set(j.keys()), set(['info', 'data', 'metadescriptions']))
 
+	def test_inject_term_colors(self):
+		tdm = build_hamlet_jz_corpus_with_meta()
+		freq_df = tdm.get_term_freq_df()
+		scatter_chart = ScatterChart(term_doc_matrix=tdm,
+									 minimum_term_frequency=0)
+		scatter_chart.inject_term_colors({'t1': '00ffee'})
+		j = scatter_chart.to_dict('hamlet')
+		self.assertIn('term_colors', j['info'])
+
 	def test_inject_coordinates_original(self):
 		tdm = build_hamlet_jz_term_doc_mat()
 		freq_df = tdm.get_term_freq_df()

@@ -1,5 +1,3 @@
-import re
-import re
 import warnings
 
 import numpy as np
@@ -7,7 +5,6 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LogisticRegression
@@ -16,36 +13,28 @@ from sklearn.linear_model import RidgeClassifierCV, LassoCV
 from scattertext.CSRMatrixTools import delete_columns
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
     DEFAULT_BACKGROUND_BETA
-from scattertext.FeatureOuput import FeatureLister
-from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
+from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
 from scattertext.indexstore import IndexStore, IndexStoreFromList
-from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.CornerScore import CornerScore
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScore
 
-SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
-                     'loc', 'product', 'event', 'work_of_art', 'language',
-                     'type', 'date', 'time', 'percent', 'money', 'quantity',
-                     'ordinal', 'cardinal']
-
-MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn',
-                                                   'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn'}
-
 
 class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
     pass
 
 
-class TermDocMatrix(object):
+class TermDocMatrix(TermDocMatrixWithoutCategories):
     '''
     !!! to do: refactor score functions into classes
     '''
 
     def __init__(self,
-                 X, mX, y,
+                 X,
+                 mX,
+                 y,
                  term_idx_store,
                  category_idx_store,
                  metadata_idx_store,
@@ -73,66 +62,29 @@ class TermDocMatrix(object):
             raise CannotCreateATermDocMatrixWithASignleCategoryException(
                 'Documents must be labeled with more than one category. All documents were labeled '
                 'with category: "' + str(category_idx_store.getval(y[0])) + '"')
-        self._X, self._mX, self._y, self._term_idx_store, self._category_idx_store = \
-            X, mX, y, term_idx_store, category_idx_store
-        self._metadata_idx_store = metadata_idx_store
-        self._unigram_frequency_path = unigram_frequency_path
-        self._background_corpus = None
-
-    def get_default_stoplist(self):
-        return MY_ENGLISH_STOP_WORDS
-
-    def compact(self, compactor):
-        '''
-        Compact term document matrix.
-
-        Parameters
-        ----------
-        compactor : object
-            Object that takes a Term Doc Matrix as its first argument, and has a compact function which returns a
-            Term Doc Matrix like argument
-
-        Returns
-        -------
-        TermDocMatrix
-        New Term Doc Matrix
-        '''
-        return compactor.compact(self)
-
-    def get_num_terms(self):
+        TermDocMatrixWithoutCategories.__init__(self, X=X, mX=mX, term_idx_store=term_idx_store,
+                                                metadata_idx_store=metadata_idx_store,
+                                                unigram_frequency_path=unigram_frequency_path)
+        self._y = y
+        self._category_idx_store = category_idx_store
+    def term_doc_lists(self):
         '''
         Returns
         -------
-        The number of terms registered in the term doc matrix
+        dict
         '''
-        return len(self._term_idx_store)
+        doc_ids = self._X.transpose().tolil().rows
+        terms = self._term_idx_store.values()
+        return dict(zip(terms, doc_ids))
 
     def get_categories(self):
         '''
-
         Returns
         -------
         list
         Category names
         '''
         return self._category_idx_store.values()
-
-    def get_num_docs(self):
-        '''
-
-        Returns
-        -------
-        int, number of documents
-        '''
-        return len(self._y)
-
-    def get_total_unigram_count(self):
-        return self._get_unigram_term_freq_df().sum()
-
-    def _get_unigram_term_freq_df(self):
-        return self._get_corpus_unigram_freq(
-            self.get_term_freq_df().sum(axis=1)
-        )
 
     def old_get_term_freq_df(self):
         d = {'term': self._term_idx_store._i2val}
@@ -239,22 +191,6 @@ class TermDocMatrix(object):
     def _metadata_freq_df_from_matrix(self, catX):
         return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
 
-    def get_terms(self):
-        '''
-        Returns
-        -------
-        np.array of unique terms
-        '''
-        return self._term_idx_store._i2val
-
-    def get_metadata(self):
-        '''
-        Returns
-        -------
-        np.array of unique metadata
-        '''
-        return self._metadata_idx_store._i2val
-
     def get_category_names_by_row(self):
         '''
         Returns
@@ -263,138 +199,11 @@ class TermDocMatrix(object):
         '''
         return np.array(self.get_categories())[self._y]
 
-    def get_unigram_corpus(self):
-        '''
-        Returns
-        -------
-        A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
-        '''
-        terms_to_ignore = self._get_non_unigrams()
-        return self.remove_terms(terms_to_ignore)
-
-    def _get_non_unigrams(self):
-        return [term for term
-                in self._term_idx_store._i2val
-                if ' ' in term or "'" in term]
-
-    def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker):
-        '''
-        Returns
-        -------
-        A new TermDocumentMatrix consisting of only terms which occur at least minimum_term_count.
-        '''
-        tdf = term_ranker(self).get_ranks().sum(axis=1)
-        return self.remove_terms(list(tdf[tdf <= minimum_term_count].index))
-
-    def remove_entity_tags(self):
-        '''
-        Returns
-        -------
-        A new TermDocumentMatrix consisting of only terms in the current TermDocumentMatrix
-         that aren't spaCy entity tags.
-
-        Note: Used if entity types are censored using FeatsFromSpacyDoc(tag_types_to_censor=...).
-        '''
-        terms_to_remove = [term for term in self._term_idx_store._i2val
-                           if any([word in SPACY_ENTITY_TAGS for word in term.split()])]
-        return self.remove_terms(terms_to_remove)
-
-    def get_stoplisted_unigram_corpus(self, stoplist=None):
-        '''
-        Parameters
-        -------
-        stoplist : list, optional
-
-        Returns
-        -------
-        A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
-        '''
-        if stoplist is None:
-            stoplist = self.get_default_stoplist()
-        else:
-            stoplist = [w.lower() for w in stoplist]
-        return self._remove_terms_from_list(stoplist)
-
-    def get_stoplisted_unigram_corpus_and_custom(self,
-                                                 custom_stoplist):
-        '''
-        Parameters
-        -------
-        stoplist : list of lower-cased words, optional
-
-        Returns
-        -------
-        A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
-        '''
-        if type(custom_stoplist) == str:
-            custom_stoplist = [custom_stoplist]
-        return self._remove_terms_from_list(set(self.get_default_stoplist())
-                                            | set(w.lower() for w in custom_stoplist))
-
-    def _remove_terms_from_list(self, stoplist):
-        terms_to_ignore = [term for term
-                           in self._term_idx_store._i2val
-                           if ' ' in term or "'" in term
-                           or term in stoplist]
-        return self.remove_terms(terms_to_ignore)
-
-    def term_doc_lists(self):
-        '''
-        Returns
-        -------
-        dict
-        '''
-        doc_ids = self._X.transpose().tolil().rows
-        terms = self._term_idx_store.values()
-        return dict(zip(terms, doc_ids))
-
-    def get_term_doc_count_df(self):
-        '''
-
-        Returns
-        -------
-        pd.DataFrame indexed on terms, with columns giving the
-         number of docs containing each term
-        '''
-        row = self._row_category_ids()
-        catX = self._change_document_type_in_matrix(self._X, row)
-        return self._term_freq_df_from_matrix(catX)
 
     def _change_document_type_in_matrix(self, X, new_doc_ids):
         new_data = self._make_all_positive_data_ones(X.data)
         newX = csr_matrix((new_data, (new_doc_ids, X.indices)))
         return newX
-
-    def _make_all_positive_data_ones(self, newX):
-        # type: (sparse_matrix) -> sparse_matrix
-        return (newX > 0).astype(np.int32)
-
-    def remove_terms(self, terms, ignore_absences=False):
-        '''Non destructive term removal.
-
-        Parameters
-        ----------
-        terms : list
-            list of terms to remove
-        ignore_absences : bool, False by default
-            if term does not appear, don't raise an error, just move on.
-
-        Returns
-        -------
-        TermDocMatrix, new object with terms removed.
-        '''
-        idx_to_delete_list = self._build_term_index_list(ignore_absences, terms)
-        return self.remove_terms_by_indices(idx_to_delete_list)
-
-    def _build_term_index_list(self, ignore_absences, terms):
-        idx_to_delete_list = []
-        for term in terms:
-            if term not in self._term_idx_store:
-                if not ignore_absences:
-                    raise KeyError('Term %s not found' % (term))
-                continue
-            idx_to_delete_list.append(self._term_idx_store.getidx(term))
-        return idx_to_delete_list
 
     def keep_only_these_categories(self, categories, ignore_absences=False):
         '''
@@ -460,24 +269,11 @@ class TermDocMatrix(object):
         new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
         new_X = delete_columns(new_X, term_idx_to_delete)
 
-        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X,
-                                                             new_mX,
-                                                             new_y,
-                                                             new_term_idx_store,
-                                                             new_category_idx_store,
-                                                             new_metadata_idx_store,
+        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X, new_mX, new_y, new_term_idx_store,
+                                                             new_category_idx_store, new_metadata_idx_store,
                                                              ~np.isin(self._y, idx_to_delete_list))
         return term_doc_mat_to_ret
 
-    def metadata_in_use(self):
-        '''
-        Returns True if metadata values are in term doc matrix.
-
-        Returns
-        -------
-        bool
-        '''
-        return len(self._metadata_idx_store) > 0
 
     def remove_terms_by_indices(self, idx_to_delete_list):
         '''
@@ -490,33 +286,8 @@ class TermDocMatrix(object):
         TermDocMatrix
         '''
         new_X, new_term_idx_store = self._get_X_after_delete_terms(idx_to_delete_list)
-        return self._make_new_term_doc_matrix(new_X,
-                                              self._mX,
-                                              self._y,
-                                              new_term_idx_store,
-                                              self._category_idx_store,
-                                              self._metadata_idx_store,
-                                              self._y == self._y)
-
-    def _get_X_after_delete_terms(self, idx_to_delete_list):
-        new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
-        new_X = delete_columns(self._X, idx_to_delete_list)
-        return new_X, new_term_idx_store
-
-    def remove_terms_used_in_less_than_num_docs(self, threshold):
-        '''
-        Parameters
-        ----------
-        threshold: int
-            Minimum number of documents term should appear in to be kept
-
-        Returns
-        -------
-        TermDocMatrix, new object with terms removed.
-        '''
-        term_counts = self._X.astype(bool).astype(int).sum(axis=0).A[0]
-        terms_to_remove = np.where(term_counts < threshold)[0]
-        return self.remove_terms_by_indices(terms_to_remove)
+        return self._make_new_term_doc_matrix(new_X, self._mX, self._y, new_term_idx_store, self._category_idx_store,
+                                              self._metadata_idx_store, self._y == self._y)
 
     def _make_new_term_doc_matrix(self,
                                   new_X,
@@ -526,12 +297,12 @@ class TermDocMatrix(object):
                                   new_category_idx_store,
                                   new_metadata_idx_store,
                                   new_y_mask):
-        return TermDocMatrix(X=new_X,
-                             mX=new_mX,
-                             y=new_y,
-                             term_idx_store=new_term_idx_store,
-                             category_idx_store=new_category_idx_store,
-                             metadata_idx_store=new_metadata_idx_store,
+        return TermDocMatrix(X=new_X if new_X is not None else self._X,
+                             mX=new_mX if new_mX is not None else self._mX,
+                             y=new_y if new_y is not None else self._y,
+                             term_idx_store=new_term_idx_store if not None else self._term_idx_store,
+                             category_idx_store=new_category_idx_store if not None else self._category_idx_store,
+                             metadata_idx_store=new_metadata_idx_store if not None else self._metadata_idx_store,
                              unigram_frequency_path=self._unigram_frequency_path)
 
     def get_posterior_mean_ratio_scores(self, category):
@@ -695,17 +466,6 @@ class TermDocMatrix(object):
     def _get_continuous_version_boolean_y(self, y_bool):
         return 1000 * (y_bool * 2. - 1)
 
-    def get_doc_lengths(self):
-        '''
-        Returns a list of document lengths in words
-
-        Returns
-        -------
-        np.array
-        '''
-        idx_to_delete_list = self._build_term_index_list(True, self._get_non_unigrams())
-        unigram_X, _ = self._get_X_after_delete_terms(idx_to_delete_list)
-        return unigram_X.sum(axis=1).A1
 
     def get_scaled_f_scores(self,
                             category,
@@ -837,7 +597,7 @@ class TermDocMatrix(object):
         '''
         Returns
         -------
-    pd.DataFrame of rudder scores vs background
+        pd.DataFrame of rudder scores vs background
         '''
         df = self.get_term_and_background_counts()
         corpus_percentiles = self._get_percentiles_from_freqs(df['corpus'])
@@ -850,96 +610,6 @@ class TermDocMatrix(object):
     def _rescale_labels_to_neg_one_pos_one(self, category):
         return (self._get_mask_from_category(category)) * 2 - 1
 
-    def set_background_corpus(self, background):
-        '''
-        Parameters
-        ----------
-        background
-
-        '''
-        if issubclass(type(background), TermDocMatrix):
-            self._background_corpus = pd.DataFrame(background
-                                                   .get_term_freq_df()
-                                                   .sum(axis=1),
-                                                   columns=['background']).reset_index()
-            self._background_corpus.columns = ['word', 'background']
-        elif (type(background) == pd.DataFrame
-              and set(background.columns) == set(['word', 'background'])):
-            self._background_corpus = background
-        else:
-            raise Exception('The argument named background must be a subclass of TermDocMatrix or a ' \
-                            + 'DataFrame with columns "word" and "background", where "word" ' \
-                            + 'is the term text, and "background" is its frequency.')
-
-    def get_background_corpus(self):
-        if self._background_corpus is not None:
-            return self._background_corpus
-        return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
-
-    def get_term_and_background_counts(self):
-        '''
-        Returns
-        -------
-        A pd.DataFrame consisting of unigram term counts of words occurring
-         in the TermDocumentMatrix and their corresponding background corpus
-         counts.  The dataframe has two columns, corpus and background.
-
-        >>> corpus.get_unigram_corpus.get_term_and_background_counts()
-                          corpus  background
-        obama              702.0    565739.0
-        romney             570.0    695398.0
-        barack             248.0    227861.0
-        ...
-        '''
-        background_df = self._get_background_unigram_frequencies()
-        term_freq_df = self.get_term_freq_df()
-        corpus_freq_df = pd.DataFrame({'corpus': term_freq_df.sum(axis=1)})
-        corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
-        df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
-        del df.index.name
-        return df
-
-    def _get_corpus_unigram_freq(self, corpus_freq_df):
-        unigram_validator = re.compile('^[A-Za-z]+$')
-        corpus_unigram_freq = corpus_freq_df.ix[[term for term
-                                                 in corpus_freq_df.index
-                                                 if unigram_validator.match(term) is not None]]
-        return corpus_unigram_freq
-
-    def _get_background_unigram_frequencies(self):
-        if self.get_background_corpus() is not None:
-            return self.get_background_corpus()
-        return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
-
-    def list_extra_features(self):
-        '''
-        Returns
-        -------
-        List of dicts.  One dict for each document, keys are metadata, values are counts
-        '''
-        return FeatureLister(self._mX,
-                             self._metadata_idx_store,
-                             self.get_num_docs()).output()
-
-    def get_scaled_f_scores_vs_background(self,
-                                          scaler_algo=DEFAULT_BACKGROUND_SCALER_ALGO,
-                                          beta=DEFAULT_BACKGROUND_BETA):
-        '''
-        Parameters
-        ----------
-        scaler_algo : str
-            see get_scaled_f_scores, default 'none'
-        beta : float
-          default 1.
-        Returns
-        -------
-        pd.DataFrame of scaled_f_score scores compared to background corpus
-        '''
-        df = self.get_term_and_background_counts()
-        df['Scaled f-score'] = ScaledFScore.get_scores_for_category(
-            df['corpus'], df['background'], scaler_algo, beta
-        )
-        return df.sort_values(by='Scaled f-score', ascending=False)
 
     def _get_rudder_scores_for_percentile_pair(self, category_percentiles, not_category_percentiles):
         return np.linalg.norm(np.array([1, 0])
@@ -1003,27 +673,6 @@ class TermDocMatrix(object):
         np.array
         '''
         return self._y
-
-    def get_term_doc_mat(self):
-        '''
-        Returns sparse matrix representation of term-doc-matrix
-
-        Returns
-        -------
-        scipy.sparse.csr_matrix
-        '''
-        return self._X
-
-    def get_metadata_doc_mat(self):
-        '''
-        Returns sparse matrix representation of term-doc-matrix
-
-        Returns
-        -------
-        scipy.sparse.csr_matrix
-        '''
-        return self._mX
-
     def get_category_index_store(self):
         '''
         Returns IndexStore object mapping categories to ids
@@ -1050,27 +699,7 @@ class TermDocMatrix(object):
         new_category_idx_store = IndexStoreFromList.build(set(new_categories))
         new_y = np.array(new_category_idx_store.getidxstrictbatch(new_categories))
 
-        new_tdm = self._make_new_term_doc_matrix(self._X,
-                                                 self._mX,
-                                                 new_y,
-                                                 self._term_idx_store,
-                                                 new_category_idx_store,
-                                                 self._metadata_idx_store,
-                                                 new_y == new_y)
+        new_tdm = self._make_new_term_doc_matrix(self._X, self._mX, new_y, self._term_idx_store, new_category_idx_store,
+                                                 self._metadata_idx_store, new_y == new_y)
         return new_tdm
 
-    def add_metadata(self, metadata_matrix, meta_index_store):
-        '''
-        Adds metadata after a term document matrix has been
-        constructed.
-
-        :param metadata_matrix: scipy.sparse matrix (# docs, # metadata)
-        :param meta_index_store: IndexStore of metadata values
-        :return: TermDocMatrix
-        '''
-        assert isinstance(meta_index_store, IndexStore)
-        assert len(metadata_matrix.shape) == 2
-        assert metadata_matrix.shape[0] == self.get_num_docs()
-        self._mX = metadata_matrix
-        self._metadata_idx_store = meta_index_store
-        return self

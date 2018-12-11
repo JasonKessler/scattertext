@@ -18,7 +18,6 @@ x_dim = 0; y_dim = 1
 projection = pd.DataFrame({'term':corpus.get_terms(),
                            'x':U.T[x_dim],
                            'y':U.T[y_dim]}).set_index('term')
-import pdb; pdb.set_trace()
 html = st.produce_pca_explorer(corpus,
                                category='democrat',
                                category_name='Democratic',

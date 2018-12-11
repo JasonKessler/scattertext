@@ -10,8 +10,8 @@ from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas, CompactTerms, CSRMatrixFactory
 from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.TermDocMatrix import TermDocMatrix, SPACY_ENTITY_TAGS, \
-    CannotCreateATermDocMatrixWithASignleCategoryException
+from scattertext.TermDocMatrix import TermDocMatrix, CannotCreateATermDocMatrixWithASignleCategoryException
+from scattertext.Common import SPACY_ENTITY_TAGS
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
@@ -327,7 +327,7 @@ class TestTermDocMat(TestCase):
             meta_fact[i, i] = meta_index_store.getidx(str(i))
         other_hamlet = hamlet.add_metadata(meta_fact.get_csr_matrix(),
                                            meta_index_store)
-        assert other_hamlet == hamlet
+        assert other_hamlet != hamlet
         meta_index_store = IndexStore()
         meta_fact = CSRMatrixFactory()
         for i in range(hamlet.get_num_docs() - 5):
@@ -335,6 +335,16 @@ class TestTermDocMat(TestCase):
         with self.assertRaises(AssertionError):
             hamlet.add_metadata(meta_fact.get_csr_matrix(),
                                 meta_index_store)
+
+    def test_add_doc_names_as_metadata(self):
+        hamlet = get_hamlet_term_doc_matrix()
+        doc_names = [str(i) for i in range(hamlet.get_num_docs())]
+        hamlet_meta = hamlet.add_doc_names_as_metadata(doc_names)
+        self.assertNotEqual(hamlet, hamlet_meta)
+        self.assertEqual(hamlet.get_metadata(), [])
+        self.assertEqual(hamlet_meta.get_metadata(), doc_names)
+        self.assertEqual(hamlet_meta.get_metadata_doc_mat().shape, (hamlet.get_num_docs(), hamlet.get_num_docs()))
+        self.assertNotEqual(hamlet.get_metadata_doc_mat().shape, (hamlet.get_num_docs(), hamlet.get_num_docs()))
 
     def test_metadata_in_use(self):
         hamlet = get_hamlet_term_doc_matrix()

@@ -14,17 +14,17 @@ priors = (st.PriorFactory(corpus,
                           category='fresh',
                           not_categories=['rotten'],
                           starting_count=1)
-          #.use_general_term_frequencies()
+          # .use_general_term_frequencies()
           .use_all_categories()
           .get_priors())
 (open(fn, 'wb')
-	.write(
-	st.produce_frequency_explorer(
-		corpus,
-		category='fresh',
-		not_categories=['rotten'],
-		metadata=df['movie_name'],
-		term_scorer=LogOddsRatioInformativeDirichletPrior(priors, 1),
-	).encode('utf-8'))
+    .write(
+    st.produce_frequency_explorer(
+        corpus,
+        category='fresh',
+        not_categories=['rotten'],
+        metadata=df['movie_name'],
+        term_scorer=LogOddsRatioInformativeDirichletPrior(priors, 1),
+    ).encode('utf-8'))
 )
 print(fn)
