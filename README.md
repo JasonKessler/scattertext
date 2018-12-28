@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.32
+# Scattertext 0.0.2.33
 
 **Table of Contents**
 
@@ -80,6 +80,14 @@ The HTML outputs look best in Chrome and Safari.
 ```
 
 ## What's new
+
+In 0.0.2.33:
+Added the following methods:
+* `TermDocMatrixWithoutCategories.get_num_metadata`
+* `TermDocMatrix.use_metadata_as_categories`
+* `unified_context` argument in `produce_scattertext_explorer` lists all contexts in a single column. This let's
+you see snippets organized by multiple categories in a single column.  See `demo_unified_context.py` for an example.  
+helps category-free or multi-category analyses.  
 
 In 0.0.2.32 we added a series of objects to handle uncategorized corpora. Added section on 
  [Document-Based Scatterplots](#document-based-scatterplots), and the add_doc_names_as_metadata function.
@@ -457,7 +465,8 @@ html = st.produce_pca_explorer(corpus,
                                show_top_terms=False)
 ```
 Click for an interactive version
-[![docpca](https://jasonkessler.github.io/doc_pca.png)]![docpca](https://jasonkessler.github.io/demo_pca_documents.html)
+[![demo_pca_documents.html](https://jasonkessler.github.io/doc_pca.png)](https://jasonkessler.github.io/demo_pca_documents.html)
+
 
 ### Understanding Scaled F-Score
 

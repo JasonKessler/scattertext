@@ -75,6 +75,14 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return self._X.shape[0]
 
+    def get_num_metadata(self):
+        '''
+        Returns
+        -------
+        int, number of unique metadata items
+        '''
+        return len(self.get_metadata())
+
     def set_background_corpus(self, background):
         '''
         Parameters
@@ -117,13 +125,13 @@ class TermDocMatrixWithoutCategories(object):
         ...
         '''
         background_df = self._get_background_unigram_frequencies()
-        corpus_freq_df = self._get_term_count_df()
+        corpus_freq_df = self.get_term_count_df()
         corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
         df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
         del df.index.name
         return df
 
-    def _get_term_count_df(self):
+    def get_term_count_df(self):
         return pd.DataFrame({'corpus': self._X.sum(axis=0).A1, 'term': self.get_terms()}).set_index('term')
 
     def _get_corpus_unigram_freq(self, corpus_freq_df):
@@ -170,7 +178,7 @@ class TermDocMatrixWithoutCategories(object):
     def _get_unigram_term_freq_df(self):
         return self._get_corpus_unigram_freq(
             # self.get_term_freq_df().sum(axis=1)
-            self._get_term_count_df()['corpus']
+            self.get_term_count_df()['corpus']
         )
 
     def _get_X_after_delete_terms(self, idx_to_delete_list):
@@ -395,6 +403,28 @@ class TermDocMatrixWithoutCategories(object):
         scipy.sparse.csr_matrix
         '''
         return self._mX
+
+    def term_doc_lists(self):
+        '''
+        Returns
+        -------
+        dict
+        '''
+        doc_ids = self._X.transpose().tolil().rows
+        terms = self._term_idx_store.values()
+        return dict(zip(terms, doc_ids))
+
+    def apply_ranker(self, term_ranker):
+        '''
+        Parameters
+        ----------
+        term_ranker : TermRanker
+
+        Returns
+        -------
+        pd.Dataframe
+        '''
+        return term_ranker(self).get_ranks()
 
     def add_doc_names_as_metadata(self, doc_names):
         '''

@@ -372,6 +372,21 @@ class TestTermDocMat(TestCase):
         self.assertIsInstance(idxstore, IndexStore)
         self.assertEquals(idxstore.getvals(), {'hamlet', 'not hamlet'})
 
+    def test_use_categories_as_metadata(self):
+        hamlet = get_hamlet_term_doc_matrix()
+        meta_hamlet = hamlet.use_categories_as_metadata()
+        self.assertEqual(hamlet.get_metadata_doc_mat().toarray(), [[0]])
+        self.assertEqual(meta_hamlet.get_metadata(), ['hamlet', 'not hamlet'])
+        self.assertEqual(meta_hamlet.get_metadata_doc_mat().shape,
+                         (meta_hamlet.get_num_docs(), len(meta_hamlet.get_metadata())))
+        self.assertTrue(all(meta_hamlet.get_metadata_doc_mat().todense().T[0].astype(bool).A1
+                            == (meta_hamlet.get_category_names_by_row() == 'hamlet')))
+        self.assertTrue(all(meta_hamlet.get_metadata_doc_mat().todense().T[1].astype(bool).A1
+                            == (meta_hamlet.get_category_names_by_row() == 'not hamlet')))
+
+    def test_get_num_metadata(self):
+        self.assertEqual(get_hamlet_term_doc_matrix().use_categories_as_metadata().get_num_metadata(), 2)
+
     def test_recategorize(self):
         hamlet = get_hamlet_term_doc_matrix()
         newcats = ['cat' + str(i % 3) for i in range(hamlet.get_num_docs())]

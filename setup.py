@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(name='scattertext',
-      version='0.0.2.32',
+      version='0.0.2.33',
       description='An NLP package to visualize interesting terms in text.',
       url='https://github.com/JasonKessler/scattertext',
       author='Jason Kessler',
       author_email='jason.kessler@gmail.com',
-      license='MIT',
+      license='Apache 2.0',
       packages=find_packages(),
       install_requires=[
 	      'numpy',

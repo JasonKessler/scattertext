@@ -54,6 +54,10 @@ def check_topic_model_string_format(term_dict):
                     raise TypeError("Values in term lists must be str.")
 
 
+class NeedToInjectCoordinatesException(Exception):
+    pass
+
+
 class ScatterChart:
     def __init__(self,
                  term_doc_matrix,
@@ -115,9 +119,10 @@ class ScatterChart:
         assert type(term_dict) == dict
         if not self.term_doc_matrix.metadata_in_use():
             raise TermDocMatrixHasNoMetadataException("No metadata is present in the term document matrix")
-        if set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()) != set():
-            raise Exception('The following meta data terms are not present: '
-                            + ', '.join(list(set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()))))
+        # This doesn't seem necessary. If a definition's not in the corpus, it just won't be shown.
+        # if set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()) != set():
+        #    raise Exception('The following meta data terms are not present: '
+        #                    + ', '.join(list(set(term_dict.keys()) - set(self.term_doc_matrix.get_metadata()))))
 
         if sys.version_info[0] == 2:
             assert set([type(v) for v in term_dict.values()]) - set([str, unicode]) == set()
@@ -176,15 +181,15 @@ class ScatterChart:
 
     def _verify_coordinates(self, coords, name):
         if self.scatterchartdata.use_non_text_features and len(coords) != len(self.term_doc_matrix.get_metadata()):
-            raise CoordinatesNotRightException("Length of %s_cords must be the same as the number "
+            raise CoordinatesNotRightException("Length of %s_coords must be the same as the number "
                                                "of non-text features in the term_doc_matrix." % (name))
         if not self.scatterchartdata.use_non_text_features and len(coords) != self.term_doc_matrix.get_num_terms():
-            raise CoordinatesNotRightException("Length of %s_cords must be the same as the number "
+            raise CoordinatesNotRightException("Length of %s_coords must be the same as the number "
                                                "of terms in the term_doc_matrix." % (name))
         if max(coords) > 1:
-            raise CoordinatesNotRightException("Max value of %s_cords must be <= 1." % (name))
+            raise CoordinatesNotRightException("Max value of %s_coords must be <= 1." % (name))
         if min(coords) < 0:
-            raise CoordinatesNotRightException("Min value of %s_cords must be >= 0." % (name))
+            raise CoordinatesNotRightException("Min value of %s_coords must be >= 0." % (name))
 
     def to_dict(self,
                 category,
@@ -265,21 +270,7 @@ class ScatterChart:
 
         df = self._get_term_category_frequencies()
 
-        if self.x_coords is not None:
-            df['x'] = self.x_coords
-            df['y'] = self.y_coords
-
-        if not self.original_x is None:
-            try:
-                df['ox'] = self.original_x.values
-            except AttributeError:
-                df['ox'] = self.original_x
-
-        if not self.original_y is None:
-            try:
-                df['oy'] = self.original_y.values
-            except AttributeError:
-                df['oy'] = self.original_y
+        self._add_x_and_y_coords_to_term_df_if_injected(df)
 
         if scores is None:
             scores = self._get_default_scores(category, not_categories, df)
@@ -377,6 +368,21 @@ class ScatterChart:
         j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
         return j
 
+    def _add_x_and_y_coords_to_term_df_if_injected(self, df):
+        if self.x_coords is not None:
+            df['x'] = self.x_coords
+            df['y'] = self.y_coords
+        if not self.original_x is None:
+            try:
+                df['ox'] = self.original_x.values
+            except AttributeError:
+                df['ox'] = self.original_x
+        if not self.original_y is None:
+            try:
+                df['oy'] = self.original_y.values
+            except AttributeError:
+                df['oy'] = self.original_y
+
     def _get_term_category_frequencies(self):
         return self.term_doc_matrix.get_term_category_frequencies(self.scatterchartdata)
 
@@ -453,21 +459,7 @@ class ScatterChart:
 
     def _term_rank_score_and_frequency_df(self, all_categories, category, other_categories, scores):
         df = self._get_term_category_frequencies()
-        if self.x_coords is not None:
-            df['x'] = self.x_coords
-            df['y'] = self.y_coords
-
-        if not self.original_x is None:
-            try:
-                df['ox'] = self.original_x.values
-            except AttributeError:
-                df['ox'] = self.original_x
-
-        if not self.original_y is None:
-            try:
-                df['oy'] = self.original_y.values
-            except AttributeError:
-                df['oy'] = self.original_y
+        self._add_x_and_y_coords_to_term_df_if_injected(df)
 
         if scores is None:
             scores = self._get_default_scores(category, other_categories, df)
@@ -620,3 +612,20 @@ class ScatterChart:
         # adjust_text(texts, arrowprops=dict(arrowstyle="->", color='r', lw=0.5))
         plt.show()
         return df, fig_to_html(fig)
+
+    def to_dict_without_categories(self):
+        if self.y_coords is None or self.x_coords is None or self.original_x is None or self.original_y is None:
+            raise NeedToInjectCoordinatesException(
+                "This function requires you run inject_coordinates."
+            )
+        json_df = (self.term_doc_matrix
+                   .get_term_count_df()
+                   .rename(columns={'corpus': 'cat'}))
+        json_df['cat25k'] = (((json_df['cat'] * 1.
+                               / json_df['cat'].sum()) * 25000)
+                             .apply(np.round).astype(np.int))
+
+        self._add_x_and_y_coords_to_term_df_if_injected(json_df)
+        j = {}
+        j['data'] = json_df.reset_index().sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+        return j

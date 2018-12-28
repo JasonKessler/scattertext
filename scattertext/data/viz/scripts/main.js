@@ -32,7 +32,8 @@ buildViz = function (d3) {
                      topic_model_preview_size=10,
                      verticalLines = null,
                      horizontal_line_y_position = null,
-                     vertical_line_x_position = null) {
+                     vertical_line_x_position = null,
+                     unifiedContexts = false) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -48,8 +49,10 @@ buildViz = function (d3) {
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
 
-
-        if (showNeutral) {
+        if (unifiedContexts) {
+            document.querySelectorAll('#notcol').forEach(function (x) {x.style.display = 'none'});
+            document.querySelectorAll('.contexts').forEach(function (x) {x.style.width = '90%'});
+        } else if (showNeutral) {
 
             if (showExtra) {
                 document.querySelectorAll('#neutcol')
@@ -567,6 +570,7 @@ buildViz = function (d3) {
                         'id': i,
                         'snippets': [text],
                         'strength': strength,
+                        'docLabel': docLabel,
                         'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
                     }
 
@@ -630,66 +634,126 @@ buildViz = function (d3) {
             //var categoryNames = [fullData.info.category_name,
             //    fullData.info.not_category_name];
             var catInternalName = fullData.info.category_internal_name;
-            var contextCoulumns = [
-                fullData.info.category_internal_name,
-                fullData.info.not_category_name
-            ];
-            if (showNeutral) {
-                if ('neutral_category_name' in fullData.info) {
-                    contextCoulumns.push(fullData.info.neutral_category_name)
-                } else {
-                    contextCoulumns.push("Neutral")
-                }
-                if (showExtra) {
-                    if ('extra_category_name' in fullData.info) {
-                        contextCoulumns.push(fullData.info.extra_category_name)
-                    } else {
-                        contextCoulumns.push("Extra")
-                    }
-                }
 
+
+            function addSnippets(contexts, divId) {
+                var meta = contexts.meta ? contexts.meta : '&nbsp;';
+                d3.select(divId)
+                    .append("div")
+                    .attr('class', 'snippet_meta docLabel' + contexts.docLabel)
+                    .html(meta);
+                contexts.snippets.forEach(function (snippet) {
+                    d3.select(divId)
+                        .append("div")
+                        .attr('class', 'snippet docLabel' + contexts.docLabel)
+                        .html(snippet);
+                })
             }
+            if (unifiedContexts) {
+               divId = '#cat';
+                var docLabelCounts = fullData.docs.labels.reduce(
+                    function(map, label) {map[label] = (map[label]||0)+1; return map;},
+                    Object.create(null)
+                );
+               var numMatches = Object.create(null);
+               var temp = d3.select(divId).selectAll("div").remove();
+               var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
+                allContexts.forEach(function (singleDoc) {
+                    numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
+                });
 
-            contextCoulumns.map(
-                function (catName, catIndex) {
-                    if (max_snippets != null) {
-                        var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
-                    }
-                    console.log("CATCAT")
-                    console.log(catName, catIndex)
-                    //var divId = catName == catInternalName ? '#cat' : '#notcat';
-                    var divId = null
-                    if (catName == fullData.info.category_internal_name) {
-                        divId = '#cat'
-                    } else if (fullData.info.not_category_name == catName) {
-                        divId = '#notcat'
-                    } else if (fullData.info.neutral_category_name == catName) {
-                        divId = '#neut';
-                    } else if (fullData.info.extra_category_name == catName) {
-                        divId = '#extra'
-                    } else {
-                        return;
-                    }
-                    console.log('divid');
-                    console.log(divId)
-
-                    var temp = d3.select(divId)
-                        .selectAll("div").remove();
-                    contexts[catIndex].forEach(function (context) {
-                        var meta = context.meta ? context.meta : '&nbsp;';
+               /*contexts.forEach(function(context) {
+                    context.forEach(function (singleDoc) {
+                        numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
+                        addSnippets(singleDoc, divId);
+                    });
+                });*/
+                var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => (
+                    {"label": fullData.docs.categories[key],
+                     "labelNum": key,
+                     "matches": numMatches[key]||0,
+                     "overall": docLabelCounts[key],
+                     'percent': (numMatches[key]||0)*100./docLabelCounts[key]}))
+                    .sort(function(a,b) {return b.percent-a.percent});
+                console.log("docLabelCountsSorted")
+                console.log(docLabelCountsSorted);
+                console.log(numMatches)
+                d3.select('#categoryinfo').selectAll("div").remove();
+                d3.select('#categoryinfo').attr('display', 'inline')
+                docLabelCountsSorted.forEach(function(counts) {
+                    var htmlToAdd = "<b>"+counts.label + "</b>: " + counts.matches + " document"
+                    + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
+                         +counts['percent'].toFixed(2) + '%';
+                    console.log(htmlToAdd);
+                    d3.select('#categoryinfo')
+                        .attr('display', 'inline')
+                        .append('div')
+                        .html(htmlToAdd)
+                        .on("click", function() {window.location.hash = '#category' + counts.labelNum});
+                    if(counts.matches > 0) {
                         d3.select(divId)
                             .append("div")
-                            .attr('class', 'snippet_meta')
-                            .html(meta);
-                        context.snippets.forEach(function (snippet) {
-                            d3.select(divId)
-                                .append("div")
-                                .attr('class', 'snippet')
-                                .html(snippet);
-                        })
+                            .attr('class', 'text_header')
+                            .html('<a name="category' + counts.labelNum + '"></a>' + counts.label);
+                        allContexts
+                            .filter(singleDoc => singleDoc.docLabel == counts.labelNum)
+                            .forEach(function (singleDoc) {
+                                addSnippets(singleDoc, divId);
+                            });
+                    }
+                })
 
-                    });
-                });
+            } else {
+                var contextColumns = [
+                    fullData.info.category_internal_name,
+                    fullData.info.not_category_name
+                ];
+                if (showNeutral) {
+                    if ('neutral_category_name' in fullData.info) {
+                        contextColumns.push(fullData.info.neutral_category_name)
+                    } else {
+                        contextColumns.push("Neutral")
+                    }
+                    if (showExtra) {
+                        if ('extra_category_name' in fullData.info) {
+                            contextColumns.push(fullData.info.extra_category_name)
+                        } else {
+                            contextColumns.push("Extra")
+                        }
+                    }
+
+                }
+                contextColumns.map(
+                    function (catName, catIndex) {
+                        if (max_snippets != null) {
+                            var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
+                        }
+                        console.log("CATCAT")
+                        console.log(catName, catIndex)
+                        //var divId = catName == catInternalName ? '#cat' : '#notcat';
+                        var divId = null
+                        if (catName == fullData.info.category_internal_name) {
+                            divId = '#cat'
+                        } else if (fullData.info.not_category_name == catName) {
+                            divId = '#notcat'
+                        } else if (fullData.info.neutral_category_name == catName) {
+                            divId = '#neut';
+                        } else if (fullData.info.extra_category_name == catName) {
+                            divId = '#extra'
+                        } else {
+                            return;
+                        }
+                        console.log('divid');
+                        console.log(divId)
+
+                        var temp = d3.select(divId).selectAll("div").remove();
+                        contexts[catIndex].forEach(function (context) {
+                            addSnippets(context, divId);
+                        });
+                    }
+                );
+            }
+
             var obscuredTerms = getObscuredTerms(termInfo.info);
             displayObscuredTerms(obscuredTerms, info.term, '#overlapped-terms-clicked');
 
@@ -724,6 +788,7 @@ buildViz = function (d3) {
             var message = '';
             var cat_name = fullData.info.category_name;
             var ncat_name = fullData.info.not_category_name;
+
 
             var numCatDocs = fullData.docs.labels
                 .map(function (x) {
@@ -777,60 +842,32 @@ buildViz = function (d3) {
                 return desc;
             }
 
-            d3.select('#cathead')
-                .style('fill', color(1))
-                .html(
-                    getFrequencyDescription(cat_name,
-                        info.cat25k,
-                        info.cat,
-                        termInfo.contexts[0].length * 1000 / numCatDocs
-                    )
-                );
-            d3.select('#notcathead')
-                .style('fill', color(0))
-                .html(
-                    getFrequencyDescription(ncat_name,
-                        info.ncat25k,
-                        info.ncat,
-                        termInfo.contexts[1].length * 1000 / numNCatDocs)
-                );
-            console.log("TermINfo")
-            console.log(termInfo);
-            console.log(info)
-            if (showNeutral) {
-                console.log("NEUTRAL")
-
-                var numList = fullData.docs.categories.map(function (x, i) {
-                    if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
-                        return i;
-                    } else {
-                        return -1;
-                    }
-                }).filter(function (x) {
-                    return x > -1
-                });
-
-                var numDocs = fullData.docs.labels
-                    .map(function (x) {
-                        return numList.indexOf(x) > -1
-                    })
-                    .reduce(function (a, b) {
-                        return a + b;
-                    });
-
-                d3.select("#neuthead")
+            if (!unifiedContexts) {
+                d3.select('#cathead')
+                    .style('fill', color(1))
+                    .html(
+                        getFrequencyDescription(cat_name,
+                            info.cat25k,
+                            info.cat,
+                            termInfo.contexts[0].length * 1000 / numCatDocs
+                        )
+                    );
+                d3.select('#notcathead')
                     .style('fill', color(0))
                     .html(
-                        getFrequencyDescription(fullData.info.neutral_category_name,
-                            info.neut25k,
-                            info.neut,
-                            termInfo.contexts[2].length * 1000 / numDocs)
+                        getFrequencyDescription(ncat_name,
+                            info.ncat25k,
+                            info.ncat,
+                            termInfo.contexts[1].length * 1000 / numNCatDocs)
                     );
+                console.log("TermINfo")
+                console.log(termInfo);
+                console.log(info)
+                if (showNeutral) {
+                    console.log("NEUTRAL")
 
-                if (showExtra) {
-                    console.log("EXTRA")
                     var numList = fullData.docs.categories.map(function (x, i) {
-                        if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
+                        if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
                             return i;
                         } else {
                             return -1;
@@ -847,16 +884,48 @@ buildViz = function (d3) {
                             return a + b;
                         });
 
-                    d3.select("#extrahead")
+                    d3.select("#neuthead")
                         .style('fill', color(0))
                         .html(
-                            getFrequencyDescription(fullData.info.extra_category_name,
-                                info.extra25k,
-                                info.extra,
-                                termInfo.contexts[3].length * 1000 / numDocs)
+                            getFrequencyDescription(fullData.info.neutral_category_name,
+                                info.neut25k,
+                                info.neut,
+                                termInfo.contexts[2].length * 1000 / numDocs)
                         );
 
+                    if (showExtra) {
+                        console.log("EXTRA")
+                        var numList = fullData.docs.categories.map(function (x, i) {
+                            if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
+                                return i;
+                            } else {
+                                return -1;
+                            }
+                        }).filter(function (x) {
+                            return x > -1
+                        });
+
+                        var numDocs = fullData.docs.labels
+                            .map(function (x) {
+                                return numList.indexOf(x) > -1
+                            })
+                            .reduce(function (a, b) {
+                                return a + b;
+                            });
+
+                        d3.select("#extrahead")
+                            .style('fill', color(0))
+                            .html(
+                                getFrequencyDescription(fullData.info.extra_category_name,
+                                    info.extra25k,
+                                    info.extra,
+                                    termInfo.contexts[3].length * 1000 / numDocs)
+                            );
+
+                    }
                 }
+            } else {
+                // extra unified context code goes here
             }
             if (jump) {
                 if (window.location.hash == '#snippets') {
@@ -953,6 +1022,7 @@ buildViz = function (d3) {
             if (pattern !== null) {
                 for (var i in fullData.docs.texts) {
                     //var numericLabel = 1 * (fullData.docs.categories[fullData.docs.labels[i]] != fullData.info.category_internal_name);
+
                     var docLabel = fullData.docs.labels[i];
                     var numericLabel = -1;
                     if (docLabel == categoryNum) {
@@ -974,7 +1044,7 @@ buildViz = function (d3) {
                     var sentenceOffsets = null;
                     var lastSentenceStart = null;
                     var matchFound = false;
-                    var curMatch = {'id': i, 'snippets': []};
+                    var curMatch = {'id': i, 'snippets': [], 'docLabel': docLabel};
                     if (fullData.docs.meta) {
                         curMatch['meta'] = fullData.docs.meta[i];
                     }
@@ -1005,7 +1075,7 @@ buildViz = function (d3) {
                     }
                 }
             }
-            var toRet = {'contexts': matches, 'info': d};
+            var toRet = {'contexts': matches, 'info': d, 'docLabel': docLabel};
             return toRet;
         }
 

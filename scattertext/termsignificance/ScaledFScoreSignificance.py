@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from scattertext import ScaledFZScore
+from scattertext.termscoring.ScaledFScore import ScaledFZScore
 from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
 from scattertext.termscoring import ScaledFScore
 from scipy.stats import norm

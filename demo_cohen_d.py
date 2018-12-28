@@ -3,7 +3,6 @@ from scattertext import SampleCorpora, whitespace_nlp_with_sentences, CohensD, p
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
 from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.termranking import ClassBalancedFrequencyRanker
 from scattertext.termscoring.ScaledFScore import ScaledFScorePresets
 
 convention_df = SampleCorpora.ConventionData2012.get_data()
@@ -19,7 +18,7 @@ html = produce_frequency_explorer(
     category='democrat',
     category_name='Democratic',
     not_category_name='Republican',
-    term_scorer=CohensD(corpus).set_term_ranker(ClassBalancedFrequencyRanker).set_categories('democrat', ['republican']),
+    term_scorer=CohensD(corpus).set_categories('democrat', ['republican']),
     metadata=convention_df['speaker'],
     grey_threshold=0,
     show_neutral=True

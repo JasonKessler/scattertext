@@ -1,4 +1,5 @@
 import warnings
+from copy import copy
 
 import numpy as np
 import pandas as pd
@@ -10,7 +11,7 @@ from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
-from scattertext.CSRMatrixTools import delete_columns
+from scattertext.CSRMatrixTools import delete_columns, CSRMatrixFactory
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
     DEFAULT_BACKGROUND_BETA
 from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
@@ -67,15 +68,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                 unigram_frequency_path=unigram_frequency_path)
         self._y = y
         self._category_idx_store = category_idx_store
-    def term_doc_lists(self):
-        '''
-        Returns
-        -------
-        dict
-        '''
-        doc_ids = self._X.transpose().tolil().rows
-        terms = self._term_idx_store.values()
-        return dict(zip(terms, doc_ids))
 
     def get_categories(self):
         '''
@@ -142,6 +134,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         Returns
         -------
         pd.DataFrame indexed on terms, with columns the number of documents each term appeared in
+        each category
         '''
         # row = self._row_category_ids()
         # newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
@@ -170,7 +163,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         '''
         Returns
         -------
-        pd.DataFrame indexed on metadata, with columns giving frequencies for each
+        pd.DataFrame indexed on metadata, with columns giving frequencies for each category
         '''
         row = self._row_category_ids_for_meta()
         newX = csr_matrix((self._mX.data, (row, self._mX.indices)))
@@ -198,7 +191,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         np.array of the category name for each row
         '''
         return np.array(self.get_categories())[self._y]
-
 
     def _change_document_type_in_matrix(self, X, new_doc_ids):
         new_data = self._make_all_positive_data_ones(X.data)
@@ -273,7 +265,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                              new_category_idx_store, new_metadata_idx_store,
                                                              ~np.isin(self._y, idx_to_delete_list))
         return term_doc_mat_to_ret
-
 
     def remove_terms_by_indices(self, idx_to_delete_list):
         '''
@@ -466,7 +457,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
     def _get_continuous_version_boolean_y(self, y_bool):
         return 1000 * (y_bool * 2. - 1)
 
-
     def get_scaled_f_scores(self,
                             category,
                             scaler_algo=DEFAULT_SCALER_ALGO,
@@ -610,7 +600,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
     def _rescale_labels_to_neg_one_pos_one(self, category):
         return (self._get_mask_from_category(category)) * 2 - 1
 
-
     def _get_rudder_scores_for_percentile_pair(self, category_percentiles, not_category_percentiles):
         return np.linalg.norm(np.array([1, 0])
                               - np.array(list(zip(category_percentiles, not_category_percentiles))),
@@ -652,18 +641,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             term_ranker.use_non_text_features()
         return term_ranker.get_ranks()
 
-    def apply_ranker(self, term_ranker):
-        '''
-        Parameters
-        ----------
-        term_ranker : TermRanker
-
-        Returns
-        -------
-        pd.Dataframe
-        '''
-        return term_ranker(self).get_ranks()
-
     def get_category_ids(self):
         '''
         Returns array of category ids
@@ -673,6 +650,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         np.array
         '''
         return self._y
+
     def get_category_index_store(self):
         '''
         Returns IndexStore object mapping categories to ids
@@ -701,5 +679,25 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
 
         new_tdm = self._make_new_term_doc_matrix(self._X, self._mX, new_y, self._term_idx_store, new_category_idx_store,
                                                  self._metadata_idx_store, new_y == new_y)
+        return new_tdm
+
+    def use_categories_as_metadata(self):
+        '''
+        Returns a TermDocMatrix which is identical to self except the metadata values are now identical to the
+         categories present.
+
+        :return: TermDocMatrix
+        '''
+        new_metadata_factory = CSRMatrixFactory()
+        for i, category_idx in enumerate(self.get_category_ids()):
+            new_metadata_factory[i, category_idx] = 1
+        new_metadata = new_metadata_factory.get_csr_matrix()
+        new_tdm = self._make_new_term_doc_matrix(self._X,
+                                                 new_metadata,
+                                                 self._y,
+                                                 self._term_idx_store,
+                                                 self._category_idx_store,
+                                                 copy(self._category_idx_store),
+                                                 self._y == self._y)
         return new_tdm
 

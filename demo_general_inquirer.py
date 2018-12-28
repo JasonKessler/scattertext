@@ -25,6 +25,7 @@ def main():
 	                                    use_non_text_features=True,
 	                                    use_full_doc=True,
 	                                    topic_model_term_lists=feat_builder.get_top_model_term_lists(),
+										metadata_descriptions=feat_builder.get_definitions()
 										)
 	open('./demo_general_inquirer.html', 'wb').write(html.encode('utf-8'))
 	print('Open ./demo_general_inquirer.html in Chrome or Firefox.')

@@ -16,4 +16,3 @@ class TestClassPercentageCompactor(TestCase):
 		self.assertEqual(set(new_tdm.get_terms()),
 		                 {'a','b'})
 
-
