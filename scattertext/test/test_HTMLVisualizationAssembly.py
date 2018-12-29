@@ -14,7 +14,7 @@ class TestHTMLVisualizationAssembly(TestCase):
 		          'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1',
 		          'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
 		          'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
-		          'null', 'null', '10', 'null', 'null', 'null', 'false']
+		          'null', 'null', '10', 'null', 'null', 'null', 'false', 'true']
 		for i, val in param_dict.items():
 			params[i] = val
 		return 'plotInterface = buildViz(' + ','.join(params) + ');'
@@ -337,3 +337,10 @@ class TestHTMLVisualizationAssembly(TestCase):
 											unified_context=True)
 		 ._call_build_visualization_in_javascript())
 		self.assertEqual(params, self.get_params({34: 'true'}))
+
+	def test_show_category_headings(self):
+		visualization_data = self.make_adapter()
+		params = (HTMLVisualizationAssembly(visualization_data,
+											show_category_headings=False)
+		 ._call_build_visualization_in_javascript())
+		self.assertEqual(params, self.get_params({35: 'false'}))

@@ -17,7 +17,7 @@ class HTMLVisualizationAssembly(object):
                  x_axis_values=None, y_axis_values=None, color_func=None, show_axes=True,
                  horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
-                 topic_model_preview_size=10, vertical_lines=None, unified_context=False):
+                 topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True):
         '''
 
         Parameters
@@ -105,7 +105,9 @@ class HTMLVisualizationAssembly(object):
         vertical_lines: list, default None
             List of scaled points along the x-axis to draw horizontal lines
         unified_context: bool, default False
-            Display all context in a signle column.
+            Display all context in a single column.
+        show_category_headings: bool, default True
+            If unified_context, should we show the category headings>?
 
         '''
         self._visualization_data = visualization_data
@@ -144,6 +146,7 @@ class HTMLVisualizationAssembly(object):
         self._topic_model_preview_size = topic_model_preview_size
         self._vertical_lines = vertical_lines
         self._unified_context = unified_context
+        self._show_category_headings = show_category_headings
 
 
     def to_html(self,
@@ -290,5 +293,6 @@ class HTMLVisualizationAssembly(object):
                      js_list_or_null(self._vertical_lines),
                      js_default_value_to_null(self._horizontal_line_y_position),
                      js_default_value_to_null(self._vertical_line_x_position),
-                     js_bool(self._unified_context)]
+                     js_bool(self._unified_context),
+                     js_bool(self._show_category_headings)]
         return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

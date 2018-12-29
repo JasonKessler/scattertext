@@ -33,7 +33,8 @@ buildViz = function (d3) {
                      verticalLines = null,
                      horizontal_line_y_position = null,
                      vertical_line_x_position = null,
-                     unifiedContexts = false) {
+                     unifiedContexts = false,
+                     showCategoryHeadings = true) {
         var divName = 'd3-div-1';
 
         // Set the dimensions of the canvas / graph
@@ -678,18 +679,22 @@ buildViz = function (d3) {
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
                 console.log(numMatches)
-                d3.select('#categoryinfo').selectAll("div").remove();
-                d3.select('#categoryinfo').attr('display', 'inline')
+                if(showCategoryHeadings) {
+                    d3.select('#categoryinfo').selectAll("div").remove();
+                    d3.select('#categoryinfo').attr('display', 'inline')
+                }
                 docLabelCountsSorted.forEach(function(counts) {
                     var htmlToAdd = "<b>"+counts.label + "</b>: " + counts.matches + " document"
                     + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
                          +counts['percent'].toFixed(2) + '%';
                     console.log(htmlToAdd);
-                    d3.select('#categoryinfo')
-                        .attr('display', 'inline')
-                        .append('div')
-                        .html(htmlToAdd)
-                        .on("click", function() {window.location.hash = '#category' + counts.labelNum});
+                    if(showCategoryHeadings) {
+                        d3.select('#categoryinfo')
+                            .attr('display', 'inline')
+                            .append('div')
+                            .html(htmlToAdd)
+                            .on("click", function() {window.location.hash = '#category' + counts.labelNum});
+                    }
                     if(counts.matches > 0) {
                         d3.select(divId)
                             .append("div")

@@ -362,6 +362,13 @@ class TestTermDocMat(TestCase):
         mX = hamlet_meta.get_metadata_doc_mat()
         np.testing.assert_array_equal(mX.shape, (hamlet_meta.get_num_docs(), len(hamlet_meta.get_metadata_freq_df())))
 
+    def test_get_metadata_freq_df(self):
+        hamlet_meta = build_hamlet_jz_corpus_with_meta()
+        mdf = hamlet_meta.get_metadata_freq_df()
+        self.assertEqual(list(mdf.columns), ['hamlet freq', 'jay-z/r. kelly freq'])
+        mdf = hamlet_meta.get_metadata_freq_df('')
+        self.assertEqual(list(mdf.columns), ['hamlet', 'jay-z/r. kelly'])
+
     def test_get_metadata(self):
         hamlet_meta = build_hamlet_jz_corpus_with_meta()
         self.assertEqual(hamlet_meta.get_metadata(), ['cat1'])

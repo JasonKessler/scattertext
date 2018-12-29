@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.33
+# Scattertext 0.0.2.34
 
 **Table of Contents**
 
@@ -80,6 +80,12 @@ The HTML outputs look best in Chrome and Safari.
 ```
 
 ## What's new
+In 0.0.2.34:
+* `TermDocMatrix.get_metadata_freq_df` now accepts the `label_append` argument which by default adds `' freq'` to the
+end of each column.
+* Added `show_category_headings=True` to `produce_scattertext_explorer`. This suppresses the list of categories
+which will be displayed in the term context area. 
+
 
 In 0.0.2.33:
 Added the following methods:

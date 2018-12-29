@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import pandas as pd
 
-version = [0, 0, 2, 33]
+version = [0, 0, 2, 34]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -220,6 +220,7 @@ def produce_scattertext_explorer(corpus,
                                  characteristic_scorer=None,
                                  term_colors=None,
                                  unified_context=False,
+                                 show_category_headings=True,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -400,7 +401,9 @@ def produce_scattertext_explorer(corpus,
     term_colors : dict, default None
         Dictionary mapping term to color
     unified_context : bool, default False
-        Boolean displays contexts in a single pane as oppsed to separate columns.
+        Boolean displays contexts in a single pane as opposed to separate columns.
+    show_category_headings : bool, default True
+        Show category headings if unified_context is True.
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -508,7 +511,7 @@ def produce_scattertext_explorer(corpus,
                                      do_censor_points=censor_points, center_label_over_points=center_label_over_points,
                                      x_axis_labels=x_axis_labels, y_axis_labels=y_axis_labels,
                                      topic_model_preview_size=topic_model_preview_size, vertical_lines=vertical_lines,
-                                     unified_context=unified_context) \
+                                     unified_context=unified_context, show_category_headings=show_category_headings) \
         .to_html(protocol=protocol,
                  d3_url=d3_url,
                  d3_scale_chromatic_url=d3_scale_chromatic_url,

@@ -147,11 +147,11 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
     def _term_freq_df_from_matrix(self, catX):
         return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
 
-    def _get_freq_df_using_idx_store(self, catX, idx_store):
+    def _get_freq_df_using_idx_store(self, catX, idx_store, label_append=' freq'):
         d = {'term': idx_store._i2val}
         for idx, cat in self._category_idx_store.items():
             try:
-                d[cat + ' freq'] = catX[idx, :].A[0]
+                d[cat + label_append] = catX[idx, :].A[0]
             except IndexError:
                 self._fix_problem_when_final_category_index_has_no_terms(cat, catX, d)
         return pd.DataFrame(d).set_index('term')
@@ -159,15 +159,19 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
     def _fix_problem_when_final_category_index_has_no_terms(self, cat, catX, d):
         d[cat + ' freq'] = np.zeros(catX.shape[1])
 
-    def get_metadata_freq_df(self):
+    def get_metadata_freq_df(self, label_append=' freq'):
         '''
+        Parameters
+        -------
+        label_append : str
+
         Returns
         -------
         pd.DataFrame indexed on metadata, with columns giving frequencies for each category
         '''
         row = self._row_category_ids_for_meta()
         newX = csr_matrix((self._mX.data, (row, self._mX.indices)))
-        return self._metadata_freq_df_from_matrix(newX)
+        return self._metadata_freq_df_from_matrix(newX, label_append)
 
     def _row_category_ids(self):
         row = self._X.tocoo().row
@@ -181,8 +185,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             row[row == i] = cat
         return row
 
-    def _metadata_freq_df_from_matrix(self, catX):
-        return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store)
+    def _metadata_freq_df_from_matrix(self, catX, label_append=' freq'):
+        return self._get_freq_df_using_idx_store(catX, self._metadata_idx_store, label_append)
 
     def get_category_names_by_row(self):
         '''
