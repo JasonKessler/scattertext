@@ -56,7 +56,7 @@ class TestScatterChartExplorer(TestCase):
 
 
 	def test_include_term_category_counts(self):
-		corpus = build_hamlet_jz_corpus()
+		corpus = build_hamlet_jz_corpus().get_unigram_corpus()
 		j = (ScatterChartExplorer(corpus,
 								  minimum_term_frequency=0)
 			 .to_dict('hamlet', include_term_category_counts=True))
