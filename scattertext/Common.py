@@ -8,6 +8,11 @@ DEFAULT_PMI_THRESHOLD_COEFFICIENT = 8
 
 DEFAULT_MINIMUM_TERM_FREQUENCY = 3
 
+DEFAULT_DIV_ID = 'd3-div-1'
+
+DEFAULT_VIZ_HTML_PATH = 'data/viz/scattertext.html'
+SEMIOTIC_SQUARE_HTML_PATH = 'data/viz/semiotic_new.html'
+
 # Constants for background scaled f-score
 DEFAULT_BACKGROUND_BETA = 1
 DEFAULT_BACKGROUND_SCALER_ALGO = 'none'

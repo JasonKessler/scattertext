@@ -39,6 +39,7 @@ class TestScatterChartExplorer(TestCase):
 		                  'news from the east sire! the best of both worlds has returned!'])
 		expected = {'y': 0.5, 'ncat': 0, 'ncat25k': 0, 'bg': 5,
 		            'cat': 1, 's': 0.5, 'term': 'art', 'os': 0.5192, 'extra': 0, 'extra25k': 0,
+
 		            'cat25k': 758, 'x': 0.06, 'neut': 0, 'neut25k': 0, 'ox': 5, 'oy': 3}
 
 		actual = [t for t in j['data'] if t['term'] == 'art'][0]
@@ -52,6 +53,20 @@ class TestScatterChartExplorer(TestCase):
 		self.assertEqual(set(expected.keys()), set(actual.keys()))
 		self.assertEqual(expected['term'], actual['term'])
 		self.assertEqual(j['docs'].keys(), {'texts', 'labels', 'categories'})
+
+
+	def test_include_term_category_counts(self):
+		corpus = build_hamlet_jz_corpus()
+		j = (ScatterChartExplorer(corpus,
+								  minimum_term_frequency=0)
+			 .to_dict('hamlet', include_term_category_counts=True))
+		self.assertEqual(set(j.keys()), set(['info', 'data', 'docs', 'termCounts']))
+		self.assertEqual(len(j['termCounts']), corpus.get_num_categories())
+		term_idx_set = set()
+		for cat_counts in j['termCounts']:
+			term_idx_set |= set(cat_counts.keys())
+			self.assertTrue(all([freq >= docs for freq, docs in cat_counts.values()]))
+		self.assertEqual(len(term_idx_set), corpus.get_num_terms())
 
 	def test_multi_categories(self):
 		corpus = get_test_corpus()

@@ -1,7 +1,7 @@
 import json
 import pkgutil
 
-from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC
+from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, DEFAULT_DIV_ID, DEFAULT_VIZ_HTML_PATH
 
 
 class InvalidProtocolException(Exception):
@@ -17,7 +17,8 @@ class HTMLVisualizationAssembly(object):
                  x_axis_values=None, y_axis_values=None, color_func=None, show_axes=True,
                  horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
-                 topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True):
+                 topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
+                 show_cross_axes=True, div_name = DEFAULT_DIV_ID):
         '''
 
         Parameters
@@ -107,8 +108,11 @@ class HTMLVisualizationAssembly(object):
         unified_context: bool, default False
             Display all context in a single column.
         show_category_headings: bool, default True
-            If unified_context, should we show the category headings>?
-
+            If unified_context, should we show the category headings?
+        show_cross_axes: bool, default True
+            If show_axes is False, do we show cross-axes?
+        div_name: str, default DEFAULT_DIV_ID
+            Div which holds scatterplot
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -147,7 +151,8 @@ class HTMLVisualizationAssembly(object):
         self._vertical_lines = vertical_lines
         self._unified_context = unified_context
         self._show_category_headings = show_category_headings
-
+        self._show_cross_axes = show_cross_axes
+        self._div_name = div_name
 
     def to_html(self,
                 protocol='http',
@@ -188,8 +193,7 @@ class HTMLVisualizationAssembly(object):
         if d3_scale_chromatic_url is None:
             d3_scale_chromatic_url = DEFAULT_D3_SCALE_CHROMATIC
 
-        html_content = ((
-                            self._full_content_of_html_file()
+        html_content = ((self._full_content_of_html_file()
                             if html_base is None
                             else self._format_html_base(html_base))
                         .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
@@ -221,8 +225,7 @@ class HTMLVisualizationAssembly(object):
                 "Invalid protocol: %s.  Protocol must be either http or https." % (protocol))
 
     def _full_content_of_html_file(self):
-        return pkgutil.get_data('scattertext',
-                                'data/viz/scattertext.html').decode('utf-8')
+        return pkgutil.get_data('scattertext', DEFAULT_VIZ_HTML_PATH).decode('utf-8')
 
     def _full_content_of_javascript_files(self):
         return '; \n \n '.join([self._get_packaged_file_content(script_name)
@@ -294,5 +297,7 @@ class HTMLVisualizationAssembly(object):
                      js_default_value_to_null(self._horizontal_line_y_position),
                      js_default_value_to_null(self._vertical_line_x_position),
                      js_bool(self._unified_context),
-                     js_bool(self._show_category_headings)]
+                     js_bool(self._show_category_headings),
+                     js_bool(self._show_cross_axes),
+                     js_default_string(self._div_name)]
         return 'plotInterface = buildViz(' + ','.join(arguments) + ');'

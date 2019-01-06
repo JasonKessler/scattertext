@@ -34,9 +34,10 @@ buildViz = function (d3) {
                      horizontal_line_y_position = null,
                      vertical_line_x_position = null,
                      unifiedContexts = false,
-                     showCategoryHeadings = true) {
-        var divName = 'd3-div-1';
-
+                     showCategoryHeadings = true,
+                     showCrossAxes = true,
+                     divName = 'd3-div-1') {
+        //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
         if (!showAxes) {
@@ -45,42 +46,98 @@ buildViz = function (d3) {
         var margin = padding,
             width = widthInPixels - margin.left - margin.right,
             height = heightInPixels - margin.top - margin.bottom;
-
+        fullData.data.forEach(function (x, i) {x.i = i});
         // Set the ranges
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
 
         if (unifiedContexts) {
-            document.querySelectorAll('#notcol').forEach(function (x) {x.style.display = 'none'});
-            document.querySelectorAll('.contexts').forEach(function (x) {x.style.width = '90%'});
-        } else if (showNeutral) {
-
+            console.log('UNIFIED CONTEXTS')
+            document.querySelectorAll('#'+divName+'-'+'notcol')
+                .forEach(function (x) {x.style.display = 'none'});
+            document.querySelectorAll('.'+divName+'-'+'contexts')
+                .forEach(function (x) {x.style.width = '90%'});
+        } 
+        else if (showNeutral) {
             if (showExtra) {
-                document.querySelectorAll('#neutcol')
+                /*
+                document.querySelectorAll('#'+divName+'-'+'neutcol')
                     .forEach(function (x) {
                         x.style.display = 'inline'
                     });
-                document.querySelectorAll('#extracol')
+                document.querySelectorAll('#'+divName+'-'+'extracol')
                     .forEach(function (x) {
                         x.style.display = 'inline'
                     });
-                document.querySelectorAll('.contexts')
+                document.querySelectorAll('.'+divName+'-'+'contexts')
                     .forEach(function (x) {
                         x.style.width = '25%'
                     });
+                */
+                document.querySelectorAll('.'+divName+'-'+'contexts')
+                .forEach(function (x) {
+                    x.style.width = '25%'
+                    //x.style.display = 'inline'
+                    x.style.float = 'left'
+                });
+
+                ['notcol','neutcol','extracol'].forEach(function (columnName) { 
+                    document.querySelectorAll('#'+divName+'-'+columnName)
+                        .forEach(function (x) {
+                            x.style.display = 'inline'
+                            x.style.float = 'left'
+                            x.style.width = '25%'
+                        });
+                })
 
             } else {
-                document.querySelectorAll('#neutcol')
+                /*
+                document.querySelectorAll('#'+divName+'-'+'neutcol')
                     .forEach(function (x) {
                         x.style.display = 'inline'
                     });
-                document.querySelectorAll('.contexts')
+                document.querySelectorAll('.'+divName+'-'+'contexts')
                     .forEach(function (x) {
                         x.style.width = '30%'
                     });
+                */
+                document.querySelectorAll('.'+divName+'-'+'contexts')
+                .forEach(function (x) {
+                    x.style.width = '33%'
+                    //x.style.display = 'inline'
+                    x.style.float = 'left'
+                });
+
+                ['notcol','neutcol'].forEach(function (columnName) { 
+                    document.querySelectorAll('#'+divName+'-'+columnName)
+                        .forEach(function (x) {
+                            x.style.display = 'inline'
+                            x.style.float = 'left'
+                            x.style.width = '33%'
+                        });
+                })
+
 
             }
+        } else {
+            document.querySelectorAll('.'+divName+'-'+'contexts')
+                .forEach(function (x) {
+                    x.style.width = '45%'
+                    //x.style.display = 'inline'
+                    x.style.float = 'left'
+                });
+
+            ['notcol'].forEach(function (columnName) { 
+                document.querySelectorAll('#'+divName+'-'+columnName)
+                    .forEach(function (x) {
+                        //x.style.display = 'inline'
+                        x.style.float = 'left'
+                        x.style.width = '45%'
+                    });
+            })
+            console.log('DEFAULT')
         }
+
         var yAxis = null;
         var xAxis = null;
 
@@ -115,10 +172,12 @@ buildViz = function (d3) {
 
             return bsa(0, ar.length);
         }
+        
 
         console.log("fullData");
         console.log(fullData);
 
+        
         var sortedX = fullData.data.sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
         }).map(function (x) {
@@ -142,6 +201,8 @@ buildViz = function (d3) {
         }).map(function (x) {
             return x.oy
         });
+        console.log("444");
+        console.log(fullData.data[0])
 
 
         function labelWithZScore(axis, axisName, tickPoints) {
@@ -290,8 +351,54 @@ buildViz = function (d3) {
             }
 
         }
+        
+        function denseRank(ar) {
+            var markedAr = ar.map((x,i) => [x,i]).sort((a,b) => a[0] - b[0]);
+            var curRank = 1
+            var rankedAr = markedAr.map(
+                function(x, i) {
+                    if(i > 0 && x[0] != markedAr[i-1][0]) {
+                        curRank++;
+                    }
+                    return [curRank, x[0], x[1]];
+                }
+            )
+            return rankedAr.sort((a,b) => (a[2] - b[2])).map(x => x[0]);    
+        }
 
-
+        function getCategoryDenseRankScores(categoryNum) {
+            var fgFreqs = Array(fullData.data.length).fill(0);
+            var bgFreqs = Array(fullData.data.length).fill(0);
+            var categoryTermCounts = fullData.termCounts[categoryNum];
+            Object.keys(categoryTermCounts).forEach(
+                key => fgFreqs[key] = categoryTermCounts[key][0]
+            )
+            fullData.termCounts.forEach( 
+                function (categoryTermCounts, otherCategoryNum) {
+                    if(otherCategoryNum != categoryNum) {
+                        Object.keys(categoryTermCounts).forEach(
+                           key => bgFreqs[key] = categoryTermCounts[key][0]
+                        )                        
+                    }
+                }
+            )
+            var fgDenseRanks = denseRank(fgFreqs);
+            var bgDenseRanks = denseRank(bgFreqs);
+            return fgDenseRanks.map((x,i) => x - bgDenseRanks[i]);
+        }
+        
+        function getTermCounts() {
+            var counts = Array(fullData.data.length).fill(0);  
+            fullData.termCounts.forEach( 
+                function (categoryTermCounts) {
+                    Object.keys(categoryTermCounts).forEach(
+                       key => counts[key] = categoryTermCounts[key][0]
+                    )                        
+                }
+            )
+            return counts;
+        }
+        
         function getContextWordLORIPs(query) {
             var contextWordCounts = getContextWordCounts(query);
             var ni_k = contextWordCounts.sums[0];
@@ -594,8 +701,8 @@ buildViz = function (d3) {
             return false;
         }
 
-        function displayObscuredTerms(obscuredTerms, term, div='#overlapped-terms') {
-            d3.select('#overlapped-terms')
+        function displayObscuredTerms(obscuredTerms, term, div='#'+divName+'-'+'overlapped-terms') {
+            d3.select('#'+divName+'-'+'overlapped-terms')
                 .selectAll('div')
                 .remove();
             d3.select(div)
@@ -651,7 +758,7 @@ buildViz = function (d3) {
                 })
             }
             if (unifiedContexts) {
-               divId = '#cat';
+               divId = '#'+divName+'-'+'cat';
                 var docLabelCounts = fullData.docs.labels.reduce(
                     function(map, label) {map[label] = (map[label]||0)+1; return map;},
                     Object.create(null)
@@ -679,27 +786,39 @@ buildViz = function (d3) {
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
                 console.log(numMatches)
+                d3.select('#'+divName+'-'+'categoryinfo').selectAll("div").remove();
                 if(showCategoryHeadings) {
-                    d3.select('#categoryinfo').selectAll("div").remove();
-                    d3.select('#categoryinfo').attr('display', 'inline')
+                    d3.select('#'+divName+'-'+'categoryinfo').attr('display', 'inline')
                 }
+                function getCategoryStatsHTML(counts) {
+                    return counts.matches + " document"
+                        + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
+                        +counts['percent'].toFixed(2) + '%';
+                }
+                
+                function getCategoryInlineHeadingHTML(counts) {
+                    return '<a name="'+divName+'-category'
+                        + counts.labelNum + '"></a>' 
+                        + counts.label + ": <span class=topic_preview>"
+                        + getCategoryStatsHTML(counts)
+                        + "</span>";
+                }
+
                 docLabelCountsSorted.forEach(function(counts) {
-                    var htmlToAdd = "<b>"+counts.label + "</b>: " + counts.matches + " document"
-                    + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
-                         +counts['percent'].toFixed(2) + '%';
+                    var htmlToAdd = "<b>"+counts.label + "</b>: " +  getCategoryStatsHTML(counts);
                     console.log(htmlToAdd);
                     if(showCategoryHeadings) {
-                        d3.select('#categoryinfo')
+                        d3.select('#'+divName+'-'+'categoryinfo')
                             .attr('display', 'inline')
                             .append('div')
                             .html(htmlToAdd)
-                            .on("click", function() {window.location.hash = '#category' + counts.labelNum});
+                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
                     }
                     if(counts.matches > 0) {
                         d3.select(divId)
                             .append("div")
                             .attr('class', 'text_header')
-                            .html('<a name="category' + counts.labelNum + '"></a>' + counts.label);
+                            .html(getCategoryInlineHeadingHTML(counts));
                         allContexts
                             .filter(singleDoc => singleDoc.docLabel == counts.labelNum)
                             .forEach(function (singleDoc) {
@@ -738,13 +857,13 @@ buildViz = function (d3) {
                         //var divId = catName == catInternalName ? '#cat' : '#notcat';
                         var divId = null
                         if (catName == fullData.info.category_internal_name) {
-                            divId = '#cat'
+                            divId = '#'+divName+'-'+'cat'
                         } else if (fullData.info.not_category_name == catName) {
-                            divId = '#notcat'
+                            divId = '#'+divName+'-'+'notcat'
                         } else if (fullData.info.neutral_category_name == catName) {
-                            divId = '#neut';
+                            divId = '#'+divName+'-'+'neut';
                         } else if (fullData.info.extra_category_name == catName) {
-                            divId = '#extra'
+                            divId = '#'+divName+'-'+'extra'
                         } else {
                             return;
                         }
@@ -760,21 +879,21 @@ buildViz = function (d3) {
             }
 
             var obscuredTerms = getObscuredTerms(termInfo.info);
-            displayObscuredTerms(obscuredTerms, info.term, '#overlapped-terms-clicked');
+            displayObscuredTerms(obscuredTerms, info.term, '#'+divName+'-'+'overlapped-terms-clicked');
 
-            d3.select('#termstats')
+            d3.select('#'+divName+'-'+'termstats')
                 .selectAll("div")
                 .remove();
             var termHtml = 'Term: <b>' + info.term + '</b>';
             if ('metalists' in fullData && info.term in fullData.metalists) {
                 termHtml = 'Topic: <b>' + info.term + '</b>';
             }
-            d3.select('#termstats')
+            d3.select('#'+divName+'-'+'termstats')
                 .append('div')
                 .attr("class", "snippet_header")
                 .html(termHtml);
             if ('metalists' in fullData && info.term in fullData.metalists) {
-                d3.select('#termstats')
+                d3.select('#'+divName+'-'+'termstats')
                     .attr("class", "topic_preview")
                     .append('div')
                     .html("<b>Topic preview</b>: "
@@ -785,7 +904,7 @@ buildViz = function (d3) {
                             }));
             }
             if ('metadescriptions' in fullData && info.term in fullData.metadescriptions) {
-                d3.select('#termstats')
+                d3.select('#'+divName+'-'+'termstats')
                     .attr("class", "topic_preview")
                     .append('div')
                     .html("<b>Description</b>: " + fullData.metadescriptions[info.term]);
@@ -848,7 +967,8 @@ buildViz = function (d3) {
             }
 
             if (!unifiedContexts) {
-                d3.select('#cathead')
+                console.log("NOT UNIFIED CONTEXTS")
+                d3.select('#'+divName+'-'+'cathead')
                     .style('fill', color(1))
                     .html(
                         getFrequencyDescription(cat_name,
@@ -857,7 +977,7 @@ buildViz = function (d3) {
                             termInfo.contexts[0].length * 1000 / numCatDocs
                         )
                     );
-                d3.select('#notcathead')
+                d3.select('#'+divName+'-'+'notcathead')
                     .style('fill', color(0))
                     .html(
                         getFrequencyDescription(ncat_name,
@@ -889,7 +1009,7 @@ buildViz = function (d3) {
                             return a + b;
                         });
 
-                    d3.select("#neuthead")
+                    d3.select("#" + divName + "-neuthead")
                         .style('fill', color(0))
                         .html(
                             getFrequencyDescription(fullData.info.neutral_category_name,
@@ -918,7 +1038,7 @@ buildViz = function (d3) {
                                 return a + b;
                             });
 
-                        d3.select("#extrahead")
+                        d3.select("#" + divName + "-extrahead")
                             .style('fill', color(0))
                             .html(
                                 getFrequencyDescription(fullData.info.extra_category_name,
@@ -933,10 +1053,10 @@ buildViz = function (d3) {
                 // extra unified context code goes here
             }
             if (jump) {
-                if (window.location.hash == '#snippets') {
-                    window.location.hash = '#snippetsalt';
+                if (window.location.hash == '#'+divName+'-'+'snippets') {
+                    window.location.hash = '#'+divName+'-'+'snippetsalt';
                 } else {
-                    window.location.hash = '#snippets';
+                    window.location.hash = '#'+divName+'-'+'snippets';
                 }
             }
         }
@@ -1155,15 +1275,14 @@ buildViz = function (d3) {
         function showToolTipForTerm(searchTerm, showObscured=true) {
             var searchTermInfo = termDict[searchTerm];
             if (searchTermInfo === undefined) {
-                d3.select("#alertMessage")
+                d3.select("#" + divName + "-alertMessage")
                     .text(searchTerm + " didn't make it into the visualization.");
             } else {
-                d3.select("#alertMessage").text("");
-                var circle = mysvg._groups[0][searchTermInfo.i];
-
-
+                d3.select("#" + divName + "-alertMessage").text("");
+                var circle = mysvg._groups[0][searchTermInfo.ci];
                 var mySVGMatrix = circle.getScreenCTM()
-                    .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+                    .translate(circle.cx.baseVal.value, 
+                               circle.cy.baseVal.value);
                 var pageX = mySVGMatrix.e;
                 var pageY = mySVGMatrix.f;
                 circle.style["stroke"] = "black";
@@ -1194,7 +1313,7 @@ buildViz = function (d3) {
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
                     if (showObscured) {
-                        d3.select('#overlapped-terms')
+                        d3.select('#'+divName+'-'+'overlapped-terms')
                             .selectAll('div')
                             .remove();
                     }
@@ -1216,7 +1335,8 @@ buildViz = function (d3) {
             termDict = Object();
             data.forEach(function (x, i) {
                 termDict[x.term] = x;
-                termDict[x.term].i = i;
+                //!!!
+                //termDict[x.term].i = i;
             });
 
             var padding = 0;
@@ -1242,6 +1362,7 @@ buildViz = function (d3) {
             //var rangeTree = null; // keep boxes of all points and labels here
             var rectHolder = new RectangleHolder();
             // Add the scatterplot
+            data.forEach(function(d,i) {d.ci = i});
             mysvg = svg
                 .selectAll("dot")
                 .data(data)
@@ -1299,7 +1420,7 @@ buildViz = function (d3) {
                         .duration(0)
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
-                    d3.select('#overlapped-terms')
+                    d3.select('#'+divName+'-'+'overlapped-terms')
                         .selectAll('div')
                         .remove();
                 })
@@ -1332,6 +1453,28 @@ buildViz = function (d3) {
                 pointStore.push([x2, y2]);
                 curLabel.remove();
             }
+            
+            function censorCircle(xCoord, yCoord) {
+                var curLabel = svg.append("text")
+                    .attr("x", x(xCoord))
+                    .attr("y", y(yCoord) + 3)
+                    .attr("text-anchor", "middle")
+                    .text("x");
+                var bbox = curLabel.node().getBBox();
+                var borderToRemove = .5;
+                var x1 = bbox.x + borderToRemove,
+                    y1 = bbox.y + borderToRemove,
+                    x2 = bbox.x + bbox.width - borderToRemove,
+                    y2 = bbox.y + bbox.height - borderToRemove;
+                var pointRect = new Rectangle(x1, y1, x2, y2);
+                pointRects.push(pointRect);
+                rectHolder.add(pointRect);
+                pointStore.push([x1, y1]);
+                pointStore.push([x2, y1]);
+                pointStore.push([x1, y2]);
+                pointStore.push([x2, y2]);
+                curLabel.remove();
+            }
 
             function labelPointsIfPossible(i, myX, myY) {
                 var term = data[i].term;
@@ -1339,6 +1482,12 @@ buildViz = function (d3) {
                 var configs = [
                     {'anchor': 'end', 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                    
+                    {'anchor': 'end', 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'end', 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'end', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                    {'anchor': 'end', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                    
                     {'anchor': 'start', 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
@@ -1479,8 +1628,6 @@ buildViz = function (d3) {
             }
 
             data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
-            console.log("Sorted Data:");
-            console.log(data);
             if (doCensorPoints) {
                 for (var i in data) {
                     var d = data[i];
@@ -1598,6 +1745,7 @@ buildViz = function (d3) {
                     .attr('font-size', '10px')
                     .text(getLabelText('y'));
                 registerFigureBBox(yLabel);
+            
             } else {
                 horizontal_line_y_position_translated = 0.5;
                 if(horizontal_line_y_position !== null) {
@@ -1640,20 +1788,22 @@ buildViz = function (d3) {
                        }
                     }
                 }
-                var x_line = svg.append("g")
-                    .attr("transform", "translate(0, " + y(horizontal_line_y_position_translated) + ")")
-                    .append("line")
-                    .attr("x2", width)
-                    .style("stroke", "#cccccc")
-                    .style("stroke-width", "1px")
-                    .moveToBack();
-                var y_line = svg.append("g")
-                    .attr("transform", "translate(" + x(vertical_line_x_position_translated) + ", 0)")
-                    .append("line")
-                    .attr("y2", height)
-                    .style("stroke", "#cccccc")
-                    .style("stroke-width", "1px")
-                    .moveToBack();
+                if(showCrossAxes) {
+                    var x_line = svg.append("g")
+                        .attr("transform", "translate(0, " + y(horizontal_line_y_position_translated) + ")")
+                        .append("line")
+                        .attr("x2", width)
+                        .style("stroke", "#cccccc")
+                        .style("stroke-width", "1px")
+                        .moveToBack();
+                    var y_line = svg.append("g")
+                        .attr("transform", "translate(" + x(vertical_line_x_position_translated) + ", 0)")
+                        .append("line")
+                        .attr("y2", height)
+                        .style("stroke", "#cccccc")
+                        .style("stroke-width", "1px")
+                        .moveToBack();
+                }
             }
 
             function showWordList(word, termDataList) {
@@ -1719,19 +1869,17 @@ buildViz = function (d3) {
                 return showWordList(header, sortedData.slice(0, length));
 
             }
-
-
             var characteristicXOffset = width;
-            if (showTopTerms) {
+            function showTopTermsPane(registerFigureBBox, showAssociatedWordList) {
                 var catHeader = svg.append("text")
-                    .attr("text-anchor", "start")
-                    .attr("x", width)
-                    .attr("dy", "6px")
-                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                    .attr('font-size', '12px')
-                    .attr('font-weight', 'bolder')
-                    .attr('font-decoration', 'underline')
-                    .text("Top " + fullData['info']['category_name']);
+                .attr("text-anchor", "start")
+                .attr("x", width)
+                .attr("dy", "6px")
+                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bolder')
+                .attr('font-decoration', 'underline')
+                .text("Top " + fullData['info']['category_name']);
                 registerFigureBBox(catHeader);
                 console.log(catHeader);
 
@@ -1757,6 +1905,18 @@ buildViz = function (d3) {
                 if (wordListData.maxWidth > maxWidth) {
                     maxWidth = wordListData.maxWidth;
                 }
+                return {wordListData, word, maxWidth, characteristicXOffset};
+            }
+
+            
+            if (showTopTerms) {
+                
+
+                var ret = showTopTermsPane(registerFigureBBox, showAssociatedWordList);
+                var wordListData = ret.wordListData;
+                var word = ret.word;
+                var maxWidth = ret.maxWidth;
+                characteristicXOffset = ret.characteristicXOffset;
 
             }
 
@@ -1797,6 +1957,7 @@ buildViz = function (d3) {
                     rectHolder.remove(existingLabels[i].rect);
                     existingLabels[i].label.remove();
                 }
+                console.log('labeling 1')
 
                 var labeledPoints = [];
                 for (var i = 0; i < data.length; i++) {
@@ -1806,8 +1967,6 @@ buildViz = function (d3) {
                     }
                     //if (labelPointsIfPossible(i), true) numPointsLabeled++;
                 }
-                console.log('numPointsLabeled');
-                console.log(labeledPoints.length);
                 return labeledPoints;
             }
 
@@ -1820,9 +1979,8 @@ buildViz = function (d3) {
                 function (d) {
                     return d.y
                 });
-            console.log("labeledPoints");
-            console.log(labeledPoints);
-            var redrawPoints = function (n, getX, getY, relabel=false) {
+
+            var rerender = function (xCoords, yCoords, color) {
                 labeledPoints.forEach(function (p) {
                     p.label.remove();
                     rectHolder.remove(p.rect);
@@ -1831,30 +1989,20 @@ buildViz = function (d3) {
                     rectHolder.remove(rect);
                 });
                 pointRects = []
-
-                var newCoords = {};
-                for (i in fullData['data']) {
-                    var d = fullData['data'][i];
-                    newCoords[d.term] = {x: getX(d), y: getY(d)};
-                    censorPoints(d, getX, getY);
+                var circles = d3.selectAll('circle')
+                    .attr("cy", function (d) {return y(yCoords[d.i])})
+                    .transition(50)
+                    .attr("cx", function (d) {return x(xCoords[d.i])})
+                    .transition(50);    
+                if(color !== null) {
+                     circles.style("fill", d => color(d));
                 }
-
-                d3.selectAll('circle').transition().duration(1000).attr("cy", function (d) {
-                    return y(newCoords[d.term].y)
-                }).attr("cx", function (d) {
-                    return x(newCoords[d.term].x)
-                }).duration(1000);
+                xCoords.forEach((xCoord,i) => censorCircle(xCoord, yCoords[i]))
                 labeledPoints = [];
-                if (relabel) {
-                    labeledPoints = performPartialLabeling(labeledPoints, function (d) {
-                            return newCoords[d.term].x
-                        },
-                        function (d) {
-                            return newCoords[d.term].y
-                        });
-                    console.log("labeledPoints");
-                    console.log(labeledPoints);
-                }
+                labeledPoints = performPartialLabeling(
+                    labeledPoints, 
+                    function (d) {return xCoords[d.i]},
+                    function (d) {return yCoords[d.i]});
             };
 
 
@@ -1987,7 +2135,7 @@ buildViz = function (d3) {
                     }
                 });
 
-                d3.select('#corpus-stats')
+                d3.select('#'+divName+'-'+'corpus-stats')
                     .style('width', width + margin.left + margin.right + 200)
                     .append('div')
                     .html(messages.join('<br />'));
@@ -2000,7 +2148,7 @@ buildViz = function (d3) {
 
             if (saveSvgButton) {
                 // from https://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
-                var svgElement = document.getElementById("d3-div-1");
+                var svgElement = document.getElementById(divName);
 
                 var serializer = new XMLSerializer();
                 var source = serializer.serializeToString(svgElement);
@@ -2024,14 +2172,14 @@ buildViz = function (d3) {
 
             }
             //return [performPartialLabeling, labeledPoints];
-            return redrawPoints;
+            return rerender;
         };
 
         //fullData = getDataAndInfo();
         if (fullData.docs) {
             var corpusWordCounts = getCorpusWordCounts();
         }
-        var redrawPoints = processData(fullData);
+        var rerender = processData(fullData);
 
 
         // The tool tip is down here in order to make sure it has the highest z-index
@@ -2040,21 +2188,48 @@ buildViz = function (d3) {
             //.attr("class", getTooltipContent == null && sortByDist ? "tooltip" : "tooltipscore")
             .attr("class", "tooltipscore")
             .style("opacity", 0);
+        
+        function drawCategoryAssociation(categoryNum) {
+            var rawLogTermCounts = getTermCounts().map(Math.log);
+            var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
+            var minRawLogTermCounts = Math.min(...rawLogTermCounts);
+            var logTermCounts = rawLogTermCounts.map(
+                x => (x - minRawLogTermCounts)/maxRawLogTermCounts
+            )
+
+            var rawScores = getCategoryDenseRankScores(categoryNum);
+            var maxRawScores = Math.max(...rawScores);
+            var minRawScores = Math.min(...rawScores);
+            var scores = rawScores.map(
+                function(rawScore) {
+                    if(rawScore == 0) {
+                        return 0.5;
+                    } else if(rawScore > 0) {
+                        return rawScore/(2.*maxRawScores) + 0.5;
+                    } else if(rawScore < 0) {
+                        return 0.5 - rawScore/(2.*minRawScores);
+                    }
+                }
+            )
+            
+            plotInterface.rerender(logTermCounts, scores, 
+                                   d => d3.interpolateRdYlBu(scores[d.i]));
+            /*plotInterface.redrawPoints(
+                0, 
+                function (d) {return Math.log(termCounts[d.i] / maxFreq)}, 
+                function (d) {return scores[d.i]}, 
+                true
+            )*/
+        }
+        
         var plotInterface = Object();
         plotInterface.displayTermContexts = displayTermContexts;
         plotInterface.gatherTermContexts = gatherTermContexts;
         plotInterface.termDict = termDict;
         plotInterface.showToolTipForTerm = showToolTipForTerm;
-        plotInterface.redrawPoints = redrawPoints;
+        plotInterface.drawCategoryAssociation = drawCategoryAssociation;
+        plotInterface.rerender = rerender;
 
-        function drawFightinWords() {
-            plotInterface.redrawPoints(0.1, function (d) {
-                    return Math.log(d.ncat + d.cat) / maxFreq
-                }, function (d) {
-                    return d.s
-                }, true
-            )
-        };
         return plotInterface
     };
 }(d3);

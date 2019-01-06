@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.34
+# Scattertext 0.0.2.35
 
 **Table of Contents**
 
@@ -80,12 +80,21 @@ The HTML outputs look best in Chrome and Safari.
 ```
 
 ## What's new
+In 0.0.2.35:
+* Added `show_category_headings=True` to `produce_scattertext_explorer`. Setting this to False suppresses the list of categories
+which will be displayed in the term context area. 
+* Added `div_name` argument to `produce_scattertext_explorer` and name-spaced important divs and classes by `div_name`
+in HTML templates and Javascript. 
+* Added `show_cross_axes=True` to `produce_scattertext_explorer`. Setting this to `False` prevents the cross axes 
+from being displayed if `show_axes` is `True`.
+* Changed default scorer to RankDifference.
+* Made sure that term contexts were properly shown in all configurations.
+
+
 In 0.0.2.34:
 * `TermDocMatrix.get_metadata_freq_df` now accepts the `label_append` argument which by default adds `' freq'` to the
 end of each column.
-* Added `show_category_headings=True` to `produce_scattertext_explorer`. This suppresses the list of categories
-which will be displayed in the term context area. 
-
+* `TermDocMatrix.get_num_cateogires` returns the number of categories in a term-document matrix.
 
 In 0.0.2.33:
 Added the following methods:

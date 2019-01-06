@@ -394,6 +394,9 @@ class TestTermDocMat(TestCase):
     def test_get_num_metadata(self):
         self.assertEqual(get_hamlet_term_doc_matrix().use_categories_as_metadata().get_num_metadata(), 2)
 
+    def test_get_num_categories(self):
+        self.assertEqual(get_hamlet_term_doc_matrix().get_num_categories(), 2)
+
     def test_recategorize(self):
         hamlet = get_hamlet_term_doc_matrix()
         newcats = ['cat' + str(i % 3) for i in range(hamlet.get_num_docs())]

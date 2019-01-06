@@ -134,18 +134,21 @@ input:focus {
   font-family: Helvetica, Arial, Sans-Serif;
   text-align: center;
   padding-bottom: 10px;
+  font-weight: normal;
+  text-decoration: none;
 }
 
 
-#categoryinfo {
+#d3-div-1-categoryinfo {
   font-size: 12px;
   font-family: Helvetica, Arial, Sans-Serif;
   text-align: center;
-  padding-bottom: 10px;
+  padding-bottom: 10px;    
+
 }
 
 
-#title-div {
+#d3-div-1-title-div {
   font-size: 20px;
   font-family: Helvetica, Arial, Sans-Serif;
   text-align: center;
@@ -209,20 +212,20 @@ input:focus {
   font-size: 10px;
 }
 
-#corpus-stats {
+#d3-div-1-corpus-stats {
   text-align: center;
 }
 
-#cat {
+#d3-div-1-cat {
 }
 
-#notcat {
+#d3-div-1-notcat {
 }
 
-#neut {
+#d3-div-1-neut {
 }
 
-#neutcol {
+#d3-div-1-neutcol {
   display: none;
 }
 
@@ -232,32 +235,32 @@ input:focus {
 <!-- EXTRA LIBS -->
 <!-- INSERT SEMIOTIC SQUARE -->
 <!--<a onclick="maxFreq = Math.log(data.map(d => d.cat + d.ncat).reduce((a,b) => Math.max(a,b))); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, false); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, true)">View Score Plot</a>-->
-<span id="title-div"></span>
+<span id="d3-div-1-title-div"></span>
 <div class="scattertext" id="d3-div-1"></div>
-<div id="corpus-stats"></div>
-<div id="overlapped-terms"></div>
+<div id="d3-div-1-corpus-stats"></div>
+<div id="d3-div-1-overlapped-terms"></div>
 <form name="termForm" onSubmit="handleSearch(); return false;">
   <input name="Submit" type="submit" value="Search for term">
-  <input type="text" id="searchTerm" placeholder="Type a word or two&hellip;">
-  <span id="alertMessage" class="alert"></span>
+  <input type="text" id="d3-div-1-searchTerm" placeholder="Type a word or two&hellip;">
+  <span id="d3-div-1-alertMessage" class="alert"></span>
 </form>
-<a name="snippets"></a>
-<a name="snippetsalt"></a>
-<div id="termstats"></div>
-<div id="overlapped-terms-clicked"></div>
-<div id="categoryinfo" style="display: hidden"></div>
+<a name="d3-div-1-snippets"></a>
+<a name="d3-div-1-snippetsalt"></a>
+<div id="d3-div-1-termstats"></div>
+<div id="d3-div-1-overlapped-terms-clicked"></div>
+<div id="d3-div-1-categoryinfo" style="display: hidden"></div>
 <div id="d3-div-2">
-  <div class="contexts">
-    <div class="snippet_header" id="cathead"></div>
-    <div class="snippet" id="cat"></div>
+  <div class="d3-div-1-contexts">
+    <div class="snippet_header" id="d3-div-1-cathead"></div>
+    <div class="snippet" id="d3-div-1-cat"></div>
   </div>
-  <div id="notcol" class="contexts">
-    <div class="snippet_header" id="notcathead"></div>
-    <div class="snippet" id="notcat"></div>
+  <div id="d3-div-1-notcol" class="d3-div-1-contexts">
+    <div class="snippet_header" id="d3-div-1-notcathead"></div>
+    <div class="snippet" id="d3-div-1-notcat"></div>
   </div>
-  <div id="neutcol" class="contexts">
-    <div class="snippet_header" id="neuthead"></div>
-    <div class="snippet" id="neut"></div>
+  <div id="d3-div-1-neutcol" class="d3-div-1-contexts">
+    <div class="snippet_header" id="d3-div-1-neuthead"></div>
+    <div class="snippet" id="d3-div-1-neut"></div>
   </div>
 </div>
 <script charset="utf-8">

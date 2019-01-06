@@ -111,8 +111,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(len(self.get_terms()), len(self.get_categories())), dtype=int)
-        for cat_i in range(len(self._category_idx_store._i2val)):
+        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()), dtype=int)
+        for cat_i in range(self.get_num_categories()):
             freq_mat[:, cat_i] = self._X[self._y == cat_i, :].sum(axis=0)
         return freq_mat
 
@@ -122,8 +122,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(len(self.get_terms()), len(self.get_categories())), dtype=int)
-        for cat_i in range(len(self._category_idx_store._i2val)):
+        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()), dtype=int)
+        for cat_i in range(self.get_num_categories()):
             X = (self._X[self._y == cat_i, :] > 0).astype(int)
             freq_mat[:, cat_i] = X.sum(axis=0)
         return freq_mat
@@ -138,7 +138,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         '''
         # row = self._row_category_ids()
         # newX = csr_matrix(((self._X.data > 0).astype(int), (row, self._X.indices)))
-        # return self._term_freq_df_from_matrix(newX)
+        # return self._ term_freq_df_from_matrix(newX)
         mat = self.get_term_count_mat()
         return pd.DataFrame(mat,
                             index=self.get_terms(),
@@ -704,4 +704,11 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                  copy(self._category_idx_store),
                                                  self._y == self._y)
         return new_tdm
+
+    def get_num_categories(self):
+        '''
+        Returns the number of categories in the term document matrix
+        :return: int
+        '''
+        return len(self.get_categories())
 

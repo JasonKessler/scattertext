@@ -3,13 +3,13 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
-
 from scattertext.PValGetter import get_p_vals
 from scattertext.Scalers import percentile_min, percentile_alphabetical
 from scattertext.ScatterChartData import ScatterChartData
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
     filter_out_unigrams_that_only_occur_in_one_bigram
 from scattertext.termscoring import ScaledFScore
+from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.termscoring.CornerScore import CornerScore
 
 
@@ -213,7 +213,7 @@ class ScatterChart:
         not_category_name : str, optional
             Name of ~category which will appear on web site. Default None is same as "not " + category.
         scores : np.array, optional
-            Scores to use for coloring.  Defaults to None, or np.array(self.term_doc_matrix.get_scaled_f_scores(category))
+            Scores to use for coloring.  Defaults to None, or RankDifference scores
         transform : function, optional
             Function for ranking terms.  Defaults to scattertext.Scalers.percentile_lexicographic.
         title_case_names : bool, default False
@@ -365,7 +365,9 @@ class ScatterChart:
             j['metadescriptions'] = self.metadata_descriptions
         if self.term_colors is not None:
             j['info']['term_colors'] = self.term_colors
-        j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+        #j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+        j['data'] = json_df.to_dict(orient='records')
+
         return j
 
     def _add_x_and_y_coords_to_term_df_if_injected(self, df):
@@ -522,7 +524,8 @@ class ScatterChart:
         category_column_name = category + ' freq'
         cat_word_counts = df[category_column_name]
         not_cat_word_counts = df[[c + ' freq' for c in other_categories]].sum(axis=1)
-        scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
+        # scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
+        scores = RankDifference().get_scores(cat_word_counts, not_cat_word_counts)
         return scores
 
     def _term_importance_ranks(self, category, df):

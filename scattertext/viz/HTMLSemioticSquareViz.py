@@ -1,5 +1,7 @@
 import pkgutil
 
+from scattertext.Common import SEMIOTIC_SQUARE_HTML_PATH
+
 
 class HTMLSemioticSquareViz(object):
 	def __init__(self, semiotic_square):
@@ -54,5 +56,4 @@ class HTMLSemioticSquareViz(object):
 		return ', '.join(template.format(term=term) for term in lexicon)
 
 	def _get_template(self):
-		return pkgutil.get_data('scattertext',
-		                        'data/viz/semiotic_new.html').decode('utf-8')
+		return pkgutil.get_data('scattertext', SEMIOTIC_SQUARE_HTML_PATH).decode('utf-8')

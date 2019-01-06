@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import pandas as pd
 
-version = [0, 0, 2, 34]
+version = [0, 0, 2, 35]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -207,6 +207,7 @@ def produce_scattertext_explorer(corpus,
                                  show_axes=True,
                                  horizontal_line_y_position=None,
                                  vertical_line_x_position=None,
+                                 show_cross_axes=True,
                                  show_extra=False,
                                  extra_category_name=None,
                                  censor_points=True,
@@ -221,6 +222,8 @@ def produce_scattertext_explorer(corpus,
                                  term_colors=None,
                                  unified_context=False,
                                  show_category_headings=True,
+                                 include_term_category_counts=False,
+                                 div_name=None,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -369,6 +372,8 @@ def produce_scattertext_explorer(corpus,
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     vertical_line_x_position : float, default None
     horizontal_line_y_position : float, default None
+    show_cross_axes : bool, default True
+        If show_axes is False, do we show cross-axes?
     show_extra : bool
         False by default.  Show a fourth column listing contexts in the
         extra categories.
@@ -404,6 +409,10 @@ def produce_scattertext_explorer(corpus,
         Boolean displays contexts in a single pane as opposed to separate columns.
     show_category_headings : bool, default True
         Show category headings if unified_context is True.
+    include_term_category_counts : bool, default False
+        Include the termCounts object in the plot definition.
+    div_name : str, None by default
+        Give the scatterplot div name a non-default value
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -491,7 +500,8 @@ def produce_scattertext_explorer(corpus,
                                                         extra_category_name=extra_category_name,
                                                         neutral_categories=neutral_categories,
                                                         extra_categories=extra_categories,
-                                                        background_scorer=characteristic_scorer)
+                                                        background_scorer=characteristic_scorer,
+                                                        include_term_category_counts=include_term_category_counts)
     if return_data:
         return scatter_chart_data
     return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data), width_in_pixels=width_in_pixels,
@@ -511,7 +521,8 @@ def produce_scattertext_explorer(corpus,
                                      do_censor_points=censor_points, center_label_over_points=center_label_over_points,
                                      x_axis_labels=x_axis_labels, y_axis_labels=y_axis_labels,
                                      topic_model_preview_size=topic_model_preview_size, vertical_lines=vertical_lines,
-                                     unified_context=unified_context, show_category_headings=show_category_headings) \
+                                     unified_context=unified_context, show_category_headings=show_category_headings,
+                                     show_cross_axes=show_cross_axes, div_name=div_name) \
         .to_html(protocol=protocol,
                  d3_url=d3_url,
                  d3_scale_chromatic_url=d3_scale_chromatic_url,
@@ -750,12 +761,6 @@ def produce_frequency_explorer(corpus,
         return round(x, -int(np.floor(np.log10(abs(x)))))
 
     if y_axis_values is None:
-        '''
-        y_axis_values = [round_to_1(x) for x
-                         in sorted(set(-np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
-                                   | set(np.linspace(0, np.max(np.abs(kwargs['scores'])), 4))
-                                   | {0})]
-        '''
         max_score = np.floor(np.max(kwargs['scores']) * 100) / 100
         min_score = np.ceil(np.min(kwargs['scores']) * 100) / 100
         if min_score < 0 and max_score > 0:
@@ -765,7 +770,6 @@ def produce_frequency_explorer(corpus,
         y_axis_values = [x for x in [min_score, central, max_score]
                          if x >= min_score and x <= max_score]
     scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
-    # kwargs['metadata'] = kwargs.get('metadata', None),
     if use_term_significance:
         kwargs['term_significance'] = term_scorer
 
