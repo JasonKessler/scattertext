@@ -2,7 +2,10 @@ from __future__ import print_function
 
 import pandas as pd
 
-version = [0, 0, 2, 35]
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
+from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
+
+version = [0, 0, 2, 36]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -12,7 +15,7 @@ import scattertext.viz
 from scattertext.CategoryColorAssigner import CategoryColorAssigner
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
-from scattertext.termscoring.CohensD import CohensD
+from scattertext.termscoring.CohensD import CohensD, HedgesR
 from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
 from scattertext.diachronic.DiachronicTermMiner import DiachronicTermMiner
 from scattertext.characteristic.DenseRankCharacteristicness import DenseRankCharacteristicness
@@ -65,7 +68,7 @@ from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromPar
 from scattertext.semioticsquare import SemioticSquare, FourSquareAxis
 from scattertext.semioticsquare.FourSquare import FourSquare
 from scattertext.termranking import OncePerDocFrequencyRanker, DocLengthDividedFrequencyRanker, \
-    DocLengthNormalizedFrequencyRanker
+    DocLengthNormalizedFrequencyRanker, AbsoluteFrequencyRanker
 from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScorePresets, ScaledFScorePresetsNeg1To1
 from scattertext.termsignificance.LogOddsRatioSmoothed import LogOddsRatioSmoothed
@@ -75,7 +78,7 @@ from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior \
     import LogOddsRatioUninformativeDirichletPrior
 from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 from scattertext.termsignificance.TermSignificance import TermSignificance
-from scattertext.viz import VizDataAdapter, HTMLVisualizationAssembly
+from scattertext.viz import VizDataAdapter, ScatterplotStructure, PairPlotFromScatterplotStructure
 from scattertext.viz.HTMLSemioticSquareViz import HTMLSemioticSquareViz
 from scattertext.semioticsquare.FourSquareAxis import FourSquareAxes
 from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageCompactor
@@ -86,64 +89,6 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
-
-def produce_scattertext_html(term_doc_matrix,
-                             category,
-                             category_name,
-                             not_category_name,
-                             protocol='https',
-                             minimum_term_frequency=DEFAULT_MINIMUM_TERM_FREQUENCY,
-                             pmi_threshold_coefficient=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
-                             max_terms=None,
-                             filter_unigrams=False,
-                             height_in_pixels=None,
-                             width_in_pixels=None,
-                             term_ranker=termranking.AbsoluteFrequencyRanker):
-    '''Returns html code of visualization.
-
-    Parameters
-    ----------
-    term_doc_matrix : TermDocMatrix
-        Corpus to use
-    category : str
-        name of category column
-    category_name: str
-        name of category to mine for
-    not_category_name: str
-        name of everything that isn't in category
-    protocol : str
-        optional, used prototcol of , http or https
-    minimum_term_frequency : int, optional
-        Minimum number of times word needs to appear to make it into visualization.
-    pmi_threshold_coefficient : int, optional
-        Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 6.
-    max_terms : int, optional
-        Maximum number of terms to include in visualization.
-    filter_unigrams : bool
-        default False, do we filter unigrams that only occur in one bigram
-    width_in_pixels: int
-        width of viz in pixels, if None, default to JS's choice
-    height_in_pixels: int
-        height of viz in pixels, if None, default to JS's choice
-    term_ranker : TermRanker
-            TermRanker class for determining term frequency ranks.
-
-    Returns
-    -------
-        str, html of visualization
-    '''
-    scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix,
-                                      minimum_term_frequency=minimum_term_frequency,
-                                      pmi_threshold_coefficient=pmi_threshold_coefficient,
-                                      filter_unigrams=filter_unigrams,
-                                      max_terms=max_terms,
-                                      term_ranker=term_ranker) \
-        .to_dict(category=category,
-                 category_name=category_name,
-                 not_category_name=not_category_name,
-                 transform=percentile_alphabetical)
-    html = HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data), width_in_pixels, height_in_pixels).to_html(protocol=protocol)
-    return html
 
 
 def produce_scattertext_explorer(corpus,
@@ -224,6 +169,7 @@ def produce_scattertext_explorer(corpus,
                                  show_category_headings=True,
                                  include_term_category_counts=False,
                                  div_name=None,
+                                 alternative_term_func=None,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -324,10 +270,10 @@ def produce_scattertext_explorer(corpus,
         Custom y-axis label
     d3_url, str, None by default.  The url (or path) of d3.
         URL of d3, to be inserted into <script src="..."/>.  Overrides `protocol`.
-      By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
+      By default, this is `DEFAULT_D3_URL` declared in `ScatterplotStructure`.
     d3_scale_chromatic_url, str, None by default.  Overrides `protocol`.
       URL of d3 scale chromatic, to be inserted into <script src="..."/>
-      By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
+      By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `ScatterplotStructure`.
     pmi_filter_thresold : (DEPRECATED) int, None by default
       DEPRECATED.  Use pmi_threshold_coefficient instead.
     alternative_text_field : str or None, optional
@@ -367,7 +313,8 @@ def produce_scattertext_explorer(corpus,
         returns a string.
     term_scorer : Object, default None
         In lieu of scores, object with a get_scores(a,b) function that returns a set of scores,
-        where a and b are term counts.  Scorer optionally has a get_term_freqs function.
+        where a and b are term counts.  Scorer optionally has a get_term_freqs function. Also could be a
+        CorpusBasedTermScorer instance.
     show_axes : bool, default True
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     vertical_line_x_position : float, default None
@@ -413,6 +360,9 @@ def produce_scattertext_explorer(corpus,
         Include the termCounts object in the plot definition.
     div_name : str, None by default
         Give the scatterplot div name a non-default value
+    alternative_term_func: str, default None
+        Javascript function which take a term JSON object and returns a bool.  If the return value is true,
+        execute standard term click pipeline. Ex.: `'(function(termDict) {return true;})'`.
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -438,14 +388,8 @@ def produce_scattertext_explorer(corpus,
         not_categories = [c for c in corpus.get_categories() if c != category]
 
     if term_scorer:
-        # tdf = term_ranker(corpus).get_ranks()
-        tdf = corpus.apply_ranker(term_ranker)
-        cat_freqs = tdf[category + ' freq']
-        if not_categories:
-            not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
-        else:
-            not_cat_freqs = tdf.sum(axis=1) - tdf[category + ' freq']
-        scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
+        scores = get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral, term_ranker,
+                                        term_scorer)
 
     if pmi_filter_thresold is not None:
         pmi_threshold_coefficient = pmi_filter_thresold
@@ -504,29 +448,215 @@ def produce_scattertext_explorer(corpus,
                                                         include_term_category_counts=include_term_category_counts)
     if return_data:
         return scatter_chart_data
-    return HTMLVisualizationAssembly(VizDataAdapter(scatter_chart_data), width_in_pixels=width_in_pixels,
-                                     height_in_pixels=height_in_pixels, max_snippets=max_snippets, color=color,
-                                     grey_zero_scores=gray_zero_scores, sort_by_dist=sort_by_dist,
-                                     reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
-                                     use_full_doc=use_full_doc, asian_mode=asian_mode,
-                                     use_non_text_features=use_non_text_features,
-                                     show_characteristic=show_characteristic, word_vec_use_p_vals=word_vec_use_p_vals,
-                                     max_p_val=max_p_val, save_svg_button=save_svg_button,
-                                     p_value_colors=p_value_colors, x_label=x_label, y_label=y_label,
-                                     show_top_terms=show_top_terms, show_neutral=show_neutral,
-                                     get_tooltip_content=get_tooltip_content, x_axis_values=x_axis_values,
-                                     y_axis_values=y_axis_values, color_func=color_func, show_axes=show_axes,
-                                     horizontal_line_y_position=horizontal_line_y_position,
-                                     vertical_line_x_position=vertical_line_x_position, show_extra=show_extra,
-                                     do_censor_points=censor_points, center_label_over_points=center_label_over_points,
-                                     x_axis_labels=x_axis_labels, y_axis_labels=y_axis_labels,
-                                     topic_model_preview_size=topic_model_preview_size, vertical_lines=vertical_lines,
-                                     unified_context=unified_context, show_category_headings=show_category_headings,
-                                     show_cross_axes=show_cross_axes, div_name=div_name) \
-        .to_html(protocol=protocol,
-                 d3_url=d3_url,
-                 d3_scale_chromatic_url=d3_scale_chromatic_url,
-                 html_base=html_base)
+    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data), width_in_pixels=width_in_pixels,
+                                                 height_in_pixels=height_in_pixels, max_snippets=max_snippets,
+                                                 color=color,
+                                                 grey_zero_scores=gray_zero_scores, sort_by_dist=sort_by_dist,
+                                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
+                                                 use_full_doc=use_full_doc, asian_mode=asian_mode,
+                                                 use_non_text_features=use_non_text_features,
+                                                 show_characteristic=show_characteristic,
+                                                 word_vec_use_p_vals=word_vec_use_p_vals,
+                                                 max_p_val=max_p_val, save_svg_button=save_svg_button,
+                                                 p_value_colors=p_value_colors, x_label=x_label, y_label=y_label,
+                                                 show_top_terms=show_top_terms, show_neutral=show_neutral,
+                                                 get_tooltip_content=get_tooltip_content, x_axis_values=x_axis_values,
+                                                 y_axis_values=y_axis_values, color_func=color_func,
+                                                 show_axes=show_axes,
+                                                 horizontal_line_y_position=horizontal_line_y_position,
+                                                 vertical_line_x_position=vertical_line_x_position,
+                                                 show_extra=show_extra,
+                                                 do_censor_points=censor_points,
+                                                 center_label_over_points=center_label_over_points,
+                                                 x_axis_labels=x_axis_labels, y_axis_labels=y_axis_labels,
+                                                 topic_model_preview_size=topic_model_preview_size,
+                                                 vertical_lines=vertical_lines,
+                                                 unified_context=unified_context,
+                                                 show_category_headings=show_category_headings,
+                                                 show_cross_axes=show_cross_axes, div_name=div_name,
+                                                 alternative_term_func=alternative_term_func)
+    return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol,
+                                                                            d3_url=d3_url,
+                                                                            d3_scale_chromatic_url=d3_scale_chromatic_url,
+                                                                            html_base=html_base)
+
+
+def get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral,
+                           term_ranker, term_scorer):
+    tdf = corpus.apply_ranker(term_ranker)
+    cat_freqs = tdf[category + ' freq']
+    if not_categories:
+        not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
+    else:
+        not_cat_freqs = tdf.sum(axis=1) - tdf[category + ' freq']
+    if isinstance(term_scorer, CorpusBasedTermScorer) and not term_scorer.is_category_name_set():
+        if show_neutral:
+            term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
+        else:
+            term_scorer = term_scorer.set_categories(category, not_categories)
+    return term_scorer.get_scores(cat_freqs, not_cat_freqs)
+
+
+def produce_pairplot(corpus,
+                     asian_mode=False,
+                     category_width_in_pixels=700,
+                     category_height_in_pixels=700,
+                     term_width_in_pixels=700,
+                     term_height_in_pixels=700,
+                     scaler=scale_neg_1_to_1_with_zero_mean,
+                     num_terms=1000,
+                     term_ranker=AbsoluteFrequencyRanker,
+                     category_color_func='(function(x) {return "#5555FF"})'):
+    compact_corpus = corpus.compact(AssociationCompactor(num_terms)).use_categories_as_metadata()
+    compact_category_counts = compact_corpus.get_term_freq_df('').astype('f')
+    compact_category_counts_catscale = compact_category_counts / compact_category_counts.sum(axis=0)
+    compact_category_counts_catscale_std = (
+            compact_category_counts_catscale.T - compact_category_counts_catscale.mean(axis=1)).T
+    compact_category_counts_catscale_std_scale = (
+            compact_category_counts_catscale_std.T / compact_category_counts_catscale_std.var(axis=1)).T
+    from sklearn.decomposition import PCA
+    proj = PCA(2).fit_transform(compact_category_counts_catscale_std_scale.T)
+    projection = pd.DataFrame({'term': compact_corpus.get_metadata(),
+                               'x': proj.T[0],
+                               'y': proj.T[1]}).set_index('term')
+
+    category_scatter_chart_explorer = ScatterChartExplorer(compact_corpus,
+                                                           minimum_term_frequency=0,
+                                                           minimum_not_category_term_frequency=0,
+                                                           pmi_threshold_coefficient=0,
+                                                           filter_unigrams=False,
+                                                           jitter=0,
+                                                           max_terms=None,
+                                                           term_ranker=term_ranker,
+                                                           use_non_text_features=True,
+                                                           term_significance=None,
+                                                           terms_to_include=None)
+
+    category_scatter_chart_explorer.inject_coordinates(x_coords=scaler(projection['x']),
+                                                       y_coords=scaler(projection['y']),
+                                                       original_x=projection['x'],
+                                                       original_y=projection['y'])
+    category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
+        category=compact_corpus.get_categories()[0],
+        max_docs_per_category=0,
+    )
+    category_scatterplot_structure = ScatterplotStructure(
+        VizDataAdapter(category_scatter_chart_data),
+        width_in_pixels=category_width_in_pixels,
+        height_in_pixels=category_height_in_pixels,
+        asian_mode=asian_mode,
+        use_non_text_features=True,
+        show_top_terms=False,
+        show_characteristic=False,
+        get_tooltip_content=None,
+        color_func=category_color_func,
+        show_axes=False,
+        unified_context=True,
+        show_category_headings=False,
+        show_cross_axes=True,
+        horizontal_line_y_position=0,
+        vertical_line_x_position=0,
+        y_label='',
+        x_label='',
+        full_data='getCategoryDataAndInfo()',
+        div_name='cat-plot'
+    )
+
+    term_scatter_chart_explorer = ScatterChartExplorer(compact_corpus,
+                                                       minimum_term_frequency=0,
+                                                       minimum_not_category_term_frequency=0,
+                                                       pmi_threshold_coefficient=0,
+                                                       term_ranker=term_ranker)
+    tdf = compact_corpus.get_term_freq_df()
+    scores = RankDifference().get_scores(
+        tdf[compact_corpus.get_categories()[0] + ' freq'],
+        tdf[[c + ' freq' for c in compact_corpus.get_categories()
+             if c != compact_corpus.get_categories()[0]]].sum(axis=1)
+    )
+    term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
+        category=compact_corpus.get_categories()[0],
+        scores=scores
+    )
+    term_scatterplot_structure = ScatterplotStructure(
+        VizDataAdapter(term_scatter_chart_data),
+        width_in_pixels=term_width_in_pixels,
+        height_in_pixels=term_height_in_pixels,
+
+        asian_mode=asian_mode,
+        use_non_text_features=False,
+        show_top_terms=True,
+        show_characteristic=False,
+        get_tooltip_content=None,
+        show_category_headings=False,
+        horizontal_line_y_position=0,
+        vertical_line_x_position=0,
+        y_label=compact_corpus.get_categories()[0],
+        x_label='Not ' + compact_corpus.get_categories()[0],
+        full_data='getTermDataAndInfo()',
+        div_name='d3-div-1'
+    )
+
+    return PairPlotFromScatterplotStructure(category_scatterplot_structure, term_scatterplot_structure).to_html()
+
+
+def produce_scattertext_html(term_doc_matrix,
+                             category,
+                             category_name,
+                             not_category_name,
+                             protocol='https',
+                             minimum_term_frequency=DEFAULT_MINIMUM_TERM_FREQUENCY,
+                             pmi_threshold_coefficient=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
+                             max_terms=None,
+                             filter_unigrams=False,
+                             height_in_pixels=None,
+                             width_in_pixels=None,
+                             term_ranker=termranking.AbsoluteFrequencyRanker):
+    '''Returns html code of visualization.
+
+    Parameters
+    ----------
+    term_doc_matrix : TermDocMatrix
+        Corpus to use
+    category : str
+        name of category column
+    category_name: str
+        name of category to mine for
+    not_category_name: str
+        name of everything that isn't in category
+    protocol : str
+        optional, used prototcol of , http or https
+    minimum_term_frequency : int, optional
+        Minimum number of times word needs to appear to make it into visualization.
+    pmi_threshold_coefficient : int, optional
+        Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 6.
+    max_terms : int, optional
+        Maximum number of terms to include in visualization.
+    filter_unigrams : bool
+        default False, do we filter unigrams that only occur in one bigram
+    width_in_pixels: int
+        width of viz in pixels, if None, default to JS's choice
+    height_in_pixels: int
+        height of viz in pixels, if None, default to JS's choice
+    term_ranker : TermRanker
+        TermRanker class for determining term frequency ranks.
+
+    Returns
+    -------
+        str, html of visualization
+    '''
+    scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix,
+                                      minimum_term_frequency=minimum_term_frequency,
+                                      pmi_threshold_coefficient=pmi_threshold_coefficient,
+                                      filter_unigrams=filter_unigrams,
+                                      max_terms=max_terms,
+                                      term_ranker=term_ranker) \
+        .to_dict(category=category,
+                 category_name=category_name,
+                 not_category_name=not_category_name,
+                 transform=percentile_alphabetical)
+
+    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data), width_in_pixels, height_in_pixels)
+    return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol)
 
 
 def get_category_names(category, category_name, not_categories, not_category_name):
@@ -691,6 +821,7 @@ def produce_frequency_explorer(corpus,
                                not_categories=None,
                                grey_threshold=1.96,
                                y_axis_values=None,
+                               frequency_transform=lambda x: scale(np.log(x) - np.log(1)),
                                **kwargs):
     '''
     Produces a Monroe et al. style visualization, with the x-axis being the log frequency
@@ -722,6 +853,8 @@ def produce_frequency_explorer(corpus,
         Score to grey points. Default is 1.96
     y_axis_values : list
         Custom y-axis values. Defaults to linspace
+    frequency_transfom : lambda, default lambda x: scale(np.log(x) - np.log(1))
+        Takes a vector of frequencies and returns their x-axis scale.
     Remaining arguments are from `produce_scattertext_explorer`.'
     Returns
     -------
@@ -742,14 +875,14 @@ def produce_frequency_explorer(corpus,
                      in np.linspace(0, np.log(freqs.max()) / np.log(10), 5)]
     x_axis_values = [x for x in x_axis_values if x > 1 and x <= freqs.max()]
     # y_axis_values = [-2.58, -1.96, 0, 1.96, 2.58]
-    frequencies_log_scaled = scale(np.log(freqs) - np.log(1))
+    frequencies_log_scaled = frequency_transform(freqs)  # scale(np.log(freqs) - np.log(1))
 
     if 'scores' not in kwargs:
-        zeta_i_j = term_scorer.get_scores(
-            term_freq_df[category + ' freq'],
-            term_freq_df[[c + ' freq' for c in not_categories]].sum(axis=1)
-        )
-        kwargs['scores'] = kwargs.get('scores', zeta_i_j)
+        kwargs['scores'] = get_term_scorer_scores(category,
+                                                  corpus,
+                                                  kwargs.get('neutral_categories', False),
+                                                  not_categories,
+                                                  kwargs.get('show_neutral', False), term_ranker, term_scorer)
 
     def y_axis_rescale(coords):
         return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
@@ -1261,6 +1394,7 @@ def produce_pca_explorer(corpus,
         **kwargs
     )
     return html
+
 
 def produce_characteristic_explorer(corpus,
                                     category,

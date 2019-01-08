@@ -25,15 +25,19 @@ def sparse_var(X):
     return np.array(Xc.mean(axis=0) - np.power(X.mean(axis=0), 2))[0]
 
 
+class NeedToSetCategoriesException(Exception):
+    pass
+
+
 class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     def __init__(self, corpus, *args, **kwargs):
         self.corpus_ = corpus
-        self.category_names_ = corpus.get_categories()
         self.category_ids_ = corpus._y
         self.tdf_ = None
         self._set_scorer_args(**kwargs)
         self.term_ranker_ = AbsoluteFrequencyRanker(corpus)
         self.use_metadata_ = False
+        self.category_name_is_set_ = False
 
     @abstractmethod
     def _set_scorer_args(self, **kwargs):
@@ -50,6 +54,9 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         if self.use_metadata_:
             self.term_ranker_.use_non_text_features()
         return self
+
+    def is_category_name_set(self):
+        return self.category_name_is_set_
 
     def set_categories(self,
                        category_name,
@@ -78,6 +85,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         self.category_name = category_name
         self.not_category_names = [c[:-5] for c in not_category_names]
         self.neutral_category_names = [c[:-5] for c in neutral_category_names]
+        self.category_name_is_set_ = True
         return self
 
     def _get_X(self):
@@ -122,6 +130,8 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return np.array(cat_X.mean(axis=0) - ncat_X.mean(axis=0))[0]
 
     def _get_cat_and_ncat(self, X):
+        if self.category_name_is_set_ is False:
+            raise NeedToSetCategoriesException()
         cat_X = X[np.isin(self.corpus_.get_category_names_by_row(),
                           [self.category_name] + self.neutral_category_names), :]
         ncat_X = X[np.isin(self.corpus_.get_category_names_by_row(),
@@ -131,7 +141,6 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
             cat_X = vstack([cat_X, neut_X])
             ncat_X = vstack([ncat_X, neut_X])
         return cat_X, ncat_X
-
 
     def _get_index(self):
         return self.corpus_.get_metadata() if self.use_metadata_ else self.corpus_.get_terms()

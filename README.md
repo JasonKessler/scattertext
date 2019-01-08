@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.35
+# Scattertext 0.0.2.36
 
 **Table of Contents**
 
@@ -80,6 +80,13 @@ The HTML outputs look best in Chrome and Safari.
 ```
 
 ## What's new
+In 0.0.2.36:
+* Added `alternative_term_func` to `produce_scattertext_explorer` which allows you to inject a function that activates
+when a term is clicked.
+* Fixed Cohen's d calculation, and added `HedgesR`, and unbiased version of Cohen's d which is a subclass of `CohensD`. 
+* Added the `frequency_transform` parameter to `produce_frequency_explorer`.  This defaults to a log transform, but 
+allows you to use any way your heart desires to order terms along the x-axis. 
+
 In 0.0.2.35:
 * Added `show_category_headings=True` to `produce_scattertext_explorer`. Setting this to False suppresses the list of categories
 which will be displayed in the term context area. 
@@ -482,29 +489,67 @@ html = st.produce_pca_explorer(corpus,
 Click for an interactive version
 [![demo_pca_documents.html](https://jasonkessler.github.io/doc_pca.png)](https://jasonkessler.github.io/demo_pca_documents.html)
 
+### Using Cohen's d or Hedge's r to visualize effect size.
+
+Cohen's d is a popular metric used to measure effect size.  The definitions of Cohen's d and Hedge's r 
+from (Shinichi and Cuthill 2017) are implemented in Scattertext. 
+
+```python
+>>> convention_df = st.SampleCorpora.ConventionData2012.get_data()
+>>> corpus = (st.CorpusFromPandas(convention_df,
+...                               category_col='party',
+...                               text_col='text',
+...                               nlp=st.whitespace_nlp_with_sentences)
+...           .build()
+...           .get_unigram_corpus())
+```
+We can create a term scorer object to examine the effect sizes and other metrics. 
+```python
+>>> term_scorer = st.CohensD(corpus).set_categories('democrat', ['republican'])
+>>> term_scorer.get_score_df().sort_values(by='cohens_d', ascending=False).head()
+           cohens_d  cohens_d_se  cohens_d_z     cohens_d_p  hedges_r  hedges_r_se  hedges_r_z  hedges_r_p        m1        m2
+obama      1.187378     0.024588   48.290444   0.000000e+00  1.187322     0.018419   64.461363         0.0  0.007778  0.002795
+class      0.855859     0.020848   41.052045   0.000000e+00  0.855818     0.017227   49.677688         0.0  0.002222  0.000375
+middle     0.826895     0.020553   40.232746   0.000000e+00  0.826857     0.017138   48.245626         0.0  0.002316  0.000400
+president  0.820825     0.020492   40.056541   0.000000e+00  0.820786     0.017120   47.942661         0.0  0.010231  0.005369
+barack     0.730624     0.019616   37.245725  6.213052e-304  0.730589     0.016862   43.327800         0.0  0.002547  0.000725
+```
+Our calculation of Cohen's d is not directly based on term counts. Rather, we divide each document's term counts by the total number
+of terms in the document before calculating the statistics.  `m1` and `m2` are, respectively the mean portions of words
+in speeches made by Democrats and Republicans that were the term in question.  The effect size (`cohens_d`) is the 
+difference between these means divided by the pooled standard standard deviation.  `cohens_d_se` is the standard error
+of the statistic, while `cohens_d_z` and `cohens_d_p` are the Z-scores and p-values indicating the statistical
+ significance of the effect.  Corresponding columns are present for Hedge's r, and unbiased version of Cohen's d.
+ 
+```python
+>>> st.produce_frequency_explorer(
+    corpus,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    term_scorer=st.CohensD(corpus),
+    metadata=convention_df['speaker'],
+    grey_threshold=0
+)
+```  
+Click for an interactive version. 
+[![demo_cohens_d.html](https://jasonkessler.github.io/cohens_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
+ 
 
 ### Understanding Scaled F-Score
 
-Let's use the Rotten Tomatoes corpus as an example for to explain how Scaled F-Score works. 
-This corpus contains excerpts of positive and negative movie reviews.
+Let's now turn our attention to a novel term scoring metric, Scaled F-Score.  We'll examine this on a unigram 
+version of the Rotten Tomatoes corpus (Pang et al. 2002). It contains excerpts of 
+positive and negative movie reviews. 
 
 Please see [Scaled F Score Explanation](http://nbviewer.jupyter.org/github/JasonKessler/GlobalAI2018/blob/master/notebook/Scaled-F-Score-Explanation.ipynb) 
 for a notebook version of this analysis. 
 
-```python
-rdf = st.SampleCorpora.RottenTomatoes.get_data()
-rdf['category_name'] = rdf['category'].apply(lambda x: {'plot': 'Plot', 'rotten': 'Negative', 'fresh': 'Positive'}[x])
-corpus = (st.CorpusFromPandas(rdf, 
-                              category_col='category_name', 
-                              text_col='text',
-                              nlp = st.whitespace_nlp_with_sentences)
-          .build().get_unigram_corpus())
-``` 
 
 ![Scaled F-Score Explanation 1](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/scaledfscoreimgs/sfs1.png)
 
 ```python
-from scipy.stats import hmean
+from scipy.stats import hmean 
 
 term_freq_df = corpus.get_unigram_corpus().get_term_freq_df()[['Positive freq', 'Negative freq']]
 term_freq_df = term_freq_df[term_freq_df.sum(axis=1) > 0]
@@ -1915,3 +1960,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Bo Pang and Lillian Lee. A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of the ACL, 2004.
 * Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
 * Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources. LREC 2014.
+* Shinichi Nakagawa and Innes C. Cuthill. Effect size, confidence interval and statistical significance: a practical guide for biologists. 2007. In Biological Reviews 82.

@@ -36,7 +36,8 @@ buildViz = function (d3) {
                      unifiedContexts = false,
                      showCategoryHeadings = true,
                      showCrossAxes = true,
-                     divName = 'd3-div-1') {
+                     divName = 'd3-div-1',
+                     alternativeTermFunc = null) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -52,7 +53,6 @@ buildViz = function (d3) {
         var y = d3.scaleLinear().range([height, 0]);
 
         if (unifiedContexts) {
-            console.log('UNIFIED CONTEXTS')
             document.querySelectorAll('#'+divName+'-'+'notcol')
                 .forEach(function (x) {x.style.display = 'none'});
             document.querySelectorAll('.'+divName+'-'+'contexts')
@@ -60,24 +60,9 @@ buildViz = function (d3) {
         } 
         else if (showNeutral) {
             if (showExtra) {
-                /*
-                document.querySelectorAll('#'+divName+'-'+'neutcol')
-                    .forEach(function (x) {
-                        x.style.display = 'inline'
-                    });
-                document.querySelectorAll('#'+divName+'-'+'extracol')
-                    .forEach(function (x) {
-                        x.style.display = 'inline'
-                    });
-                document.querySelectorAll('.'+divName+'-'+'contexts')
-                    .forEach(function (x) {
-                        x.style.width = '25%'
-                    });
-                */
                 document.querySelectorAll('.'+divName+'-'+'contexts')
                 .forEach(function (x) {
                     x.style.width = '25%'
-                    //x.style.display = 'inline'
                     x.style.float = 'left'
                 });
 
@@ -91,20 +76,9 @@ buildViz = function (d3) {
                 })
 
             } else {
-                /*
-                document.querySelectorAll('#'+divName+'-'+'neutcol')
-                    .forEach(function (x) {
-                        x.style.display = 'inline'
-                    });
-                document.querySelectorAll('.'+divName+'-'+'contexts')
-                    .forEach(function (x) {
-                        x.style.width = '30%'
-                    });
-                */
                 document.querySelectorAll('.'+divName+'-'+'contexts')
                 .forEach(function (x) {
                     x.style.width = '33%'
-                    //x.style.display = 'inline'
                     x.style.float = 'left'
                 });
 
@@ -135,7 +109,6 @@ buildViz = function (d3) {
                         x.style.width = '45%'
                     });
             })
-            console.log('DEFAULT')
         }
 
         var yAxis = null;
@@ -1259,7 +1232,7 @@ buildViz = function (d3) {
         handleSearch = function (event) {
             deselectLastCircle();
             var searchTerm = document
-                .getElementById("searchTerm")
+                .getElementById(divName + "-searchTerm")
                 .value
                 .toLowerCase()
                 .replace("'", " '")
@@ -1267,7 +1240,13 @@ buildViz = function (d3) {
             showToolTipForTerm(searchTerm);
             var termInfo = termDict[searchTerm];
             if (termInfo != null) {
-                displayTermContexts(gatherTermContexts(termInfo), false);
+                var runDisplayTermContexts = true;
+                if(alternativeTermFunc != null) {
+                    runDisplayTermContexts = alternativeTermFunc(termInfo);
+                }
+                if(runDisplayTermContexts) {
+                    displayTermContexts(gatherTermContexts(termInfo), false);
+                }
             }
             return false;
         };
@@ -1304,6 +1283,9 @@ buildViz = function (d3) {
         function makeWordInteractive(domObj, term, showObscured=true) {
             return domObj
                 .on("mouseover", function (d) {
+                    console.log("mouseover" )
+                    console.log(term)
+                    console.log(termDict[term])
                     showToolTipForTerm(term, showObscured);
                     d3.select(this).style("stroke", "black");
                 })
@@ -1319,7 +1301,13 @@ buildViz = function (d3) {
                     }
                 })
                 .on("click", function (d) {
-                    displayTermContexts(gatherTermContexts(termDict[term]));
+                    var runDisplayTermContexts = true;
+                    if(alternativeTermFunc != null) {
+                        runDisplayTermContexts = alternativeTermFunc(termDict[term]);
+                    }
+                    if(runDisplayTermContexts) {
+                        displayTermContexts(gatherTermContexts(termDict[term]));
+                    }
                 });
         }
 
@@ -1409,11 +1397,19 @@ buildViz = function (d3) {
                         d3.event.pageX,
                         d3.event.pageY
                     );*/
+                    console.log("point MOUSOEVER")
+                    console.log(d)
                     showToolTipForTerm(d.term, true);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("click", function (d) {
-                    displayTermContexts(gatherTermContexts(d));
+                    var runDisplayTermContexts = true;
+                    if(alternativeTermFunc != null) {
+                        runDisplayTermContexts = alternativeTermFunc(d);
+                    }
+                    if(runDisplayTermContexts) {
+                        displayTermContexts(gatherTermContexts(d));
+                    }
                 })
                 .on("mouseout", function (d) {
                     tooltip.transition()

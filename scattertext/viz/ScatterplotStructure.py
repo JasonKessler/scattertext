@@ -1,14 +1,13 @@
 import json
-import pkgutil
 
-from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, DEFAULT_DIV_ID, DEFAULT_VIZ_HTML_PATH
+from scattertext.Common import DEFAULT_DIV_ID
 
 
 class InvalidProtocolException(Exception):
     pass
 
 
-class HTMLVisualizationAssembly(object):
+class ScatterplotStructure(object):
     def __init__(self, visualization_data, width_in_pixels=None, height_in_pixels=None, max_snippets=None, color=None,
                  grey_zero_scores=False, sort_by_dist=True, reverse_sort_scores_for_not_category=True,
                  use_full_doc=False, asian_mode=False, use_non_text_features=False, show_characteristic=True,
@@ -18,7 +17,8 @@ class HTMLVisualizationAssembly(object):
                  horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
                  topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
-                 show_cross_axes=True, div_name = DEFAULT_DIV_ID):
+                 show_cross_axes=True, div_name=DEFAULT_DIV_ID,
+                 alternative_term_func=None):
         '''
 
         Parameters
@@ -113,6 +113,9 @@ class HTMLVisualizationAssembly(object):
             If show_axes is False, do we show cross-axes?
         div_name: str, default DEFAULT_DIV_ID
             Div which holds scatterplot
+        alternative_term_func: str, default None
+            Javascript function which take a term JSON object and returns a bool.  If the return value is true,
+            execute standard term click pipeline. Ex.: `'(function(termDict) {return true;})'`.
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -153,94 +156,9 @@ class HTMLVisualizationAssembly(object):
         self._show_category_headings = show_category_headings
         self._show_cross_axes = show_cross_axes
         self._div_name = div_name
+        self._alternative_term_func = alternative_term_func
 
-    def to_html(self,
-                protocol='http',
-                d3_url=None,
-                d3_scale_chromatic_url=None,
-                html_base=None):
-        '''
-        Parameters
-        ----------
-        protocol : str
-         'http' or 'https' for including external urls
-        d3_url, str
-          None by default.  The url (or path) of
-          d3, to be inserted into <script src="..."/>
-          By default, this is `DEFAULT_D3_URL` declared in `HTMLVisualizationAssembly`.
-        d3_scale_chromatic_url : str
-          None by default.
-          URL of d3_scale_chromatic_url, to be inserted into <script src="..."/>
-          By default, this is `DEFAULT_D3_SCALE_CHROMATIC` declared in `HTMLVisualizationAssembly`.
-        html_base : str
-            None by default.  HTML of semiotic square to be inserted above plot.
-
-        Returns
-        -------
-        str, the html file representation
-
-        '''
-        self._ensure_valid_protocol(protocol)
-        javascript_to_insert = '\n'.join([
-            self._full_content_of_javascript_files(),
-            self._visualization_data.to_javascript(),
-            self._call_build_visualization_in_javascript()
-        ])
-
-        if d3_url is None:
-            d3_url = DEFAULT_D3_URL
-
-        if d3_scale_chromatic_url is None:
-            d3_scale_chromatic_url = DEFAULT_D3_SCALE_CHROMATIC
-
-        html_content = ((self._full_content_of_html_file()
-                            if html_base is None
-                            else self._format_html_base(html_base))
-                        .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
-                        .replace('<!--D3URL-->', d3_url, 1)
-                        .replace('<!--D3SCALECHROMATIC-->', d3_scale_chromatic_url)
-                        # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
-                        )
-        '''
-        if html_base is not None:
-            html_file = html_file.replace('<!-- INSERT SEMIOTIC SQUARE -->',
-                                          html_base)
-        '''
-
-        extra_libs = ''
-        if self._save_svg_button:
-            # extra_libs = '<script src="https://cdn.rawgit.com/edeno/d3-save-svg/gh-pages/assets/d3-save-svg.min.js" charset="utf-8"></script>'
-            extra_libs = ''
-        html_content = (html_content
-                        .replace('<!-- EXTRA LIBS -->', extra_libs, 1)
-                        .replace('http://', protocol + '://'))
-        return html_content
-
-    def _format_html_base(self, html_base):
-        return html_base.replace('{width}', str(self._width_in_pixels)).replace('{height}', str(self._height_in_pixels))
-
-    def _ensure_valid_protocol(self, protocol):
-        if protocol not in ('https', 'http'):
-            raise InvalidProtocolException(
-                "Invalid protocol: %s.  Protocol must be either http or https." % (protocol))
-
-    def _full_content_of_html_file(self):
-        return pkgutil.get_data('scattertext', DEFAULT_VIZ_HTML_PATH).decode('utf-8')
-
-    def _full_content_of_javascript_files(self):
-        return '; \n \n '.join([self._get_packaged_file_content(script_name)
-                                for script_name in [
-                                    # 'd3.min.js',
-                                    # 'd3-scale-chromatic.v1.min.js',
-                                    'rectangle-holder.js',  # 'range-tree.js',
-                                    'main.js',
-                                ]])
-
-    def _get_packaged_file_content(self, file_name):
-        return pkgutil.get_data('scattertext',
-                                'data/viz/scripts/' + file_name).decode('utf-8')
-
-    def _call_build_visualization_in_javascript(self):
+    def call_build_visualization_in_javascript(self):
         def js_default_value(x):
             return 'undefined' if x is None else str(x)
 
@@ -299,5 +217,11 @@ class HTMLVisualizationAssembly(object):
                      js_bool(self._unified_context),
                      js_bool(self._show_category_headings),
                      js_bool(self._show_cross_axes),
-                     js_default_string(self._div_name)]
-        return 'plotInterface = buildViz(' + ','.join(arguments) + ');'
+                     js_default_string(self._div_name),
+                     js_default_value_to_null(self._alternative_term_func)]
+        return 'buildViz(' + ','.join(arguments) + ');'
+
+    def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):
+        return object_name + ' = ' + self.call_build_visualization_in_javascript()
+
+

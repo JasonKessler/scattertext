@@ -10,8 +10,9 @@ DEFAULT_MINIMUM_TERM_FREQUENCY = 3
 
 DEFAULT_DIV_ID = 'd3-div-1'
 
-DEFAULT_VIZ_HTML_PATH = 'data/viz/scattertext.html'
+DEFAULT_HTML_VIZ_FILE_NAME = 'scattertext.html'
 SEMIOTIC_SQUARE_HTML_PATH = 'data/viz/semiotic_new.html'
+PAIR_PLOT_HTML_VIZ_FILE_NAME = 'pairplot.html'
 
 # Constants for background scaled f-score
 DEFAULT_BACKGROUND_BETA = 1
