@@ -18,7 +18,7 @@
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
-    - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohen-s-d-or-hedge-s-r-to-visualize-effect-size)
+    - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [Advanced Uses](#advanced-uses)
