@@ -18,6 +18,7 @@
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
+    - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohen-s-d-or-hedge-s-r-to-visualize-effect-size)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [Advanced Uses](#advanced-uses)
@@ -533,7 +534,7 @@ of the statistic, while `cohens_d_z` and `cohens_d_p` are the Z-scores and p-val
 )
 ```  
 Click for an interactive version. 
-[![demo_cohens_d.html](https://jasonkessler.github.io/cohens_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
+[![demo_cohens_d.html](https://jasonkessler.github.io/cohen_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
  
 
 ### Understanding Scaled F-Score
