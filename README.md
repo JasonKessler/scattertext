@@ -80,6 +80,7 @@ The HTML outputs look best in Chrome and Safari.
 }
 ```
 
+
 ## What's new
 In 0.0.2.37:
 * Javascript changes to support multiple plots on a single page.
