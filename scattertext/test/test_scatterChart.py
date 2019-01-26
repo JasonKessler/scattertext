@@ -79,6 +79,16 @@ class TestScatterChart(TestCase):
         with self.assertRaises(Exception):
             sc.to_dict('hamlet')
 
+    def test_score_transform(self):
+        corpus = get_test_corpus()
+        sc = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0)
+        d1 = sc.to_dict('hamlet')
+        sc = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0, score_transform=lambda x:x)
+        d2 = sc.to_dict('hamlet')
+        assert sum([datum['s'] for datum in d1['data']]) != sum([datum['s'] for datum in d2['data']])
+
+
+
     def test_multi_categories(self):
         corpus = get_test_corpus()
         j_vs_all = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0) \

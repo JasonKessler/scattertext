@@ -81,6 +81,7 @@ class ScatterChart:
         self.metadata_term_lists = None
         self.metadata_descriptions = None
         self.term_colors = None
+        self.hidden_terms = None
 
     def inject_metadata_term_lists(self, term_dict):
         '''
@@ -190,6 +191,17 @@ class ScatterChart:
             raise CoordinatesNotRightException("Max value of %s_coords must be <= 1." % (name))
         if min(coords) < 0:
             raise CoordinatesNotRightException("Min value of %s_coords must be >= 0." % (name))
+
+    def hide_terms(self, terms):
+        '''
+        Mark terms which won't be displayed in the visualization.
+
+        :param terms: iter[str]
+            Terms to mark as hidden.
+        :return: ScatterChart
+        '''
+        self.hidden_terms = set(terms)
+        return self
 
     def to_dict(self,
                 category,
@@ -323,7 +335,7 @@ class ScatterChart:
         if self.scatterchartdata.term_significance:
             json_df['p'] = df['p']
         self._add_term_freq_to_json_df(json_df, df, category)
-        json_df['s'] = percentile_min(df['color_scores'])
+        json_df['s'] = self.scatterchartdata.score_transform(df['color_scores'])
         json_df['os'] = df['color_scores']
         if background_scorer:
             bg_scores = background_scorer.get_scores(self.term_doc_matrix)
@@ -365,9 +377,13 @@ class ScatterChart:
             j['metadescriptions'] = self.metadata_descriptions
         if self.term_colors is not None:
             j['info']['term_colors'] = self.term_colors
+
         #j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
         j['data'] = json_df.to_dict(orient='records')
-
+        if self.hidden_terms is not None:
+            for term_obj in j['data']:
+                if term_obj['term'] in self.hidden_terms:
+                    term_obj['display'] = False
         return j
 
     def _add_x_and_y_coords_to_term_df_if_injected(self, df):
@@ -604,7 +620,7 @@ class ScatterChart:
             verticalalignment = 'bottom' if alignment_criteria else 'top'
             term = row['term']
             ax.annotate(term,
-                        (self.x_coords[i], y_data[i]),
+                        (self.x_coords[i], self.y_data[i]),
                         size=15,
                         horizontalalignment=horizontalalignment,
                         verticalalignment=verticalalignment,

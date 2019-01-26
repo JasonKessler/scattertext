@@ -54,6 +54,14 @@ class TestScatterChartExplorer(TestCase):
 		self.assertEqual(expected['term'], actual['term'])
 		self.assertEqual(j['docs'].keys(), {'texts', 'labels', 'categories'})
 
+	def test_hide_terms(self):
+		corpus = build_hamlet_jz_corpus().get_unigram_corpus()
+		terms_to_hide = ['thou', 'heaven']
+		sc = (ScatterChartExplorer(corpus, minimum_term_frequency=0).hide_terms(terms_to_hide))
+		self.assertEquals(type(sc), ScatterChartExplorer)
+		j = sc.to_dict('hamlet', include_term_category_counts=True)
+		self.assertTrue(all(['display' in t and t['display'] == False for t in j['data'] if t['term'] in terms_to_hide]))
+		self.assertTrue(all(['display' not in t for t in j['data'] if t['term'] not in terms_to_hide]))
 
 	def test_include_term_category_counts(self):
 		corpus = build_hamlet_jz_corpus().get_unigram_corpus()

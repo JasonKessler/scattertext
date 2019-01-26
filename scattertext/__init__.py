@@ -5,7 +5,7 @@ import pandas as pd
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
 
-version = [0, 0, 2, 36]
+version = [0, 0, 2, 37]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -39,7 +39,7 @@ from scattertext.Formatter import large_int_format, round_downer
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.PriorFactory import PriorFactory
 from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max, \
-    scale_neg_1_to_1_with_zero_mean, dense_rank
+    scale_neg_1_to_1_with_zero_mean, dense_rank, stretch_0_to_1
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean_abs_max, scale
 from scattertext.ScatterChart import ScatterChart
 from scattertext.ScatterChartExplorer import ScatterChartExplorer
@@ -506,7 +506,8 @@ def produce_pairplot(corpus,
                      scaler=scale_neg_1_to_1_with_zero_mean,
                      num_terms=1000,
                      term_ranker=AbsoluteFrequencyRanker,
-                     category_color_func='(function(x) {return "#5555FF"})'):
+                     category_color_func='(function(x) {return "#5555FF"})',
+                     **kwargs):
     compact_corpus = corpus.compact(AssociationCompactor(num_terms)).use_categories_as_metadata()
     compact_category_counts = compact_corpus.get_term_freq_df('').astype('f')
     compact_category_counts_catscale = compact_category_counts / compact_category_counts.sum(axis=0)
@@ -559,29 +560,43 @@ def produce_pairplot(corpus,
         y_label='',
         x_label='',
         full_data='getCategoryDataAndInfo()',
+        alternative_term_func='(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})',
         div_name='cat-plot'
     )
 
-    term_scatter_chart_explorer = ScatterChartExplorer(compact_corpus,
-                                                       minimum_term_frequency=0,
-                                                       minimum_not_category_term_frequency=0,
-                                                       pmi_threshold_coefficient=0,
-                                                       term_ranker=term_ranker)
-    tdf = compact_corpus.get_term_freq_df()
+    compacted_corpus = corpus.compact(AssociationCompactor(num_terms))
+    terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
+    print('num terms to hide', len(terms_to_hide))
+    print('num terms to show', compacted_corpus.get_num_terms())
+
+    term_scatter_chart_explorer = ScatterChartExplorer(
+        corpus,
+        minimum_term_frequency=0,
+        minimum_not_category_term_frequency=0,
+        pmi_threshold_coefficient=0,
+        term_ranker=term_ranker,
+        score_transform=stretch_0_to_1).hide_terms(terms_to_hide)
+
+    initial_category = corpus.get_categories()[0]
+
+    tdf = corpus.get_term_freq_df()
     scores = RankDifference().get_scores(
-        tdf[compact_corpus.get_categories()[0] + ' freq'],
-        tdf[[c + ' freq' for c in compact_corpus.get_categories()
-             if c != compact_corpus.get_categories()[0]]].sum(axis=1)
+        tdf[initial_category + ' freq'],
+        tdf[[c + ' freq' for c in corpus.get_categories()
+             if c != initial_category]].sum(axis=1)
     )
+
     term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
-        category=compact_corpus.get_categories()[0],
-        scores=scores
+        category=initial_category,
+        scores=scores,
+        include_term_category_counts=True,
+        transform=dense_rank,
+        **kwargs
     )
     term_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(term_scatter_chart_data),
         width_in_pixels=term_width_in_pixels,
         height_in_pixels=term_height_in_pixels,
-
         asian_mode=asian_mode,
         use_non_text_features=False,
         show_top_terms=True,
@@ -593,10 +608,13 @@ def produce_pairplot(corpus,
         y_label=compact_corpus.get_categories()[0],
         x_label='Not ' + compact_corpus.get_categories()[0],
         full_data='getTermDataAndInfo()',
-        div_name='d3-div-1'
+        div_name='d3-div-1',
     )
 
-    return PairPlotFromScatterplotStructure(category_scatterplot_structure, term_scatterplot_structure).to_html()
+    return PairPlotFromScatterplotStructure(
+        category_scatterplot_structure,
+        term_scatterplot_structure
+    ).to_html()
 
 
 def produce_scattertext_html(term_doc_matrix,

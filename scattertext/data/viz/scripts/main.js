@@ -48,6 +48,7 @@ buildViz = function (d3) {
             width = widthInPixels - margin.left - margin.right,
             height = heightInPixels - margin.top - margin.bottom;
         fullData.data.forEach(function (x, i) {x.i = i});
+        
         // Set the ranges
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
@@ -151,25 +152,25 @@ buildViz = function (d3) {
         console.log(fullData);
 
         
-        var sortedX = fullData.data.sort(function (a, b) {
+        var sortedX = fullData.data.map(x=>x).sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
         }).map(function (x) {
             return x.x
         });
 
-        var sortedOx = fullData.data.sort(function (a, b) {
+        var sortedOx = fullData.data.map(x=>x).sort(function (a, b) {
             return a.ox < b.ox ? -1 : (a.ox == b.ox ? 0 : 1);
         }).map(function (x) {
             return x.ox
         });
 
-        var sortedY = fullData.data.sort(function (a, b) {
+        var sortedY = fullData.data.map(x=>x).sort(function (a, b) {
             return a.y < b.y ? -1 : (a.y == b.y ? 0 : 1);
         }).map(function (x) {
             return x.y
         });
 
-        var sortedOy = fullData.data.sort(function (a, b) {
+        var sortedOy = fullData.data.map(x=>x).sort(function (a, b) {
             return a.oy < b.oy ? -1 : (a.oy == b.oy ? 0 : 1);
         }).map(function (x) {
             return x.oy
@@ -336,10 +337,10 @@ buildViz = function (d3) {
                     return [curRank, x[0], x[1]];
                 }
             )
-            return rankedAr.sort((a,b) => (a[2] - b[2])).map(x => x[0]);    
+            return rankedAr.map(x=>x).sort((a,b) => (a[2] - b[2])).map(x => x[0]);    
         }
-
-        function getCategoryDenseRankScores(categoryNum) {
+        
+        function getDenseRanks(fullData, categoryNum) {
             var fgFreqs = Array(fullData.data.length).fill(0);
             var bgFreqs = Array(fullData.data.length).fill(0);
             var categoryTermCounts = fullData.termCounts[categoryNum];
@@ -350,17 +351,35 @@ buildViz = function (d3) {
                 function (categoryTermCounts, otherCategoryNum) {
                     if(otherCategoryNum != categoryNum) {
                         Object.keys(categoryTermCounts).forEach(
-                           key => bgFreqs[key] = categoryTermCounts[key][0]
+                           key => bgFreqs[key] += categoryTermCounts[key][0]
                         )                        
                     }
                 }
             )
             var fgDenseRanks = denseRank(fgFreqs);
             var bgDenseRanks = denseRank(bgFreqs);
-            return fgDenseRanks.map((x,i) => x - bgDenseRanks[i]);
+            
+            var maxfgDenseRanks = Math.max(...fgDenseRanks);
+            var minfgDenseRanks = Math.min(...fgDenseRanks);
+            var scalefgDenseRanks = fgDenseRanks.map(
+                x => (x - minfgDenseRanks)/maxfgDenseRanks
+            )
+
+            var maxbgDenseRanks = Math.max(...bgDenseRanks);
+            var minbgDenseRanks = Math.min(...bgDenseRanks);
+            var scalebgDenseRanks = bgDenseRanks.map(
+                x => (x - minbgDenseRanks)/maxbgDenseRanks
+            )
+
+            return {'fg': scalefgDenseRanks, 'bg': scalebgDenseRanks, 'bgFreqs': bgFreqs, 'fgFreqs': fgFreqs}
+        }
+
+        function getCategoryDenseRankScores(fullData, categoryNum) {
+            var denseRanks = getDenseRanks(fullData, categoryNum)
+            return denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
         }
         
-        function getTermCounts() {
+        function getTermCounts(fullData) {
             var counts = Array(fullData.data.length).fill(0);  
             fullData.termCounts.forEach( 
                 function (categoryTermCounts) {
@@ -674,7 +693,7 @@ buildViz = function (d3) {
             return false;
         }
 
-        function displayObscuredTerms(obscuredTerms, term, div='#'+divName+'-'+'overlapped-terms') {
+        function displayObscuredTerms(obscuredTerms, data, term, termInfo, div='#'+divName+'-'+'overlapped-terms') {
             d3.select('#'+divName+'-'+'overlapped-terms')
                 .selectAll('div')
                 .remove();
@@ -691,8 +710,11 @@ buildViz = function (d3) {
                 obscuredTerms.map(
                     function (term, i) {
                         makeWordInteractive(
+                            data,
+                            svg,
                             obscuredDiv.append("text").text(term),
                             term,
+                            data.filter(t=>t.term == term)[0],//termInfo
                             false
                         );
                         if (i < obscuredTerms.length - 1) {
@@ -703,7 +725,7 @@ buildViz = function (d3) {
             }
         }
 
-        function displayTermContexts(termInfo, jump=true) {
+        function displayTermContexts(data, termInfo, jump=true) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
             if (contexts[0].length + contexts[1].length + contexts[2].length + contexts[3].length == 0) {
@@ -800,6 +822,7 @@ buildViz = function (d3) {
                     }
                 })
 
+            
             } else {
                 var contextColumns = [
                     fullData.info.category_internal_name,
@@ -851,8 +874,8 @@ buildViz = function (d3) {
                 );
             }
 
-            var obscuredTerms = getObscuredTerms(termInfo.info);
-            displayObscuredTerms(obscuredTerms, info.term, '#'+divName+'-'+'overlapped-terms-clicked');
+            var obscuredTerms = getObscuredTerms(data, termInfo.info);
+            displayObscuredTerms(obscuredTerms, data, info.term, info, '#'+divName+'-'+'overlapped-terms-clicked');
 
             d3.select('#'+divName+'-'+'termstats')
                 .selectAll("div")
@@ -1188,9 +1211,10 @@ buildViz = function (d3) {
             return message;
         }
 
-        function getObscuredTerms(d) {
+        function getObscuredTerms(data, d) {
+            //data = fullData['data']
             var matches = (data.filter(function (term) {
-                    return term.x === d.x && term.y === d.y;
+                    return term.x === d.x && term.y === d.y && (term.display === undefined || term.display === true);
                 }).map(function (term) {
                     return term.term
                 }).sort()
@@ -1198,13 +1222,15 @@ buildViz = function (d3) {
             return matches;
         }
 
-        function showTooltip(d, pageX, pageY, showObscured=true) {
+        function showTooltip(data, d, pageX, pageY, showObscured=true) {
             deselectLastCircle();
 
-            var obscuredTerms = getObscuredTerms(d);
+            var obscuredTerms = getObscuredTerms(data, d);
             var message = '';
+            console.log("!!!!! " + obscuredTerms.length)
+            console.log(showObscured)
             if (obscuredTerms.length > 1 && showObscured)
-                displayObscuredTerms(obscuredTerms, d.term);
+                displayObscuredTerms(obscuredTerms, data, d.term, d);
             if (getTooltipContent !== null) {
                 message += getTooltipContent(d);
             } else {
@@ -1237,31 +1263,52 @@ buildViz = function (d3) {
                 .toLowerCase()
                 .replace("'", " '")
                 .trim();
-            showToolTipForTerm(searchTerm);
-            var termInfo = termDict[searchTerm];
+            if(termDict[searchTerm] !== undefined) {
+                showToolTipForTerm(data, svg, searchTerm, termDict[searchTerm], true);
+            }
             if (termInfo != null) {
                 var runDisplayTermContexts = true;
                 if(alternativeTermFunc != null) {
-                    runDisplayTermContexts = alternativeTermFunc(termInfo);
+                    runDisplayTermContexts = alternativeTermFunc(termDict[searchTerm]);
                 }
                 if(runDisplayTermContexts) {
-                    displayTermContexts(gatherTermContexts(termInfo), false);
+                    displayTermContexts(data, gatherTermContexts(termDict[searchTerm]), false);
                 }
             }
             return false;
         };
 
-        function showToolTipForTerm(searchTerm, showObscured=true) {
-            var searchTermInfo = termDict[searchTerm];
+        function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured=true) {
+            //var searchTermInfo = termDict[searchTerm];
+            console.log("showing tool tip")
+            console.log(searchTerm)
+            console.log(searchTermInfo)
             if (searchTermInfo === undefined) {
+                console.log("can't show")
                 d3.select("#" + divName + "-alertMessage")
                     .text(searchTerm + " didn't make it into the visualization.");
             } else {
                 d3.select("#" + divName + "-alertMessage").text("");
-                var circle = mysvg._groups[0][searchTermInfo.ci];
-                var mySVGMatrix = circle.getScreenCTM()
-                    .translate(circle.cx.baseVal.value, 
-                               circle.cy.baseVal.value);
+                var circle = mysvg; 
+                console.log("mysvg"); console.log(mysvg)
+                if(circle.tagName !== "circle") {
+                    circle = mysvg._groups[0][searchTermInfo.ci];
+                    if(circle === undefined || circle.tagName != 'circle') {
+                        if(mysvg._groups[0].children !== undefined) {
+                            circle = mysvg._groups[0].children[searchTermInfo.ci];
+                        }
+                    }
+                    if(circle === undefined || circle.tagName != 'circle') {
+                        if(mysvg._groups[0][0].children !== undefined) {
+                            circle = Array.prototype.filter.call(
+                                mysvg._groups[0][0].children, 
+                                x=> (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
+                            )[0];
+                        }
+                        
+                    }
+                }
+                var mySVGMatrix = circle.getScreenCTM().translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
                 var pageX = mySVGMatrix.e;
                 var pageY = mySVGMatrix.f;
                 circle.style["stroke"] = "black";
@@ -1269,6 +1316,7 @@ buildViz = function (d3) {
                 //var el = circle.node()
                 //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
                 showTooltip(
+                    data,
                     searchTermInfo,
                     pageX,
                     pageY,
@@ -1280,13 +1328,14 @@ buildViz = function (d3) {
             }
         };
 
-        function makeWordInteractive(domObj, term, showObscured=true) {
+
+        function makeWordInteractive(data, svg, domObj, term, termInfo, showObscured=true) {
             return domObj
                 .on("mouseover", function (d) {
                     console.log("mouseover" )
                     console.log(term)
-                    console.log(termDict[term])
-                    showToolTipForTerm(term, showObscured);
+                    console.log(termInfo)
+                    showToolTipForTerm(data, svg, term, termInfo, showObscured);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("mouseout", function (d) {
@@ -1303,15 +1352,16 @@ buildViz = function (d3) {
                 .on("click", function (d) {
                     var runDisplayTermContexts = true;
                     if(alternativeTermFunc != null) {
-                        runDisplayTermContexts = alternativeTermFunc(termDict[term]);
+                        runDisplayTermContexts = alternativeTermFunc(termInfo);
                     }
                     if(runDisplayTermContexts) {
-                        displayTermContexts(gatherTermContexts(termDict[term]));
+                        displayTermContexts(data, gatherTermContexts(termInfo));
                     }
                 });
         }
 
         function processData(fullData) {
+            
             modelInfo = fullData['info'];
             /*
              categoryTermList.data(modelInfo['category_terms'])
@@ -1319,7 +1369,7 @@ buildViz = function (d3) {
              .append("li")
              .text(function(d) {return d;});
              */
-            data = fullData['data'];
+            var data = fullData['data'];
             termDict = Object();
             data.forEach(function (x, i) {
                 termDict[x.term] = x;
@@ -1351,9 +1401,11 @@ buildViz = function (d3) {
             var rectHolder = new RectangleHolder();
             // Add the scatterplot
             data.forEach(function(d,i) {d.ci = i});
-            mysvg = svg
+            //console.log('XXXXX'); console.log(data)
+            var mysvg = svg
                 .selectAll("dot")
-                .data(data)
+                .data(data.filter(d=>d.display === undefined || d.display === true))
+                //.filter(function (d) {return d.display === undefined || d.display === true})
                 .enter()
                 .append("circle")
                 .attr("r", function (d) {
@@ -1383,6 +1435,11 @@ buildViz = function (d3) {
                             return interpolateLightGreys(d.s);
                         }
                     } else {
+                        if(d.term == "psychological") {
+                            console.log("COLS " + d.s + " " + color(d.s) + " " + d.term)
+                            console.log(d)
+                            console.log(color)
+                        }
                         return color(d.s);
                     }
                 })
@@ -1399,7 +1456,7 @@ buildViz = function (d3) {
                     );*/
                     console.log("point MOUSOEVER")
                     console.log(d)
-                    showToolTipForTerm(d.term, true);
+                    showToolTipForTerm(data, this, d.term, d, true);
                     d3.select(this).style("stroke", "black");
                 })
                 .on("click", function (d) {
@@ -1408,7 +1465,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(d);
                     }
                     if(runDisplayTermContexts) {
-                        displayTermContexts(gatherTermContexts(d));
+                        displayTermContexts(data, gatherTermContexts(d));
                     }
                 })
                 .on("mouseout", function (d) {
@@ -1420,7 +1477,8 @@ buildViz = function (d3) {
                         .selectAll('div')
                         .remove();
                 })
-
+            
+            
             coords = Object();
 
             var pointStore = [];
@@ -1472,9 +1530,14 @@ buildViz = function (d3) {
                 curLabel.remove();
             }
 
-            function labelPointsIfPossible(i, myX, myY) {
-                var term = data[i].term;
-
+            function labelPointsIfPossible(datum, myX, myY) {
+                var term = datum.term;
+                if(term == "the") 
+                    console.log("TERM " + term + " " + myX + " " + myY)
+                //console.log('xxx'); console.log(term); console.log(term.display !== undefined && term.display === false)
+                //if(term.display !== undefined && term.display === false) {
+                //    return false;
+                //}
                 var configs = [
                     {'anchor': 'end', 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
@@ -1530,7 +1593,7 @@ buildViz = function (d3) {
                     if (matchedElement) {
                         curLabel.remove();
                     } else {
-                        curLabel = makeWordInteractive(curLabel, term);
+                        curLabel = makeWordInteractive(data, svg, curLabel, term, datum);
                         break;
                     }
                 }
@@ -1623,10 +1686,10 @@ buildViz = function (d3) {
                     return b.s - a.s;
             }
 
-            data = data.sort(sortByDist ? euclideanDistanceSort : scoreSort);
+            var sortedData = data.map(x=>x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
             if (doCensorPoints) {
                 for (var i in data) {
-                    var d = data[i];
+                    var d = sortedData[i];
                     censorPoints(
                         d,
                         function (d) {
@@ -1650,6 +1713,28 @@ buildViz = function (d3) {
                 rectHolder.add(new Rectangle(x1, y1, x2, y2));
                 //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
             }
+            function drawXLabel(svg, labelText) {
+                    return svg.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "end")
+                    .attr("x", width)
+                    .attr("y", height - 6)
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '10px')
+                    .text(labelText);
+            }
+            function drawYLabel(svg, labelText) {
+                    return svg.append("text")
+                        .attr("class", "y label")
+                        .attr("text-anchor", "end")
+                        .attr("y", 6)
+                        .attr("dy", ".75em")
+                        .attr("transform", "rotate(-90)")
+                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                        .attr('font-size', '10px')
+                        .text(labelText);
+                        registerFigureBBox(yLabel);
+                }
 
             d3.selection.prototype.moveToBack = function () {
                 return this.each(function () {
@@ -1680,14 +1765,9 @@ buildViz = function (d3) {
                     .call(xAxis);
 
                 //rangeTree = registerFigureBBox(myXAxis);
-                var xLabel = svg.append("text")
-                    .attr("class", "x label")
-                    .attr("text-anchor", "end")
-                    .attr("x", width)
-                    .attr("y", height - 6)
-                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                    .attr('font-size', '10px')
-                    .text(getLabelText('x'));
+                
+
+                var xLabel = drawXLabel(svg, getLabelText('x'));
 
                 //console.log('xLabel');
                 //console.log(xLabel);
@@ -1730,17 +1810,8 @@ buildViz = function (d3) {
                             return xLabelText;
                     }
                 }
-
-                var yLabel = svg.append("text")
-                    .attr("class", "y label")
-                    .attr("text-anchor", "end")
-                    .attr("y", 6)
-                    .attr("dy", ".75em")
-                    .attr("transform", "rotate(-90)")
-                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                    .attr('font-size', '10px')
-                    .text(getLabelText('y'));
-                registerFigureBBox(yLabel);
+                var yLabel = drawYLabel(svg, getLabelText('y'))
+                
             
             } else {
                 horizontal_line_y_position_translated = 0.5;
@@ -1804,20 +1875,25 @@ buildViz = function (d3) {
 
             function showWordList(word, termDataList) {
                 var maxWidth = word.node().getBBox().width;
+                var wordObjList = [];
                 for (var i in termDataList) {
                     var curTerm = termDataList[i].term;
                     word = (function (word, curTerm) {
-                        return makeWordInteractive(
-                            svg.append("text")
+                        var curWordPrinted = svg.append("text")
                                 .attr("text-anchor", "start")
                                 .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                                 .attr('font-size', '12px')
                                 .attr("x", word.node().getBBox().x)
                                 .attr("y", word.node().getBBox().y
                                     + 2 * word.node().getBBox().height)
-                                .text(curTerm)
-                            ,
-                            curTerm);
+                                .text(curTerm);
+                        wordObjList.push(curWordPrinted)
+                        return makeWordInteractive(
+                            termDataList, //data,
+                            svg, 
+                            curWordPrinted,
+                            curTerm,
+                            termDataList[i]);
                     })(word, curTerm);
                     if (word.node().getBBox().width > maxWidth)
                         maxWidth = word.node().getBBox().width;
@@ -1825,7 +1901,8 @@ buildViz = function (d3) {
                 }
                 return {
                     'word': word,
-                    'maxWidth': maxWidth
+                    'maxWidth': maxWidth,
+                    'wordObjList':wordObjList
                 };
             }
 
@@ -1849,10 +1926,10 @@ buildViz = function (d3) {
                 return pickScoreSortAlgo(category);
             }
 
-            function showAssociatedWordList(header, isAssociatedToCategory, length=14) {
+            function showAssociatedWordList(data, word, header, isAssociatedToCategory,  length=14) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isAssociatedToCategory);
-                sortedData = data.sort(sortingAlgo);
+                sortedData = data.filter(term => (term.display === undefined || term.display === true)).sort(sortingAlgo);
                 if (wordVecMaxPValue) {
                     function signifTest(x) {
                         if (isAssociatedToCategory)
@@ -1862,58 +1939,102 @@ buildViz = function (d3) {
 
                     sortedData = sortedData.filter(signifTest)
                 }
-                return showWordList(header, sortedData.slice(0, length));
+                return showWordList(word, sortedData.slice(0, length));
 
             }
             var characteristicXOffset = width;
-            function showTopTermsPane(registerFigureBBox, showAssociatedWordList) {
-                var catHeader = svg.append("text")
+            function showCatHeader(startingOffset, catName, registerFigureBBox) {
+                var catHeader =  svg.append("text")
                 .attr("text-anchor", "start")
-                .attr("x", width)
+                .attr("x", startingOffset //width
+                     )
                 .attr("dy", "6px")
                 .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                 .attr('font-size', '12px')
                 .attr('font-weight', 'bolder')
                 .attr('font-decoration', 'underline')
-                .text("Top " + fullData['info']['category_name']);
+                .text(catName
+                      //"Top " + fullData['info']['category_name']
+                     );
                 registerFigureBBox(catHeader);
-                console.log(catHeader);
+                return catHeader;
+            }
 
+            function showNotCatHeader(startingOffset, word, notCatName) {
+                console.log("showNotCatHeader")
+                console.log(word)
+                console.log(word.node().getBBox().y - word.node().getBBox().height)
+                console.log(word.node().getBBox().y + word.node().getBBox().height)
+                return svg.append("text")
+                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bolder')
+                .attr('font-decoration', 'underline')
+                .attr("text-anchor", "start")
+                .attr("x", startingOffset)
+                .attr("y", word.node().getBBox().y + 3 * word.node().getBBox().height)
+                .text(notCatName);
+            }
 
-                var wordListData = showAssociatedWordList(catHeader, true);
-                var word = wordListData.word;
+            function showTopTermsPane(data,
+                                       registerFigureBBox, 
+                                       showAssociatedWordList,
+                                       catName,
+                                       notCatName,
+                                       startingOffset) {
+                data = data.filter(term => (term.display === undefined || term.display === true));
+                //var catHeader = showCatHeader(startingOffset, catName, registerFigureBBox);
+                var catHeader = svg.append("text")
+                .attr("text-anchor", "start")
+                .attr("x", startingOffset)
+                .attr("dy", "6px")
+                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bolder')
+                .attr('font-decoration', 'underline')
+                .text(catName
+                      //"Top " + fullData['info']['category_name']
+                     );
+                registerFigureBBox(catHeader);
+                var word = catHeader;
+                var wordListData = showAssociatedWordList(data, word, catHeader, true);
+                word = wordListData.word;
                 var maxWidth = wordListData.maxWidth;
 
-                catHeader = svg.append("text")
-                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                    .attr('font-size', '12px')
-                    .attr('font-weight', 'bolder')
-                    .attr('font-decoration', 'underline')
-                    .attr("text-anchor", "start")
-                    .attr("x", width)
-                    .attr("y", word.node().getBBox().y + 4 * word.node().getBBox().height)
-                    .text("Top " + fullData['info']['not_category_name']);
-
+                var notCatHeader = showNotCatHeader(startingOffset, word, notCatName);
+                word = notCatHeader;
                 characteristicXOffset = catHeader.node().getBBox().x + maxWidth + 10;
 
-                wordListData = showAssociatedWordList(catHeader, false);
+                var notWordListData = showAssociatedWordList(data, word, notCatHeader, false);
                 word = wordListData.word;
                 if (wordListData.maxWidth > maxWidth) {
                     maxWidth = wordListData.maxWidth;
                 }
-                return {wordListData, word, maxWidth, characteristicXOffset};
+                return {wordListData, notWordListData,
+                        word, maxWidth, characteristicXOffset, startingOffset,
+                        catHeader, notCatHeader, registerFigureBBox};
             }
 
-            
+            var payload = Object();
             if (showTopTerms) {
-                
-
-                var ret = showTopTermsPane(registerFigureBBox, showAssociatedWordList);
-                var wordListData = ret.wordListData;
-                var word = ret.word;
-                var maxWidth = ret.maxWidth;
-                characteristicXOffset = ret.characteristicXOffset;
-
+                payload.topTermsPane = showTopTermsPane(
+                    data,
+                    registerFigureBBox, 
+                    showAssociatedWordList,
+                    "Top " + fullData['info']['category_name'],
+                    "Top " + fullData['info']['not_category_name'],
+                    width
+                );
+                payload.showTopTermsPane = showTopTermsPane;
+                payload.showAssociatedWordList = showAssociatedWordList;
+                payload.showWordList = showWordList;
+                /*var wordListData = topTermsPane.wordListData;
+                var word = topTermsPane.word;
+                var maxWidth = topTermsPane.maxWidth;
+                var catHeader = topTermsPane.catHeader;
+                var notCatHeader = topTermsPane.notCatHeader;
+                var startingOffset = topTermsPane.startingOffset;*/
+                characteristicXOffset = payload.topTermsPane.characteristicXOffset;
             }
 
 
@@ -1938,7 +2059,7 @@ buildViz = function (d3) {
                     .attr("dy", "6px")
                     .text(title);
 
-                var wordListData = showWordList(word, data.sort(sortMethod).slice(0, 30));
+                var wordListData = showWordList(word, data.filter(term => (term.display === undefined || term.display === true)).sort(sortMethod).slice(0, 30));
 
                 word = wordListData.word;
                 maxWidth = wordListData.maxWidth;
@@ -1948,58 +2069,44 @@ buildViz = function (d3) {
                 svg.attr('width', word.node().getBBox().x + 3 * maxWidth + 10);
             }
 
-            function performPartialLabeling(existingLabels, getX, getY) {
+            function performPartialLabeling(data, existingLabels, getX, getY) {
                 for (i in existingLabels) {
                     rectHolder.remove(existingLabels[i].rect);
                     existingLabels[i].label.remove();
                 }
                 console.log('labeling 1')
+                
 
                 var labeledPoints = [];
-                for (var i = 0; i < data.length; i++) {
-                    var label = labelPointsIfPossible(i, getX(data[i]), getY(data[i]));
-                    if (label !== false) {
-                        labeledPoints.push(label)
+                //var filteredData = data.filter(d=>d.display === undefined || d.display === true);
+                //for (var i = 0; i < filteredData.length; i++) {
+                data.forEach(function(datum, i) {
+                    //console.log(datum.i, datum.ci, i)
+                    //var label = labelPointsIfPossible(i, getX(filteredData[i]), getY(filteredData[i]));
+                    if(datum.display === undefined || datum.display === true) {
+                        if(datum.term == "the" || i == 1) {
+                            console.log("trying to label datum # " + i + ": " + datum.term)
+                            console.log(datum)
+                            console.log([getX(datum), getY(datum)])
+                        }
+                        var label = labelPointsIfPossible(datum, getX(datum), getY(datum));
+                        if (label !== false) {
+                            //console.log("labeled")
+                            labeledPoints.push(label)
+                        }
                     }
                     //if (labelPointsIfPossible(i), true) numPointsLabeled++;
-                }
+                })
                 return labeledPoints;
             }
 
             //var labeledPoints = performPartialLabeling();
-            labeledPoints = [];
-            labeledPoints = performPartialLabeling(labeledPoints,
-                function (d) {
-                    return d.x
-                },
-                function (d) {
-                    return d.y
-                });
+            var labeledPoints = [];
+            labeledPoints = performPartialLabeling(data,
+                                                   labeledPoints,
+                                                   function (d) {return d.x},
+                                                   function (d) {return d.y});
 
-            var rerender = function (xCoords, yCoords, color) {
-                labeledPoints.forEach(function (p) {
-                    p.label.remove();
-                    rectHolder.remove(p.rect);
-                });
-                pointRects.forEach(function (rect) {
-                    rectHolder.remove(rect);
-                });
-                pointRects = []
-                var circles = d3.selectAll('circle')
-                    .attr("cy", function (d) {return y(yCoords[d.i])})
-                    .transition(50)
-                    .attr("cx", function (d) {return x(xCoords[d.i])})
-                    .transition(50);    
-                if(color !== null) {
-                     circles.style("fill", d => color(d));
-                }
-                xCoords.forEach((xCoord,i) => censorCircle(xCoord, yCoords[i]))
-                labeledPoints = [];
-                labeledPoints = performPartialLabeling(
-                    labeledPoints, 
-                    function (d) {return xCoords[d.i]},
-                    function (d) {return yCoords[d.i]});
-            };
 
 
             /*
@@ -2118,11 +2225,10 @@ buildViz = function (d3) {
                 console.log("docCounts");
                 console.log(docCounts)
                 var messages = [];
-                var categoriesToShow = [fullData.info.category_name,
-                    fullData.info.not_category_name,
-                    fullData.info.neutral_category_name,
-                    fullData.info.extra_category_name];
-                categoriesToShow.forEach(function (x, i) {
+                [fullData.info.category_name,
+                 fullData.info.not_category_name,
+                 fullData.info.neutral_category_name,
+                 fullData.info.extra_category_name].forEach(function (x, i) {
                     if (docCounts[x] > 0) {
                         messages.push('<b>' + x + '</b> document count: '
                             + Number(docCounts[x]).toLocaleString('en')
@@ -2167,17 +2273,70 @@ buildViz = function (d3) {
                 document.body.appendChild(downloadLink);
 
             }
+            function rerender(xCoords, yCoords, color) {
+                labeledPoints.forEach(function (p) {
+                    p.label.remove();
+                    rectHolder.remove(p.rect);
+                });
+                pointRects.forEach(function (rect) {
+                    rectHolder.remove(rect);
+                });
+                pointRects = []
+                /*
+                var circles = d3.select('#' + divName).selectAll('circle')
+                    .attr("cy", function (d) {return y(yCoords[d.i])})
+                    .transition(0)
+                    .attr("cx", function (d) {return x(xCoords[d.i])})
+                    .transition(0);    
+                */
+                d3.select('#' + divName).selectAll("dot").remove();
+                d3.select('#' + divName).selectAll("circle").remove();
+                console.log(fullData)
+                console.log(this)
+                var circles = this.svg//.select('#' + divName)
+                .selectAll("dot")
+                .data(this.fullData.data.filter(d=>d.display === undefined || d.display === true))
+                //.filter(function (d) {return d.display === undefined || d.display === true})
+                .enter()
+                .append("circle")
+                .attr("cy", d=>d.y)
+                .attr("cx", d=>d.x)
+                .attr("r", d=>2)
+                
+                if(color !== null) {
+                     circles.style("fill", d => color(d));
+                }
+                xCoords.forEach((xCoord,i) => censorCircle(xCoord, yCoords[i]))
+                labeledPoints = [];
+                labeledPoints = performPartialLabeling(
+                    this.fullData.data,
+                    labeledPoints, 
+                    (d=>d.ox), //function (d) {return xCoords[d.ci]},
+                    (d=>d.oy) //function (d) {return yCoords[d.ci]}
+                );
+            };
             //return [performPartialLabeling, labeledPoints];
-            return rerender;
+            return {...payload, 
+                    ...{'rerender': rerender, 
+                        'performPartialLabeling': performPartialLabeling,
+                        'showToolTipForTerm': showToolTipForTerm,
+                        'svg': svg,
+                        'data': data,
+                        'xLabel': xLabel,
+                        'yLabel': yLabel,
+                        'drawXLabel': drawXLabel,
+                        'drawYLabel': drawYLabel,
+                        'populateCorpusStats': populateCorpusStats}};
         };
 
+        
+        
         //fullData = getDataAndInfo();
         if (fullData.docs) {
             var corpusWordCounts = getCorpusWordCounts();
         }
-        var rerender = processData(fullData);
-
-
+        var payload = processData(fullData);
+        
         // The tool tip is down here in order to make sure it has the highest z-index
         var tooltip = d3.select('#' + divName)
             .append("div")
@@ -2185,15 +2344,36 @@ buildViz = function (d3) {
             .attr("class", "tooltipscore")
             .style("opacity", 0);
         
-        function drawCategoryAssociation(categoryNum) {
-            var rawLogTermCounts = getTermCounts().map(Math.log);
+        plotInterface = {}
+        if(payload.topTermsPane) {
+            plotInterface.topTermsPane = payload.topTermsPane;
+            plotInterface.showTopTermsPane = payload.showTopTermsPane;
+            plotInterface.showAssociatedWordList = payload.showAssociatedWordList;
+        }
+        plotInterface.displayTermContexts = displayTermContexts;
+        plotInterface.gatherTermContexts = gatherTermContexts;
+        plotInterface.xLabel = payload.xLabel;
+        plotInterface.yLabel = payload.yLabel;
+        plotInterface.drawXLabel = payload.drawXLabel;
+        plotInterface.drawYLabel = payload.drawYLabel;
+        plotInterface.svg = payload.svg;
+        plotInterface.termDict = termDict;
+        plotInterface.showToolTipForTerm = payload.showToolTipForTerm;
+        plotInterface.fullData = fullData;
+        plotInterface.data = payload.data;
+        plotInterface.rerender = payload.rerender;
+        plotInterface.populateCorpusStats = payload.populateCorpusStats;
+        plotInterface.y = y;
+        plotInterface.x = x;
+        plotInterface.drawCategoryAssociation = function (categoryNum) {
+            var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
             var minRawLogTermCounts = Math.min(...rawLogTermCounts);
             var logTermCounts = rawLogTermCounts.map(
                 x => (x - minRawLogTermCounts)/maxRawLogTermCounts
             )
-
-            var rawScores = getCategoryDenseRankScores(categoryNum);
+            
+            var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
             var maxRawScores = Math.max(...rawScores);
             var minRawScores = Math.min(...rawScores);
             var scores = rawScores.map(
@@ -2208,24 +2388,99 @@ buildViz = function (d3) {
                 }
             )
             
-            plotInterface.rerender(logTermCounts, scores, 
-                                   d => d3.interpolateRdYlBu(scores[d.i]));
-            /*plotInterface.redrawPoints(
-                0, 
-                function (d) {return Math.log(termCounts[d.i] / maxFreq)}, 
-                function (d) {return scores[d.i]}, 
-                true
-            )*/
+            var denseRanks = getDenseRanks(this.fullData, categoryNum)
+            var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
+            var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
+            var ox = denseRanks.bg; //logTermCounts;
+            var oy = denseRanks.fg; //scores;
+            var xf = this.x;
+            var yf = this.y;
+            
+            this.fullData.data = this.fullData.data.map(function(term, i) { 
+                //term.ci = i;
+                term.s = scores[i];
+                term.os = rawScores[i];
+                term.cat = denseRanks.fgFreqs[i];
+                term.ncat = denseRanks.bgFreqs[i];
+                term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000/fgFreqSum);
+                term.ncat25k = parseInt(25000 *denseRanks.bgFreqs[i]/bgFreqSum);
+                term.x = xf(ox[i]) // logTermCounts[term.i];
+                term.y = yf(oy[i]) // scores[term.i];
+                term.ox = ox[i];
+                term.oy = oy[i];
+                term.display = false;
+                return term;
+             })
+            
+            var targetTermsToShow = 3000;
+            
+            var sortedBg = denseRanks.bg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
+            var sortedFg = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
+            var sortedScores = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+            var myFullData = this.fullData
+            
+            sortedBg.concat(sortedFg).concat(sortedScores.slice(0, parseInt(targetTermsToShow/4))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4))).forEach(function(i) {
+                myFullData.data[i].display = true;
+            })
+            
+            this.rerender(//denseRanks.bg, 
+                          ox, 
+                          //denseRanks.fg, 
+                          oy,          
+                          d => d3.interpolateRdYlBu(d.s));
+            this.yLabel.remove()
+            this.xLabel.remove()
+            this.yLabel = this.drawYLabel(this.svg, this.fullData.info.categories[categoryNum] + ' Frequncy Rank')
+            this.xLabel = this.drawXLabel(this.svg,
+                               "Not " + this.fullData.info.categories[categoryNum] + ' Frequency Rank')
+            console.log(this.topTermsPane)
+            this.topTermsPane.catHeader.remove()
+            this.topTermsPane.notCatHeader.remove()
+            this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
+            this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
+            this.showWordList = payload.showWordList;
+            this.showAssociatedWordList = function(data, word, header, isAssociatedToCategory, length=14) {
+                var sortedData = null;
+                if(!isAssociatedToCategory) {
+                    sortedData = data.map(x=>x).sort((a, b) => scores[a.i] - scores[b.i])
+                } else {
+                    sortedData = data.map(x=>x).sort((a, b) => scores[b.i] - scores[a.i])
+                }
+                console.log('sortedData'); 
+                console.log(isAssociatedToCategory); 
+                console.log(sortedData.slice(0, length))
+                console.log(payload)
+                console.log(word)
+                return payload.showWordList(word, sortedData.slice(0, length));
+            }
+            this.topTermsPane = payload.showTopTermsPane(
+                this.data,
+                this.topTermsPane.registerFigureBBox,
+                this.showAssociatedWordList,
+                "Top " + this.fullData.info.categories[categoryNum],
+                "Top Not " + this.fullData.info.categories[categoryNum],
+                this.topTermsPane.startingOffset
+            )
+            
+            fullData.info.category_name = this.fullData.info.categories[categoryNum];
+            fullData.info.not_category_name = "Not " + this.fullData.info.categories[categoryNum];
+            fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
+            fullData.info.not_category_internal_names = this.fullData.info.categories.filter(x => x!==this.fullData.info.categories[categoryNum]);
+            ['snippets', 
+             'snippetsalt', 'termstats', 
+             'overlapped-terms-clicked', 'categoryinfo', 
+             'cathead', 'cat', 'corpus-stats',
+             'notcathead', 'notcat', 'neuthead', 'nuet'].forEach(function(divSubName) {
+                var mydiv = '#'+divName+'-'+divSubName;
+                d3.select(mydiv).selectAll("*").remove();
+                d3.select(mydiv).html("");
+
+            })
+            this.populateCorpusStats();
+            console.log(fullData)
         }
         
-        var plotInterface = Object();
-        plotInterface.displayTermContexts = displayTermContexts;
-        plotInterface.gatherTermContexts = gatherTermContexts;
-        plotInterface.termDict = termDict;
-        plotInterface.showToolTipForTerm = showToolTipForTerm;
-        plotInterface.drawCategoryAssociation = drawCategoryAssociation;
-        plotInterface.rerender = rerender;
-
         return plotInterface
     };
 }(d3);
+ 

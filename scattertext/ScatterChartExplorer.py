@@ -63,7 +63,7 @@ class ScatterChartExplorer(ScatterChart):
         extra_categories : list, optional
             List of categories to use as extra.  Defaults [].
         neutral_category_name : str
-            "Neutral" by default. Only active if show_neutral is True.  Name of the neutral
+            "Neutral" by default. Only active if show_neutral is True.  Name of the neutra l
             column.
         extra_category_name : str
             "Extra" by default. Only active if show_neutral and show_extra are true. Name of the
@@ -155,3 +155,4 @@ class ScatterChartExplorer(ScatterChart):
         ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)
         json_df['cat'] = term_freq_df[category + ' freq'].astype(np.int)
         json_df['ncat'] = term_freq_df['not cat freq'].astype(np.int)
+

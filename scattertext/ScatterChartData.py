@@ -1,5 +1,6 @@
 import numpy as np
 
+from scattertext.Scalers import percentile_min
 from scattertext.termranking import AbsoluteFrequencyRanker
 
 
@@ -15,7 +16,8 @@ class ScatterChartData(object):
 	             term_ranker=AbsoluteFrequencyRanker,
 	             use_non_text_features=False,
 	             term_significance=None,
-	             terms_to_include=None):
+	             terms_to_include=None,
+				 score_transform=percentile_min):
 		'''
 
 		Parameters
@@ -45,6 +47,8 @@ class ScatterChartData(object):
 			Way of getting significance scores.  If None, p values will not be added.
 		terms_to_include : set or None
 			Only annotate these terms in chart
+		score_transform : function
+			Transforms original scores into value between 0 and 1. Default is percentile_min
 		'''
 		self.jitter = jitter
 		self.minimum_term_frequency = minimum_term_frequency
@@ -57,4 +61,5 @@ class ScatterChartData(object):
 		self.use_non_text_features = use_non_text_features
 		self.term_significance = term_significance
 		self.terms_to_include = terms_to_include
+		self.score_transform = score_transform
 		np.random.seed(seed)

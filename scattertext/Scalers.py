@@ -145,6 +145,13 @@ def percentile_alphabetical(vec, terms, other_vec=None):
 		.index)
 	return _scale_0_to_1(vec_ss)
 
+def stretch_0_to_1(vec):
+	a = np.copy(vec)
+	if sum(a < 0):
+		a[a < 0] = -a[a < 0] * 1. / a[a < 0].min()
+	if sum(a > 0):
+		a[a > 0] = a[a > 0] * 1. / a[a > 0].max()
+	return 0.5 * (a + 1)
 
 def _scale_0_to_1(vec_ss):
 	vec_ss = (vec_ss - vec_ss.min()) * 1. / (vec_ss.max() - vec_ss.min())
