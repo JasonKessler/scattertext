@@ -208,6 +208,11 @@ input:focus {
   text-align: center;
 }
 
+.halo {
+  font-size: 9px;
+  background-color: #ddd;
+}
+
 .small_label {
   font-size: 10px;
 }
@@ -236,11 +241,57 @@ input:focus {
 <!-- INSERT SEMIOTIC SQUARE -->
 <!--<a onclick="maxFreq = Math.log(data.map(d => d.cat + d.ncat).reduce((a,b) => Math.max(a,b))); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, false); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, true)">View Score Plot</a>-->
 <span id="d3-div-1-title-div"></span>
-<div class="scattertext" id="cat-plot" style="float: left"></div>
+
+
+
+<table style="float: left">
+  <tr>
+    <td rowspan="2" style="text-align: right; vertical-align: bottom;">
+      <div class="halo" style="width: 200px">{top_left}</div>
+    </td>
+    <td style="text-align: center; vertical-align: bottom;">
+      <span class="halo" style="text-align: center;  width: 100px">{top}</span>
+    </td>
+    <td rowspan="2" style="text-align: left; vertical-align: top;">
+      <div class="halo" style="width: 100px">{top_right}</div>
+    </td>
+  </tr>
+  <tr>
+    <td width="{width}" rowspan="3" style="height: {height}">
+      <div class="scattertext" id="cat-plot"></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: right; vertical-align: middle">
+      <div class="halo" style="width: 100px; text-align: right;">{left}</div>
+    </td>
+    <td style="text-align: left; vertical-align: middle">
+      <div class="halo" style="width: 100px">{right}</div>
+    </td>
+  </tr>
+  <tr>
+    <td rowspan="2" style="text-align: right; vertical-align: bottom;">
+      <div class="halo"style="width: 100px">{bottom_left}</div>
+    </td>
+    <td rowspan="2" style="text-align: left; vertical-align: bottom;">
+      <div class="halo" style="width: 100px">{bottom_right}</div>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: center; vertical-align: top;">
+      <span class="halo" style="text-align: center;  width: 100px">{bottom}</span>
+    </td>
+  </tr>
+</table>
+
+
+<!-- <div id="terms">{terms}</div>
+<div class="scattertext" id="cat-plot" style="float: left"></div>-->
 <div class="scattertext" id="d3-div-1" style="float: left"></div>
-<div id="d3-div-1-corpus-stats"></div>  
-<div id="d3-div-1-overlapped-terms"></div>
-<form name="termForm" onSubmit="handleSearch(); return false;">
+<br />
+<div style="text-align: center; width: 100%" id="d3-div-1-corpus-stats" align="center"></div>
+<div style="text-align: center; width: 100%" id="d3-div-1-overlapped-terms" align="center"></div>
+<form name="termForm" action="#" onsubmit="termPlotInterface.handleSearch(); return false;" width="100%" align="center">
   <input name="Submit" type="submit" value="Search for term">
   <input type="text" id="d3-div-1-searchTerm" placeholder="Type a word or two&hellip;">
   <span id="d3-div-1-alertMessage" class="alert"></span>

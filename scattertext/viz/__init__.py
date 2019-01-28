@@ -1,5 +1,5 @@
 from .ScatterplotStructure import ScatterplotStructure
 from .BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
-from scattertext.viz.PairPlotFromScattertextSctructure import PairPlotFromScatterplotStructure
+from scattertext.viz.PairPlotFromScattertextStructure import PairPlotFromScatterplotStructure
 from .VizDataAdapter import VizDataAdapter
 from .HTMLSemioticSquareViz import HTMLSemioticSquareViz

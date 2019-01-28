@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.37
+# Scattertext 0.0.2.38
 
 **Table of Contents**
 
@@ -82,9 +82,14 @@ The HTML outputs look best in Chrome and Safari.
 
 
 ## What's new
+In 0.0.2.38:
+* Fixed term preview/clickability in semiotic square plots 
+* Fixed search box
+* Added preliminary `produce_pairplot 
+
 In 0.0.2.37:
 * Javascript changes to support multiple plots on a single page.
-* Added `ScatterChart.hide_terms(terms: iter[str])` which enables selected terms to be hidden from the chart. 
+* Added `ScatterChart.hide_terms(terms: iter[str])` which enables selected terms to be hidden from the chart.  
 * Added `ScatterChartData.score_transform` to specify the function which can change an original score into a value 
 between 0 and 1 used for term coloring. 
 

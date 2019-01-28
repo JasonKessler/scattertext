@@ -1,6 +1,5 @@
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.metrics import f1_score
 import scattertext as st
 
 import time

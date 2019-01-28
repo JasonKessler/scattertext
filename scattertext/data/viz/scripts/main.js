@@ -340,6 +340,7 @@ buildViz = function (d3) {
             return rankedAr.map(x=>x).sort((a,b) => (a[2] - b[2])).map(x => x[0]);    
         }
         
+        
         function getDenseRanks(fullData, categoryNum) {
             var fgFreqs = Array(fullData.data.length).fill(0);
             var bgFreqs = Array(fullData.data.length).fill(0);
@@ -1252,27 +1253,29 @@ buildViz = function (d3) {
             tooltip.on('click', function () {
                 tooltip.transition()
                     .style('opacity', 0)
+            }).on('mouseout', function () {
+                tooltip.transition().style('opacity', 0)
             });
         }
 
         handleSearch = function (event) {
             deselectLastCircle();
             var searchTerm = document
-                .getElementById(divName + "-searchTerm")
+                .getElementById(this.divName + "-searchTerm")
                 .value
                 .toLowerCase()
                 .replace("'", " '")
                 .trim();
-            if(termDict[searchTerm] !== undefined) {
-                showToolTipForTerm(data, svg, searchTerm, termDict[searchTerm], true);
+            if(this.termDict[searchTerm] !== undefined) {
+                showToolTipForTerm(this.data, this.svg, searchTerm, this.termDict[searchTerm], true);
             }
-            if (termInfo != null) {
+            if (this.termDict[searchTerm] != null) {
                 var runDisplayTermContexts = true;
                 if(alternativeTermFunc != null) {
-                    runDisplayTermContexts = alternativeTermFunc(termDict[searchTerm]);
+                    runDisplayTermContexts = this.alternativeTermFunc(this.termDict[searchTerm]);
                 }
                 if(runDisplayTermContexts) {
-                    displayTermContexts(data, gatherTermContexts(termDict[searchTerm]), false);
+                    displayTermContexts(this.data, this.gatherTermContexts(this.termDict[searchTerm]), false);
                 }
             }
             return false;
@@ -1291,39 +1294,51 @@ buildViz = function (d3) {
                 d3.select("#" + divName + "-alertMessage").text("");
                 var circle = mysvg; 
                 console.log("mysvg"); console.log(mysvg)
-                if(circle.tagName !== "circle") {
+                if(circle.tagName !== "circle") { // need to clean this thing up
                     circle = mysvg._groups[0][searchTermInfo.ci];
                     if(circle === undefined || circle.tagName != 'circle') {
+                        console.log("circle0")
                         if(mysvg._groups[0].children !== undefined) {
                             circle = mysvg._groups[0].children[searchTermInfo.ci];
                         }
                     }
                     if(circle === undefined || circle.tagName != 'circle') {
+                        console.log("circle1"); 
                         if(mysvg._groups[0][0].children !== undefined) {
                             circle = Array.prototype.filter.call(
                                 mysvg._groups[0][0].children, 
                                 x=> (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
                             )[0];
                         }
-                        
+                        console.log(circle)
+                    }
+                    if((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
+                        console.log("circle2"); 
+                        console.log(mysvg._groups[0][0])
+                        console.log(mysvg._groups[0][0].children)
+                        console.log(searchTermInfo.ci);
+                        circle = mysvg._groups[0][0].children[searchTermInfo.ci];
+                        console.log(circle)
                     }
                 }
-                var mySVGMatrix = circle.getScreenCTM().translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
-                var pageX = mySVGMatrix.e;
-                var pageY = mySVGMatrix.f;
-                circle.style["stroke"] = "black";
-                //var circlePos = circle.position();
-                //var el = circle.node()
-                //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
-                showTooltip(
-                    data,
-                    searchTermInfo,
-                    pageX,
-                    pageY,
-                    showObscured
-                );
+                if(circle) {
+                    var mySVGMatrix = circle.getScreenCTM().translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+                    var pageX = mySVGMatrix.e;
+                    var pageY = mySVGMatrix.f;
+                    circle.style["stroke"] = "black";
+                    //var circlePos = circle.position();
+                    //var el = circle.node()
+                    //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
+                    showTooltip(
+                        data,
+                        searchTermInfo,
+                        pageX,
+                        pageY,
+                        showObscured
+                    );
 
-                lastCircleSelected = circle;
+                    lastCircleSelected = circle;
+                }
 
             }
         };
@@ -2302,6 +2317,40 @@ buildViz = function (d3) {
                 .attr("cy", d=>d.y)
                 .attr("cx", d=>d.x)
                 .attr("r", d=>2)
+                .on("mouseover", function (d) {
+                    /*var mySVGMatrix = circle.getScreenCTM()n
+                        .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+                    var pageX = mySVGMatrix.e;
+                    var pageY = mySVGMatrix.f;*/
+
+                    /*showTooltip(
+                        d,
+                        d3.event.pageX,
+                        d3.event.pageY
+                    );*/
+                    console.log("point MOUSOEVER")
+                    console.log(d)
+                    showToolTipForTerm(data, this, d.term, d, true);
+                    d3.select(this).style("stroke", "black");
+                })
+                .on("click", function (d) {
+                    var runDisplayTermContexts = true;
+                    if(alternativeTermFunc != null) {
+                        runDisplayTermContexts = alternativeTermFunc(d);
+                    }
+                    if(runDisplayTermContexts) {
+                        displayTermContexts(data, gatherTermContexts(d));
+                    }
+                })
+                .on("mouseout", function (d) {
+                    tooltip.transition()
+                        .duration(0)
+                        .style("opacity", 0);
+                    d3.select(this).style("stroke", null);
+                    d3.select('#'+divName+'-'+'overlapped-terms')
+                        .selectAll('div')
+                        .remove();
+                })
                 
                 if(color !== null) {
                      circles.style("fill", d => color(d));
@@ -2350,6 +2399,7 @@ buildViz = function (d3) {
             plotInterface.showTopTermsPane = payload.showTopTermsPane;
             plotInterface.showAssociatedWordList = payload.showAssociatedWordList;
         }
+        plotInterface.divName = divName; 
         plotInterface.displayTermContexts = displayTermContexts;
         plotInterface.gatherTermContexts = gatherTermContexts;
         plotInterface.xLabel = payload.xLabel;
@@ -2363,8 +2413,11 @@ buildViz = function (d3) {
         plotInterface.data = payload.data;
         plotInterface.rerender = payload.rerender;
         plotInterface.populateCorpusStats = payload.populateCorpusStats;
+        plotInterface.handleSearch = handleSearch;
         plotInterface.y = y;
         plotInterface.x = x;
+        plotInterface.tooltip = tooltip;
+        plotInterface.alternativeTermFunc = alternativeTermFunc;
         plotInterface.drawCategoryAssociation = function (categoryNum) {
             var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
@@ -2389,6 +2442,8 @@ buildViz = function (d3) {
             )
             
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
+            console.log("denseRanks")
+            console.log(denseRanks);
             var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
             var ox = denseRanks.bg; //logTermCounts;
@@ -2412,21 +2467,60 @@ buildViz = function (d3) {
                 return term;
              })
             
-            var targetTermsToShow = 3000;
+            // Feature selection
+            var targetTermsToShow = 1500;
             
             var sortedBg = denseRanks.bg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
             var sortedFg = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
             var sortedScores = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
             var myFullData = this.fullData
             
-            sortedBg.concat(sortedFg).concat(sortedScores.slice(0, parseInt(targetTermsToShow/4))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4))).forEach(function(i) {
+            sortedBg.concat(sortedFg)//.concat(sortedScores.slice(0, parseInt(targetTermsToShow/2))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4)))
+                .forEach(function(i) {
                 myFullData.data[i].display = true;
             })
             
+            console.log('newly filtered')
+            console.log(myFullData)
+            
+            // begin rescaling to ignore hidden terms
+            /*
+            function scaleDenseRanks(ranks) { 
+                var max = Math.max(...ranks); 
+                return ranks.map(x=>x/max) 
+            }
+            var filteredData = myFullData.data.filter(d=>d.display);
+            var catRanks = scaleDenseRanks(denseRank(filteredData.map(d=>d.cat)))
+            var ncatRanks = scaleDenseRanks(denseRank(filteredData.map(d=>d.ncat)))
+            var rawScores = catRanks.map((x,i) => x - ncatRanks[i]);
+            function stretch_0_1(scores) {
+                var max = 1.*Math.max(...rawScores);
+                var min = -1.*Math.min(...rawScores);
+                return scores.map(function(x, i) {
+                    if(x == 0) return 0.5;
+                    if(x > 0) return (x/max + 1)/2;
+                    return (x/min + 1)/2;
+                })
+            }
+            var scores = stretch_0_1(rawScores);
+            console.log(scores)
+            filteredData.forEach(function(d, i) {
+                d.x = xf(catRanks[i]);
+                d.y = yf(ncatRanks[i]);
+                d.ox = catRanks[i];
+                d.oy = ncatRanks[i];
+                d.s = scores[i];
+                d.os = rawScores[i];
+            });
+            console.log("rescaled");
+            */
+            // end rescaling
+            
+            
             this.rerender(//denseRanks.bg, 
-                          ox, 
+                          fullData.data.map(x=>x.ox), //ox 
                           //denseRanks.fg, 
-                          oy,          
+                          fullData.data.map(x=>x.oy), //oy,          
                           d => d3.interpolateRdYlBu(d.s));
             this.yLabel.remove()
             this.xLabel.remove()
