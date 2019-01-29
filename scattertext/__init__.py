@@ -6,7 +6,7 @@ from scattertext.cartegoryprojector.CategoryProjector import CategoryProjector
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
 
-version = [0, 0, 2, 38]
+version = [0, 0, 2, 39]
 __version__ = '.'.join([str(e) for e in version])
 
 import re

@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from scattertext.Scalers import stretch_0_to_1, stretch_neg1_to_1
+
 
 class CategoryProjection(object):
     def __init__(self, category_corpus, category_counts, projection):
@@ -20,9 +22,26 @@ class CategoryProjection(object):
                              'y': self.projection.T[y_dim]}).set_index('term')
 
     def get_axes_labels(self, num_terms=5, x_dim=0, y_dim=1):
+        df = self.get_term_projection(x_dim, y_dim)
+        return {'right': list(df.sort_values(by='x', ascending=False).index[:num_terms]),
+                'left': list(df.sort_values(by='x', ascending=True).index[:num_terms]),
+                'top': list(df.sort_values(by='y', ascending=False).index[:num_terms]),
+                'bottom': list(df.sort_values(by='y', ascending=True).index[:num_terms])}
+
+    def get_nearest_terms(self, num_terms=5, x_dim=0, y_dim=1):
+        df = self.get_term_projection(x_dim, y_dim).apply(stretch_neg1_to_1)
+        return {
+            'top_right': ((df.x - 1) ** 2 + (df.y - 1)**2).sort_values().index[:num_terms].values,
+            'top': (df.x ** 2 + (df.y - 1)**2).sort_values().index[:num_terms].values,
+            'top_left': ((df.x + 1) ** 2 + (df.y - 1)**2).sort_values().index[:num_terms].values,
+            'right': ((df.x - 1) ** 2 + df.y**2).sort_values().index[:num_terms].values,
+            'left': ((df.x + 1) ** 2 + df.y**2).sort_values().index[:num_terms].values,
+            'bottom_right': ((df.x - 1) ** 2 + (df.y + 1)**2).sort_values().index[:num_terms].values,
+            'bottom': (df.x ** 2 + (df.y + 1)**2).sort_values().index[:num_terms].values,
+            'bottom_left': ((df.x + 1) ** 2 + (df.y + 1) ** 2).sort_values().index[:num_terms].values,
+        }
+
+    def get_term_projection(self, x_dim, y_dim):
         dim_term = np.matrix(self.category_counts.values) * self.projection[:, [x_dim, y_dim]]
         df = pd.DataFrame(dim_term, index=self.category_corpus.get_terms(), columns=['x', 'y'])
-        return {'x_pos': list(df.sort_values(by='x', ascending=False).index[:num_terms]),
-                'x_neg': list(df.sort_values(by='x', ascending=True).index[:num_terms]),
-                'y_pos': list(df.sort_values(by='y', ascending=False).index[:num_terms]),
-                'y_neg': list(df.sort_values(by='y', ascending=True).index[:num_terms])}
+        return df

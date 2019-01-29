@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.38
+# Scattertext 0.0.2.39
 
 **Table of Contents**
 
@@ -82,10 +82,14 @@ The HTML outputs look best in Chrome and Safari.
 
 
 ## What's new
+In 0.0.2.39:
+* Fixing failing test case
+* Adding halo to pair plot
+
 In 0.0.2.38:
 * Fixed term preview/clickability in semiotic square plots 
 * Fixed search box
-* Added preliminary `produce_pairplot 
+* Added preliminary `produce_pairplot`
 
 In 0.0.2.37:
 * Javascript changes to support multiple plots on a single page.
@@ -109,7 +113,6 @@ in HTML templates and Javascript.
 from being displayed if `show_axes` is `True`.
 * Changed default scorer to RankDifference.
 * Made sure that term contexts were properly shown in all configurations.
-
 
 In 0.0.2.34:
 * `TermDocMatrix.get_metadata_freq_df` now accepts the `label_append` argument which by default adds `' freq'` to the

@@ -11,6 +11,7 @@ class PairPlotFromScatterplotStructure(object):
                  category_projection,
                  category_width,
                  category_height,
+                 num_terms=10,
                  d3_url_struct=None,
                  protocol='http'):
         ''',
@@ -21,6 +22,7 @@ class PairPlotFromScatterplotStructure(object):
         category_projection: CategoryProjection
         category_height: int
         category_width: int
+        num_terms: int, default 10
         d3_url_struct: D3URLs
         protocol: str
             http or https
@@ -34,6 +36,7 @@ class PairPlotFromScatterplotStructure(object):
         self.protocol = protocol
         self.category_width = category_width
         self.category_height = category_height
+        self.num_terms = num_terms
 
     def to_html(self):
         '''
@@ -58,11 +61,13 @@ class PairPlotFromScatterplotStructure(object):
             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
         )
         html_content = (html_content.replace('http://', self.protocol + '://'))
-        for position, axis_end in [['left', 'x_pos'], ['right', 'x_neg'], ['top', 'y_pos'], ['bottom', 'y_neg']]:
+        axes_labels = self.category_projection.get_nearest_terms(num_terms=self.num_terms)
+        for position in ['left', 'right', 'top', 'bottom', 'top_left', 'top_right', 'bottom_left', 'bottom_right']:
             html_content = html_content.replace(
                 '{%s}' % (position),
-                get_clickable_lexicon(self.category_projection.get_axes_labels()[axis_end], 'termPlotInterface')
+                get_clickable_lexicon(
+                    axes_labels[position],
+                    'termPlotInterface'
+                ) if position in axes_labels else ''
             )
-        for blank_position in ['top_left', 'top_right', 'bottom_left', 'bottom_right']:
-            html_content = html_content.replace('{%s}' % blank_position, '')
         return html_content.replace('{width}', str(self.category_width)).replace('{height}', str(self.category_height))
