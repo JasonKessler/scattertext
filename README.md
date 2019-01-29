@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.39
+# Scattertext 0.0.2.40
 
 **Table of Contents**
 
@@ -82,6 +82,9 @@ The HTML outputs look best in Chrome and Safari.
 
 
 ## What's new
+In 0.0.2.40:
+* Added categories to terms in  pair plot halo, made them clickable 
+
 In 0.0.2.39:
 * Fixing failing test case
 * Adding halo to pair plot

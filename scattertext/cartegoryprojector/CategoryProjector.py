@@ -1,5 +1,4 @@
-import pandas as pd
-
+from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.cartegoryprojector.CategoryProjection import CategoryProjection
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
 from sklearn.decomposition import PCA
@@ -7,8 +6,8 @@ from sklearn.decomposition import PCA
 
 class CategoryProjector(object):
     def __init__(self,
-                 compactor = AssociationCompactor(1000),
-                 projector = PCA(2)):
+                 compactor=AssociationCompactor(1000, RankDifference),
+                 projector=PCA(2)):
         '''
 
         :param compactor: instance of a compactor class

@@ -3,17 +3,39 @@ import pkgutil
 from scattertext.Common import SEMIOTIC_SQUARE_HTML_PATH
 
 
-def get_clickable_lexicon(lexicon, plot_interface='plotInterface'):
-	onclick_js = "{plot_interface}.displayTermContexts({plot_interface}.data, {plot_interface}.gatherTermContexts(" \
-				 "{plot_interface}.termDict['{term}']));"
-	onmouseover_js = (
-		"{plot_interface}.showToolTipForTerm({plot_interface}.data, {plot_interface}.svg, '{term}',"
-		"{plot_interface}.termDict['{term}'])"
-	)
-	onmouseout_js = "{plot_interface}.tooltip.transition().style('opacity', 0)"
-	template = ('<span onclick="' + onclick_js + '" onmouseover="' + onmouseover_js + '" onmouseout="'+
-				onmouseout_js +'">{term}</span>')
-	return ', \n'.join(template.format(term=term, plot_interface=plot_interface) for term in lexicon)
+class ClickableTerms:
+	@staticmethod
+	def get_clickable_lexicon(lexicon, plot_interface='plotInterface'):
+		out = []
+		for term in lexicon:
+			clickable_term = ClickableTerms.get_clickable_term(plot_interface, term)
+			out.append(clickable_term)
+		return ',\n'.join(out)
+
+
+
+	@staticmethod
+	def get_clickable_term(term, plot_interface='plotInterface', other_plot_interface=None):
+		onclick_js = ClickableTerms._get_onclick_js(term, plot_interface, other_plot_interface)
+		onmouseover_js = (
+			"{plot_interface}.showToolTipForTerm({plot_interface}.data, {plot_interface}.svg, '{term}',"
+			"{plot_interface}.termDict['{term}'])"
+		)
+		onmouseout_js = "{plot_interface}.tooltip.transition().style('opacity', 0)"
+		template = ('<span onclick="' + onclick_js + '" onmouseover="' + onmouseover_js + '" onmouseout="' +
+					onmouseout_js + '">{term}</span>')
+		clickable_term = template.format(term=term, plot_interface=plot_interface)
+		return clickable_term
+
+	@staticmethod
+	def _get_onclick_js(term, plot_interface, other_plot_interface = None):
+		if other_plot_interface:
+			return "{other_plot_interface}.drawCategoryAssociation(" \
+				   "{plot_interface}.termDict['{term}'].ci); return false;"\
+				.format(other_plot_interface=other_plot_interface, plot_interface=plot_interface, term=term)
+		return "{plot_interface}.displayTermContexts({plot_interface}.data, {plot_interface}.gatherTermContexts(" \
+					 "{plot_interface}.termDict['{term}']));"
+
 
 def get_halo_td_style():
 	return '''
