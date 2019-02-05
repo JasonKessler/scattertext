@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.40
+# Scattertext 0.0.2.41
 
 **Table of Contents**
 
@@ -82,6 +82,12 @@ The HTML outputs look best in Chrome and Safari.
 
 
 ## What's new
+In 0.0.2.41:
+* Enabled changing protocol in pair plot
+* Fixed semiotic square creator
+* Added `use_categories_as_metadata_and_replace_terms` to `TermDocMatrix`.
+* Added `get_metadata_doc_count_df` and `get_metadata_count_mat` to TermDocMatrix
+
 In 0.0.2.40:
 * Added categories to terms in  pair plot halo, made them clickable 
 

@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
-from scattertext.diachronic.BubbleDiachronicVisualization import DiachronicVisualizer, BubbleDiachronicVisualization
+from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
+from scattertext.diachronic.DiachronicVisualizer import DiachronicVisualizer
 
 
 class DiachronicTermMiner(object):

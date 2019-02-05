@@ -71,7 +71,8 @@ class ScatterChartExplorer(ScatterChart):
         background_scorer : CharacteristicScorer, optional
             Used for bg scores
         include_term_category_counts : bool, default False
-            Includes term-category counts in keyed off 'term-category-count'
+            Includes term-category counts in keyed off 'term-category-count'. If use_non_text_features,
+            use metadata counts instead.
 
         Returns
         -------
@@ -116,14 +117,19 @@ class ScatterChartExplorer(ScatterChart):
         json_data['info']['neutral_category_name'] = neutral_category_name
         json_data['info']['extra_category_name'] = extra_category_name
         if include_term_category_counts:
+
             terms = np.array([term_struct['term'] for term_struct in json_data['data']])
             json_data['termCounts'] = self._get_term_doc_counts(terms)
         return json_data
 
     def _get_term_doc_counts(self, terms):
         term_counts = []
-        term_doc_counts = self.term_doc_matrix.get_term_doc_count_df('').loc[terms]
-        term_doc_freq = self.term_doc_matrix.get_term_freq_df('').loc[terms]
+        if self.scatterchartdata.use_non_text_features:
+            term_doc_counts = self.term_doc_matrix.get_metadata_doc_count_df('').loc[terms]
+            term_doc_freq = self.term_doc_matrix.get_metadata_freq_df('').loc[terms]
+        else:
+            term_doc_counts = self.term_doc_matrix.get_term_doc_count_df('').loc[terms]
+            term_doc_freq = self.term_doc_matrix.get_term_freq_df('').loc[terms]
         for i, category in enumerate(term_doc_freq.columns):
             category_counts = {}
             for j, val in enumerate(term_doc_freq[category].values):

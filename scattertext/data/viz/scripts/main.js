@@ -345,6 +345,8 @@ buildViz = function (d3) {
             var fgFreqs = Array(fullData.data.length).fill(0);
             var bgFreqs = Array(fullData.data.length).fill(0);
             var categoryTermCounts = fullData.termCounts[categoryNum];
+            
+            
             Object.keys(categoryTermCounts).forEach(
                 key => fgFreqs[key] = categoryTermCounts[key][0]
             )
@@ -363,13 +365,13 @@ buildViz = function (d3) {
             var maxfgDenseRanks = Math.max(...fgDenseRanks);
             var minfgDenseRanks = Math.min(...fgDenseRanks);
             var scalefgDenseRanks = fgDenseRanks.map(
-                x => (x - minfgDenseRanks)/maxfgDenseRanks
+                x => (x - minfgDenseRanks)/(maxfgDenseRanks - minfgDenseRanks)
             )
 
             var maxbgDenseRanks = Math.max(...bgDenseRanks);
             var minbgDenseRanks = Math.min(...bgDenseRanks);
             var scalebgDenseRanks = bgDenseRanks.map(
-                x => (x - minbgDenseRanks)/maxbgDenseRanks
+                x => (x - minbgDenseRanks)/(maxbgDenseRanks - minbgDenseRanks)
             )
 
             return {'fg': scalefgDenseRanks, 'bg': scalebgDenseRanks, 'bgFreqs': bgFreqs, 'fgFreqs': fgFreqs}
@@ -2446,8 +2448,10 @@ buildViz = function (d3) {
             console.log(denseRanks);
             var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
-            var ox = denseRanks.bg; //logTermCounts;
-            var oy = denseRanks.fg; //scores;
+            var ox = denseRanks.bg;
+            var oy = denseRanks.fg; 
+            //var ox = logTermCounts
+            //var oy = scores;
             var xf = this.x;
             var yf = this.y;
             

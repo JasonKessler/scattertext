@@ -1,3 +1,6 @@
+from sklearn.decomposition import KernelPCA
+from sklearn.preprocessing import RobustScaler
+
 import scattertext as st
 
 convention_df = st.SampleCorpora.ConventionData2012.get_data()

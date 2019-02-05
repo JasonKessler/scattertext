@@ -385,6 +385,20 @@ class TestTermDocMat(TestCase):
         self.assertTrue(all(meta_hamlet.get_metadata_doc_mat().todense().T[1].astype(bool).A1
                             == (meta_hamlet.get_category_names_by_row() == 'not hamlet')))
 
+    def test_use_categories_as_metadata_and_replace_terms(self):
+        hamlet = build_hamlet_jz_corpus_with_meta()
+        meta_hamlet = hamlet.use_categories_as_metadata_and_replace_terms()
+
+        np.testing.assert_array_almost_equal(hamlet.get_metadata_doc_mat().toarray(), np.array([[2] for _ in range(8)]))
+        self.assertEqual(meta_hamlet.get_metadata(), ['hamlet', 'jay-z/r. kelly'])
+        self.assertEqual(meta_hamlet.get_metadata_doc_mat().shape,
+                         (meta_hamlet.get_num_docs(), len(meta_hamlet.get_metadata())))
+        self.assertTrue(all(meta_hamlet.get_metadata_doc_mat().todense().T[0].astype(bool).A1
+                            == (meta_hamlet.get_category_names_by_row() == 'hamlet')))
+        self.assertTrue(all(meta_hamlet.get_metadata_doc_mat().todense().T[1].astype(bool).A1
+                            == (meta_hamlet.get_category_names_by_row() == 'jay-z/r. kelly')))
+        np.testing.assert_array_equal(meta_hamlet.get_term_doc_mat().todense(), hamlet.get_metadata_doc_mat().toarray())
+
     def test_get_num_metadata(self):
         self.assertEqual(get_hamlet_term_doc_matrix().use_categories_as_metadata().get_num_metadata(), 2)
 
@@ -399,6 +413,20 @@ class TestTermDocMat(TestCase):
                           {'cat0', 'cat1', 'cat2'})
         self.assertEquals(set(hamlet.get_term_freq_df('').columns),
                           {'hamlet', 'not hamlet'})
+
+    def test_get_metadata_count_mat(self):
+        corpus = build_hamlet_jz_corpus_with_meta()
+        np.testing.assert_array_almost_equal(
+            corpus.get_metadata_count_mat(), [[4, 4]])
+
+    def test_get_metadata_doc_count_df(self):
+        corpus = build_hamlet_jz_corpus_with_meta()
+        np.testing.assert_array_almost_equal(
+            corpus.get_metadata_doc_count_df(), [[4, 4]])
+        self.assertEqual(list(corpus.get_metadata_doc_count_df().columns),
+                         ['hamlet freq','jay-z/r. kelly freq'])
+        self.assertEqual(list(corpus.get_metadata_doc_count_df().index),
+                         ['cat1'])
 
 
 def get_hamlet_term_doc_matrix():

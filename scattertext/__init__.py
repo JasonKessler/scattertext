@@ -6,7 +6,7 @@ from scattertext.cartegoryprojector.CategoryProjector import CategoryProjector
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
 
-version = [0, 0, 2, 40]
+version = [0, 0, 2, 41]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -506,11 +506,19 @@ def produce_pairplot(corpus,
                      term_height_in_pixels=700,
                      scaler=scale_neg_1_to_1_with_zero_mean,
                      term_ranker=AbsoluteFrequencyRanker,
+                     use_metadata=False,
                      category_projector = CategoryProjector(),
+                     topic_model_term_lists=None,
+                     topic_model_preview_size=10,
+                     metadata_descriptions=None,
                      category_color_func='(function(x) {return "#5555FF"})',
+                     protocol='https',
                      **kwargs):
 
-    category_projection = category_projector.project(corpus)
+    if use_metadata:
+        category_projection = category_projector.project_with_metadata(corpus)
+    else:
+        category_projection = category_projector.project(corpus)
 
     initial_category = corpus.get_categories()[0]
 
@@ -525,7 +533,7 @@ def produce_pairplot(corpus,
                                                            use_non_text_features=True,
                                                            term_significance=None,
                                                            terms_to_include=None)
-    proj_df = category_projection.get_pandas_projection(0, 1)
+    proj_df = category_projection.get_pandas_projection(x_dim=0, y_dim=1)
     category_scatter_chart_explorer.inject_coordinates(x_coords=scaler(proj_df['x']),
                                                        y_coords=scaler(proj_df['y']),
                                                        original_x=proj_df['x'],
@@ -556,7 +564,7 @@ def produce_pairplot(corpus,
         div_name='cat-plot'
     )
 
-    compacted_corpus = corpus.compact(category_projector.compactor_)
+    compacted_corpus = category_projector.compact(corpus)
     terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
     print('num terms to hide', len(terms_to_hide))
     print('num terms to show', compacted_corpus.get_num_terms())
@@ -567,11 +575,16 @@ def produce_pairplot(corpus,
         minimum_not_category_term_frequency=0,
         pmi_threshold_coefficient=0,
         term_ranker=term_ranker,
+        use_non_text_features=use_metadata,
         score_transform=stretch_0_to_1).hide_terms(terms_to_hide)
 
+    if topic_model_term_lists is not None:
+        term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
+    if metadata_descriptions is not None:
+        term_scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
 
     tdf = corpus.get_term_freq_df()
-    scores = RankDifference().get_scores(
+    scores = LogOddsRatioUninformativeDirichletPrior().get_scores(
         tdf[initial_category + ' freq'],
         tdf[[c + ' freq' for c in corpus.get_categories()
              if c != initial_category]].sum(axis=1)
@@ -596,6 +609,7 @@ def produce_pairplot(corpus,
         show_category_headings=False,
         horizontal_line_y_position=0,
         vertical_line_x_position=0,
+        topic_model_preview_size=topic_model_preview_size,
         y_label=initial_category,
         x_label='Not ' + initial_category,
         full_data='getTermDataAndInfo()',
@@ -607,7 +621,8 @@ def produce_pairplot(corpus,
         term_scatterplot_structure,
         category_projection,
         category_width_in_pixels,
-        category_height_in_pixels
+        category_height_in_pixels,
+        protocol=protocol
     ).to_html()
 
 

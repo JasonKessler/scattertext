@@ -128,6 +128,18 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             freq_mat[:, cat_i] = X.sum(axis=0)
         return freq_mat
 
+    def get_metadata_count_mat(self):
+        '''
+        Returns
+        -------
+        np.array with columns as categories and rows as terms
+        '''
+        freq_mat = np.zeros(shape=(self.get_num_metadata(), self.get_num_categories()), dtype=int)
+        for cat_i in range(self.get_num_categories()):
+            mX = (self._mX[self._y == cat_i, :] > 0).astype(int)
+            freq_mat[:, cat_i] = mX.sum(axis=0)
+        return freq_mat
+
     def get_term_doc_count_df(self, label_append=' freq'):
         '''
 
@@ -142,6 +154,19 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         mat = self.get_term_count_mat()
         return pd.DataFrame(mat,
                             index=self.get_terms(),
+                            columns=[c + label_append for c in self.get_categories()])
+
+    def get_metadata_doc_count_df(self, label_append=' freq'):
+        '''
+
+        Returns
+        -------
+        pd.DataFrame indexed on metadata, with columns the number of documents
+        each metadata appeared in each category
+        '''
+        mat = self.get_metadata_count_mat()
+        return pd.DataFrame(mat,
+                            index=self.get_metadata(),
                             columns=[c + label_append for c in self.get_categories()])
 
     def _term_freq_df_from_matrix(self, catX):
@@ -700,6 +725,26 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                  new_metadata,
                                                  self._y,
                                                  self._term_idx_store,
+                                                 self._category_idx_store,
+                                                 copy(self._category_idx_store),
+                                                 self._y == self._y)
+        return new_tdm
+
+    def use_categories_as_metadata_and_replace_terms(self):
+        '''
+        Returns a TermDocMatrix which is identical to self except the metadata values are now identical to the
+         categories present and term-doc-matrix is now the metadata matrix.
+
+        :return: TermDocMatrix
+        '''
+        new_metadata_factory = CSRMatrixFactory()
+        for i, category_idx in enumerate(self.get_category_ids()):
+            new_metadata_factory[i, category_idx] = 1
+        new_metadata = new_metadata_factory.get_csr_matrix()
+        new_tdm = self._make_new_term_doc_matrix(self._mX,
+                                                 new_metadata,
+                                                 self._y,
+                                                 self._metadata_idx_store,
                                                  self._category_idx_store,
                                                  copy(self._category_idx_store),
                                                  self._y == self._y)

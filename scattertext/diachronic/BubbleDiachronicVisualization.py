@@ -1,7 +1,5 @@
-class DiachronicVisualizer(object):
-	@staticmethod
-	def visualize(display_df):
-		raise NotImplementedError()
+from scattertext.diachronic.DiachronicVisualizer import DiachronicVisualizer
+
 
 class BubbleDiachronicVisualization(DiachronicVisualizer):
 	@staticmethod

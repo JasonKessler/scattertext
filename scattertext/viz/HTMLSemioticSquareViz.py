@@ -8,7 +8,7 @@ class ClickableTerms:
 	def get_clickable_lexicon(lexicon, plot_interface='plotInterface'):
 		out = []
 		for term in lexicon:
-			clickable_term = ClickableTerms.get_clickable_term(plot_interface, term)
+			clickable_term = ClickableTerms.get_clickable_term(term, plot_interface)
 			out.append(clickable_term)
 		return ',\n'.join(out)
 
@@ -82,7 +82,7 @@ class HTMLSemioticSquareViz(object):
 		return template
 
 	def _lexicon_to_html(self, lexicon):
-		return get_clickable_lexicon(lexicon)
+		return ClickableTerms.get_clickable_lexicon(lexicon)
 
 	def _get_template(self):
 		return pkgutil.get_data('scattertext', SEMIOTIC_SQUARE_HTML_PATH).decode('utf-8')
