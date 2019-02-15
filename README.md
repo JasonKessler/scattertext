@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.41
+# Scattertext 0.0.2.42
 
 **Table of Contents**
 
@@ -82,6 +82,10 @@ The HTML outputs look best in Chrome and Safari.
 
 
 ## What's new
+In 0.0.2.42:
+* Fixed clickablity of terms, coloring in certain plots
+* Added initial number of terms to show in pairplot, using the `terms_to_show` parameter
+
 In 0.0.2.41:
 * Enabled changing protocol in pair plot
 * Fixed semiotic square creator

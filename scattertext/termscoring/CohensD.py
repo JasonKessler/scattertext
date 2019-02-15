@@ -35,7 +35,7 @@ class CohensD(CorpusBasedTermScorer):
         # From https://people.kth.se/~lang/Effect_size.pdf
         # Shinichi Nakagawa1 and Innes C. Cuthill. 2007. In Biological Reviews 82.
         X = self._get_X().astype(np.float64)
-        X = X/X.sum(axis=1)
+        X = X / X.sum(axis=1)
         cat_X, ncat_X = self._get_cat_and_ncat(X)
         n1, n2 = float(cat_X.shape[1]), float(ncat_X.shape[1])
         n = n1 + n2
@@ -43,13 +43,13 @@ class CohensD(CorpusBasedTermScorer):
         m2 = ncat_X.mean(axis=0).A1
         v1 = cat_X.var(axis=0).A1
         v2 = ncat_X.var(axis=0).A1
-        s_pooled = np.sqrt(((n2 - 1) * v2 + (n1 - 1) * v1)/(n - 2))
-        cohens_d = (m1 - m2)/s_pooled
-        cohens_d_se = np.sqrt(((n - 1.)/(n - 3)) * (4 / n) * (1 + np.square(cohens_d)))
+        s_pooled = np.sqrt(((n2 - 1) * v2 + (n1 - 1) * v1) / (n - 2.))
+        cohens_d = (m1 - m2) / s_pooled
+        cohens_d_se = np.sqrt(((n - 1.) / (n - 3)) * (4. / n) * (1 + np.square(cohens_d)))
         cohens_d_z = cohens_d / cohens_d_se
         cohens_d_p = norm.sf(cohens_d_z)
         hedges_r = cohens_d * (1 - 3. / ((4. * (n - 2)) - 1))
-        hedges_r_se = np.sqrt(n/(n1*n2) + np.square(hedges_r)/(n - 2))
+        hedges_r_se = np.sqrt(n / (n1 * n2) + np.square(hedges_r) / (n - 2.))
         hedges_r_z = hedges_r / hedges_r_se
         hedges_r_p = norm.sf(hedges_r_z)
 
@@ -65,11 +65,7 @@ class CohensD(CorpusBasedTermScorer):
             'm1': m1,
             'm2': m2
         }, index=self.corpus_.get_terms()).fillna(0)
-
-
-
         return score_df
-
 
     def get_name(self):
         return "Cohen's d"

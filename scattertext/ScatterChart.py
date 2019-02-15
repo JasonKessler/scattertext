@@ -283,9 +283,9 @@ class ScatterChart:
         df = self._get_term_category_frequencies()
 
         self._add_x_and_y_coords_to_term_df_if_injected(df)
-
         if scores is None:
             scores = self._get_default_scores(category, not_categories, df)
+
         category_column_name = category + ' freq'
         df['category score'] = CornerScore.get_scores_for_category(
             df[category_column_name],
@@ -335,6 +335,7 @@ class ScatterChart:
         if self.scatterchartdata.term_significance:
             json_df['p'] = df['p']
         self._add_term_freq_to_json_df(json_df, df, category)
+
         json_df['s'] = self.scatterchartdata.score_transform(df['color_scores'])
         json_df['os'] = df['color_scores']
         if background_scorer:

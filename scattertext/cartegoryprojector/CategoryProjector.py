@@ -16,6 +16,7 @@ class LengthNormalizeScaleStandardize(object):
                 compact_category_counts_catscale_std.T / compact_category_counts_catscale_std.std(axis=1)).T
         return compact_category_counts_catscale_std_scale
 
+
 class LengthNormalizeRobustScale(object):
     def fit_transform(self, X):
         compact_category_counts_catscale = X / X.sum(axis=0)
@@ -39,34 +40,35 @@ class CategoryProjector(object):
         self.projector_ = projector
         self.normalizer_ = normalizer
 
-    def project(self, term_doc_mat):
+    def project(self, term_doc_mat, x_dim=0, y_dim=1):
         '''
         Returns a projection of the
 
         :param term_doc_mat: a TermDocMatrix
         :return: pd.DataFrame, TermDocMatrix
         '''
-        return self._project_category_corpus(self._get_category_metadata_corpus(term_doc_mat))
+        return self._project_category_corpus(self._get_category_metadata_corpus(term_doc_mat), x_dim, y_dim)
 
-    def project_with_metadata(self, term_doc_mat):
+    def project_with_metadata(self, term_doc_mat, x_dim=0, y_dim=1):
         '''
         Returns a projection of the
 
         :param term_doc_mat: a TermDocMatrix
         :return: pd.DataFrame, TermDocMatrix
         '''
-        return self._project_category_corpus(self._get_category_metadata_corpus_and_replace_terms(term_doc_mat))
+        return self._project_category_corpus(self._get_category_metadata_corpus_and_replace_terms(term_doc_mat), x_dim,
+                                             y_dim)
 
-    def _project_category_corpus(self, category_corpus):
+    def _project_category_corpus(self, category_corpus, x_dim=0, y_dim=1):
         category_counts = self.normalize(category_corpus.get_term_freq_df(''))
         proj = self.projector_.fit_transform(category_counts.T)
-        return CategoryProjection(category_corpus, category_counts, proj)
+        return CategoryProjection(category_corpus, category_counts, proj, x_dim=x_dim, y_dim=y_dim)
 
     def normalize(self, category_counts):
         if self.normalizer_ is not None:
             normalized_vals = self.normalizer_.fit_transform(category_counts)
             if not isinstance(normalized_vals, DataFrame):
-                return DataFrame(data=normalized_vals, columns = category_counts.columns, index=category_counts.index)
+                return DataFrame(data=normalized_vals, columns=category_counts.columns, index=category_counts.index)
             else:
                 return normalized_vals
         return category_counts

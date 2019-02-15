@@ -4,7 +4,6 @@ from scipy.stats import rankdata
 
 from scattertext.termscoring.ScaledFScore import ScaledFScorePresetsNeg1To1
 
-
 class AssociationCompactor(object):
     def __init__(self, max_terms, scorer=ScaledFScorePresetsNeg1To1):
         self.max_terms = max_terms
@@ -16,7 +15,6 @@ class AssociationCompactor(object):
         ----------
         term_doc_matrix : TermDocMatrix
             Term document matrix object to compact
-
         Returns
         -------
         New term doc matrix
@@ -26,6 +24,9 @@ class AssociationCompactor(object):
         term_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= optimal_rank])
             .apply(lambda x: all(x), axis=1)]
         return term_doc_matrix.remove_terms(term_to_remove)
+
+    def get_term_ranks(self, corpus):
+        return self._get_rank_df(corpus)
 
     def _get_rank_df(self, corpus):
         tdf = corpus.get_term_freq_df('')

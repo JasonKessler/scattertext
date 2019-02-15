@@ -82,7 +82,7 @@ class ScatterChartExplorer(ScatterChart):
                             'meta': ['<b>blah</b>', '<b>blah</b>']},
 
                     // if include_term_category_counts
-                    termCounts: [term num -> [total occurrences, total documents], ... for the number of categories]
+                    termCounts: [term num -> [total occurrences, total documents, variance], ... for the number of categories]
 
                     data: {term:term,
                            x:frequency [0-1],
@@ -124,17 +124,19 @@ class ScatterChartExplorer(ScatterChart):
 
     def _get_term_doc_counts(self, terms):
         term_counts = []
+        term_counts = []
         if self.scatterchartdata.use_non_text_features:
             term_doc_counts = self.term_doc_matrix.get_metadata_doc_count_df('').loc[terms]
             term_doc_freq = self.term_doc_matrix.get_metadata_freq_df('').loc[terms]
         else:
             term_doc_counts = self.term_doc_matrix.get_term_doc_count_df('').loc[terms]
             term_doc_freq = self.term_doc_matrix.get_term_freq_df('').loc[terms]
-        for i, category in enumerate(term_doc_freq.columns):
+        # this can be vectorized
+        for category_i, category in enumerate(term_doc_freq.columns):
             category_counts = {}
-            for j, val in enumerate(term_doc_freq[category].values):
+            for term_i, val in enumerate(term_doc_freq[category].values):
                 if val > 0:
-                    category_counts[j] = [val, term_doc_counts.iloc[j, i]]
+                    category_counts[term_i] = [val, term_doc_counts.iloc[term_i, category_i]]
             term_counts.append(category_counts)
 
         return term_counts

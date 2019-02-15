@@ -14,9 +14,11 @@ class PairPlotFromScatterplotStructure(object):
                  include_category_labels=True,
                  num_terms=5,
                  d3_url_struct=None,
+                 x_dim=0,
+                 y_dim=1,
                  protocol='http',
-                 term_plot_interface = 'termPlotInterface',
-                 category_plot_interface = 'categoryPlotInterface'):
+                 term_plot_interface='termPlotInterface',
+                 category_plot_interface='categoryPlotInterface'):
         ''',
         Parameters
         ----------
@@ -28,6 +30,8 @@ class PairPlotFromScatterplotStructure(object):
         num_terms: int, default 5
         include_category_labels: bool, default True
         d3_url_struct: D3URLs
+        x_dim: int, 0
+        y_dim: int, 1
         protocol: str
             http or https
         term_plot_interface : str
@@ -43,10 +47,11 @@ class PairPlotFromScatterplotStructure(object):
         self.category_width = category_width
         self.category_height = category_height
         self.num_terms = num_terms
+        self.x_dim = x_dim
+        self.y_dim = y_dim
         self.include_category_labels = include_category_labels
         self.term_plot_interface = term_plot_interface
         self.category_plot_interface = category_plot_interface
-
     def to_html(self):
         '''
         Returns
@@ -70,7 +75,9 @@ class PairPlotFromScatterplotStructure(object):
             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
         )
         html_content = (html_content.replace('http://', self.protocol + '://'))
-        axes_labels = self.category_projection.get_nearest_terms(num_terms=self.num_terms)
+        axes_labels = self.category_projection.get_nearest_terms(
+            num_terms=self.num_terms
+        )
         for position, terms in axes_labels.items():
             html_content = html_content.replace('{%s}' % position, self._get_lexicon_html(terms))
         return html_content.replace('{width}', str(self.category_width)).replace('{height}', str(self.category_height))
@@ -78,12 +85,13 @@ class PairPlotFromScatterplotStructure(object):
     def _get_lexicon_html(self, terms):
         lexicon_html = ''
         for i, term in enumerate(terms):
-            lexicon_html += '<b>'+ClickableTerms.get_clickable_term(term, self.term_plot_interface)+'</b>'
+            lexicon_html += '<b>' + ClickableTerms.get_clickable_term(term, self.term_plot_interface) + '</b>'
             if self.include_category_labels:
                 category = self.category_projection.category_counts.loc[term].idxmax()
                 lexicon_html += (
                         ' (<i>%s</i>)' %
-                        ClickableTerms.get_clickable_term(category, self.category_plot_interface, self.term_plot_interface))
+                        ClickableTerms.get_clickable_term(category, self.category_plot_interface,
+                                                          self.term_plot_interface))
             if i != len(terms) - 1:
                 lexicon_html += ',\n'
         return lexicon_html
