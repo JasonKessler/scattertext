@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 42]
+version = [0, 0, 2, 43]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -546,6 +546,9 @@ def produce_pairplot(corpus,
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
         category=initial_category, max_docs_per_category=0,
     )
+
+    category_tooltip_func = '(function(d) {return d.term})'
+
     category_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(category_scatter_chart_data),
         width_in_pixels=category_width_in_pixels,
@@ -554,7 +557,7 @@ def produce_pairplot(corpus,
         use_non_text_features=True,
         show_top_terms=False,
         show_characteristic=False,
-        get_tooltip_content=None,
+        get_tooltip_content=category_tooltip_func,
         color_func=category_color_func,
         show_axes=False,
         unified_context=True,

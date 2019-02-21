@@ -48,11 +48,14 @@ class ScaledFScorePresets(object):
 	             scaler_algo=DEFAULT_SCALER_ALGO,
 	             beta=DEFAULT_BETA,
 	             one_to_neg_one=False,
-	             priors=None):
+	             priors=None,
+				 use_score_difference=False,
+				 ):
 		self.scaler_algo_ = scaler_algo
 		self.beta_ = beta
 		self.one_to_neg_one_ = one_to_neg_one
 		self.priors_ = priors
+		self.use_score_difference_ = use_score_difference
 		assert self.beta_ > 0
 
 	def get_name(self):
@@ -81,11 +84,14 @@ class ScaledFScorePresets(object):
 		                                          not_cat_word_counts)
 		not_cat_scores = self.get_scores_for_category(not_cat_word_counts,
 		                                              cat_word_counts)
-		if self.one_to_neg_one_:
-			#return ScoreBalancer.balance_scores_and_dont_scale(cat_scores, not_cat_scores)
-			return 2 * ScoreBalancer.balance_scores(cat_scores, not_cat_scores) - 1
+		if self.use_score_difference_:
+			scores = ((cat_scores - not_cat_scores) + 1.)/2.
 		else:
-			return ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
+			scores = ScoreBalancer.balance_scores(cat_scores, not_cat_scores)
+		if self.one_to_neg_one_:
+			return 2 * scores - 1
+		else:
+			return scores
 
 	def get_scores_for_category(self, cat_word_counts, not_cat_word_counts):
 		'''
