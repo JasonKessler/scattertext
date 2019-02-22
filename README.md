@@ -85,6 +85,8 @@ The HTML outputs look best in Chrome and Safari.
 In 0.0.2.43:
 * Made the term pop-up box on the category pairplot only the category name 
 * Fixed optimal projection search function 
+* Merged PR from @millengustavo to fix when a FutureWarning is issued every time the get_background_frequency_df 
+is called.
 
 In 0.0.2.42:
 * Fixed clickablity of terms, coloring in certain plots
