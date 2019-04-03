@@ -59,6 +59,12 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return compactor.compact(self)
 
+    def select(self, compactor):
+        '''
+        Same as compact
+        '''
+        return compactor.compact(self)
+
     def get_num_terms(self):
         '''
         Returns

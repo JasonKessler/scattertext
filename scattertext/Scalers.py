@@ -69,20 +69,20 @@ def scale_standardize(vec, terms=None, other_vec=None):
 def log_scale_standardize(vec, terms=None, other_vec=None):
 	vec_ss = (np.log(vec + 1) / np.log(2))
 	vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 
 def sqrt_scale_standardize(vec, terms=None, other_vec=None):
 	vec_ss = np.sqrt(vec)
 	vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 
 def power_scale_standardize_factory(alpha):
 	def f(vec, terms=None, other_vec=None):
 		vec_ss = np.power(vec, 1. / alpha)
 		vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
-		return _scale_0_to_1(vec_ss)
+		return scale_0_to_1(vec_ss)
 
 	return f
 
@@ -98,37 +98,37 @@ def ecdf_scale_standardize(vec):
 
 def power_scale_factory(alpha):
 	def f(vec, terms=None, other_vec=None):
-		return _scale_0_to_1(np.power(vec, 1. / alpha))
+		return scale_0_to_1(np.power(vec, 1. / alpha))
 
 	return f
 
 
 def sqrt_scale(vec, terms=None, other_vec=None):
-	return _scale_0_to_1(np.sqrt(vec))
+	return scale_0_to_1(np.sqrt(vec))
 
 
 def log_scale(vec, terms=None, other_vec=None):
-	return _scale_0_to_1(np.log(vec))
+	return scale_0_to_1(np.log(vec))
 
 
 def percentile(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='average') * (1. / len(vec))
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 
 def dense_rank(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='dense') * (1. / len(vec))
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 percentile_dense = dense_rank
 
 def percentile_ordinal(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='ordinal') * (1. / len(vec))
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 
 def percentile_min(vec, terms=None, other_vec=None):
 	vec_ss = rankdata(vec, method='min') * (1. / len(vec))
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 
 def percentile_alphabetical(vec, terms, other_vec=None):
@@ -143,7 +143,7 @@ def percentile_alphabetical(vec, terms, other_vec=None):
 		.reset_index()
 		.sort_values(by='index')
 		.index)
-	return _scale_0_to_1(vec_ss)
+	return scale_0_to_1(vec_ss)
 
 def stretch_0_to_1(vec):
 	a = stretch_neg1_to_1(vec)
@@ -159,6 +159,6 @@ def stretch_neg1_to_1(vec):
 	return a
 
 
-def _scale_0_to_1(vec_ss):
+def scale_0_to_1(vec_ss):
 	vec_ss = (vec_ss - vec_ss.min()) * 1. / (vec_ss.max() - vec_ss.min())
 	return vec_ss

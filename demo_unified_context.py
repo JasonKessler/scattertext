@@ -6,7 +6,7 @@ df['parse'] = df['text'].apply(st.whitespace_nlp_with_sentences)
 corpus = (st.CorpusFromParsedDocuments(df, category_col='category', parsed_col='parse')
           .build()
           .get_unigram_corpus()
-          .compact(st.AssociationCompactor(1000)))
+          .select(st.AssociationCompactor(1000)))
 
 corpus, axes = st.EmbeddingsResolver(corpus).set_embeddings_model().project_embeddings()
 term_colors = st.CategoryColorAssigner(corpus).get_term_colors()

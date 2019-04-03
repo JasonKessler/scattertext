@@ -2429,6 +2429,27 @@ buildViz = function (d3) {
             )
             
             var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
+            /*
+            function logOddsRatioUninformativeDirichletPrior(fgFreqs, bgFreqs, alpha) {
+                var fgVocabSize = fgFreqs.reduce((x,y) => x+y);
+                var fgL = fgFreqs.map(x => (x + alpha)/((1+alpha)*fgVocabSize - x - alpha))
+                var bgVocabSize = bgFreqs.reduce((x,y) => x+y);
+                var bgL = bgFreqs.map(x => (x + alpha)/((1+alpha)*bgVocabSize - x - alpha))
+                var pooledVar = fgFreqs.map(function(x, i) {
+                    return (
+                        1/(x + alpha) 
+                        + 1/((1+alpha)*fgVocabSize - x - alpha)
+                        + 1/(bgFreqs[i] + alpha)
+                        + 1/((1+alpha)*bgVocabSize - bgFreqs[i] - alpha))
+                })
+                return pooledVar.map(function(x, i) {
+                    return (Math.log(fgL[i]) - Math.log(bgL[i]))/x;
+                })
+            }
+            var rawScores = logOddsRatioUninformativeDirichletPrior(
+                denseRanks.fgFreqs, denseRanks.bgFreqs, 0.01);
+            */
+                
             var maxRawScores = Math.max(...rawScores);
             var minRawScores = Math.min(...rawScores);
             var scores = rawScores.map(
@@ -2448,8 +2469,47 @@ buildViz = function (d3) {
             console.log(denseRanks);
             var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
+            
+            //!!! OLD and good
             var ox = denseRanks.bg;
             var oy = denseRanks.fg; 
+            
+            //!!! NEW
+            /*
+            var oy = denseRanks.fg.map((x,i)=> x - denseRanks.bg[i]);
+            var ox = denseRanks.fgFreqs.map((x,i)=> x/fgFreqSum - denseRanks.bgFreqs[i]/bgFreqSum);
+            */
+            /*
+            
+            var ox = denseRanks.fg;
+            */
+            
+            /*
+            ox = ox.map(function(x) {
+                if (x > 0)
+                    return 0.5 * x/Math.max(...ox) + 0.5;
+                else
+                    return 0.5 * (1 + x/Math.min(...ox));
+                    
+            })
+            oy = oy.map(function(x) {
+                if (x > 0)
+                    return 0.5 * x/Math.max(...oy) + 0.5;
+                else
+                    return 0.5 * (1 + x/Math.min(...oy));
+                    
+            })*/
+            
+            
+            
+            
+            
+            var oxmax = Math.max(...ox)
+            var oxmin = Math.min(...ox)
+            var ox = ox.map(x => (x - oxmin)/(oxmax - oxmin))
+            var oymax = Math.max(...oy)
+            var oymin = Math.min(...oy)
+            var oy = oy.map(x => (x - oymin)/(oymax - oymin))
             //var ox = logTermCounts
             //var oy = scores;
             var xf = this.x;

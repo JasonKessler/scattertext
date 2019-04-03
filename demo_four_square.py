@@ -21,7 +21,7 @@ corpus = (full_corpus
                                        'Reject, Positive', 'Reject, Negative'],
                                       False)
           .get_unigram_corpus()
-          .compact(st.ClassPercentageCompactor(term_count=5)))
+          .select(st.ClassPercentageCompactor(term_count=5)))
 
 print('finding priors', time.time() - t0, 's')
 priors = (st.PriorFactory(full_corpus, starting_count=0.01)

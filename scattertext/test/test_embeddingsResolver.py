@@ -42,7 +42,7 @@ class TestEmbeddingsResolver(TestCase):
         cls.corpus = CorpusFromParsedDocuments(cls.df, 'category', 'parsed').build()
 
     def test_resolve_embeddings(self):
-        tdm = self.corpus.get_unigram_corpus().compact(ClassPercentageCompactor(term_count=1))
+        tdm = self.corpus.get_unigram_corpus().select(ClassPercentageCompactor(term_count=1))
         embeddings_resolver = EmbeddingsResolver(tdm)
         # embeddings = TruncatedSVD(n_components=20).fit_transform(tdm.get_term_doc_mat().T).T
         # embeddings_resolver.set_embeddings(embeddings)

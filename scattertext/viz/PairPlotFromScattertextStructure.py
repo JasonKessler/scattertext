@@ -1,7 +1,8 @@
-from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME
-from scattertext.cartegoryprojector.CategoryProjection import CategoryProjection
+from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME, PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils
 from scattertext.viz.HTMLSemioticSquareViz import ClickableTerms
+
 
 
 class PairPlotFromScatterplotStructure(object):
@@ -12,6 +13,7 @@ class PairPlotFromScatterplotStructure(object):
                  category_width,
                  category_height,
                  include_category_labels=True,
+                 show_halo=True,
                  num_terms=5,
                  d3_url_struct=None,
                  x_dim=0,
@@ -27,6 +29,7 @@ class PairPlotFromScatterplotStructure(object):
         category_projection: CategoryProjection
         category_height: int
         category_width: int
+        show_halo: bool
         num_terms: int, default 5
         include_category_labels: bool, default True
         d3_url_struct: D3URLs
@@ -47,11 +50,13 @@ class PairPlotFromScatterplotStructure(object):
         self.category_width = category_width
         self.category_height = category_height
         self.num_terms = num_terms
+        self.show_halo = show_halo
         self.x_dim = x_dim
         self.y_dim = y_dim
         self.include_category_labels = include_category_labels
         self.term_plot_interface = term_plot_interface
         self.category_plot_interface = category_plot_interface
+
     def to_html(self):
         '''
         Returns
@@ -66,7 +71,7 @@ class PairPlotFromScatterplotStructure(object):
             self.term_scatterplot_structure._visualization_data.to_javascript('getTermDataAndInfo'),
             self.term_scatterplot_structure.get_js_to_call_build_scatterplot(self.term_plot_interface),
         ])
-        html_template = PackedDataUtils.get_packaged_html_template_content(PAIR_PLOT_HTML_VIZ_FILE_NAME)
+        html_template = self._get_html_template()
         html_content = (
             html_template
                 .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
@@ -75,12 +80,20 @@ class PairPlotFromScatterplotStructure(object):
             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
         )
         html_content = (html_content.replace('http://', self.protocol + '://'))
-        axes_labels = self.category_projection.get_nearest_terms(
-            num_terms=self.num_terms
-        )
-        for position, terms in axes_labels.items():
-            html_content = html_content.replace('{%s}' % position, self._get_lexicon_html(terms))
+        if self.show_halo:
+            axes_labels = self.category_projection.get_nearest_terms(
+                num_terms=self.num_terms
+            )
+            for position, terms in axes_labels.items():
+                html_content = html_content.replace('{%s}' % position, self._get_lexicon_html(terms))
         return html_content.replace('{width}', str(self.category_width)).replace('{height}', str(self.category_height))
+
+    def _get_html_template(self):
+        if self.show_halo:
+            return PackedDataUtils.get_packaged_html_template_content(PAIR_PLOT_HTML_VIZ_FILE_NAME)
+        return PackedDataUtils.get_packaged_html_template_content(PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME)
+
+
 
     def _get_lexicon_html(self, terms):
         lexicon_html = ''

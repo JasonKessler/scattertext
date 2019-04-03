@@ -11,7 +11,7 @@ corpus = (st.CorpusFromParsedDocuments(convention_df,
                                        category_col='party',
                                        parsed_col='parse')
           .build()
-          .get_stoplisted_unigram_corpus().compact(ClassPercentageCompactor(term_count=3)))
+          .get_stoplisted_unigram_corpus().select(ClassPercentageCompactor(term_count=3)))
 
 
 html = st.produce_projection_explorer(corpus,

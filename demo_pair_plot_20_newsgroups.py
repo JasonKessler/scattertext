@@ -3,6 +3,9 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import scattertext as st
 
 import time
+
+import scattertext.categoryprojector.pairplot
+
 t0 = time.time()
 newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 print(time.time() - t0)
@@ -19,7 +22,7 @@ corpus = st.CorpusFromScikit(
 ).build().get_unigram_corpus()
 print(time.time() - t0)
 
-html = st.produce_pairplot(corpus)
+html = scattertext.categoryprojector.pairplot.produce_pairplot(corpus)
 print(time.time() - t0)
 file_name = 'demo_pair_plot.html'
 open(file_name, 'wb').write(html.encode('utf-8'))

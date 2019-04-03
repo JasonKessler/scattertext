@@ -1,7 +1,7 @@
 import numpy as np
 
 from scattertext import ScatterChart, TermCategoryFrequencies
-from scattertext import percentile_alphabetical
+from scattertext.Scalers import percentile_alphabetical
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
 

@@ -12,6 +12,9 @@ class CategoryProjection(object):
         self.y_dim = y_dim
         self.projection = projection
 
+    def project_with_alternative_dimensions(self, x_dim, y_dim):
+        return CategoryProjection(self.category_corpus, self.category_counts, self.projection, x_dim, y_dim)
+
     def get_pandas_projection(self):
         '''
 
@@ -47,5 +50,3 @@ class CategoryProjection(object):
         dim_term = np.matrix(self.category_counts.values) * self.projection[:, [self.x_dim, self.y_dim]]
         df = pd.DataFrame(dim_term, index=self.category_corpus.get_terms(), columns=['x', 'y'])
         return df
-
-

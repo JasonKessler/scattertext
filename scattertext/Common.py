@@ -1,6 +1,6 @@
-# Constants for scaled f-score
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
+# Constants for scaled f-score
 DEFAULT_BETA = 2
 DEFAULT_SCALER_ALGO = 'normcdf'
 
@@ -13,6 +13,7 @@ DEFAULT_DIV_ID = 'd3-div-1'
 DEFAULT_HTML_VIZ_FILE_NAME = 'scattertext.html'
 SEMIOTIC_SQUARE_HTML_PATH = 'data/viz/semiotic_new.html'
 PAIR_PLOT_HTML_VIZ_FILE_NAME = 'pairplot.html'
+PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME = 'pairplot_without_halo.html'
 
 # Constants for background scaled f-score
 DEFAULT_BACKGROUND_BETA = 1
@@ -33,8 +34,10 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'loc', 'product', 'event', 'work_of_art', 'language',
                      'type', 'date', 'time', 'percent', 'money', 'quantity',
                      'ordinal', 'cardinal']
+
+# Adjust stopword set for spaCy tokenization
 MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn',
-                                                   'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn'}
+                                                   'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn', 's', 't'}
 
 # Qualitative Colors From Tableau
 

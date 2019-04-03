@@ -14,8 +14,8 @@ corpus = (st.CorpusFromPandas(movie_df,
           .get_unigram_corpus())
 
 # Remove relatively infrequent terms from both categories
-corpus = corpus.compact(st.ClassPercentageCompactor(term_count=2,
-                                                    term_ranker=st.OncePerDocFrequencyRanker))
+corpus = corpus.select(st.ClassPercentageCompactor(term_count=2,
+                                                   term_ranker=st.OncePerDocFrequencyRanker))
 fn = 'demo_characteristic_chart.html'
 
 open(fn, 'wb').write(st.produce_characteristic_explorer(

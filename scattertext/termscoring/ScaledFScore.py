@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm, rankdata
 
+
 from scattertext.Common import DEFAULT_SCALER_ALGO, DEFAULT_BETA
 
 
@@ -308,6 +309,9 @@ class ScaledFScore(object):
 			scaler = lambda x: rankdata(x).astype(np.float64) / len(x)
 		elif scaler_algo == 'percentiledense':
 			scaler = lambda x: rankdata(x, method='dense').astype(np.float64) / len(x)
+		elif scaler_algo == 'ecdf':
+			from statsmodels.distributions import ECDF
+			scaler = lambda x: ECDF(x)
 		elif scaler_algo == 'none':
 			scaler = lambda x: x
 		else:

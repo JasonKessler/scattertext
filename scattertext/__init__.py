@@ -1,20 +1,23 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 43]
+
+version = [0, 0, 2, 44]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
 import numpy as np
 import pandas as pd
 
-from scattertext.cartegoryprojector.OptimalProjection import get_optimal_category_projection
-from scattertext.cartegoryprojector.CategoryProjector import CategoryProjector
+from scattertext.categoryprojector.OptimalProjection import get_optimal_category_projection, \
+    get_optimal_category_projection_by_rank
+from scattertext.categoryprojector.CategoryProjector import CategoryProjector, Doc2VecCategoryProjector
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
-from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
+from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure, D3URLs
 import scattertext.viz
 from scattertext.CategoryColorAssigner import CategoryColorAssigner
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
-from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
+from scattertext.termcompaction.AssociationCompactor import AssociationCompactor, TermCategoryRanker, \
+    AssociationCompactorByRank
 from scattertext.termscoring.CohensD import CohensD, HedgesR
 from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
 from scattertext.diachronic.DiachronicTermMiner import DiachronicTermMiner
@@ -36,7 +39,6 @@ from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 from scattertext.CorpusFromScikit import CorpusFromScikit
 from scattertext.Formatter import large_int_format, round_downer
-from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.PriorFactory import PriorFactory
 from scattertext.Scalers import percentile_alphabetical, scale_neg_1_to_1_with_zero_mean_rank_abs_max, \
     scale_neg_1_to_1_with_zero_mean, dense_rank, stretch_0_to_1
@@ -64,7 +66,7 @@ from scattertext.indexstore import IndexStoreFromDict
 from scattertext.indexstore import IndexStoreFromList
 from scattertext.indexstore.IndexStore import IndexStore
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecFromParsedCorpus, \
-    Word2VecFromParsedCorpusBigrams
+    Word2VecFromParsedCorpusBigrams, CorpusAdapterForGensim
 from scattertext.semioticsquare import SemioticSquare, FourSquareAxis
 from scattertext.semioticsquare.FourSquare import FourSquare
 from scattertext.termranking import OncePerDocFrequencyRanker, DocLengthDividedFrequencyRanker, \
@@ -89,7 +91,12 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
-
+from scattertext.categoryprojector.pairplot import produce_pairplot
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection
+from scattertext.categoryprojector.CategoryProjectorEvaluator import RipleyKCategoryProjectorEvaluator, \
+    EmbeddingsProjectorEvaluator
+from scattertext.representations.Doc2VecBuilder import Doc2VecBuilder
+from scattertext.ParsedCorpus import ParsedCorpus
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -495,149 +502,6 @@ def get_term_scorer_scores(category, corpus, neutral_categories, not_categories,
         else:
             term_scorer = term_scorer.set_categories(category, not_categories)
     return term_scorer.get_scores(cat_freqs, not_cat_freqs)
-
-
-def produce_pairplot(corpus,
-                     asian_mode=False,
-                     category_width_in_pixels=500,
-                     category_height_in_pixels=700,
-                     term_width_in_pixels=500,
-                     term_height_in_pixels=700,
-                     terms_to_show=3000,
-                     scaler=scale_neg_1_to_1_with_zero_mean,
-                     term_ranker=AbsoluteFrequencyRanker,
-                     use_metadata=False,
-                     category_projector=CategoryProjector(),
-                     category_projection=None,
-                     topic_model_term_lists=None,
-                     topic_model_preview_size=10,
-                     metadata_descriptions=None,
-                     initial_category=None,
-                     x_dim=0,
-                     y_dim=1,
-                     category_color_func='(function(x) {return "#5555FF"})',
-                     protocol='https',
-                     **kwargs):
-    if category_projection is None:
-        if use_metadata:
-            category_projection = category_projector.project_with_metadata(corpus, x_dim=x_dim, y_dim=y_dim)
-        else:
-            category_projection = category_projector.project(corpus, x_dim=x_dim, y_dim=y_dim)
-
-    if initial_category is None:
-        initial_category = corpus.get_categories()[0]
-
-    category_scatter_chart_explorer = ScatterChartExplorer(category_projection.category_corpus,
-                                                           minimum_term_frequency=0,
-                                                           minimum_not_category_term_frequency=0,
-                                                           pmi_threshold_coefficient=0,
-                                                           filter_unigrams=False,
-                                                           jitter=0,
-                                                           max_terms=None,
-                                                           term_ranker=term_ranker,
-                                                           use_non_text_features=True,
-                                                           term_significance=None,
-                                                           terms_to_include=None)
-    proj_df = category_projection.get_pandas_projection()
-    category_scatter_chart_explorer.inject_coordinates(x_coords=scaler(proj_df['x']),
-                                                       y_coords=scaler(proj_df['y']),
-                                                       original_x=proj_df['x'],
-                                                       original_y=proj_df['y'])
-    category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
-        category=initial_category, max_docs_per_category=0,
-    )
-
-    category_tooltip_func = '(function(d) {return d.term})'
-
-    category_scatterplot_structure = ScatterplotStructure(
-        VizDataAdapter(category_scatter_chart_data),
-        width_in_pixels=category_width_in_pixels,
-        height_in_pixels=category_height_in_pixels,
-        asian_mode=asian_mode,
-        use_non_text_features=True,
-        show_top_terms=False,
-        show_characteristic=False,
-        get_tooltip_content=category_tooltip_func,
-        color_func=category_color_func,
-        show_axes=False,
-        unified_context=True,
-        show_category_headings=False,
-        show_cross_axes=True,
-        horizontal_line_y_position=0,
-        vertical_line_x_position=0,
-        y_label='',
-        x_label='',
-        full_data='getCategoryDataAndInfo()',
-        alternative_term_func='(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})',
-        div_name='cat-plot'
-    )
-
-    compacted_corpus = AssociationCompactor(terms_to_show).compact(corpus)
-    terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
-    print('num terms to hide', len(terms_to_hide))
-    print('num terms to show', compacted_corpus.get_num_terms())
-
-    term_scatter_chart_explorer = ScatterChartExplorer(
-        corpus,
-        minimum_term_frequency=0,
-        minimum_not_category_term_frequency=0,
-        pmi_threshold_coefficient=0,
-        term_ranker=term_ranker,
-        use_non_text_features=use_metadata,
-        score_transform=stretch_0_to_1,
-    ).hide_terms(terms_to_hide)
-
-    if topic_model_term_lists is not None:
-        term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
-    if metadata_descriptions is not None:
-        term_scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
-
-    if use_metadata:
-        tdf = corpus.get_metadata_freq_df('')
-    else:
-        tdf = corpus.get_term_freq_df('')
-    scores = RankDifference().get_scores(
-        tdf[initial_category], tdf[[c for c in corpus.get_categories() if c != initial_category]].sum(axis=1)
-    )
-
-    term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
-        category=initial_category,
-        scores=scores,
-        include_term_category_counts=True,
-        transform=dense_rank,
-        **kwargs
-    )
-
-    term_scatterplot_structure = ScatterplotStructure(
-        VizDataAdapter(term_scatter_chart_data),
-        width_in_pixels=term_width_in_pixels,
-        height_in_pixels=term_height_in_pixels,
-        asian_mode=asian_mode,
-        use_non_text_features=use_metadata,
-        show_top_terms=True,
-        show_characteristic=False,
-        get_tooltip_content=None,
-        show_category_headings=False,
-        use_full_doc=use_metadata,
-        horizontal_line_y_position=0,
-        vertical_line_x_position=0,
-        topic_model_preview_size=topic_model_preview_size,
-        y_label=initial_category,
-        x_label='Not ' + initial_category,
-        full_data='getTermDataAndInfo()',
-        div_name='d3-div-1',
-    )
-
-    return PairPlotFromScatterplotStructure(
-        category_scatterplot_structure,
-        term_scatterplot_structure,
-        category_projection,
-        category_width_in_pixels,
-        category_height_in_pixels,
-        x_dim=x_dim,
-        y_dim=y_dim,
-        protocol=protocol
-    ).to_html()
 
 
 def produce_scattertext_html(term_doc_matrix,
