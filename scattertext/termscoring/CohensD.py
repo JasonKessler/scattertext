@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
-from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer, sparse_var
+
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
 
 class CohensD(CorpusBasedTermScorer):
@@ -31,7 +32,13 @@ class CohensD(CorpusBasedTermScorer):
     def get_scores(self, *args):
         return self.get_score_df()['cohens_d']
 
-    def get_score_df(self):
+    def get_score_df(self, correction_method=None):
+        '''
+
+        :param correction_method: str or None, correction method from statsmodels.stats.multitest.multipletests
+         'fdr_bh' is recommended.
+        :return: pd.DataFrame
+        '''
         # From https://people.kth.se/~lang/Effect_size.pdf
         # Shinichi Nakagawa1 and Innes C. Cuthill. 2007. In Biological Reviews 82.
         X = self._get_X().astype(np.float64)
@@ -63,8 +70,18 @@ class CohensD(CorpusBasedTermScorer):
             'hedges_r_z': hedges_r_z,
             'hedges_r_p': hedges_r_p,
             'm1': m1,
-            'm2': m2
+            'm2': m2,
         }, index=self.corpus_.get_terms()).fillna(0)
+        if correction_method is not None:
+            from statsmodels.stats.multitest import multipletests
+            score_df['hedges_r_p_corr'] = 0.5
+            for method in ['cohens_d', 'hedges_r']:
+                score_df[method + '_p_corr'] = 0.5
+                score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p_corr'] = (
+                    multipletests(score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p'],
+                                  method=correction_method)[1]
+                )
+
         return score_df
 
     def get_name(self):

@@ -4,7 +4,6 @@ import re
 import numpy as np
 import pandas as pd
 
-from scattertext import TermDocMatrix
 from scattertext.CSRMatrixTools import delete_columns, CSRMatrixFactory
 from scattertext.FeatureOuput import FeatureLister
 from scattertext.Common import SPACY_ENTITY_TAGS, MY_ENGLISH_STOP_WORDS, DEFAULT_BACKGROUND_SCALER_ALGO, \

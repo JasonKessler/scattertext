@@ -23,7 +23,7 @@ class ScatterplotStructure(object):
 
         Parameters
         ----------
-        visualization_data : dict
+        visualization_data : VizDataAdapter
             From ScatterChart or a descendant
         width_in_pixels : int, optional
             width of viz in pixels, if None, default to 1000

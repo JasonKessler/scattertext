@@ -1,6 +1,6 @@
 import numpy as np
 
-from scattertext import ScatterChart, TermCategoryFrequencies
+from scattertext import ScatterChart, TermCategoryFrequencies, ParsedCorpus, CorpusDF
 from scattertext.Scalers import percentile_alphabetical
 from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
@@ -13,8 +13,12 @@ class ScatterChartExplorer(ScatterChart):
         '''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
         Running the `to_dict` function outputs
         '''
-        assert (isinstance(corpus, Corpus)) or (isinstance(corpus, TermCategoryFrequencies))
+        #if not (isinstance(corpus, (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies))
+        #        or (issubclass(type(corpus), (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies)))):
+        #    raise AssertionError(corpus, 'of type', type(corpus),
+        #                         'must be a subclass of Corpus or TermCategoryFrequencies.')
         ScatterChart.__init__(self, corpus, **kwargs)
+        self._term_metadata = None
 
     def to_dict(self,
                 category,
@@ -95,7 +99,8 @@ class ScatterChartExplorer(ScatterChart):
                            ncat: count in non-category,
                            catdocs: [docnum, ...],
                            ncatdocs: [docnum, ...]
-                           ncat25k: freq per 25k in non-category}}
+                           ncat25k: freq per 25k in non-category}
+                           etc: term specific dictionary (if inject_term_metadata is called and contains terms)}
         '''
         json_data = ScatterChart.to_dict(self,
                                          category,
@@ -117,13 +122,11 @@ class ScatterChartExplorer(ScatterChart):
         json_data['info']['neutral_category_name'] = neutral_category_name
         json_data['info']['extra_category_name'] = extra_category_name
         if include_term_category_counts:
-
             terms = np.array([term_struct['term'] for term_struct in json_data['data']])
             json_data['termCounts'] = self._get_term_doc_counts(terms)
         return json_data
 
     def _get_term_doc_counts(self, terms):
-        term_counts = []
         term_counts = []
         if self.scatterchartdata.use_non_text_features:
             term_doc_counts = self.term_doc_matrix.get_metadata_doc_count_df('').loc[terms]
@@ -131,7 +134,7 @@ class ScatterChartExplorer(ScatterChart):
         else:
             term_doc_counts = self.term_doc_matrix.get_term_doc_count_df('').loc[terms]
             term_doc_freq = self.term_doc_matrix.get_term_freq_df('').loc[terms]
-        # this can be vectorized
+        # this can possibly be vectorized
         for category_i, category in enumerate(term_doc_freq.columns):
             category_counts = {}
             for term_i, val in enumerate(term_doc_freq[category].values):
@@ -163,4 +166,14 @@ class ScatterChartExplorer(ScatterChart):
         ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)
         json_df['cat'] = term_freq_df[category + ' freq'].astype(np.int)
         json_df['ncat'] = term_freq_df['not cat freq'].astype(np.int)
+        if self._term_metadata is not None:
+            json_df['etc'] = term_freq_df['term'].apply(lambda term: self._term_metadata.get(term, {}))
 
+    def inject_term_metadata(self, metadata):
+        '''
+
+        :param metadata: dict, maps terms to a dictionary which will be added to term's json structure
+        :return: ScatterChartExplorer
+        '''
+        self._term_metadata = metadata
+        return self

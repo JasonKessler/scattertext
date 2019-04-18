@@ -1,13 +1,13 @@
 from __future__ import print_function
 
-
-version = [0, 0, 2, 44]
+version = [0, 0, 2, 45]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
 import numpy as np
 import pandas as pd
 
+from scattertext.semioticsquare.SemioticSquareFromAxes import SemioticSquareFromAxes
 from scattertext.categoryprojector.OptimalProjection import get_optimal_category_projection, \
     get_optimal_category_projection_by_rank
 from scattertext.categoryprojector.CategoryProjector import CategoryProjector, Doc2VecCategoryProjector
@@ -97,6 +97,9 @@ from scattertext.categoryprojector.CategoryProjectorEvaluator import RipleyKCate
     EmbeddingsProjectorEvaluator
 from scattertext.representations.Doc2VecBuilder import Doc2VecBuilder
 from scattertext.ParsedCorpus import ParsedCorpus
+from scattertext.distancemeasures.EuclideanDistance import EuclideanDistance
+from scattertext.distancemeasures.DistanceMeasureBase import DistanceMeasureBase
+
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -177,6 +180,7 @@ def produce_scattertext_explorer(corpus,
                                  include_term_category_counts=False,
                                  div_name=None,
                                  alternative_term_func=None,
+                                 term_metadata=None,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -288,7 +292,7 @@ def produce_scattertext_explorer(corpus,
         can be used if corpus is a ParsedCorpus instance.
     terms_to_include : list or None, optional
         Whitelist of terms to include in visualization.
-    semiotic_square : SemioticSquare
+    semiotic_square : SemioticSquareBase
         None by default.  SemioticSquare based on corpus.  Includes square above visualization.
     num_terms_semiotic_square : int
         10 by default. Number of terms to show in semiotic square.
@@ -370,6 +374,9 @@ def produce_scattertext_explorer(corpus,
     alternative_term_func: str, default None
         Javascript function which take a term JSON object and returns a bool.  If the return value is true,
         execute standard term click pipeline. Ex.: `'(function(termDict) {return true;})'`.
+    term_metadata : dict, None by default
+        Dict mapping terms to dictionaries containing additional information which can be used in the color_func
+        or the get_tooltip_content function. These will appear in termDict.etc
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -434,6 +441,8 @@ def produce_scattertext_explorer(corpus,
         scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
     if term_colors is not None:
         scatter_chart_explorer.inject_term_colors(term_colors)
+    if term_metadata is not None:
+        scatter_chart_explorer.inject_term_metadata(term_metadata)
     html_base = None
     if semiotic_square:
         html_base = get_semiotic_square_html(num_terms_semiotic_square,
@@ -455,8 +464,10 @@ def produce_scattertext_explorer(corpus,
                                                         include_term_category_counts=include_term_category_counts)
     if return_data:
         return scatter_chart_data
-    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data), width_in_pixels=width_in_pixels,
-                                                 height_in_pixels=height_in_pixels, max_snippets=max_snippets,
+    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
+                                                 width_in_pixels=width_in_pixels,
+                                                 height_in_pixels=height_in_pixels,
+                                                 max_snippets=max_snippets,
                                                  color=color,
                                                  grey_zero_scores=gray_zero_scores, sort_by_dist=sort_by_dist,
                                                  reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
@@ -576,6 +587,12 @@ def get_category_names(category, category_name, not_categories, not_category_nam
 
 
 def get_semiotic_square_html(num_terms_semiotic_square, semiotic_square):
+    '''
+
+    :param num_terms_semiotic_square: int
+    :param semiotic_square: SemioticSquare
+    :return: str
+    '''
     semiotic_square_html = None
     if semiotic_square:
         semiotic_square_viz = HTMLSemioticSquareViz(semiotic_square)
@@ -1414,3 +1431,112 @@ def sparse_explorer(corpus,
         gray_zero_scores=True,
         **kwargs
     )
+
+
+def pick_color(x_pval, y_pval, x_d, y_d):
+    if x_d > 0.2 and y_d > 0.2:
+        return 'fc00a0'
+    if x_d > 0.2 or y_d > 0.2:
+        return 'a300fc'
+    if x_pval < 0.001 and y_pval < 0.001:
+        return 'blue'
+    if x_pval < 0.001 or y_pval < 0.001:
+        return '00befc'
+    else:
+        return 'CCCCCC'
+
+
+def produce_two_axis_plot(corpus,
+                          x_score_df,
+                          y_score_df,
+                          x_label,
+                          y_label,
+                          effect_size_column='cohens_d',
+                          p_value_column='cohens_d_p',
+                          use_non_text_features=False,
+                          pick_color=pick_color,
+                          axis_scaler=scale_neg_1_to_1_with_zero_mean,
+                          distance_measure=EuclideanDistance,
+                          semiotic_square_labels=None,
+                          **kwargs):
+    '''
+
+    :param corpus: Corpus
+    :param x_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensDs
+    :param y_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensDs
+    :param x_label: str
+    :param y_label: str
+    :param effect_size_column: str, column in x_score_df, y_score_df giving effect sizes, default cohens_d
+    :param p_value_column: str, column in x_score_df, y_score_df giving effect sizes, default cohens_d_p
+    :param use_non_text_features: bool, default True
+    :param pick_color: func, returns color, default is pick_color
+    :param axis_scaler: func, scaler default is scale_neg_1_to_1_with_zero_mean
+    :param distance_measure: DistanceMeasureBase, default EuclideanDistance
+        This is how parts of the square are populated
+    :param semiotic_square_labels: dict, semiotic square position labels
+    :param kwargs: dict, other arguments
+    :return: str, html
+    '''
+
+
+    if use_non_text_features:
+        terms = corpus.get_metadata()
+    else:
+        terms = corpus.get_terms()
+
+    axes = pd.DataFrame({'x': x_score_df.cohens_d, 'y': y_score_df.cohens_d}).loc[terms]
+    merged_scores = pd.merge(x_score_df, y_score_df, left_index=True, right_index=True).loc[terms]
+
+    def generate_term_metadata(term_struct):
+        x_p = term_struct[p_value_column + '_x']
+        y_p = term_struct[p_value_column + '_y']
+        if p_value_column + '_corr_x' in term_struct:
+            x_p = term_struct[p_value_column + '_corr_x']
+        if p_value_column + '_corr_y' in term_struct:
+            y_p = term_struct[p_value_column + '_corr_y']
+        x_p = min(x_p, 1. - x_p)
+        y_p = min(y_p, 1. - y_p)
+        x_d = term_struct[effect_size_column + '_x']
+        y_d = term_struct[effect_size_column + '_y']
+
+        tooltip = '%s: d: %0.3f; p: %0.4f' % (x_label, x_d, x_p)
+        tooltip += '<br/>'
+        tooltip += '%s: d: %0.3f; p: %0.4f' % (y_label, y_d, y_p)
+        return {'tooltip': tooltip, 'color': pick_color(x_p, y_p, np.abs(x_d), np.abs(y_d))}
+
+    explanations = merged_scores.apply(generate_term_metadata, axis=1)
+
+    semiotic_square = SemioticSquareFromAxes(corpus,
+                                             axes,
+                                             x_axis_name=x_label,
+                                             y_axis_name=y_label,
+                                             labels=semiotic_square_labels,
+                                             distance_measure=distance_measure)
+
+    get_tooltip_content = kwargs.get('get_tooltip_content',
+                                     '''(function(d) {return d.term + "<br/> " + d.etc.tooltip})''')
+    color_func = kwargs.get('color_func', '''(function(d) {return d.etc.color})''')
+
+    html = produce_scattertext_explorer(corpus,
+                                        category=x_label,
+                                        sort_by_dist=False,
+                                        x_coords=axis_scaler(axes['x']),
+                                        y_coords=axis_scaler(axes['y']),
+                                        original_x=axes['x'],
+                                        original_y=axes['y'],
+                                        show_characteristic=False,
+                                        show_top_terms=False,
+                                        show_category_headings=True,
+                                        x_label=x_label,
+                                        y_label=y_label,
+                                        semiotic_square=semiotic_square,
+                                        get_tooltip_content=get_tooltip_content,
+                                        x_axis_values=None,
+                                        y_axis_values=None,
+                                        unified_context=True,
+                                        color_func=color_func,
+                                        show_axes=False,
+                                        term_metadata=explanations.to_dict(),
+                                        use_non_text_features=use_non_text_features,
+                                        **kwargs)
+    return html

@@ -218,6 +218,7 @@ buildViz = function (d3) {
         var label = d3.select('#' + divName).append("div")
             .attr("class", "label");
 
+
         var interpolateLightGreys = d3.interpolate(d3.rgb(230, 230, 230),
             d3.rgb(130, 130, 130));
         // setup fill color
@@ -784,9 +785,10 @@ buildViz = function (d3) {
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
                 console.log(numMatches)
+                console.log('#'+divName+'-'+'categoryinfo')
                 d3.select('#'+divName+'-'+'categoryinfo').selectAll("div").remove();
                 if(showCategoryHeadings) {
-                    d3.select('#'+divName+'-'+'categoryinfo').attr('display', 'inline')
+                    d3.select('#'+divName+'-'+'categoryinfo').attr('display', 'inline');
                 }
                 function getCategoryStatsHTML(counts) {
                     return counts.matches + " document"
@@ -802,16 +804,10 @@ buildViz = function (d3) {
                         + "</span>";
                 }
 
+
                 docLabelCountsSorted.forEach(function(counts) {
                     var htmlToAdd = "<b>"+counts.label + "</b>: " +  getCategoryStatsHTML(counts);
-                    console.log(htmlToAdd);
-                    if(showCategoryHeadings) {
-                        d3.select('#'+divName+'-'+'categoryinfo')
-                            .attr('display', 'inline')
-                            .append('div')
-                            .html(htmlToAdd)
-                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
-                    }
+
                     if(counts.matches > 0) {
                         d3.select(divId)
                             .append("div")
@@ -823,6 +819,15 @@ buildViz = function (d3) {
                                 addSnippets(singleDoc, divId);
                             });
                     }
+
+                    if(showCategoryHeadings) {
+                        d3.select('#'+divName+'-'+'categoryinfo')
+                            .attr('display', 'inline')
+                            .append('div')
+                            .html(htmlToAdd)
+                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
+                    }
+
                 })
 
             
@@ -1050,6 +1055,19 @@ buildViz = function (d3) {
                 }
             } else {
                 // extra unified context code goes here
+                console.log("docLabelCountsSorted")
+                console.log(docLabelCountsSorted)
+
+                docLabelCountsSorted.forEach(function(counts) {
+                    var htmlToAdd = "<b>"+counts.label + "</b>: " +  getCategoryStatsHTML(counts);
+                    if(showCategoryHeadings) {
+                        console.log("XXXX")
+                        d3.select('#'+divName+'-'+'contexts')
+                            .append('div')
+                            .html("XX" + htmlToAdd)
+                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
+                    }
+                })
             }
             if (jump) {
                 if (window.location.hash == '#'+divName+'-'+'snippets') {
@@ -2209,50 +2227,72 @@ buildViz = function (d3) {
                             .match(/\S+/g) || []
                     ).length;
                     var name = null;
-                    if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
-                        name = fullData.info.category_name;
-                    } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.not_category_name;
-                    } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.neutral_category_name;
-                    } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.extra_category_name;
-                    }
-                    if (name) {
-                        wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt
+                    if(unifiedContexts) {
+                        var name = fullData.docs.categories[x];
+                        wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt;
+                    } else {
+                        if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
+                            name = fullData.info.category_name;
+                        } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.not_category_name;
+                        } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.neutral_category_name;
+                        } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.extra_category_name;
+                        }
+                        if (name) {
+                            wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt
+                        }
                     }
                     //!!!
 
                 });
                 fullData.docs.labels.forEach(function (x) {
-                    var name = null;
-                    if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
-                        name = fullData.info.category_name;
-                    } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.not_category_name;
-                    } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.neutral_category_name;
-                    } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
-                        name = fullData.info.extra_category_name;
-                    }
-                    if (name) {
+
+                    if(unifiedContexts) {
+                        var name = fullData.docs.categories[x];
                         docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
+                    } else {
+                        var name = null;
+                        if (fullData.docs.categories[x] == fullData.info.category_internal_name) {
+                            name = fullData.info.category_name;
+                        } else if (fullData.info.not_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.not_category_name;
+                        } else if (fullData.info.neutral_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.neutral_category_name;
+                        } else if (fullData.info.extra_category_internal_names.indexOf(fullData.docs.categories[x]) > -1) {
+                            name = fullData.info.extra_category_name;
+                        }
+                        if (name) {
+                            docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
+                        }
                     }
                 });
                 console.log("docCounts");
                 console.log(docCounts)
                 var messages = [];
-                [fullData.info.category_name,
-                 fullData.info.not_category_name,
-                 fullData.info.neutral_category_name,
-                 fullData.info.extra_category_name].forEach(function (x, i) {
-                    if (docCounts[x] > 0) {
-                        messages.push('<b>' + x + '</b> document count: '
-                            + Number(docCounts[x]).toLocaleString('en')
-                            + '; word count: '
-                            + Number(wordCounts[x]).toLocaleString('en'));
-                    }
-                });
+                if (unifiedContexts) {
+                    fullData.docs.categories.forEach(function (x, i) {
+                        if (docCounts[x] > 0) {
+                            messages.push('<b>' + x + '</b> document count: '
+                                + Number(docCounts[x]).toLocaleString('en')
+                                + '; word count: '
+                                + Number(wordCounts[x]).toLocaleString('en'));
+                        }
+                    });
+                } else {
+                    [fullData.info.category_name,
+                     fullData.info.not_category_name,
+                     fullData.info.neutral_category_name,
+                     fullData.info.extra_category_name].forEach(function (x, i) {
+                        if (docCounts[x] > 0) {
+                            messages.push('<b>' + x + '</b> document count: '
+                                + Number(docCounts[x]).toLocaleString('en')
+                                + '; word count: '
+                                + Number(wordCounts[x]).toLocaleString('en'));
+                        }
+                    });
+                }
 
                 d3.select('#'+divName+'-'+'corpus-stats')
                     .style('width', width + margin.left + margin.right + 200)

@@ -54,6 +54,26 @@ class TestScatterChartExplorer(TestCase):
 		self.assertEqual(expected['term'], actual['term'])
 		self.assertEqual(j['docs'].keys(), {'texts', 'labels', 'categories'})
 
+		j = (ScatterChartExplorer(corpus,
+		                          minimum_term_frequency=0)
+			.inject_term_metadata({'art': {'display': 'blah blah blah', 'color': 'red'}})
+			.to_dict('hamlet'))
+
+		actual = [t for t in j['data'] if t['term'] == 'art'][0]
+		expected = {'y': 0.5, 'ncat': 0, 'ncat25k': 0, 'bg': 5,
+		            'cat': 1, 's': 0.5, 'term': 'art', 'os': 0.5192, 'extra': 0, 'extra25k': 0,
+
+		            'cat25k': 758, 'x': 0.06, 'neut': 0, 'neut25k': 0, 'ox': 5, 'oy': 3,
+					'etc': {'display': 'blah blah blah', 'color': 'red'}}
+		self.assertEqual(set(actual.keys()), set(expected.keys()))
+		self.assertEqual(actual['etc'], expected['etc'])
+
+
+		actual = [t for t in j['data'] if t['term'] != 'art'][0]
+		self.assertEqual(set(actual.keys()), set(expected.keys()))
+		self.assertEqual(actual['etc'], {})
+
+
 	def test_hide_terms(self):
 		corpus = build_hamlet_jz_corpus().get_unigram_corpus()
 		terms_to_hide = ['thou', 'heaven']
