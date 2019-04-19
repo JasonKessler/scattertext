@@ -419,7 +419,7 @@ class TermDocMatrixWithoutCategories(object):
         terms = self._term_idx_store.values()
         return dict(zip(terms, doc_ids))
 
-    def apply_ranker(self, term_ranker):
+    def apply_ranker(self, term_ranker, use_non_text_features):
         '''
         Parameters
         ----------
@@ -429,6 +429,8 @@ class TermDocMatrixWithoutCategories(object):
         -------
         pd.Dataframe
         '''
+        if use_non_text_features:
+            return term_ranker(self).use_non_text_features().get_ranks()
         return term_ranker(self).get_ranks()
 
     def add_doc_names_as_metadata(self, doc_names):

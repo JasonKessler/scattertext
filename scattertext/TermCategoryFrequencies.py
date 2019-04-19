@@ -197,6 +197,7 @@ class TermCategoryFrequencies(object):
 		-------
 		pd.DataFrame
 		'''
+
 		df = self.term_category_freq_df.rename(
 			columns={c: c + ' freq' for c in self.term_category_freq_df}
 		)

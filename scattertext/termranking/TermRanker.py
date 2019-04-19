@@ -26,6 +26,10 @@ class TermRanker:
 		Use use_non_text_features instead of text
 		'''
 		self._use_non_text_features = True
+		return self
+
+	def are_non_text_featuers_in_use(self):
+		return self._use_non_text_features
 
 	def get_X(self):
 		'''

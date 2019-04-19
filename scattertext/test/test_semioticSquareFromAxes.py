@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import pandas as pd
 
-from build.lib.scattertext.WhitespaceNLP import whitespace_nlp
+from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext import CorpusFromPandas, SemioticSquareFromAxes
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 

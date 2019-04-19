@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 45]
+version = [0, 0, 2, 46]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -403,7 +403,7 @@ def produce_scattertext_explorer(corpus,
 
     if term_scorer:
         scores = get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral, term_ranker,
-                                        term_scorer)
+                                        term_scorer, use_non_text_features)
 
     if pmi_filter_thresold is not None:
         pmi_threshold_coefficient = pmi_filter_thresold
@@ -500,8 +500,9 @@ def produce_scattertext_explorer(corpus,
 
 
 def get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral,
-                           term_ranker, term_scorer):
-    tdf = corpus.apply_ranker(term_ranker)
+                           term_ranker, term_scorer, use_non_text_features):
+    tdf = corpus.apply_ranker(term_ranker, use_non_text_features)
+
     cat_freqs = tdf[category + ' freq']
     if not_categories:
         not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
@@ -804,7 +805,10 @@ def produce_frequency_explorer(corpus,
                                                   corpus,
                                                   kwargs.get('neutral_categories', False),
                                                   not_categories,
-                                                  kwargs.get('show_neutral', False), term_ranker, term_scorer)
+                                                  kwargs.get('show_neutral', False),
+                                                  term_ranker,
+                                                  term_scorer,
+                                                  kwargs.get('use_non_text_features', False))
 
     def y_axis_rescale(coords):
         return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
@@ -833,6 +837,7 @@ def produce_frequency_explorer(corpus,
 	 ? d3.interpolate(d3.rgb(230, 230, 230), d3.rgb(130, 130, 130))(Math.abs(d.os)/%s) 
 	 : d3.interpolateRdYlBu(d.y);
 	})''' % (grey_threshold, grey_threshold)
+
 
     return produce_scattertext_explorer(corpus,
                                         category=category,
