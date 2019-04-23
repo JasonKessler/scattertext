@@ -101,7 +101,7 @@ def nltk_tokenzier_factory(nltk_tokenizer):
 	return tokenize
 
 
-def tweet_tokenzier_factory(tweet_tokenizer):
+def tweet_tokenizier_factory(tweet_tokenizer):
 	'''
 	Parameters
 	----------

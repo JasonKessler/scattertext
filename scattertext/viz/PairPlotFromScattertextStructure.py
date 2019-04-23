@@ -1,5 +1,5 @@
 from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME, PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME
-from scattertext.categoryprojector.CategoryProjection import CategoryProjection
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection, CategoryProjectionBase
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils
 from scattertext.viz.HTMLSemioticSquareViz import ClickableTerms
 
@@ -42,7 +42,7 @@ class PairPlotFromScatterplotStructure(object):
         '''
         self.category_scatterplot_structure = category_scatterplot_structure
         self.term_scatterplot_structure = term_scatterplot_structure
-        assert type(category_projection) == CategoryProjection
+        assert issubclass(type(category_projection), CategoryProjectionBase)
         self.category_projection = category_projection
         self.d3_url_struct = d3_url_struct if d3_url_struct else D3URLs()
         ExternalJSUtilts.ensure_valid_protocol(protocol)

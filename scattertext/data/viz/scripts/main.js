@@ -631,13 +631,13 @@ buildViz = function (d3) {
             if ('metalists' in fullData && term in fullData.metalists) {
                 // from https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(str) {
-                    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+                    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\']/g, "\\$&");
                 }
 
                 console.log('term');
                 console.log(term);
                 pattern = new RegExp(
-                    '\\b(' + fullData.metalists[term].map(escapeRegExp).join('|') + ')\\b',
+                    '\\W(' + fullData.metalists[term].map(escapeRegExp).join('|') + ')\\W',
                     'gim'
                 );
             }
@@ -1096,7 +1096,7 @@ buildViz = function (d3) {
 
             function buildMatcher(term) {
 
-                var boundary = '\\b';
+                var boundary = '(?:\\W|^|$)';
                 var wordSep = "[^\\w]+";
                 if (asianMode) {
                     boundary = '( |$|^)';
@@ -1107,15 +1107,25 @@ buildViz = function (d3) {
                     wordSep = '';
                 }
                 var termToRegex = term;
-                ['[', ']', '(', ')', '{', '}', '^', '$', '.', '|', '?', "'", '"',
-                    '*', '+', '-', '=', '~', '`', '{', '#'].forEach(function (a) {
+
+                // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+                function escapeRegExp(string) {
+                  return string.replace(/[#.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                }
+                /*
+                ['[', ']', '(', ')', '{', '}', '^', '$', '|', '?', '"',
+                    '*', '+', '-', '=', '~', '`', '{'].forEach(function (a) {
                     termToRegex = termToRegex.replace(a, '\\\\' + a)
                 });
+                ['.', '#'].forEach(function(a) {termToRegex = termToRegex.replace(a, '\\' + a)})
+                */
+                termToRegex = escapeRegExp(termToRegex);
                 var regexp = new RegExp(boundary + '('
                     + removeUnderScoreJoin(
                         termToRegex.replace(' ', wordSep, 'gim')
                     )
                     + ')' + boundary, 'gim');
+                console.log(regexp)
                 try {
                     regexp.exec('X');
                 } catch (err) {

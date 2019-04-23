@@ -4,7 +4,7 @@ from sklearn.preprocessing import RobustScaler
 
 from scattertext.representations.Doc2VecBuilder import Doc2VecBuilder
 from scattertext.termscoring.RankDifference import RankDifference
-from scattertext.categoryprojector.CategoryProjection import CategoryProjection
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection, CategoryProjectionWithDoc2Vec
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
 from sklearn.decomposition import PCA
 
@@ -57,6 +57,14 @@ class CategoryProjectorBase(object):
     def _get_category_metadata_corpus_and_replace_terms(self, corpus):
         raise NotImplementedError()
 
+    def get_category_embeddings(self, corpus):
+        '''
+        :param corpus: TermDocMatrix
+
+        :return: np.array, matrix of (num categories, embedding dimension) dimensions
+        '''
+        raise NotImplementedError()
+
 
 class CategoryProjector(CategoryProjectorBase):
     def __init__(self,
@@ -100,6 +108,13 @@ class CategoryProjector(CategoryProjectorBase):
             corpus = corpus.select(self.selector)
         return corpus
 
+    def get_category_embeddings(self, corpus):
+        '''
+
+        :return: np.array, matrix of (num categories, embedding dimension) dimensions
+        '''
+        return self.normalize(corpus.get_term_freq_df('')).values
+
 
 class Doc2VecCategoryProjector(CategoryProjectorBase):
     def __init__(self, doc2vec_builder=None, projector=PCA(2)):
@@ -133,11 +148,20 @@ class Doc2VecCategoryProjector(CategoryProjectorBase):
         category_corpus = corpus.use_categories_as_metadata()
         category_counts = corpus.get_term_freq_df('')
         self.doc2vec_builder.train(corpus)
+
         proj = self.projector.fit_transform(self.doc2vec_builder.project())
-        return CategoryProjection(category_corpus, category_counts, proj, x_dim=x_dim, y_dim=y_dim)
+        return CategoryProjectionWithDoc2Vec(category_corpus,
+                                             category_counts,
+                                             proj,
+                                             x_dim=x_dim,
+                                             y_dim=y_dim,
+                                             doc2vec_model=self.doc2vec_builder)
 
     def _get_category_metadata_corpus(self, corpus):
         return corpus.use_categories_as_metadata()
 
     def _get_category_metadata_corpus_and_replace_terms(self, corpus):
         return corpus.use_categories_as_metadata_and_replace_terms()
+
+    def get_category_embeddings(self, corpus):
+        return self.doc2vec_builder.project()

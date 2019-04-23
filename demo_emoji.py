@@ -26,7 +26,7 @@ except:
 	df_mf = df_aug[df_aug['gender'].isin(['m', 'f'])]
 	df_mf.to_csv('emoji_data.csv', index=False)
 
-nlp = st.tweet_tokenzier_factory(nltk.tokenize.TweetTokenizer())
+nlp = st.tweet_tokenizier_factory(nltk.tokenize.TweetTokenizer())
 df_mf['parse'] = df_mf['Tweet content'].apply(nlp)
 
 corpus = st.CorpusFromParsedDocuments(

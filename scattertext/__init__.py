@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 46]
+version = [0, 0, 2, 47]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -51,7 +51,7 @@ from scattertext.TermDocMatrixFilter import TermDocMatrixFilter, filter_bigrams_
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_sentences, \
-    tweet_tokenzier_factory
+    tweet_tokenizier_factory
 from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath

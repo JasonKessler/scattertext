@@ -16,10 +16,11 @@ class ClickableTerms:
 
 	@staticmethod
 	def get_clickable_term(term, plot_interface='plotInterface', other_plot_interface=None):
-		onclick_js = ClickableTerms._get_onclick_js(term, plot_interface, other_plot_interface)
-		onmouseover_js = (
-			"{plot_interface}.showToolTipForTerm({plot_interface}.data, {plot_interface}.svg, '{term}',"
-			"{plot_interface}.termDict['{term}'])"
+		onclick_js = ClickableTerms._get_onclick_js(term.replace("'", "\\'"), plot_interface, other_plot_interface)
+		onmouseover_js =  (
+				"{plot_interface}.showToolTipForTerm({plot_interface}.data, {plot_interface}.svg, '%s',"
+				% (term.replace("'", "\\'"))
+				+ "{plot_interface}.termDict['%s'])" % (term.replace("'", "\\'"))
 		)
 		onmouseout_js = "{plot_interface}.tooltip.transition().style('opacity', 0)"
 		template = ('<span onclick="' + onclick_js + '" onmouseover="' + onmouseover_js + '" onmouseout="' +
@@ -32,9 +33,10 @@ class ClickableTerms:
 		if other_plot_interface:
 			return "{other_plot_interface}.drawCategoryAssociation(" \
 				   "{plot_interface}.termDict['{term}'].ci); return false;"\
-				.format(other_plot_interface=other_plot_interface, plot_interface=plot_interface, term=term)
+				.format(other_plot_interface=other_plot_interface, plot_interface=plot_interface,
+						term=term.replace("'", "\\'"))
 		return "{plot_interface}.displayTermContexts({plot_interface}.data, {plot_interface}.gatherTermContexts(" \
-					 "{plot_interface}.termDict['{term}']));"
+					 "{plot_interface}.termDict['%s']));" % (term.replace("'", "\'"))
 
 
 def get_halo_td_style():

@@ -37,9 +37,19 @@ class TermDocMatrixWithoutCategories(object):
         self._metadata_idx_store = metadata_idx_store
         self._unigram_frequency_path = unigram_frequency_path
         self._background_corpus = None
+        self._strict_unigram_definition = True
 
     def get_default_stoplist(self):
         return MY_ENGLISH_STOP_WORDS
+
+    def allow_single_quotes_in_unigrams(self):
+        '''
+        Don't filter out single quotes in unigrams
+        :return: self
+        '''
+        self._strict_unigram_definition = False
+        return self
+
 
     def compact(self, compactor):
         '''
@@ -282,7 +292,8 @@ class TermDocMatrixWithoutCategories(object):
     def _get_non_unigrams(self):
         return [term for term
                 in self._term_idx_store._i2val
-                if ' ' in term or "'" in term]
+                if ' ' in term or (self._strict_unigram_definition and "'" in term)
+        ]
 
     def get_stoplisted_unigram_corpus(self, stoplist=None):
         '''
@@ -319,7 +330,7 @@ class TermDocMatrixWithoutCategories(object):
     def _remove_terms_from_list(self, stoplist):
         terms_to_ignore = [term for term
                            in self._term_idx_store._i2val
-                           if ' ' in term or "'" in term
+                           if ' ' in term or (self._strict_unigram_definition and "'" in term)
                            or term in stoplist]
         return self.remove_terms(terms_to_ignore)
 

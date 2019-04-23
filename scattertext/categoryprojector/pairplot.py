@@ -9,7 +9,6 @@ from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
 
-
 def produce_pairplot(corpus,
                      asian_mode=False,
                      category_width_in_pixels=500,
