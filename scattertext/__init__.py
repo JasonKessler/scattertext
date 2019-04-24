@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 47]
+version = [0, 0, 2, 48]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -19,6 +19,7 @@ from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor, TermCategoryRanker, \
     AssociationCompactorByRank
 from scattertext.termscoring.CohensD import CohensD, HedgesR
+from scattertext.termscoring.MannWhitneyU import MannWhitneyU
 from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
 from scattertext.diachronic.DiachronicTermMiner import DiachronicTermMiner
 from scattertext.characteristic.DenseRankCharacteristicness import DenseRankCharacteristicness
@@ -832,12 +833,13 @@ def produce_frequency_explorer(corpus,
     if use_term_significance:
         kwargs['term_significance'] = term_scorer
 
-    color_func = '''(function(d) {
+    kwargs['y_label'] = kwargs.get('y_label', term_scorer.get_name())
+
+    kwargs['color_func'] = kwargs.get('color_func', '''(function(d) {
 	return (Math.abs(d.os) < %s) 
 	 ? d3.interpolate(d3.rgb(230, 230, 230), d3.rgb(130, 130, 130))(Math.abs(d.os)/%s) 
 	 : d3.interpolateRdYlBu(d.y);
-	})''' % (grey_threshold, grey_threshold)
-
+	})''' % (grey_threshold, grey_threshold))
 
     return produce_scattertext_explorer(corpus,
                                         category=category,
@@ -853,10 +855,8 @@ def produce_frequency_explorer(corpus,
                                         rescale_y=y_axis_rescale,
                                         sort_by_dist=False,
                                         term_ranker=term_ranker,
-                                        color_func=color_func,
                                         not_categories=not_categories,
                                         x_label=kwargs.get('x_label', 'Log Frequency'),
-                                        y_label=kwargs.get('y_label', term_scorer.get_name()),
                                         **kwargs)
 
 
@@ -1456,41 +1456,50 @@ def produce_two_axis_plot(corpus,
                           y_score_df,
                           x_label,
                           y_label,
-                          effect_size_column='cohens_d',
+                          statistic_column='cohens_d',
                           p_value_column='cohens_d_p',
+                          statistic_name='d',
                           use_non_text_features=False,
                           pick_color=pick_color,
                           axis_scaler=scale_neg_1_to_1_with_zero_mean,
                           distance_measure=EuclideanDistance,
                           semiotic_square_labels=None,
+                          x_tooltip_label=None,
+                          y_tooltip_label=None,
                           **kwargs):
     '''
 
     :param corpus: Corpus
-    :param x_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensDs
-    :param y_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensDs
+    :param x_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensD
+    :param y_score_df: pd.DataFrame, contains effect_size_column, p_value_column. outputted by CohensD
     :param x_label: str
     :param y_label: str
-    :param effect_size_column: str, column in x_score_df, y_score_df giving effect sizes, default cohens_d
+    :param statistic_column: str, column in x_score_df, y_score_df giving statistics, default cohens_d
     :param p_value_column: str, column in x_score_df, y_score_df giving effect sizes, default cohens_d_p
+    :param statistic_name: str, column which corresponds to statistic name, defauld d
     :param use_non_text_features: bool, default True
     :param pick_color: func, returns color, default is pick_color
     :param axis_scaler: func, scaler default is scale_neg_1_to_1_with_zero_mean
     :param distance_measure: DistanceMeasureBase, default EuclideanDistance
         This is how parts of the square are populated
     :param semiotic_square_labels: dict, semiotic square position labels
+    :param x_tooltip_label: str, if None, x_label
+    :param y_tooltip_label: str, if None, y_label
     :param kwargs: dict, other arguments
     :return: str, html
     '''
-
 
     if use_non_text_features:
         terms = corpus.get_metadata()
     else:
         terms = corpus.get_terms()
 
-    axes = pd.DataFrame({'x': x_score_df.cohens_d, 'y': y_score_df.cohens_d}).loc[terms]
+    axes = pd.DataFrame({'x': x_score_df[statistic_column],
+                         'y': y_score_df[statistic_column]}).loc[terms]
     merged_scores = pd.merge(x_score_df, y_score_df, left_index=True, right_index=True).loc[terms]
+
+    x_tooltip_label = x_label if x_tooltip_label is None else x_tooltip_label
+    y_tooltip_label = y_label if y_tooltip_label is None else y_tooltip_label
 
     def generate_term_metadata(term_struct):
         x_p = term_struct[p_value_column + '_x']
@@ -1501,12 +1510,12 @@ def produce_two_axis_plot(corpus,
             y_p = term_struct[p_value_column + '_corr_y']
         x_p = min(x_p, 1. - x_p)
         y_p = min(y_p, 1. - y_p)
-        x_d = term_struct[effect_size_column + '_x']
-        y_d = term_struct[effect_size_column + '_y']
+        x_d = term_struct[statistic_column + '_x']
+        y_d = term_struct[statistic_column + '_y']
 
-        tooltip = '%s: d: %0.3f; p: %0.4f' % (x_label, x_d, x_p)
+        tooltip = '%s: %s: %0.3f; p: %0.4f' % (x_tooltip_label, statistic_name, x_d, x_p)
         tooltip += '<br/>'
-        tooltip += '%s: d: %0.3f; p: %0.4f' % (y_label, y_d, y_p)
+        tooltip += '%s: %s: %0.3f; p: %0.4f' % (y_tooltip_label, statistic_name, y_d, y_p)
         return {'tooltip': tooltip, 'color': pick_color(x_p, y_p, np.abs(x_d), np.abs(y_d))}
 
     explanations = merged_scores.apply(generate_term_metadata, axis=1)
