@@ -16,9 +16,11 @@ class CategoryProjectionBase(object):
         return CategoryProjection(self.category_corpus, self.category_counts, self.projection, x_dim, y_dim)
 
     def project_with_alternate_axes(self, x_axis=None, y_axis=None):
-        # !!! NEed to fix
+        # !!! Need to fix
         if x_axis is None:
            x_axis = self._get_x_axis()
+        if y_axis is None:
+           y_axis = self._get_y_axis()
         return CategoryProjectionAlternateAxes(self.category_corpus,
                                                self.category_counts,
                                                self.projection,
@@ -111,7 +113,6 @@ class CategoryProjectionAlternateAxes(CategoryProjectionBase):
 
     def _get_x_axis(self):
         return self.x_axis_
-
 
     def _get_y_axis(self):
         return self.y_axis_

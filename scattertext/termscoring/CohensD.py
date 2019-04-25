@@ -43,6 +43,7 @@ class CohensD(CorpusBasedTermScorer):
         # Shinichi Nakagawa1 and Innes C. Cuthill. 2007. In Biological Reviews 82.
         X = self._get_X().astype(np.float64)
         X = X / X.sum(axis=1)
+        X = np.nan_to_num(X, False)
         cat_X, ncat_X = self._get_cat_and_ncat(X)
         n1, n2 = float(cat_X.shape[1]), float(ncat_X.shape[1])
         n = n1 + n2

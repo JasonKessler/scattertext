@@ -13,6 +13,15 @@ class TestCohensD(TestCase):
                                        .set_categories('hamlet')
                                        .get_scores()[:5], [-0.2127981, 0.8164966, 0.8164966, 1.3669723, 0.8164966])
 
+    def test_get_cohens_d_scores_zero_robust(self):
+        corpus = build_hamlet_jz_corpus()
+        corpus._X[1,:] = 0
+        np.testing.assert_almost_equal(CohensD(corpus)
+                                       .set_term_ranker(OncePerDocFrequencyRanker)
+                                       .set_categories('hamlet')
+                                       .get_scores()[:5],[-0.2127981,  0.8164966,  0.8164966,  0.8164966,  0.8164966])
+
+
     def test_get_cohens_d_score_df(self):
         corpus = build_hamlet_jz_corpus()
         columns = (CohensD(corpus)
