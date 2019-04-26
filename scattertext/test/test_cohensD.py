@@ -11,7 +11,7 @@ class TestCohensD(TestCase):
         np.testing.assert_almost_equal(CohensD(corpus)
                                        .set_term_ranker(OncePerDocFrequencyRanker)
                                        .set_categories('hamlet')
-                                       .get_scores()[:5], [-0.2127981, 0.8164966, 0.8164966, 1.3669723, 0.8164966])
+                                       .get_scores()[:5], [-0.2884615,  0.625    ,  0.625    ,  0.9919727,  0.625    ])
 
     def test_get_cohens_d_scores_zero_robust(self):
         corpus = build_hamlet_jz_corpus()
@@ -19,7 +19,7 @@ class TestCohensD(TestCase):
         np.testing.assert_almost_equal(CohensD(corpus)
                                        .set_term_ranker(OncePerDocFrequencyRanker)
                                        .set_categories('hamlet')
-                                       .get_scores()[:5],[-0.2127981,  0.8164966,  0.8164966,  0.8164966,  0.8164966])
+                                       .get_scores()[:5], [-0.2884615,  0.625    ,  0.625    ,  0.625    ,  0.625    ])
 
 
     def test_get_cohens_d_score_df(self):

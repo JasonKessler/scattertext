@@ -40,20 +40,26 @@ class CohensD(CorpusBasedTermScorer):
         :return: pd.DataFrame
         '''
         # From https://people.kth.se/~lang/Effect_size.pdf
-        # Shinichi Nakagawa1 and Innes C. Cuthill. 2007. In Biological Reviews 82.
+        # Shinichi Nakagawa1 and Innes C. Cuthill. Effect size, confidence interval and statistical
+        # significance: a practical guide for biologists. 2007. In Biological Reviews 82.
         X = self._get_X().astype(np.float64)
         X = X / X.sum(axis=1)
-        X = np.nan_to_num(X, False)
+        X[np.isnan(X)] = 0
         cat_X, ncat_X = self._get_cat_and_ncat(X)
-        n1, n2 = float(cat_X.shape[1]), float(ncat_X.shape[1])
+        empty_cat_X_smoothing_doc = np.zeros((1, cat_X.shape[1]))
+        empty_ncat_X_smoothing_doc = np.zeros((1, ncat_X.shape[1]))
+        smoothed_cat_X = np.vstack([empty_cat_X_smoothing_doc, cat_X])
+        smoothed_ncat_X = np.vstack([empty_ncat_X_smoothing_doc, ncat_X])
+        n1, n2 = float(smoothed_cat_X.shape[1]), float(smoothed_ncat_X.shape[1])
         n = n1 + n2
         m1 = cat_X.mean(axis=0).A1
         m2 = ncat_X.mean(axis=0).A1
-        v1 = cat_X.var(axis=0).A1
-        v2 = ncat_X.var(axis=0).A1
+        v1 = smoothed_cat_X.var(axis=0).A1
+        v2 = smoothed_ncat_X.var(axis=0).A1
+
         s_pooled = np.sqrt(((n2 - 1) * v2 + (n1 - 1) * v1) / (n - 2.))
         cohens_d = (m1 - m2) / s_pooled
-        cohens_d_se = np.sqrt(((n - 1.) / (n - 3)) * (4. / n) * (1 + np.square(cohens_d)))
+        cohens_d_se = np.sqrt(((n - 1.) / (n - 3)) * (4. / n) * (1 + np.square(cohens_d)/8.))
         cohens_d_z = cohens_d / cohens_d_se
         cohens_d_p = norm.sf(cohens_d_z)
         hedges_r = cohens_d * (1 - 3. / ((4. * (n - 2)) - 1))
@@ -73,6 +79,7 @@ class CohensD(CorpusBasedTermScorer):
             'm1': m1,
             'm2': m2,
         }, index=self.corpus_.get_terms()).fillna(0)
+
         if correction_method is not None:
             from statsmodels.stats.multitest import multipletests
             score_df['hedges_r_p_corr'] = 0.5
