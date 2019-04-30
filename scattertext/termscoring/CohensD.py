@@ -42,6 +42,8 @@ class CohensD(CorpusBasedTermScorer):
         # From https://people.kth.se/~lang/Effect_size.pdf
         # Shinichi Nakagawa1 and Innes C. Cuthill. Effect size, confidence interval and statistical
         # significance: a practical guide for biologists. 2007. In Biological Reviews 82.
+        #
+        # Modification: when calculating variance, an empty document is added to each set
         X = self._get_X().astype(np.float64)
         X = X / X.sum(axis=1)
         X[np.isnan(X)] = 0

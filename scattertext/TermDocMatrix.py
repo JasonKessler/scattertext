@@ -290,7 +290,9 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
         new_X = delete_columns(new_X, term_idx_to_delete)
 
-        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X, new_mX, new_y, new_term_idx_store,
+        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X, new_mX,
+                                                             new_y.astype(int),
+                                                             new_term_idx_store,
                                                              new_category_idx_store, new_metadata_idx_store,
                                                              ~np.isin(self._y, idx_to_delete_list))
         return term_doc_mat_to_ret
@@ -756,4 +758,3 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         :return: int
         '''
         return len(self.get_categories())
-

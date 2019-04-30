@@ -1,6 +1,8 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 50]
+from scattertext.termscoring.CredTFIDF import CredTFIDF
+
+version = [0, 0, 2, 51]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
