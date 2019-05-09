@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.termscoring.CredTFIDF import CredTFIDF
 
-version = [0, 0, 2, 51]
+version = [0, 0, 2, 52]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -184,6 +184,7 @@ def produce_scattertext_explorer(corpus,
                                  div_name=None,
                                  alternative_term_func=None,
                                  term_metadata=None,
+                                 include_all_contexts=False,
                                  return_data=False):
     '''Returns html code of visualization.
 
@@ -380,6 +381,8 @@ def produce_scattertext_explorer(corpus,
     term_metadata : dict, None by default
         Dict mapping terms to dictionaries containing additional information which can be used in the color_func
         or the get_tooltip_content function. These will appear in termDict.etc
+    include_all_contexts: bool, default False
+        Include all contexts, even non-matching ones, in interface
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -495,7 +498,8 @@ def produce_scattertext_explorer(corpus,
                                                  unified_context=unified_context,
                                                  show_category_headings=show_category_headings,
                                                  show_cross_axes=show_cross_axes, div_name=div_name,
-                                                 alternative_term_func=alternative_term_func)
+                                                 alternative_term_func=alternative_term_func,
+                                                 include_all_contexts=include_all_contexts)
     return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol,
                                                                             d3_url=d3_url,
                                                                             d3_scale_chromatic_url=d3_scale_chromatic_url,

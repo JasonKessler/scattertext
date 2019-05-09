@@ -1,47 +1,11 @@
 import math
 
-
 import pandas as pd
 from scipy.stats import norm
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 import numpy as np
 from scipy.sparse import csr_matrix
-
-
-class RunningStats:
-
-    def __init__(self):
-        self.n = 0
-        self.old_m = 0
-        self.new_m = 0
-        self.old_s = 0
-        self.new_s = 0
-
-    def clear(self):
-        self.n = 0
-
-    def push(self, x):
-        self.n += 1
-
-        if self.n == 1:
-            self.old_m = self.new_m = x
-            self.old_s = 0
-        else:
-            self.new_m = self.old_m + (x - self.old_m) / self.n
-            self.new_s = self.old_s + (x - self.old_m) * (x - self.new_m)
-
-            self.old_m = self.new_m
-            self.old_s = self.new_s
-
-    def mean(self):
-        return self.new_m if self.n else 0.0
-
-    def variance(self):
-        return self.new_s / (self.n - 1) if self.n > 1 else 0.0
-
-    def standard_deviation(self):
-        return math.sqrt(self.variance())
 
 
 class CredTFIDF(CorpusBasedTermScorer):
@@ -53,32 +17,13 @@ class CredTFIDF(CorpusBasedTermScorer):
 
     '''
 
-    def get_score_df(self, bootstrap=False, num_bootstraps=1000):
+    def get_score_df(self):
         '''
         :return: pd.DataFrame
         '''
 
         X = self._get_X().astype(np.float64)
         tf_i_d_pos, tf_i_d_neg = self._get_cat_and_ncat(X)
-        if bootstrap: # not currently working
-            scores = np.zeros((tf_i_d_pos.shape[1], num_bootstraps))
-            pos_idx = np.arange(tf_i_d_pos.shape[0])
-            neg_idx = np.arange(tf_i_d_neg.shape[0])
-            tf_i_d_neg = tf_i_d_neg.todense()
-            tf_i_d_pos = tf_i_d_pos.todense()
-            for i in range(num_bootstraps):
-                bs_tfpos = tf_i_d_pos[np.random.choice(pos_idx, len(pos_idx)),:] + 1
-                bs_tfneg = tf_i_d_neg[np.random.choice(neg_idx, len(neg_idx)),:] + 1
-
-                bs_score_df = self._get_score_df_from_category_Xs(bs_tfneg, bs_tfpos)
-                scores.T[i,:] = bs_score_df.delta_cred_tf_idf.values
-
-            score_df = pd.DataFrame({'mean': scores.mean(axis=1), 'std': scores.std(axis=1)},
-                                    index=self.corpus_.get_terms())
-            score_df['p-value'] = score_df.apply(lambda x: norm.sf(0, x['mean'], x['std']),
-                                                 axis=1)
-            score_df['z-score'] = score_df['mean']/score_df['std']
-            return score_df
         return self._get_score_df_from_category_Xs(tf_i_d_neg, tf_i_d_pos)
 
     def _get_score_df_from_category_Xs(self, tf_i_d_neg, tf_i_d_pos):
@@ -124,16 +69,22 @@ class CredTFIDF(CorpusBasedTermScorer):
             adjpos_tf_idf = np.asarray(tf_i_d_pos.todense())
             adjneg_tf_idf = np.asarray(tf_i_d_neg.todense())
         s_bar_i_coef = (0.5 + s_bar_i).A1
-        tf_bar_i_pos = adjpos_tf_idf * s_bar_i_coef
-        tf_bar_i_neg = adjneg_tf_idf * s_bar_i_coef
+        tf_bar_i_pos = adjpos_tf_idf
+        tf_bar_i_neg = adjneg_tf_idf
+        if self.use_cred:
+            tf_bar_i_pos *= s_bar_i_coef
+            tf_bar_i_neg *= s_bar_i_coef
         # Eq 8
         N = 1. * tf_i_d_pos.shape[0] + tf_bar_i_neg.shape[0]
         df_i = ((tf_i_d_pos > 0).astype(float).sum(axis=0)
                 + (tf_i_d_neg > 0).astype(float).sum(axis=0))
         w_i_d_pos = tf_bar_i_pos * np.log(N / df_i).A1
         w_i_d_neg = tf_bar_i_neg * np.log(N / df_i).A1
-        w_d_pos_l2 = np.linalg.norm(w_i_d_pos, 2, axis=1)
-        w_d_neg_l2 = np.linalg.norm(w_i_d_neg, 2, axis=1)
+        w_d_pos_l2 = 1.
+        w_d_neg_l2 = 1.
+        if self.use_l2_norm:
+            w_d_pos_l2 = np.linalg.norm(w_i_d_pos, 2, axis=1)
+            w_d_neg_l2 = np.linalg.norm(w_i_d_neg, 2, axis=1)
         pos_cred_tfidf = (w_i_d_pos.T
                           / w_d_pos_l2
                           ).mean(axis=1)
@@ -150,9 +101,11 @@ class CredTFIDF(CorpusBasedTermScorer):
     def _set_scorer_args(self, **kwargs):
         self.eta = kwargs.get('eta', 1.)
         self.use_sublinear = kwargs.get('use_sublinear', True)
+        self.use_cred = kwargs.get('use_cred', True)
+        self.use_l2_norm = kwargs.get('use_l2_norm', True)
 
     def get_scores(self, *args):
         return self.get_score_df()['delta_cred_tf_idf']
 
     def get_name(self):
-        return "Delta mean cred-tf-idf"
+        return "Delta mean %stf-idf" % ('cred-' if self.use_cred else '')

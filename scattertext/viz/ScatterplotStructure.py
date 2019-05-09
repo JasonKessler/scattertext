@@ -18,7 +18,7 @@ class ScatterplotStructure(object):
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
                  topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
                  show_cross_axes=True, div_name=DEFAULT_DIV_ID,
-                 alternative_term_func=None):
+                 alternative_term_func=None, include_all_contexts=False):
         '''
 
         Parameters
@@ -116,6 +116,8 @@ class ScatterplotStructure(object):
         alternative_term_func: str, default None
             Javascript function which take a term JSON object and returns a bool.  If the return value is true,
             execute standard term click pipeline. Ex.: `'(function(termDict) {return true;})'`.
+        include_all_contexts: bool, default False
+            Include all contexts, even non-matching ones, in interface
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -157,6 +159,7 @@ class ScatterplotStructure(object):
         self._show_cross_axes = show_cross_axes
         self._div_name = div_name
         self._alternative_term_func = alternative_term_func
+        self._include_all_contexts = include_all_contexts
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -218,7 +221,8 @@ class ScatterplotStructure(object):
                      js_bool(self._show_category_headings),
                      js_bool(self._show_cross_axes),
                      js_default_string(self._div_name),
-                     js_default_value_to_null(self._alternative_term_func)]
+                     js_default_value_to_null(self._alternative_term_func),
+                     js_bool(self._include_all_contexts)]
         return 'buildViz(' + ','.join(arguments) + ');'
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):

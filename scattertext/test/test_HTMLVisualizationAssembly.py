@@ -15,7 +15,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
                   'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
                   'null', 'null', '10', 'null', 'null', 'null', 'false', 'true', 'true', '"' + DEFAULT_DIV_ID + '"',
-                  'null']
+                  'null', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -362,4 +362,11 @@ class TestHTMLVisualizationAssembly(TestCase):
                                        alternative_term_func='(function(termDict) {return true;})')
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({38: '(function(termDict) {return true;})'}))
+
+    def test_include_all_contexts(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       include_all_contexts=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({39: 'true'}))
 

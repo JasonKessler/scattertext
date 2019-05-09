@@ -52,7 +52,7 @@ class CohensD(CorpusBasedTermScorer):
         empty_ncat_X_smoothing_doc = np.zeros((1, ncat_X.shape[1]))
         smoothed_cat_X = np.vstack([empty_cat_X_smoothing_doc, cat_X])
         smoothed_ncat_X = np.vstack([empty_ncat_X_smoothing_doc, ncat_X])
-        n1, n2 = float(smoothed_cat_X.shape[1]), float(smoothed_ncat_X.shape[1])
+        n1, n2 = float(smoothed_cat_X.shape[0]), float(smoothed_ncat_X.shape[0])
         n = n1 + n2
         m1 = cat_X.mean(axis=0).A1
         m2 = ncat_X.mean(axis=0).A1
@@ -87,9 +87,10 @@ class CohensD(CorpusBasedTermScorer):
             score_df['hedges_r_p_corr'] = 0.5
             for method in ['cohens_d', 'hedges_r']:
                 score_df[method + '_p_corr'] = 0.5
+                pvals = score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p']
+                pvals = np.min(np.array([pvals, 1. - pvals])) * 2.
                 score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p_corr'] = (
-                    multipletests(score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p'],
-                                  method=correction_method)[1]
+                    multipletests(pvals, method=correction_method)[1]
                 )
 
         return score_df

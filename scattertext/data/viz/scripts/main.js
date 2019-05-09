@@ -37,7 +37,8 @@ buildViz = function (d3) {
                      showCategoryHeadings = true,
                      showCrossAxes = true,
                      divName = 'd3-div-1',
-                     alternativeTermFunc = null) {
+                     alternativeTermFunc = null,
+                     includeAllContexts = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -581,7 +582,7 @@ buildViz = function (d3) {
             return {'snippet': snippet, 'sentenceStart': sentenceStart};
         }
 
-        function gatherTermContexts(d) {
+        function gatherTermContexts(d, includeAll = true) {
             var category_name = fullData['info']['category_name'];
             var not_category_name = fullData['info']['not_category_name'];
             var matches = [[], [], [], []];
@@ -589,9 +590,9 @@ buildViz = function (d3) {
 
             if (fullData.docs === undefined) return matches;
             if (!nonTextFeaturesMode) {
-                return searchInText(d);
+                return searchInText(d, includeAll);
             } else {
-                return searchInExtraFeatures(d);
+                return searchInExtraFeatures(d, includeAll);
             }
         }
 
@@ -729,9 +730,10 @@ buildViz = function (d3) {
             }
         }
 
-        function displayTermContexts(data, termInfo, jump=true) {
+        function displayTermContexts(data, termInfo, jump=true, includeAll = false) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
+            var notmatches = termInfo.notmatches;
             if (contexts[0].length + contexts[1].length + contexts[2].length + contexts[3].length == 0) {
                 return null;
             }
@@ -743,16 +745,22 @@ buildViz = function (d3) {
             var catInternalName = fullData.info.category_internal_name;
 
 
-            function addSnippets(contexts, divId) {
+            function addSnippets(contexts, divId, isMatch=true) {
                 var meta = contexts.meta ? contexts.meta : '&nbsp;';
+                var headClass = 'snippet_meta docLabel' + contexts.docLabel;
+                var snippetClass = 'snippet docLabel' + contexts.docLabel;
+                if(!isMatch) {
+                    headClass = 'snippet_meta not_match docLabel' + contexts.docLabel;
+                    snippetClass = 'snippet not_match docLabel' + contexts.docLabel;
+                }
                 d3.select(divId)
                     .append("div")
-                    .attr('class', 'snippet_meta docLabel' + contexts.docLabel)
+                    .attr('class', headClass)
                     .html(meta);
                 contexts.snippets.forEach(function (snippet) {
                     d3.select(divId)
                         .append("div")
-                        .attr('class', 'snippet docLabel' + contexts.docLabel)
+                        .attr('class', snippetClass)
                         .html(snippet);
                 })
             }
@@ -765,10 +773,11 @@ buildViz = function (d3) {
                var numMatches = Object.create(null);
                var temp = d3.select(divId).selectAll("div").remove();
                var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
-                allContexts.forEach(function (singleDoc) {
+               allContexts.forEach(function (singleDoc) {
                     numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
-                });
-
+               });
+               var allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
+                
                /*contexts.forEach(function(context) {
                     context.forEach(function (singleDoc) {
                         numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
@@ -818,7 +827,15 @@ buildViz = function (d3) {
                             .forEach(function (singleDoc) {
                                 addSnippets(singleDoc, divId);
                             });
+                        if(includeAll) {
+                            allNotMatches
+                                .filter(singleDoc => singleDoc.docLabel == counts.labelNum)
+                                .forEach(function (singleDoc) {
+                                    addSnippets(singleDoc, divId, false);
+                                });
+                        }
                     }
+
 
                     if(showCategoryHeadings) {
                         d3.select('#'+divName+'-'+'categoryinfo')
@@ -878,6 +895,11 @@ buildViz = function (d3) {
                         contexts[catIndex].forEach(function (context) {
                             addSnippets(context, divId);
                         });
+                        if(includeAll) {
+                            notmatches[catIndex].forEach(function (context) {
+                                addSnippets(context, divId, false);
+                            });
+                        }
                     }
                 );
             }
@@ -1078,7 +1100,9 @@ buildViz = function (d3) {
             }
         }
 
-        function searchInText(d) {
+        function searchInText(d, includeAll=true) {
+            console.log("INCLUDE ALL")
+            console.log(includeAll)
             function stripNonWordChars(term) {
                 //d.term.replace(" ", "[^\\w]+")
             }
@@ -1137,6 +1161,7 @@ buildViz = function (d3) {
             }
 
             var matches = [[], [], [], []];
+            var notmatches = [[], [], [], []];
             var pattern = buildMatcher(d.term);
             var categoryNum = fullData.docs.categories.indexOf(fullData.info.category_internal_name);
             var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
@@ -1196,10 +1221,11 @@ buildViz = function (d3) {
                     var sentenceOffsets = null;
                     var lastSentenceStart = null;
                     var matchFound = false;
-                    var curMatch = {'id': i, 'snippets': [], 'docLabel': docLabel};
+                    var curMatch = {'id': i, 'snippets': [], 'notsnippets': [], 'docLabel': docLabel};
                     if (fullData.docs.meta) {
                         curMatch['meta'] = fullData.docs.meta[i];
                     }
+                    
                     while ((match = pattern.exec(text)) != null) {
                         if (sentenceOffsets == null) {
                             sentenceOffsets = getSentenceBoundaries(text);
@@ -1224,10 +1250,21 @@ buildViz = function (d3) {
                             ];
                         }
                         matches[numericLabel].push(curMatch);
+                    } else {
+                        if (includeAll) {
+                            curMatch.snippets = [
+                                text.replace(/\n$/g, '\n\n')
+                            ];
+                            notmatches[numericLabel].push(curMatch);
+                        }
+                        
                     }
                 }
             }
-            var toRet = {'contexts': matches, 'info': d, 'docLabel': docLabel};
+            var toRet = {'contexts': matches, 
+                         'notmatches': notmatches, 
+                         'info': d, 
+                         'docLabel': docLabel};
             return toRet;
         }
 
@@ -1305,7 +1342,9 @@ buildViz = function (d3) {
                     runDisplayTermContexts = this.alternativeTermFunc(this.termDict[searchTerm]);
                 }
                 if(runDisplayTermContexts) {
-                    displayTermContexts(this.data, this.gatherTermContexts(this.termDict[searchTerm]), false);
+                    displayTermContexts(this.data, 
+                                        this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts), false,
+                                        this.includeAllContexts);
                 }
             }
             return false;
@@ -1400,7 +1439,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(termInfo);
                     }
                     if(runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(termInfo));
+                        displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts), true, includeAllContexts);
                     }
                 });
         }
@@ -1510,7 +1549,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(d);
                     }
                     if(runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(d));
+                        displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
                     }
                 })
                 .on("mouseout", function (d) {
@@ -2391,7 +2430,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(d);
                     }
                     if(runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(d));
+                        displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
                     }
                 })
                 .on("mouseout", function (d) {
@@ -2451,6 +2490,7 @@ buildViz = function (d3) {
             plotInterface.showTopTermsPane = payload.showTopTermsPane;
             plotInterface.showAssociatedWordList = payload.showAssociatedWordList;
         }
+        plotInterface.includeAllContexts = includeAllContexts;
         plotInterface.divName = divName; 
         plotInterface.displayTermContexts = displayTermContexts;
         plotInterface.gatherTermContexts = gatherTermContexts;
