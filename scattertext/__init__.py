@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.termscoring.CredTFIDF import CredTFIDF
 
-version = [0, 0, 2, 52]
+version = [0, 0, 2, 53]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -94,7 +94,7 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
-from scattertext.categoryprojector.pairplot import produce_pairplot
+from scattertext.categoryprojector.pairplot import produce_pairplot, produce_category_focused_pairplot
 from scattertext.categoryprojector.CategoryProjection import CategoryProjection
 from scattertext.categoryprojector.CategoryProjectorEvaluator import RipleyKCategoryProjectorEvaluator, \
     EmbeddingsProjectorEvaluator
@@ -1508,20 +1508,34 @@ def produce_two_axis_plot(corpus,
     y_tooltip_label = y_label if y_tooltip_label is None else y_tooltip_label
 
     def generate_term_metadata(term_struct):
-        x_p = term_struct[p_value_column + '_x']
-        y_p = term_struct[p_value_column + '_y']
         if p_value_column + '_corr_x' in term_struct:
             x_p = term_struct[p_value_column + '_corr_x']
+        elif p_value_column + '_x' in term_struct:
+            x_p = term_struct[p_value_column + '_x']
+        else:
+            x_p = None
         if p_value_column + '_corr_y' in term_struct:
             y_p = term_struct[p_value_column + '_corr_y']
-        x_p = min(x_p, 1. - x_p)
-        y_p = min(y_p, 1. - y_p)
+        elif p_value_column + '_y' in term_struct:
+            y_p = term_struct[p_value_column + '_y']
+        else:
+            y_p = None
+        if x_p is not None:
+            x_p = min(x_p, 1. - x_p)
+        if y_p is not None:
+            y_p = min(y_p, 1. - y_p)
+
         x_d = term_struct[statistic_column + '_x']
         y_d = term_struct[statistic_column + '_y']
 
-        tooltip = '%s: %s: %0.3f; p: %0.4f' % (x_tooltip_label, statistic_name, x_d, x_p)
+        tooltip = '%s: %s: %0.3f' % (x_tooltip_label, statistic_name, x_d)
+        if x_p is not None:
+            tooltip += '; p: %0.4f' % x_p
         tooltip += '<br/>'
-        tooltip += '%s: %s: %0.3f; p: %0.4f' % (y_tooltip_label, statistic_name, y_d, y_p)
+        tooltip += '%s: %s: %0.3f' % (y_tooltip_label, statistic_name, y_d)
+        if y_p is not None:
+            tooltip += '; p: %0.4f' % y_p
+
         return {'tooltip': tooltip, 'color': pick_color(x_p, y_p, np.abs(x_d), np.abs(y_d))}
 
     explanations = merged_scores.apply(generate_term_metadata, axis=1)
@@ -1538,7 +1552,7 @@ def produce_two_axis_plot(corpus,
     color_func = kwargs.get('color_func', '''(function(d) {return d.etc.color})''')
 
     html = produce_scattertext_explorer(corpus,
-                                        category=x_label,
+                                        category=corpus.get_categories()[0],
                                         sort_by_dist=False,
                                         x_coords=axis_scaler(axes['x']),
                                         y_coords=axis_scaler(axes['y']),

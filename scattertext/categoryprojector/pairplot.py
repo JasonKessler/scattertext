@@ -1,3 +1,8 @@
+import numpy as np
+from scipy.stats import rankdata, pearsonr
+from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import cosine_distances
+
 from scattertext.Scalers import stretch_0_to_1, dense_rank
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
 from scattertext.termscoring.RankDifference import RankDifference
@@ -8,6 +13,45 @@ from scattertext.categoryprojector.CategoryProjector import CategoryProjector
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs
 from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
+
+
+def produce_category_focused_pairplot(corpus,
+                                      category,
+                                      category_projector=CategoryProjector(projector=PCA(20)),
+                                      **kwargs):
+    '''
+    Produces a pair-plot which is focused on a single category.
+
+    :param corpus: TermDocMatrix
+    :param category: str, name of a category in the corpus
+    :param category_projector: CategoryProjector, a factor analysis of the category/feature vector
+    :param kwargs: remaining kwargs for produce_pairplot
+    :return: str, HTML
+    '''
+
+    category_num = corpus.get_categories().index(category)
+
+    uncorrelated_components_projection = category_projector.project(corpus)
+
+    distances = cosine_distances(uncorrelated_components_projection.get_category_embeddings().T)
+
+    similarity_to_category_scores = -2 * (rankdata(distances[category_num]) - 0.5)
+
+    uncorrelated_components = uncorrelated_components_projection.get_projection()
+
+
+    least_correlated_dimension = min([(np.abs(pearsonr(similarity_to_category_scores,
+                                                       uncorrelated_components.T[i])[0]), i)]
+                                     for i in range(uncorrelated_components.shape[1]))[0][1]
+
+    projection_to_plot = np.array([uncorrelated_components.T[least_correlated_dimension],
+                                   similarity_to_category_scores]).T
+
+    return produce_pairplot(corpus,
+                            initial_category=category,
+                            category_projection=uncorrelated_components_projection.use_alternate_projection(projection_to_plot),
+                            **kwargs)
+
 
 def produce_pairplot(corpus,
                      asian_mode=False,
@@ -32,6 +76,7 @@ def produce_pairplot(corpus,
                      category_color_func='(function(x) {return "#5555FF"})',
                      protocol='https',
                      d3_url_struct=D3URLs(),
+                     verbose=False,
                      **kwargs):
     if category_projection is None:
         if use_metadata:
@@ -90,8 +135,9 @@ def produce_pairplot(corpus,
 
     compacted_corpus = AssociationCompactor(terms_to_show).compact(corpus)
     terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
-    print('num terms to hide', len(terms_to_hide))
-    print('num terms to show', compacted_corpus.get_num_terms())
+    if verbose:
+        print('num terms to hide', len(terms_to_hide))
+        print('num terms to show', compacted_corpus.get_num_terms())
 
     term_scatter_chart_explorer = ScatterChartExplorer(
         corpus,

@@ -4,7 +4,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.52
+# Scattertext 0.0.2.53
 
 **Table of Contents**
 
@@ -85,7 +85,6 @@ The HTML outputs look best in Chrome and Safari.
 In 0.0.2.44:
 * Added the following classes to support rank-based feature-selection: `AssociationCompactorByRank`, 
 `TermCategoryRanker`.
-
 
 In 0.0.2.43:
 * Made the term pop-up box on the category pairplot only the category name 

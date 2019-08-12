@@ -31,6 +31,20 @@ class RipleyKCategoryProjectorEvaluator(CategoryProjectionEvaluator):
         return np.trapz(deviances, x=radii)
 
 
+
+class BinnedProjectorEvaluator(CategoryProjectionEvaluator):
+    def __init__(self, num_bins_per_axis=100):
+        self.num_bins_per_axis = num_bins_per_axis
+
+    def evaluate(self, category_projection):
+        assert type(category_projection) == CategoryProjection
+        proj = category_projection.projection[:, [category_projection.x_dim, category_projection.y_dim]]
+
+        num_bins = len(np.unique(((proj - proj.min(axis=0))
+                                  / (proj - proj.min(axis=0)).max()
+                                  * self.num_bins_per_axis).astype(int), axis=0))
+        return num_bins/len(proj)
+
 class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
     def __init__(self, get_vector):
         self.get_vector = get_vector
@@ -45,7 +59,7 @@ class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
         total_similarity = 0
         for topic in topics.values():
             topic_vectors = np.array([self.get_vector(term) for term in topic])
-            import pdb; pdb.set_trace()
+            #simport pdb; pdb.set_trace()
             sim_matrix = cosine_similarity(topic_vectors)
             tril_sim_matrix = np.tril(sim_matrix)
             mean_similarity = tril_sim_matrix.sum()/(tril_sim_matrix.shape[0] ** 2 - tril_sim_matrix.shape[0]) / 2

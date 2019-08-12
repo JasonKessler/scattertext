@@ -41,7 +41,7 @@ class AssociationCompactor(BaseAssociationCompactor):
         self.max_terms = max_terms
         BaseAssociationCompactor.__init__(self, scorer)
 
-    def compact(self, term_doc_matrix):
+    def compact(self, term_doc_matrix, verbose=False):
         '''
         Parameters
         ----------
@@ -54,8 +54,9 @@ class AssociationCompactor(BaseAssociationCompactor):
         rank_df = self.scorer.get_rank_df(term_doc_matrix)
         optimal_rank = self._find_optimal_rank(rank_df)
         compacted_term_doc_matrix = self._prune_higher_ranked_terms(term_doc_matrix, rank_df, optimal_rank)
-        print('max terms', self.max_terms, 'optimal_rank', optimal_rank,
-              'num_terms', compacted_term_doc_matrix.get_num_terms())
+        if verbose:
+            print('max terms', self.max_terms, 'optimal_rank', optimal_rank,
+                  'num_terms', compacted_term_doc_matrix.get_num_terms())
         return compacted_term_doc_matrix
 
     def _get_num_terms_at_rank(self, rank_i, rank_df):

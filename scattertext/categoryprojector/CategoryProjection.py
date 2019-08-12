@@ -75,6 +75,12 @@ class CategoryProjectionBase(object):
     def _get_x_y_projection(self):
         return np.array([self._get_x_axis(), self._get_y_axis()]).T
 
+    def get_projection(self):
+        return self.projection
+
+    def use_alternate_projection(self, projection):
+        raise NotImplementedError()
+
     def get_category_embeddings(self):
         raise NotImplementedError()
 
@@ -85,6 +91,10 @@ class CategoryProjection(CategoryProjectionBase):
 
     def get_category_embeddings(self):
         return self.category_counts.values
+
+    def use_alternate_projection(self, projection):
+        return CategoryProjection(self.category_corpus, self.category_counts, projection, self.x_dim, self.y_dim)
+
 
 
 class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):
@@ -99,11 +109,16 @@ class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):
     def get_category_embeddings(self):
         return self.doc2vec_model.project()
 
+    def use_alternate_projection(self, projection):
+        return CategoryProjectionWithDoc2Vec(self.category_corpus, self.category_counts, projection,
+                                             self.x_dim, self.y_dim, doc2vec_model=self.doc2vec_model)
+
+
 #!!! Need to fix
 class CategoryProjectionAlternateAxes(CategoryProjectionBase):
     def __init__(self, category_corpus, category_counts, projection, category_embeddings, x_dim=0, y_dim=1, x_axis=None,
                  y_axis=None):
-        CategoryProjectionBase.__init__(self, category_corpus, category_counts, projection, x_dim=0, y_dim=1)
+        CategoryProjectionBase.__init__(self, category_corpus, category_counts, projection, x_dim=x_dim, y_dim=y_dim)
         self.x_axis_ = x_axis
         self.y_axis_ = y_axis
         self.category_embeddings_ = category_embeddings

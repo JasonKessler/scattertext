@@ -22,7 +22,7 @@ corpus = st.CorpusFromScikit(
 ).build().get_unigram_corpus()
 print(time.time() - t0)
 
-html = scattertext.categoryprojector.pairplot.produce_pairplot(corpus)
+html = scattertext.produce_pairplot(corpus)
 print(time.time() - t0)
 file_name = 'demo_pair_plot.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
