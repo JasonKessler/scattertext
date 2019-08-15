@@ -176,7 +176,6 @@ buildViz = function (d3) {
         }).map(function (x) {
             return x.oy
         });
-        console.log("444");
         console.log(fullData.data[0])
 
 
@@ -877,7 +876,7 @@ buildViz = function (d3) {
                         console.log(catName, catIndex)
                         //var divId = catName == catInternalName ? '#cat' : '#notcat';
                         var divId = null
-                        if (catName == fullData.info.category_internal_name) {
+                        if (fullData.info.category_internal_name == catName) {
                             divId = '#'+divName+'-'+'cat'
                         } else if (fullData.info.not_category_name == catName) {
                             divId = '#'+divName+'-'+'notcat'
@@ -2510,7 +2509,7 @@ buildViz = function (d3) {
         plotInterface.x = x;
         plotInterface.tooltip = tooltip;
         plotInterface.alternativeTermFunc = alternativeTermFunc;
-        plotInterface.drawCategoryAssociation = function (categoryNum) {
+        plotInterface.drawCategoryAssociation = function (categoryNum, otherCategoryNum=null) {
             var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
             var minRawLogTermCounts = Math.min(...rawLogTermCounts);
@@ -2518,7 +2517,9 @@ buildViz = function (d3) {
                 x => (x - minRawLogTermCounts)/maxRawLogTermCounts
             )
             
-            var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
+            //var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
+            //console.log("RAW SCORES")
+            //console.log(rawScores);
             /*
             function logOddsRatioUninformativeDirichletPrior(fgFreqs, bgFreqs, alpha) {
                 var fgVocabSize = fgFreqs.reduce((x,y) => x+y);
@@ -2540,8 +2541,24 @@ buildViz = function (d3) {
                 denseRanks.fgFreqs, denseRanks.bgFreqs, 0.01);
             */
                 
-            var maxRawScores = Math.max(...rawScores);
+            
+            
+            var denseRanks = getDenseRanks(this.fullData, categoryNum)
+            console.log("denseRanks")
+            console.log(denseRanks);
+            if (otherCategoryNum !== null) {
+                var otherDenseRanks = getDenseRanks(this.fullData, otherCategoryNum);
+                console.log("otherDenseRanks");
+                console.log(otherDenseRanks);
+                denseRanks.bg = otherDenseRanks.fg;
+                denseRanks.bgFreqs = otherDenseRanks.fgFreqs;
+                
+            }
+            
+            var rawScores = denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
             var minRawScores = Math.min(...rawScores);
+            var maxRawScores = Math.max(...rawScores);
+            
             var scores = rawScores.map(
                 function(rawScore) {
                     if(rawScore == 0) {
@@ -2553,10 +2570,6 @@ buildViz = function (d3) {
                     }
                 }
             )
-            
-            var denseRanks = getDenseRanks(this.fullData, categoryNum)
-            console.log("denseRanks")
-            console.log(denseRanks);
             var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
             
@@ -2612,7 +2625,7 @@ buildViz = function (d3) {
                 term.cat = denseRanks.fgFreqs[i];
                 term.ncat = denseRanks.bgFreqs[i];
                 term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000/fgFreqSum);
-                term.ncat25k = parseInt(25000 *denseRanks.bgFreqs[i]/bgFreqSum);
+                term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000/bgFreqSum);
                 term.x = xf(ox[i]) // logTermCounts[term.i];
                 term.y = yf(oy[i]) // scores[term.i];
                 term.ox = ox[i];
@@ -2678,15 +2691,24 @@ buildViz = function (d3) {
                           d => d3.interpolateRdYlBu(d.s));
             this.yLabel.remove()
             this.xLabel.remove()
-            this.yLabel = this.drawYLabel(this.svg, this.fullData.info.categories[categoryNum] + ' Frequncy Rank')
-            this.xLabel = this.drawXLabel(this.svg,
-                               "Not " + this.fullData.info.categories[categoryNum] + ' Frequency Rank')
+            
+            var leftName = this.fullData.info.categories[categoryNum];
+            var bottomName = "Not " + this.fullData.info.categories[categoryNum];
+            if(otherCategoryNum !== null) {
+                bottomName = this.fullData.info.categories[otherCategoryNum];
+            }
+            
+            
+            this.yLabel = this.drawYLabel(this.svg, leftName + ' Frequncy Rank')
+            this.xLabel = this.drawXLabel(this.svg, bottomName + ' Frequency Rank')
             console.log(this.topTermsPane)
             this.topTermsPane.catHeader.remove()
             this.topTermsPane.notCatHeader.remove()
             this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
             this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
             this.showWordList = payload.showWordList;
+            
+            
             this.showAssociatedWordList = function(data, word, header, isAssociatedToCategory, length=14) {
                 var sortedData = null;
                 if(!isAssociatedToCategory) {
@@ -2705,21 +2727,35 @@ buildViz = function (d3) {
                 this.data,
                 this.topTermsPane.registerFigureBBox,
                 this.showAssociatedWordList,
-                "Top " + this.fullData.info.categories[categoryNum],
-                "Top Not " + this.fullData.info.categories[categoryNum],
+                "Top " + leftName,
+                "Top " + bottomName,
                 this.topTermsPane.startingOffset
             )
             
-            fullData.info.category_name = this.fullData.info.categories[categoryNum];
-            fullData.info.not_category_name = "Not " + this.fullData.info.categories[categoryNum];
+            fullData.info.category_name = leftName;
+            fullData.info.not_category_name = bottomName;
             fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
-            fullData.info.not_category_internal_names = this.fullData.info.categories.filter(x => x!==this.fullData.info.categories[categoryNum]);
-            ['snippets', 
-             'snippetsalt', 'termstats', 
-             'overlapped-terms-clicked', 'categoryinfo', 
-             'cathead', 'cat', 'corpus-stats',
-             'notcathead', 'notcat', 'neuthead', 'nuet'].forEach(function(divSubName) {
+            if(otherCategoryNum === null) {
+                fullData.info.not_category_internal_names = this.fullData.info.categories
+                    .filter(x => x!==this.fullData.info.categories[categoryNum]);
+            } else {
+                fullData.info.not_category_internal_names = this.fullData.info.categories
+                    .filter(x => x===this.fullData.info.categories[otherCategoryNum]);
+                
+                fullData.info.neutral_category_internal_names = this.fullData.info.categories
+                    .filter(x => (x!==this.fullData.info.categories[categoryNum] 
+                                  && x!==this.fullData.info.categories[otherCategoryNum]));
+                fullData.info.neutral_category_name = "All Others";
+
+            }
+            console.log("fullData.info.not_category_internal_names")
+            console.log(fullData.info.not_category_internal_names)
+            ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo', 
+             'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead', 
+             'neut'].forEach(function(divSubName) {
                 var mydiv = '#'+divName+'-'+divSubName;
+                console.log("Clearing")
+                console.log(mydiv)
                 d3.select(mydiv).selectAll("*").remove();
                 d3.select(mydiv).html("");
 

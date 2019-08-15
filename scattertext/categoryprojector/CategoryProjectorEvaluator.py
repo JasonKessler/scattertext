@@ -32,18 +32,25 @@ class RipleyKCategoryProjectorEvaluator(CategoryProjectionEvaluator):
 
 
 
-class BinnedProjectorEvaluator(CategoryProjectionEvaluator):
-    def __init__(self, num_bins_per_axis=100):
-        self.num_bins_per_axis = num_bins_per_axis
+class MeanMorisitaIndexEvaluator(CategoryProjectionEvaluator):
+    def __init__(self, num_bin_range=None):
+        self.num_bin_range = num_bin_range if num_bin_range is not None else [10, 1000]
 
     def evaluate(self, category_projection):
         assert type(category_projection) == CategoryProjection
         proj = category_projection.projection[:, [category_projection.x_dim, category_projection.y_dim]]
+        scaled_proj = np.array([stretch_0_to_1(proj.T[0]), stretch_0_to_1(proj.T[1])]).T
+        morista_sum = 0
+        N = scaled_proj.shape[0]
+        for i in range(self.num_bin_range[0], self.num_bin_range[1]):
+            bins, _, _ = np.histogram2d(scaled_proj.T[0], scaled_proj.T[1], i)
 
-        num_bins = len(np.unique(((proj - proj.min(axis=0))
-                                  / (proj - proj.min(axis=0)).max()
-                                  * self.num_bins_per_axis).astype(int), axis=0))
-        return num_bins/len(proj)
+            # I_M  = Q * (\sum_{k=1}^{Q}{n_k * (n_k - 1)})/(N * (N _ 1))
+            Q = len(bins)  # num_quadrants
+
+            # Eqn 1.
+            morista_sum += Q * np.sum(np.ravel(bins) * (np.ravel(bins) - 1)) / (N * (N - 1))
+        return morista_sum/(self.num_bin_range[1] - self.num_bin_range[0])
 
 class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
     def __init__(self, get_vector):
@@ -65,3 +72,5 @@ class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
             mean_similarity = tril_sim_matrix.sum()/(tril_sim_matrix.shape[0] ** 2 - tril_sim_matrix.shape[0]) / 2
             total_similarity += mean_similarity
         return total_similarity/len(topics)
+
+

@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.termscoring.CredTFIDF import CredTFIDF
 
-version = [0, 0, 2, 53]
+version = [0, 0, 2, 54]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings

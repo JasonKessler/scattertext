@@ -18,6 +18,7 @@ from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRan
 def produce_category_focused_pairplot(corpus,
                                       category,
                                       category_projector=CategoryProjector(projector=PCA(20)),
+                                      category_projection=None,
                                       **kwargs):
     '''
     Produces a pair-plot which is focused on a single category.
@@ -25,20 +26,22 @@ def produce_category_focused_pairplot(corpus,
     :param corpus: TermDocMatrix
     :param category: str, name of a category in the corpus
     :param category_projector: CategoryProjector, a factor analysis of the category/feature vector
+    :param category_projection: CategoryProjection, None by default. If present, overrides category projector
     :param kwargs: remaining kwargs for produce_pairplot
     :return: str, HTML
     '''
 
     category_num = corpus.get_categories().index(category)
 
-    uncorrelated_components_projection = category_projector.project(corpus)
+    uncorrelated_components_projection = (category_projector.project(corpus)
+                                          if category_projection is None
+                                          else category_projection)
 
     distances = cosine_distances(uncorrelated_components_projection.get_category_embeddings().T)
 
     similarity_to_category_scores = -2 * (rankdata(distances[category_num]) - 0.5)
 
     uncorrelated_components = uncorrelated_components_projection.get_projection()
-
 
     least_correlated_dimension = min([(np.abs(pearsonr(similarity_to_category_scores,
                                                        uncorrelated_components.T[i])[0]), i)]
@@ -49,7 +52,9 @@ def produce_category_focused_pairplot(corpus,
 
     return produce_pairplot(corpus,
                             initial_category=category,
-                            category_projection=uncorrelated_components_projection.use_alternate_projection(projection_to_plot),
+                            category_projection=uncorrelated_components_projection.use_alternate_projection(
+                                projection_to_plot),
+                            category_focused=True,
                             **kwargs)
 
 
@@ -76,6 +81,7 @@ def produce_pairplot(corpus,
                      category_color_func='(function(x) {return "#5555FF"})',
                      protocol='https',
                      d3_url_struct=D3URLs(),
+                     category_focused=False,
                      verbose=False,
                      **kwargs):
     if category_projection is None:
@@ -87,6 +93,7 @@ def produce_pairplot(corpus,
 
     if initial_category is None:
         initial_category = corpus.get_categories()[0]
+    initial_category_idx = corpus.get_categories().index(initial_category)
 
     category_scatter_chart_explorer = ScatterChartExplorer(category_projection.category_corpus,
                                                            minimum_term_frequency=0,
@@ -109,6 +116,13 @@ def produce_pairplot(corpus,
     )
 
     category_tooltip_func = '(function(d) {return d.term})'
+    if category_focused:
+        term_plot_change_func = ('(function (termInfo) {termPlotInterface.drawCategoryAssociation(%s, termInfo.i);'
+                                 % (initial_category_idx)
+                                 + ' return false;})')
+    else:
+        term_plot_change_func = '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i);' \
+                                + ' return false;})'
 
     category_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(category_scatter_chart_data),
@@ -129,7 +143,7 @@ def produce_pairplot(corpus,
         y_label='',
         x_label='',
         full_data='getCategoryDataAndInfo()',
-        alternative_term_func='(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})',
+        alternative_term_func=term_plot_change_func,
         div_name='cat-plot'
     )
 

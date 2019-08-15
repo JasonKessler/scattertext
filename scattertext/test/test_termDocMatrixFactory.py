@@ -160,7 +160,7 @@ class TestFeatsFromDoc(TestCase):
 				feats_from_spacy_doc=FeatsFromSpacyDoc(entity_types_to_censor=entity_types)
 			).build()
 		)
-		clf = PassiveAggressiveClassifier(n_iter=5, C=0.5, n_jobs=-1, random_state=0)
+		clf = PassiveAggressiveClassifier()
 		fdc = FeatsFromDoc(term_doc_mat._term_idx_store,
 		                   clean_function=clean_function,
 		                   feats_from_spacy_doc=FeatsFromSpacyDoc(
