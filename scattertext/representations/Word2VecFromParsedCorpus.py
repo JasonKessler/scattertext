@@ -95,7 +95,29 @@ class CorpusAdapterForGensim(object):
 		                         for doc in corpus.get_parsed_docs()])
 
 
-class Word2VecFromParsedCorpus(object):
+class Word2VecDefault(object):
+	def _default_word2vec_model(self):
+		from gensim.models import word2vec
+		return word2vec.Word2Vec(size=100,
+		                         alpha=0.025,
+		                         window=5,
+		                         min_count=5,
+		                         max_vocab_size=None,
+		                         sample=0,
+		                         seed=1,
+		                         workers=1,
+		                         min_alpha=0.0001,
+		                         sg=1,
+		                         hs=1,
+		                         negative=0,
+		                         cbow_mean=0,
+		                         iter=1,
+		                         null_word=0,
+		                         trim_rule=None,
+		                         sorted_vocab=1)
+
+
+class Word2VecFromParsedCorpus(Word2VecDefault):
 	def __init__(self, corpus, word2vec_model=None):
 		'''
 		Parameters
@@ -139,26 +161,6 @@ class Word2VecFromParsedCorpus(object):
 		return (self._default_word2vec_model()
 		        if word2vec_model is None
 		        else word2vec_model)
-
-	def _default_word2vec_model(self):
-		from gensim.models import word2vec
-		return word2vec.Word2Vec(size=100,
-		                         alpha=0.025,
-		                         window=5,
-		                         min_count=5,
-		                         max_vocab_size=None,
-		                         sample=0,
-		                         seed=1,
-		                         workers=1,
-		                         min_alpha=0.0001,
-		                         sg=1,
-		                         hs=1,
-		                         negative=0,
-		                         cbow_mean=0,
-		                         iter=1,
-		                         null_word=0,
-		                         trim_rule=None,
-		                         sorted_vocab=1)
 
 	def _scan_and_build_vocab(self):
 		try:

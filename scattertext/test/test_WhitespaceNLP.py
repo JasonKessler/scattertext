@@ -31,8 +31,14 @@ class TestWhitespaceNLP(TestCase):
 		Mr. J.  Is that your name too?
 		Ha. Ha ha.
 		'''
-		self.assertEqual(whitespace_nlp_with_sentences(raw).text, raw)
-		self.assertEqual(len(whitespace_nlp_with_sentences(raw).sents), 7)
+		doc = whitespace_nlp_with_sentences(raw)
+		self.assertEqual(doc.text, raw)
+		self.assertEqual(len(doc.sents), 7)
+		self.assertEqual(doc[3].orth_, 'name')
+		self.assertEqual(doc[25].orth_, '.')
+		self.assertEqual(len(doc), 26)
+		self.assertEqual(doc[3].idx, 7)
+		self.assertEqual(raw[doc[3].idx:(doc[3].idx+len(doc[3].orth_))], 'name')
 
 	def test_whitespace_nlp_with_sentences_singleton(self):
 		raw = 'Blah'

@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import numpy as np
@@ -61,6 +62,7 @@ class NeedToInjectCoordinatesException(Exception):
 class ScatterChart:
     def __init__(self,
                  term_doc_matrix,
+                 verbose=False,
                  **kwargs):
         '''
         Parameters
@@ -82,6 +84,7 @@ class ScatterChart:
         self.metadata_descriptions = None
         self.term_colors = None
         self.hidden_terms = None
+        self.verbose = verbose
 
     def inject_metadata_term_lists(self, term_dict):
         '''
@@ -213,7 +216,8 @@ class ScatterChart:
                 not_categories=None,
                 neutral_categories=None,
                 extra_categories=None,
-                background_scorer=None):
+                background_scorer=None,
+                **kwargs):
         '''
 
         Parameters
@@ -263,6 +267,9 @@ class ScatterChart:
         '''
         if self.used:
             raise Exception("Cannot reuse a ScatterChart constructor")
+
+        if kwargs is not {} and self.verbose:
+            logging.info("Excessive arguments passed to ScatterChart.to_dict: " + str(kwargs))
 
         all_categories = self.term_doc_matrix.get_categories()
         assert category in all_categories

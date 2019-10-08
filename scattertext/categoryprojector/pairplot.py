@@ -83,6 +83,8 @@ def produce_pairplot(corpus,
                      d3_url_struct=D3URLs(),
                      category_focused=False,
                      verbose=False,
+                     use_full_doc=True,
+                     default_to_term_comparison=True,
                      **kwargs):
     if category_projection is None:
         if use_metadata:
@@ -95,7 +97,7 @@ def produce_pairplot(corpus,
         initial_category = corpus.get_categories()[0]
     initial_category_idx = corpus.get_categories().index(initial_category)
 
-    category_scatter_chart_explorer = ScatterChartExplorer(category_projection.category_corpus,
+    category_scatter_chart_explorer = ScatterChartExplorer(category_projection.get_corpus(),
                                                            minimum_term_frequency=0,
                                                            minimum_not_category_term_frequency=0,
                                                            pmi_threshold_coefficient=0,
@@ -105,7 +107,8 @@ def produce_pairplot(corpus,
                                                            term_ranker=term_ranker,
                                                            use_non_text_features=True,
                                                            term_significance=None,
-                                                           terms_to_include=None)
+                                                           terms_to_include=None,
+                                                           verbose=verbose)
     proj_df = category_projection.get_pandas_projection()
     category_scatter_chart_explorer.inject_coordinates(x_coords=scaler(proj_df['x']),
                                                        y_coords=scaler(proj_df['y']),
@@ -154,35 +157,73 @@ def produce_pairplot(corpus,
         print('num terms to show', compacted_corpus.get_num_terms())
 
     term_scatter_chart_explorer = ScatterChartExplorer(
-        corpus,
+        category_projection.get_corpus(),
         minimum_term_frequency=0,
         minimum_not_category_term_frequency=0,
         pmi_threshold_coefficient=0,
         term_ranker=term_ranker,
         use_non_text_features=use_metadata,
         score_transform=stretch_0_to_1,
+        verbose=verbose
     ).hide_terms(terms_to_hide)
 
-    if topic_model_term_lists is not None:
-        term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
-    if metadata_descriptions is not None:
-        term_scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
+    if default_to_term_comparison:
 
-    if use_metadata:
-        tdf = corpus.get_metadata_freq_df('')
+        if topic_model_term_lists is not None:
+            term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
+        if metadata_descriptions is not None:
+            term_scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
+
+        if use_metadata:
+            tdf = corpus.get_metadata_freq_df('')
+        else:
+            tdf = corpus.get_term_freq_df('')
+        scores = RankDifference().get_scores(
+            tdf[initial_category], tdf[[c for c in corpus.get_categories() if c != initial_category]].sum(axis=1)
+        )
+
+        term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
+            category=initial_category,
+            scores=scores,
+            include_term_category_counts=True,
+            transform=dense_rank,
+            **kwargs
+        )
+        y_label=initial_category,
+        x_label='Not ' + initial_category,
+        color_func = None
+        show_top_terms=True
+
     else:
-        tdf = corpus.get_term_freq_df('')
-    scores = RankDifference().get_scores(
-        tdf[initial_category], tdf[[c for c in corpus.get_categories() if c != initial_category]].sum(axis=1)
-    )
+        term_projection = category_projection.get_term_projection()
+        original_x = term_projection['x']
+        original_y = term_projection['y']
+        x_coords = scaler(term_projection['x'])
+        y_coords = scaler(term_projection['y'])
+        y_label = ''
+        x_label = ''
+        show_axes = False
+        horizontal_line_y_position = 0
+        vertical_line_x_position = 0
+        #import pdb; pdb.set_trace()
+        term_scatter_chart_explorer.inject_coordinates(x_coords,
+                                                       y_coords,
+                                                       original_x=original_x,
+                                                       original_y=original_y)
 
-    term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
-        category=initial_category,
-        scores=scores,
-        include_term_category_counts=True,
-        transform=dense_rank,
-        **kwargs
-    )
+        if topic_model_term_lists is not None:
+            term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
+        if metadata_descriptions is not None:
+            term_scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
+        term_scatter_chart_data = term_scatter_chart_explorer.to_dict(
+            category=initial_category,
+            category_name=initial_category,
+            include_term_category_counts=True,
+            #transform=dense_rank,
+        )
+        color_func = '(function(x) {return "#5555FF"})'
+        show_top_terms=False
+
 
     term_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(term_scatter_chart_data),
@@ -190,18 +231,19 @@ def produce_pairplot(corpus,
         height_in_pixels=term_height_in_pixels,
         asian_mode=asian_mode,
         use_non_text_features=use_metadata,
-        show_top_terms=True,
+        show_top_terms=show_top_terms,
         show_characteristic=False,
         get_tooltip_content=None,
         show_category_headings=False,
-        use_full_doc=use_metadata,
+        use_full_doc=use_metadata or use_full_doc,
         horizontal_line_y_position=0,
         vertical_line_x_position=0,
         topic_model_preview_size=topic_model_preview_size,
-        y_label=initial_category,
-        x_label='Not ' + initial_category,
+        x_label=x_label,
+        y_label=y_label,
         full_data='getTermDataAndInfo()',
         div_name='d3-div-1',
+        color_func=color_func,
     )
 
     return PairPlotFromScatterplotStructure(

@@ -2752,7 +2752,8 @@ buildViz = function (d3) {
             console.log(fullData.info.not_category_internal_names)
             ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo', 
              'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead', 
-             'neut'].forEach(function(divSubName) {
+             'neut' 
+            ].forEach(function(divSubName) {
                 var mydiv = '#'+divName+'-'+divSubName;
                 console.log("Clearing")
                 console.log(mydiv)

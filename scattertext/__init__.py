@@ -1,8 +1,6 @@
 from __future__ import print_function
 
-from scattertext.termscoring.CredTFIDF import CredTFIDF
-
-version = [0, 0, 2, 54]
+version = [0, 0, 2, 55]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -102,6 +100,7 @@ from scattertext.representations.Doc2VecBuilder import Doc2VecBuilder
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.distancemeasures.EuclideanDistance import EuclideanDistance
 from scattertext.distancemeasures.DistanceMeasureBase import DistanceMeasureBase
+from scattertext.termscoring.CredTFIDF import CredTFIDF
 
 
 def produce_scattertext_explorer(corpus,

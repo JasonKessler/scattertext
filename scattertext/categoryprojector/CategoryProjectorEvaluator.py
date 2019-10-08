@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 from scattertext.Scalers import stretch_0_to_1
-from scattertext.categoryprojector.CategoryProjection import CategoryProjection
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection, CategoryProjectionBase
 
 
 class CategoryProjectionEvaluator(object):
@@ -22,6 +22,7 @@ class RipleyKCategoryProjectorEvaluator(CategoryProjectionEvaluator):
             from astropy.stats import RipleysKEstimator
         except:
             raise Exception("Please install astropy")
+        assert issubclass(type(category_projection), CategoryProjectionBase)
 
         ripley_estimator = RipleysKEstimator(area=1., x_max=1., y_max=1., x_min=0., y_min=0.)
         proj = category_projection.projection[:, [category_projection.x_dim, category_projection.y_dim]]
@@ -37,7 +38,7 @@ class MeanMorisitaIndexEvaluator(CategoryProjectionEvaluator):
         self.num_bin_range = num_bin_range if num_bin_range is not None else [10, 1000]
 
     def evaluate(self, category_projection):
-        assert type(category_projection) == CategoryProjection
+        assert issubclass(type(category_projection), CategoryProjectionBase)
         proj = category_projection.projection[:, [category_projection.x_dim, category_projection.y_dim]]
         scaled_proj = np.array([stretch_0_to_1(proj.T[0]), stretch_0_to_1(proj.T[1])]).T
         morista_sum = 0
@@ -61,7 +62,7 @@ class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
         #self.vector_func = lambda: nlp(x)[0].vector
 
     def evaluate(self, category_projection):
-        assert type(category_projection) == CategoryProjection
+        assert issubclass(type(category_projection), CategoryProjectionBase)
         topics = category_projection.get_nearest_terms()
         total_similarity = 0
         for topic in topics.values():

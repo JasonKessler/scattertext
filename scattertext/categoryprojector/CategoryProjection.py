@@ -5,6 +5,9 @@ from scattertext.Scalers import stretch_neg1_to_1
 
 
 class CategoryProjectionBase(object):
+    '''
+
+    '''
     def __init__(self, category_corpus, category_counts, projection, x_dim=0, y_dim=1, **kwargs):
         self.category_corpus = category_corpus
         self.category_counts = category_counts
@@ -95,6 +98,8 @@ class CategoryProjection(CategoryProjectionBase):
     def use_alternate_projection(self, projection):
         return CategoryProjection(self.category_corpus, self.category_counts, projection, self.x_dim, self.y_dim)
 
+    def get_corpus(self):
+        return self.category_corpus
 
 
 class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):
@@ -104,7 +109,8 @@ class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):
 
     def project_with_alternative_dimensions(self, x_dim, y_dim):
         return CategoryProjectionWithDoc2Vec(self.category_corpus, self.category_counts, self.projection,
-                                             x_dim, y_dim, doc2vec_model=self.doc2vec_model)
+                                             x_dim, y_dim,
+                                             doc2vec_model=self.doc2vec_model)
 
     def get_category_embeddings(self):
         return self.doc2vec_model.project()
@@ -112,6 +118,7 @@ class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):
     def use_alternate_projection(self, projection):
         return CategoryProjectionWithDoc2Vec(self.category_corpus, self.category_counts, projection,
                                              self.x_dim, self.y_dim, doc2vec_model=self.doc2vec_model)
+
 
 
 #!!! Need to fix

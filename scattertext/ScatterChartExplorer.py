@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from scattertext import ScatterChart, TermCategoryFrequencies, ParsedCorpus, CorpusDF
@@ -9,6 +11,7 @@ from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAnd
 class ScatterChartExplorer(ScatterChart):
     def __init__(self,
                  corpus,
+                 verbose=False,
                  **kwargs):
         '''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
         Running the `to_dict` function outputs
@@ -17,7 +20,7 @@ class ScatterChartExplorer(ScatterChart):
         #        or (issubclass(type(corpus), (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies)))):
         #    raise AssertionError(corpus, 'of type', type(corpus),
         #                         'must be a subclass of Corpus or TermCategoryFrequencies.')
-        ScatterChart.__init__(self, corpus, **kwargs)
+        ScatterChart.__init__(self, corpus, verbose, **kwargs)
         self._term_metadata = None
 
     def to_dict(self,
@@ -36,7 +39,8 @@ class ScatterChartExplorer(ScatterChart):
                 neutral_category_name=None,
                 extra_category_name=None,
                 background_scorer=None,
-                include_term_category_counts=False):
+                include_term_category_counts=False,
+                **kwargs):
         '''
 
         Parameters
@@ -102,6 +106,10 @@ class ScatterChartExplorer(ScatterChart):
                            ncat25k: freq per 25k in non-category}
                            etc: term specific dictionary (if inject_term_metadata is called and contains terms)}
         '''
+
+        if kwargs is not {} and self.verbose:
+            logging.info("Excessive arguments passed to ScatterChartExplorer.to_dict: " + str(kwargs))
+
         json_data = ScatterChart.to_dict(self,
                                          category,
                                          category_name=category_name,

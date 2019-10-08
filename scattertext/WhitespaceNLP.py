@@ -2,7 +2,6 @@ import re
 
 from scattertext.emojis.ProcessedEmojiStructure import VALID_EMOJIS
 
-WHITESPACE_SPLITTER = re.compile(r"(\W)")
 
 '''
 This is a fast but awful partial implementation of Spacy.   It's useful 
@@ -11,13 +10,15 @@ for testing and when you don't need POS tagging.
 
 
 class Tok:
-	def __init__(self, pos, lem, low, ent_type, tag, is_punct=False):
+	def __init__(self, pos, lem, token, ent_type, tag, is_punct=False, idx=None):
 		self.pos_ = pos
 		self.lemma_ = lem
-		self.lower_ = low
+		self.lower_ = token.lower()
+		self.orth_ = token
 		self.ent_type_ = ent_type
 		self.tag_ = tag
 		self.is_punct = is_punct
+		self.idx = idx
 
 	def __str__(self):
 		return self.lower_
@@ -37,6 +38,9 @@ class Doc:
 			self.string = raw
 		self.text = self.string
 		self.noun_chunks = noun_chunks
+		self.toks = []
+		for sent in sents:
+			self.toks += sent
 
 	def __str__(self):
 		return self.string
@@ -49,6 +53,12 @@ class Doc:
 			for tok in sent:
 				yield tok
 
+	def __getitem__(self, idx):
+		return self.toks[idx] # to do: make this more efficient by only having self.sents
+
+	def __len__(self):
+		return len(self.toks)
+
 
 def whitespace_nlp(doc, entity_type=None, tag_type=None):
 	toks = _regex_parse_sentence(doc, entity_type, tag_type)
@@ -59,6 +69,7 @@ def _regex_parse_sentence(doc, entity_type, tag_type):
 	toks = _toks_from_sentence(doc, entity_type, tag_type)
 	return toks
 
+WHITESPACE_SPLITTER = re.compile(r"(\W)")
 
 def _toks_from_sentence(doc, entity_type, tag_type):
 	toks = []
@@ -131,23 +142,31 @@ def _get_pos_tag(tok):
 	return pos
 
 
+
+DEFAULT_TOK_SPLITTER_RE = re.compile(r'(\W)')
+
 def whitespace_nlp_with_sentences(doc,
                                   entity_type=None,
                                   tag_type=None,
-                                  tok_splitter_re=WHITESPACE_SPLITTER):
+                                  tok_splitter_re=DEFAULT_TOK_SPLITTER_RE):
 	sentence_split_pat = re.compile(r'([^\.!?]*?[\.!?$])', re.M)
 	sents = []
 	raw_sents = sentence_split_pat.findall(doc)
 	if len(raw_sents) == 0:
 		raw_sents = [doc]
-	for sent in raw_sents:
+	sent_start_idx = 0
+	for sentence in raw_sents:
 		toks = []
-		for tok in tok_splitter_re.split(sent):
-			if len(tok) > 0:
+		start_idx_in_sentence = 0
+		for tok in tok_splitter_re.split(sentence):
+			if len(tok.strip()) > 0:
 				toks.append(Tok(_get_pos_tag(tok),
 				                tok[:2].lower(),
 				                tok.lower(),
 				                ent_type='' if entity_type is None else entity_type.get(tok, ''),
-				                tag='' if tag_type is None else tag_type.get(tok, '')))
+				                tag='' if tag_type is None else tag_type.get(tok, ''),
+								idx=sent_start_idx + start_idx_in_sentence))
+			start_idx_in_sentence += len(tok)
 		sents.append(toks)
+		sent_start_idx += len(sentence)
 	return Doc(sents, doc)

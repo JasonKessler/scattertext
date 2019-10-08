@@ -165,3 +165,5 @@ class Doc2VecCategoryProjector(CategoryProjectorBase):
 
     def get_category_embeddings(self, corpus):
         return self.doc2vec_builder.project()
+
+
