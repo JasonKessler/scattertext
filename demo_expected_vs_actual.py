@@ -42,6 +42,6 @@ html = produce_scattertext_explorer(corpus,
                                     metadata=convention_df['speaker'],
                                     x_label='Log frequency',
                                     y_label='L2-penalized logistic regression coef')
-fn = 'demo_custom_coordinates.html'
+fn = 'demo_expected_vs_actual.html'
 open(fn, 'wb').write(html.encode('utf-8'))
 print('Open %s in Chrome or Firefox.' % fn)

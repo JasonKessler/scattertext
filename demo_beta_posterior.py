@@ -7,20 +7,25 @@ corpus = st.CorpusFromPandas(
     category_col='category',
     text_col='text',
     nlp=st.whitespace_nlp_with_sentences
-).build().get_unigram_corpus().remove_categories(['plot'])
+).build().get_unigram_corpus()
 
-term_scorer = st.CredTFIDF(corpus).set_categories('fresh', ['rotten'])
+beta_posterior = st.BetaPosterior(corpus).set_categories('fresh', ['rotten'])
+score_df = beta_posterior.get_score_df()
+print("Top Fresh Terms")
+print(score_df.sort_values(by='cat_p').head())
 
-print(term_scorer.get_score_df().sort_values(by='delta_cred_tf_idf', ascending=False).head())
+print("Top Rotten Terms")
+print(score_df.sort_values(by='ncat_p').head())
 
 html = st.produce_frequency_explorer(
     corpus,
     category='fresh',
     not_category_name='rotten',
-    term_scorer=term_scorer,
-    metadata=corpus.get_df()['movie_name'],
-    grey_threshold=0
+    term_scorer=beta_posterior,
+    grey_threshold=1.96
 )
-file_name = 'demo_cred_tfidf.html'
+
+file_name = 'demo_beta_posterior.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
 print('Open %s in Chrome or Firefox.' % file_name)
+

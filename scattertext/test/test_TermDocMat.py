@@ -180,6 +180,19 @@ class TestTermDocMat(TestCase):
         self.assertNotIn('hello', removed_df.index)
         self.assertIn('hello', df.index)
 
+    def test_whitelist_terms(self):
+        tdm = make_a_test_term_doc_matrix()
+        tdm_removed = tdm.whitelist_terms(['hello', 'this', 'is'])
+        removed_df = tdm_removed.get_term_freq_df()
+        df = tdm.get_term_freq_df()
+        self.assertEqual(tdm_removed.get_num_docs(), tdm.get_num_docs())
+        self.assertEqual(len(removed_df),  3)
+        self.assertIn('hello', removed_df.index)
+        self.assertIn('hello', df.index)
+        self.assertIn('my', df.index)
+        self.assertNotIn('my', removed_df.index)
+
+
     def test_remove_terms_used_less_than_num_docs(self):
         tdm = make_a_test_term_doc_matrix()
         tdm2 = tdm.remove_terms_used_in_less_than_num_docs(2)
@@ -259,7 +272,6 @@ class TestTermDocMat(TestCase):
                                        swiftless.get_texts())
         np.testing.assert_equal(swiftless.get_category_names_by_row(),
                                 swiftless_constructed.get_category_names_by_row())
-
 
     def test_get_category_names_by_row2(self):
         hamlet = get_hamlet_term_doc_matrix()
@@ -354,6 +366,16 @@ class TestTermDocMat(TestCase):
         self.assertEqual(hamlet_meta.get_metadata_doc_mat().shape, (hamlet.get_num_docs(), hamlet.get_num_docs()))
         self.assertNotEqual(hamlet.get_metadata_doc_mat().shape, (hamlet.get_num_docs(), hamlet.get_num_docs()))
 
+    def test_use_doc_labeled_terms_as_metadata(self):
+        hamlet = get_hamlet_term_doc_matrix()
+        doc_labels = [str(i % 3) for i in range(hamlet.get_num_docs())]
+        new_hamlet = hamlet.use_doc_labeled_terms_as_metadata(doc_labels, '++')
+        np.testing.assert_array_equal(hamlet.get_term_doc_mat().sum(axis=1),
+                                      new_hamlet.get_metadata_doc_mat().sum(axis=1))
+        metadata_freq_df = new_hamlet.get_metadata_freq_df()
+        term_freq_df = hamlet.get_term_freq_df()
+        assert term_freq_df.loc['a'].sum() == metadata_freq_df.loc[['0++a','1++a','2++a']].values.sum()
+
     def test_metadata_in_use(self):
         hamlet = get_hamlet_term_doc_matrix()
         self.assertFalse(hamlet.metadata_in_use())
@@ -438,7 +460,7 @@ class TestTermDocMat(TestCase):
         np.testing.assert_array_almost_equal(
             corpus.get_metadata_doc_count_df(), [[4, 4]])
         self.assertEqual(list(corpus.get_metadata_doc_count_df().columns),
-                         ['hamlet freq','jay-z/r. kelly freq'])
+                         ['hamlet freq', 'jay-z/r. kelly freq'])
         self.assertEqual(list(corpus.get_metadata_doc_count_df().index),
                          ['cat1'])
 

@@ -1,16 +1,20 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 55]
+
+version = [0, 0, 2, 56]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
 import numpy as np
 import pandas as pd
 
+from scattertext.features.FeastFromSentencePiece import FeatsFromSentencePiece
+from scattertext.termscoring.BetaPosterior import BetaPosterior
 from scattertext.semioticsquare.SemioticSquareFromAxes import SemioticSquareFromAxes
 from scattertext.categoryprojector.OptimalProjection import get_optimal_category_projection, \
     get_optimal_category_projection_by_rank
-from scattertext.categoryprojector.CategoryProjector import CategoryProjector, Doc2VecCategoryProjector
+from scattertext.categoryprojector.CategoryProjector import CategoryProjector, Doc2VecCategoryProjector, \
+    LengthNormalizer
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure, D3URLs
 import scattertext.viz
@@ -28,7 +32,7 @@ from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.features.FeatsFromTopicModel import FeatsFromTopicModel
 from scattertext.termscoring.BM25Difference import BM25Difference
-from scattertext import SampleCorpora
+from scattertext import SampleCorpora, SampleLexicons
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
@@ -101,7 +105,8 @@ from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.distancemeasures.EuclideanDistance import EuclideanDistance
 from scattertext.distancemeasures.DistanceMeasureBase import DistanceMeasureBase
 from scattertext.termscoring.CredTFIDF import CredTFIDF
-
+from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsResolver, EmbeddingAligner
+from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -1206,7 +1211,7 @@ def produce_projection_explorer(corpus,
         By default: umap.UMAP(min_dist=0.5, metric='cosine')
       You could also use, e.g., sklearn.manifold.TSNE(perplexity=10, n_components=2, init='pca', n_iter=2500, random_state=23)
     embeddings : array[len(corpus.get_terms()), X]
-        Word embeddings.  If None (default), wil train them using word2vec Model
+        Word embeddings.  If None (default), will train them using word2vec Model
     term_acceptance_re : SRE_Pattern,
         Regular expression to identify valid terms
     show_axes : bool, default False

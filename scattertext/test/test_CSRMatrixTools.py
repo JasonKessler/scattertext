@@ -29,3 +29,26 @@ class TestCSRMatrixFactory(TestCase):
 		self.assertEqual(type(b), csr_matrix)
 		np.testing.assert_array_almost_equal(b.todense(), desired_array)
 		self.assertEqual(a.shape, (3,6))
+
+
+	def test_typing(self):
+		mat_factory = CSRMatrixFactory()
+		mat_factory[0, 0] = 4
+		mat_factory[1, 5] = 3.1
+		mat = mat_factory.get_csr_matrix()
+		self.assertEqual(type(mat), csr_matrix)
+		np.testing.assert_array_almost_equal(
+			np.array([[4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3.1]]),
+			mat.todense())
+
+		mat = mat_factory.get_csr_matrix(dtype=np.bool)
+		self.assertEqual(type(mat), csr_matrix)
+		np.testing.assert_array_almost_equal(
+			np.array([[1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1]]),
+			mat.todense())
+
+		mat = mat_factory.get_csr_matrix(dtype=np.int32)
+		self.assertEqual(type(mat), csr_matrix)
+		np.testing.assert_array_almost_equal(
+			np.array([[4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3]]),
+			mat.todense())

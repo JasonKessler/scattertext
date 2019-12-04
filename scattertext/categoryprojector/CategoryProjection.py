@@ -71,7 +71,8 @@ class CategoryProjectionBase(object):
         }
 
     def get_term_projection(self):
-        dim_term = np.matrix(self.category_counts.values) * self._get_x_y_projection()
+        # np.ndarray(self.category_counts.values) * self._get_x_y_projection()
+        dim_term = np.matmul(self.category_counts.values, self._get_x_y_projection())
         df = pd.DataFrame(dim_term, index=self.category_corpus.get_terms(), columns=['x', 'y'])
         return df
 

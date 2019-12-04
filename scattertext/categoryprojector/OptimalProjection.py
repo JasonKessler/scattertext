@@ -12,8 +12,9 @@ def get_optimal_category_projection(
         corpus,
         n_dims=3,
         n_steps=10,
-        projector=lambda n_terms, n_dims: CategoryProjector(AssociationCompactor(n_terms, scorer=RankDifference),
-                                                            projector=PCA(n_dims)),
+        projector=lambda n_terms, n_dims: CategoryProjector(
+            selector=AssociationCompactor(n_terms, scorer=RankDifference),
+            projector=PCA(n_dims)),
         verbose=False
 ):
     try:

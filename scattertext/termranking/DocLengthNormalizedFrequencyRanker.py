@@ -9,25 +9,26 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 	This means that each term has a document-specific weight of  #(t,d)/|d|.
 	'''
 
-	def get_ranks(self):
+	def get_ranks(self,label_append=' freq'):
 		row = self._get_row_category_ids()
 		X = self.get_X()
-		return self.get_ranks_from_mat(X, row)
+		return self.get_ranks_from_mat(X, row, label_append)
 
-	def get_ranks_from_mat(self, X, row):
+	def get_ranks_from_mat(self, X, row, label_append=' freq'):
 		doc_lengths = X.sum(axis=1)
 		normX = self._get_normalized_X(X, doc_lengths)
 		categoryX = csr_matrix((normX.data, (row, normX.indices)))
-		return self._get_freq_df(categoryX)
+		return self._get_freq_df(categoryX, label_append=label_append)
 
 	def _get_normalized_X(self, X, doc_lengths):
 		return csr_matrix(doc_lengths.mean() * X.astype(np.float32) / doc_lengths)
 
 
+"""
 class VarianceSensitiveFrequencyRanker(TermRanker):
 	'''Rank terms by their mean document frequency divided by the standard errors.'''
 
-	def get_ranks(self):
+	def get_ranks(self, label_append=' freq'):
 		X = self.get_X()
 		d = {}
 		y = self._term_doc_matrix._y
@@ -42,4 +43,5 @@ class VarianceSensitiveFrequencyRanker(TermRanker):
 			ses = (np.sqrt(non_zero_sds_numerators + zero_dfs_numerators
 			               / (catX.shape[0] - 1))) / np.sqrt(catX.shape[0])
 			return means/ses
+"""
 

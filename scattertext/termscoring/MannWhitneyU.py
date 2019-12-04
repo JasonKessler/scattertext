@@ -7,7 +7,6 @@ from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
 class MannWhitneyU(CorpusBasedTermScorer):
     '''
-    Mann Whitney U test
 
     term_scorer = (MannWhitneyU(corpus).set_categories('Positive', ['Negative'], ['Plot']))
 
@@ -79,7 +78,6 @@ class MannWhitneyU(CorpusBasedTermScorer):
                 valid_pvals_abs = np.min([valid_pvals, 1-valid_pvals], axis=0)
                 valid_pvals_abs_corr = multipletests(valid_pvals_abs, method=correction_method)[1]
                 score_df[method + '_p_corr'] = 0.5
-
                 valid_pvals_abs_corr[valid_pvals > 0.5] = 1. - valid_pvals_abs_corr[valid_pvals > 0.5]
                 valid_pvals_abs_corr[valid_pvals < 0.5] = valid_pvals_abs_corr[valid_pvals < 0.5]
                 score_df.loc[score_df.valid, method + '_p_corr'] = valid_pvals_abs_corr

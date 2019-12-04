@@ -5,12 +5,13 @@ from scipy.sparse import csr_matrix
 class CSRMatrixFactory:
 	''' Factory class to create a csr_matrix.
 	'''
-	def __init__(self):
+	def __init__(self, dtype=np.int32):
 		self.rows = []
 		self.cols = []
 		self.data = []
 		self._max_col = 0
 		self._max_row = 0
+		self._dtype = dtype
 
 	def __setitem__(self, row_col, datum):
 		'''Insert a value into the matrix
@@ -36,6 +37,8 @@ class CSRMatrixFactory:
 		self.data.append(datum)
 		if row > self._max_row: self._max_row = row
 		if col > self._max_col: self._max_col = col
+		if isinstance(datum, float):
+			self._dtype = type(datum)
 
 	def set_last_col_idx(self, last_col_idx):
 		'''
@@ -59,13 +62,13 @@ class CSRMatrixFactory:
 		self._max_row = last_row_idx
 		return self
 
-	def get_csr_matrix(self, dtype=np.int32, make_square = False):
+	def get_csr_matrix(self, dtype = None, make_square = False):
 		shape = (self._max_row + 1, self._max_col + 1)
 		if make_square:
 			shape = (max(shape), max(shape))
 		return csr_matrix((self.data, (self.rows, self.cols)),
 		                  shape=shape,
-		                  dtype=dtype)
+		                  dtype=self._dtype if dtype is None else dtype)
 
 
 def delete_columns(mat, columns_to_delete):

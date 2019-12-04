@@ -3,6 +3,7 @@ from copy import copy
 
 import numpy as np
 import pandas as pd
+import scipy
 from pandas.core.common import SettingWithCopyWarning
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
@@ -169,8 +170,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                             index=self.get_metadata(),
                             columns=[c + label_append for c in self.get_categories()])
 
-    def _term_freq_df_from_matrix(self, catX):
-        return self._get_freq_df_using_idx_store(catX, self._term_idx_store)
+    def _term_freq_df_from_matrix(self, catX, label_append=' freq'):
+        return self._get_freq_df_using_idx_store(catX, self._term_idx_store, label_append=label_append)
 
     def _get_freq_df_using_idx_store(self, catX, idx_store, label_append=' freq'):
         d = {'term': idx_store._i2val}
@@ -178,11 +179,11 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             try:
                 d[cat + label_append] = catX[idx, :].A[0]
             except IndexError:
-                self._fix_problem_when_final_category_index_has_no_terms(cat, catX, d)
+                self._fix_problem_when_final_category_index_has_no_terms(cat, catX, d, label_append)
         return pd.DataFrame(d).set_index('term')
 
-    def _fix_problem_when_final_category_index_has_no_terms(self, cat, catX, d):
-        d[cat + ' freq'] = np.zeros(catX.shape[1])
+    def _fix_problem_when_final_category_index_has_no_terms(self, cat, catX, d, label_append=' freq'):
+        d[cat + label_append] = np.zeros(catX.shape[1])
 
     def get_metadata_freq_df(self, label_append=' freq'):
         '''
@@ -710,6 +711,69 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
 
         new_tdm = self._make_new_term_doc_matrix(self._X, self._mX, new_y, self._term_idx_store, new_category_idx_store,
                                                  self._metadata_idx_store, new_y == new_y)
+        return new_tdm
+
+    def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_'):
+        '''
+        Makes the metadata of a new TermDocMatrix a copy of the term-document matrix, except each term is prefixed
+        by its document's label followed by the separator.
+
+        :param doc_labels: list[str], should be the same size as the number of documents in the TermDocMatrix.
+        :param separator: str, default is '_'
+        :return: self
+        '''
+
+        assert len(doc_labels) == self.get_num_docs()
+
+        doc_labels = np.array(doc_labels)
+
+        terms_in_corpus = np.array(self._term_idx_store.values())
+        new_metadata_list = []
+        new_meta_X = None
+
+        ordered_doc_labels = list(sorted(set(doc_labels)))
+        for doc_label in ordered_doc_labels:
+            label_doc_mask = doc_labels == doc_label
+            label_X = self._X[label_doc_mask, :]
+            label_term_mask = (label_X.sum(axis=0) > 0).A1
+            label_X = label_X[:, label_term_mask]
+            cols_to_pad = len(new_metadata_list)
+
+            new_metadata_list += [doc_label + separator + term
+                                  for term in terms_in_corpus[label_term_mask]]
+            if new_meta_X is None:
+                new_meta_X = label_X
+            else:
+                label_X_pad = (CSRMatrixFactory()
+                               .set_last_col_idx(cols_to_pad - 1)
+                               .set_last_row_idx(sum(label_doc_mask) - 1)
+                               .get_csr_matrix())
+                padded_label_X = scipy.sparse.hstack([label_X_pad, label_X])
+                new_meta_X.resize(new_meta_X.shape[0], padded_label_X.shape[1])
+                new_meta_X = scipy.sparse.vstack([new_meta_X,
+                                                  padded_label_X])
+
+        new_metadata_idx_store = IndexStoreFromList.build(new_metadata_list)
+        new_meta_X = new_meta_X.tocsr()
+        new_mX = (CSRMatrixFactory()
+                  .set_last_col_idx(new_meta_X.shape[1] - 1)
+                  .set_last_row_idx(new_meta_X.shape[0] - 1)
+                  .get_csr_matrix().tolil())
+        start_row = 0
+        for doc_label in ordered_doc_labels:
+            label_doc_mask = doc_labels == doc_label
+            num_rows = sum(label_doc_mask)
+            new_mX[label_doc_mask, :] = new_meta_X[start_row:start_row + num_rows, :]
+            start_row += num_rows
+
+        new_mX = new_mX.tocsr()
+        new_tdm = self._make_new_term_doc_matrix(self._X,
+                                                 new_mX,
+                                                 self._y,
+                                                 self._term_idx_store,
+                                                 self._category_idx_store,
+                                                 new_metadata_idx_store,
+                                                 self._y == self._y)
         return new_tdm
 
     def use_categories_as_metadata(self):

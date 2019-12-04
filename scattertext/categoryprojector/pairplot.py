@@ -115,7 +115,8 @@ def produce_pairplot(corpus,
                                                        original_x=proj_df['x'],
                                                        original_y=proj_df['y'])
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
-        category=initial_category, max_docs_per_category=0,
+        category=initial_category,
+        max_docs_per_category=0,
     )
 
     category_tooltip_func = '(function(d) {return d.term})'

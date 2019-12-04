@@ -1,10 +1,9 @@
 [![Build Status](https://travis-ci.org/JasonKessler/scattertext.svg?branch=master)](https://travis-ci.org/JasonKessler/scattertext)
 [![PyPI](https://img.shields.io/pypi/v/scattertext.svg)]()
-[![Conda Install](https://anaconda.org/ioam/holoviews/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scattertext)
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.55
+# Scattertext 0.0.2.56
 
 **Table of Contents**
 
@@ -27,6 +26,7 @@
     - [Visualizing any kind of term score](#visualizing-any-kind-of-term-score)
     - [Custom term positions](#custom-term-positions)
     - [Emoji analysis](#emoji-analysis)
+    - [Visualizing SentencePiece tokens](#visualizing-sentencepiece-tokens)
     - [Visualizing scikit-learn text classification weights](#visualizing-scikit-learn-text-classification-weights)
     - [Creating lexicalized semiotic squares](#creating-lexicalized-semiotic-squares)
     - [Visualizing topic models](#visualizing-topic-models)
@@ -1149,6 +1149,81 @@ open("EmojiGender.html", 'wb').write(html.encode('utf-8'))
 
 [![EmojiGender.html](https://jasonkessler.github.io/EmojiGender.png)](https://jasonkessler.github.io/EmojiGender.html)
 
+### Visualizing SentencePiece Tokens
+[SentencePiece](https://github.com/google/sentencepiece) tokenization is a subword tokenization technique which 
+relies on a language-model to produce optimized tokenization. It has been used in large, transformer-based contextual 
+language models.
+
+Ensure to run `$ pip install sentencepiece` before running this example. 
+
+First, let's load the political convention data set as normal.
+
+```python
+import tempfile
+import re
+import scattertext as st
+
+convention_df = st.SampleCorpora.ConventionData2012.get_data()
+convention_df['parse'] = convention_df.text.apply(st.whitespace_nlp_with_sentences)
+```
+
+Next, let's train a SentencePiece tokenizer based on this data.  The `train_sentence_piece_tokenizer` function trains
+ a SentencePieceProcessor on the data set and returns it.  You can of course use any SentencePieceProcessor.  
+
+
+```python
+
+def train_sentence_piece_tokenizer(documents, vocab_size):
+    '''
+    :param documents: list-like, a list of str documents
+    :vocab_size int: the size of the vocabulary to output
+    
+    :return sentencepiece.SentencePieceProcessor
+    '''
+    import sentencepiece as spm
+    sp = None
+    with tempfile.NamedTemporaryFile(delete=True) as tempf:
+        with tempfile.NamedTemporaryFile(delete=True) as tempm:
+            tempf.write(('\n'.join(documents)).encode())
+            spm.SentencePieceTrainer.Train(
+                '--input=%s --model_prefix=%s --vocab_size=%s' % (tempf.name, tempm.name, vocab_size)
+            )
+            sp = spm.SentencePieceProcessor()
+            sp.load(tempm.name + '.model')
+    return sp
+sp = train_sentence_piece_tokenizer(convention_df.text.values, vocab_size=2000)
+
+```
+
+Next, let's add the SentencePiece tokens as metadata when creating our corpus. In order to do this, pass 
+a `FeatsFromSentencePiece` instance into the `feats_from_spacy_doc` parameter.  Pass the  SentencePieceProcessor into
+the constructor.
+
+```python
+corpus = st.CorpusFromParsedDocuments(convention_df,
+                                      parsed_col='parse', 
+                                      category_col='party', 
+                                      feats_from_spacy_doc=st.FeatsFromSentencePiece(sp)).build()
+```
+
+Now we can create the SentencePiece token scatter plot.
+
+```python
+html = st.produce_scattertext_explorer(
+    corpus,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    sort_by_dist=False,
+    metadata=convention_df['party'] + ': ' + convention_df['speaker'],
+    term_scorer=st.RankDifference(),
+    transform=st.Scalers.dense_rank,
+    use_non_text_features=True,
+    use_full_doc=True,
+)
+```
+[![demo_sentence_piece.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_sentence_piece.png)](https://jasonkessler.github.io/demo_sentence_piece.html)
+
 
 ### Visualizing scikit-learn text classification weights
 
@@ -2000,3 +2075,5 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Abram Handler, Matt Denny, Hanna Wallach, and Brendan O'Connor. Bag of what? Simple noun phrase extraction for corpus analysis.  NLP+CSS Workshop at EMNLP 2016.
 * Peter Fankhauser, Jörg Knappen, Elke Teich. Exploring and visualizing variation in language resources. LREC 2014.
 * Shinichi Nakagawa and Innes C. Cuthill. Effect size, confidence interval and statistical significance: a practical guide for biologists. 2007. In Biological Reviews 82.
+* Cynthia M. Whissell. The dictionary of affect in language. 1993. In The Measurement of Emotions.
+* David Bamman, Jacob Eisenstein, and Tyler Schnoebelen.  GENDER IDENTITY AND LEXICAL VARIATION IN SOCIAL MEDIA. 2014.

@@ -151,7 +151,7 @@ class TermDocMatrixWithoutCategories(object):
 
     def _get_corpus_unigram_freq(self, corpus_freq_df):
         unigram_validator = re.compile('^[A-Za-z]+$')
-        corpus_unigram_freq = corpus_freq_df.ix[[term for term
+        corpus_unigram_freq = corpus_freq_df.loc[[term for term
                                                  in corpus_freq_df.index
                                                  if unigram_validator.match(term) is not None]]
         return corpus_unigram_freq
@@ -239,6 +239,14 @@ class TermDocMatrixWithoutCategories(object):
         '''
         idx_to_delete_list = self._build_term_index_list(ignore_absences, terms)
         return self.remove_terms_by_indices(idx_to_delete_list)
+
+    def whitelist_terms(self, whitelist_terms):
+        '''
+
+        :param whitelist_terms: list[str], terms to whitelist
+        :return: TermDocMatrix, new object with only terms in parameter
+        '''
+        return self.remove_terms(list(set(self.get_terms()) - set(whitelist_terms)))
 
     def _build_term_index_list(self, ignore_absences, terms):
         idx_to_delete_list = []
