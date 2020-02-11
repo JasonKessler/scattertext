@@ -1,6 +1,6 @@
 import pkgutil
 from io import StringIO
-
+import numpy as np
 import pandas as pd
 
 from scattertext.Common import DEFAULT_BACKGROUND_SCALER_ALGO, DEFAULT_BACKGROUND_BETA
@@ -170,7 +170,7 @@ class TermCategoryFrequencies(object):
 		Integer document indices
 		'''
 		if self._document_category_df is None:
-			return pd.np.array([])
+			return np.array([])
 		categories_d = {d: i for i, d in enumerate(self.get_categories())}
 		return self._document_category_df.category.apply(categories_d.get).values
 
@@ -183,7 +183,7 @@ class TermCategoryFrequencies(object):
 		Texts
 		'''
 		if self._document_category_df is None:
-			return pd.np.array([])
+			return np.array([])
 		return self._document_category_df.text.values
 
 	def get_term_category_frequencies(self, scatterchartdata):

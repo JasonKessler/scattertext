@@ -541,7 +541,7 @@ class ScatterChart:
 
     def _limit_max_terms(self, category, df):
         df['score'] = self._term_importance_ranks(category, df)
-        df = df.ix[df.sort_values('score').iloc[:self.scatterchartdata.max_terms].index]
+        df = df.loc[df.sort_values('score').iloc[:self.scatterchartdata.max_terms].index]
         return df[[c for c in df.columns if c != 'score']]
 
     def _get_default_scores(self, category, other_categories, df):

@@ -1,4 +1,5 @@
 from unittest import TestCase
+import numpy as np
 
 import pandas as pd
 
@@ -64,17 +65,17 @@ class TestTermCategoryFrequencies(TestCase):
 		with self.assertRaises(AssertionError):
 			TermCategoryFrequencies(df, doc_df.rename(columns={'category': 'te'}))
 		term_cat_freq = TermCategoryFrequencies(df, doc_df)
-		pd.np.testing.assert_array_equal(term_cat_freq.get_doc_indices(),
+		np.testing.assert_array_equal(term_cat_freq.get_doc_indices(),
 		                                 [term_cat_freq.get_categories().index('republican'),
 		                                  term_cat_freq.get_categories().index('republican'),
 		                                  term_cat_freq.get_categories().index('democrat')])
-		pd.np.testing.assert_array_equal(term_cat_freq.get_texts(),
+		np.testing.assert_array_equal(term_cat_freq.get_texts(),
 		                                 ['Blah blah gut education ve got filled ago',
 		                                  'builds on most natural gas alone you what blah',
 		                                  "change will 's army the most"])
 
 	def test_no_docs(self):
-		pd.np.testing.assert_array_equal(self.term_cat_freq.get_doc_indices(),
+		np.testing.assert_array_equal(self.term_cat_freq.get_doc_indices(),
 		                                 [])
-		pd.np.testing.assert_array_equal(self.term_cat_freq.get_texts(),
+		np.testing.assert_array_equal(self.term_cat_freq.get_texts(),
 		                                 [])

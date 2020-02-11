@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 import pandas as pd
+import numpy as np
 
 from scattertext import SemioticSquare
 from scattertext.CorpusFromPandas import CorpusFromPandas
@@ -28,7 +29,7 @@ def get_docs_categories_semiotic():
 
 
 def get_test_corpus():
-	df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+	df = pd.DataFrame(data=np.array(get_docs_categories_semiotic()).T,
 	                  columns=['category', 'text'])
 	corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
 	return corpus
@@ -42,7 +43,7 @@ def get_test_semiotic_square():
 
 class TestSemioticSquare(TestCase):
 	def test_constructor(self):
-		df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+		df = pd.DataFrame(data=np.array(get_docs_categories_semiotic()).T,
 		                  columns=['category', 'text'])
 		corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
 		SemioticSquare(corpus, 'hamlet', 'jay-z/r. kelly', ['swift'])

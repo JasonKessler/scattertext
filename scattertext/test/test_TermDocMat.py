@@ -83,9 +83,9 @@ class TestTermDocMat(TestCase):
         term_doc_matrix = tdm_factory.build()
 
         term_df = term_doc_matrix.get_term_freq_df()
-        self.assertEqual(dict(term_df.ix['speak up']),
+        self.assertEqual(dict(term_df.loc['speak up']),
                          {'??? freq': 2, 'hamlet freq': 0, 'jay-z/r. kelly freq': 1})
-        self.assertEqual(dict(term_df.ix['that']),
+        self.assertEqual(dict(term_df.loc['that']),
                          {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 0})
 
     def test_get_terms(self):
@@ -240,7 +240,7 @@ class TestTermDocMat(TestCase):
                          ['hamlet', 'horatio', 'claudius'])
 
     def test_keep_only_these_categories(self):
-        df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+        df = pd.DataFrame(data=np.array(get_docs_categories_semiotic()).T,
                           columns=['category', 'text'])
         corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
         hamlet_swift_corpus = corpus.keep_only_these_categories(['hamlet', 'swift'])
@@ -251,7 +251,7 @@ class TestTermDocMat(TestCase):
         corpus.keep_only_these_categories(['hamlet', 'swift', 'asdjklasfd'], True)
 
     def test_remove_categories(self):
-        df = pd.DataFrame(data=pd.np.array(get_docs_categories_semiotic()).T,
+        df = pd.DataFrame(data=np.array(get_docs_categories_semiotic()).T,
                           columns=['category', 'text'])
         corpus = CorpusFromPandas(df, 'category', 'text', nlp=whitespace_nlp).build()
         swiftless = corpus.remove_categories(['swift'])

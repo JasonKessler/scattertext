@@ -142,7 +142,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		corpus_fact = CorpusFromParsedDocuments(df, 'category', 'parsed')
 		corpus = corpus_fact.build()
 		tdf = corpus.get_term_freq_df()
-		self.assertEqual(list(tdf.ix['play']), [37, 5])
+		self.assertEqual(list(tdf.loc['play']), [37, 5])
 		self.assertFalse(any(corpus.search('play').apply(lambda x: 'plfay' in str(x['parsed']), axis=1)))
 		self.assertTrue(all(corpus.search('play').apply(lambda x: 'play' in str(x['parsed']), axis=1)))
 

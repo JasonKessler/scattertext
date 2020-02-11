@@ -60,6 +60,6 @@ class TestParsedCorpus(TestCase):
 		group_df = self.corpus.term_group_freq_df('author')
 		self.assertEqual(set(group_df.index),
 		                 set(self.corpus._term_idx_store.values()))
-		self.assertEqual(dict(group_df.ix['of']), {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 1})
-		self.assertEqual(dict(group_df.ix['speak up']),
+		self.assertEqual(dict(group_df.loc['of']), {'??? freq': 0, 'hamlet freq': 2, 'jay-z/r. kelly freq': 1})
+		self.assertEqual(dict(group_df.loc['speak up']),
 		                 {'??? freq': 1, 'hamlet freq': 0, 'jay-z/r. kelly freq': 1})

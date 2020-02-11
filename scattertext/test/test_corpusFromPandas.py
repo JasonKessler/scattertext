@@ -31,7 +31,7 @@ class TestCorpusFromPandas(TestCase):
 		                 set(['hamlet', 'jay-z/r. kelly', '???']))
 		self.assertEqual(self.corpus.get_num_docs(), 10)
 		term_doc_df = self.corpus.get_term_freq_df()
-		self.assertEqual(term_doc_df.ix['of'].sum(), 3)
+		self.assertEqual(term_doc_df.loc['of'].sum(), 3)
 		self.corpus.get_df()
 
 	def test_chinese_error(self):

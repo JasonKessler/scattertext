@@ -1,5 +1,5 @@
 from unittest import TestCase
-
+import numpy as np
 import pandas as pd
 
 from scattertext import whitespace_nlp_with_sentences
@@ -30,5 +30,5 @@ class TestFeatsFromScoredLexicon(TestCase):
         self.assertEqual(set(feats_from_scored_lexicon.get_top_model_term_lists().keys()),
                          set(['activation', 'imagery', 'pleasantness']))
         features = feats_from_scored_lexicon.get_doc_metadata(whitespace_nlp_with_sentences('I abandoned a wallet.'))
-        pd.np.testing.assert_almost_equal(features[['activation', 'imagery', 'pleasantness']],
-                                          pd.np.array([1.74230, 2.00000, 1.57145]))
+        np.testing.assert_almost_equal(features[['activation', 'imagery', 'pleasantness']],
+                                       np.array([1.74230, 2.00000, 1.57145]))

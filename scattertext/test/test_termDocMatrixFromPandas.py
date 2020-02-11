@@ -24,7 +24,7 @@ class TestTermDocMatrixFromPandas(TestCase):
 		                 set(['hamlet', 'jay-z/r. kelly']))
 		self.assertEqual(term_doc_matrix.get_num_docs(), 9)
 		term_doc_df = term_doc_matrix.get_term_freq_df()
-		self.assertEqual(term_doc_df.ix['of'].sum(), 3)
+		self.assertEqual(term_doc_df.loc['of'].sum(), 3)
 
 	def test_one_word_per_docs(self):
 		records = [(0, 'verified', 'RAs'), (1, 'view', 'RAs'), (2, 'laminectomy', 'RAs'), (3, 'recognition', 'RAs'),
