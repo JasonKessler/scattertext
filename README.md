@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.56
+# Scattertext 0.0.2.57
 
 **Table of Contents**
 
@@ -1727,6 +1727,9 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+## 0.0.57
+
+Ensuring Pandas 1.0 compatibility fixing Issue #51 and scikit-learn stopwords import issue in #49.
 
 ## 0.0.28-31
 

@@ -1,3 +1,5 @@
+import pandas as pd
+import scipy
 from pandas import DataFrame
 from scipy.sparse import issparse
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -97,9 +99,19 @@ class CategoryProjector(CategoryProjectorBase):
         self.projector_ = projector
 
     def get_category_embeddings(self, category_corpus):
-        weighted_counts = self.weight(category_corpus.get_term_freq_df(''))
+        raw_category_counts = self._get_raw_category_counts(category_corpus)
+        weighted_counts = self.weight(raw_category_counts)
         normalized_counts = self.normalize(weighted_counts)
+        if type(normalized_counts) is not pd.DataFrame:
+            normalized_counts = pd.DataFrame(normalized_counts.todense()
+                                             if scipy.sparse.issparse(normalized_counts)
+                                             else normalized_counts,
+                                             columns=raw_category_counts.columns,
+                                             index=raw_category_counts.index)
         return normalized_counts
+
+    def _get_raw_category_counts(self, category_corpus):
+        return category_corpus.get_term_freq_df('')
 
     def weight(self, category_counts):
         if self.weighter_ is None:

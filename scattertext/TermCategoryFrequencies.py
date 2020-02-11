@@ -143,7 +143,6 @@ class TermCategoryFrequencies(object):
 		corpus_freq_df = pd.DataFrame({'corpus': self.term_category_freq_df.sum(axis=1)})
 		corpus_unigram_freq = corpus_freq_df.loc[[w for w in corpus_freq_df.index if ' ' not in w]]
 		df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
-		del df.index.name
 		return df
 
 	def _get_background_unigram_frequencies(self):

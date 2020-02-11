@@ -143,7 +143,6 @@ class TermDocMatrixWithoutCategories(object):
         corpus_freq_df = self.get_term_count_df()
         corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
         df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
-        del df.index.name
         return df
 
     def get_term_count_df(self):

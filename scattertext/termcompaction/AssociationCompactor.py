@@ -65,8 +65,14 @@ class AssociationCompactor(BaseAssociationCompactor):
     def _find_optimal_rank(self, ranks_df):
         max_rank = ranks_df.max().max()
         min_rank = 1
-
+        last_max_rank = None
+        last_min_rank = None
         while max_rank - 1 > min_rank:
+            if last_max_rank is not None:
+                if last_min_rank == min_rank and last_max_rank == max_rank:
+                    raise Exception("Error. Potential infinite loop detected.")
+            last_max_rank = max_rank
+            last_min_rank = min_rank
             cur_rank = int((max_rank - min_rank) / 2) + min_rank
             num_terms = self._get_num_terms_at_rank(cur_rank, ranks_df)
             if num_terms > self.max_terms:

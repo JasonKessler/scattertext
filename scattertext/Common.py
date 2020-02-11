@@ -1,4 +1,4 @@
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 # Constants for scaled f-score
 DEFAULT_BETA = 2

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import rankdata, pearsonr
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.metrics.pairwise import cosine_distances
 
 from scattertext.Scalers import stretch_0_to_1, dense_rank
@@ -17,7 +17,7 @@ from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRan
 
 def produce_category_focused_pairplot(corpus,
                                       category,
-                                      category_projector=CategoryProjector(projector=PCA(20)),
+                                      category_projector=CategoryProjector(projector=TruncatedSVD(20)),
                                       category_projection=None,
                                       **kwargs):
     '''

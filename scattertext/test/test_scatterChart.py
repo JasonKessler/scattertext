@@ -2,6 +2,7 @@ import sys
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 
 from scattertext import LogOddsRatioUninformativeDirichletPrior, scale
 from scattertext import ScatterChart

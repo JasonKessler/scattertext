@@ -32,6 +32,6 @@ html = st.produce_pca_explorer(corpus,
                                projection=projection,
                                scores=scores,
                                show_top_terms=False)
-file_name = 'demo_pca_documents.html'
+file_name = 'demo_umap_documents.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
 print('Open ./%s in Chrome.' % (file_name))

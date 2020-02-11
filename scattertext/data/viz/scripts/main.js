@@ -49,7 +49,7 @@ buildViz = function (d3) {
             width = widthInPixels - margin.left - margin.right,
             height = heightInPixels - margin.top - margin.bottom;
         fullData.data.forEach(function (x, i) {x.i = i});
-        
+
         // Set the ranges
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
@@ -59,7 +59,7 @@ buildViz = function (d3) {
                 .forEach(function (x) {x.style.display = 'none'});
             document.querySelectorAll('.'+divName+'-'+'contexts')
                 .forEach(function (x) {x.style.width = '90%'});
-        } 
+        }
         else if (showNeutral) {
             if (showExtra) {
                 document.querySelectorAll('.'+divName+'-'+'contexts')
@@ -68,7 +68,7 @@ buildViz = function (d3) {
                     x.style.float = 'left'
                 });
 
-                ['notcol','neutcol','extracol'].forEach(function (columnName) { 
+                ['notcol','neutcol','extracol'].forEach(function (columnName) {
                     document.querySelectorAll('#'+divName+'-'+columnName)
                         .forEach(function (x) {
                             x.style.display = 'inline'
@@ -84,7 +84,7 @@ buildViz = function (d3) {
                     x.style.float = 'left'
                 });
 
-                ['notcol','neutcol'].forEach(function (columnName) { 
+                ['notcol','neutcol'].forEach(function (columnName) {
                     document.querySelectorAll('#'+divName+'-'+columnName)
                         .forEach(function (x) {
                             x.style.display = 'inline'
@@ -103,7 +103,7 @@ buildViz = function (d3) {
                     x.style.float = 'left'
                 });
 
-            ['notcol'].forEach(function (columnName) { 
+            ['notcol'].forEach(function (columnName) {
                 document.querySelectorAll('#'+divName+'-'+columnName)
                     .forEach(function (x) {
                         //x.style.display = 'inline'
@@ -147,12 +147,12 @@ buildViz = function (d3) {
 
             return bsa(0, ar.length);
         }
-        
+
 
         console.log("fullData");
         console.log(fullData);
 
-        
+
         var sortedX = fullData.data.map(x=>x).sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
         }).map(function (x) {
@@ -326,7 +326,7 @@ buildViz = function (d3) {
             }
 
         }
-        
+
         function denseRank(ar) {
             var markedAr = ar.map((x,i) => [x,i]).sort((a,b) => a[0] - b[0]);
             var curRank = 1
@@ -338,31 +338,31 @@ buildViz = function (d3) {
                     return [curRank, x[0], x[1]];
                 }
             )
-            return rankedAr.map(x=>x).sort((a,b) => (a[2] - b[2])).map(x => x[0]);    
+            return rankedAr.map(x=>x).sort((a,b) => (a[2] - b[2])).map(x => x[0]);
         }
-        
-        
+
+
         function getDenseRanks(fullData, categoryNum) {
             var fgFreqs = Array(fullData.data.length).fill(0);
             var bgFreqs = Array(fullData.data.length).fill(0);
             var categoryTermCounts = fullData.termCounts[categoryNum];
-            
-            
+
+
             Object.keys(categoryTermCounts).forEach(
                 key => fgFreqs[key] = categoryTermCounts[key][0]
             )
-            fullData.termCounts.forEach( 
+            fullData.termCounts.forEach(
                 function (categoryTermCounts, otherCategoryNum) {
                     if(otherCategoryNum != categoryNum) {
                         Object.keys(categoryTermCounts).forEach(
                            key => bgFreqs[key] += categoryTermCounts[key][0]
-                        )                        
+                        )
                     }
                 }
             )
             var fgDenseRanks = denseRank(fgFreqs);
             var bgDenseRanks = denseRank(bgFreqs);
-            
+
             var maxfgDenseRanks = Math.max(...fgDenseRanks);
             var minfgDenseRanks = Math.min(...fgDenseRanks);
             var scalefgDenseRanks = fgDenseRanks.map(
@@ -382,19 +382,19 @@ buildViz = function (d3) {
             var denseRanks = getDenseRanks(fullData, categoryNum)
             return denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
         }
-        
+
         function getTermCounts(fullData) {
-            var counts = Array(fullData.data.length).fill(0);  
-            fullData.termCounts.forEach( 
+            var counts = Array(fullData.data.length).fill(0);
+            fullData.termCounts.forEach(
                 function (categoryTermCounts) {
                     Object.keys(categoryTermCounts).forEach(
                        key => counts[key] = categoryTermCounts[key][0]
-                    )                        
+                    )
                 }
             )
             return counts;
         }
-        
+
         function getContextWordLORIPs(query) {
             var contextWordCounts = getContextWordCounts(query);
             var ni_k = contextWordCounts.sums[0];
@@ -776,7 +776,7 @@ buildViz = function (d3) {
                     numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
                });
                var allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
-                
+
                /*contexts.forEach(function(context) {
                     context.forEach(function (singleDoc) {
                         numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
@@ -803,10 +803,10 @@ buildViz = function (d3) {
                         + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
                         +counts['percent'].toFixed(2) + '%';
                 }
-                
+
                 function getCategoryInlineHeadingHTML(counts) {
                     return '<a name="'+divName+'-category'
-                        + counts.labelNum + '"></a>' 
+                        + counts.labelNum + '"></a>'
                         + counts.label + ": <span class=topic_preview>"
                         + getCategoryStatsHTML(counts)
                         + "</span>";
@@ -846,7 +846,7 @@ buildViz = function (d3) {
 
                 })
 
-            
+
             } else {
                 var contextColumns = [
                     fullData.info.category_internal_name,
@@ -1100,8 +1100,6 @@ buildViz = function (d3) {
         }
 
         function searchInText(d, includeAll=true) {
-            console.log("INCLUDE ALL")
-            console.log(includeAll)
             function stripNonWordChars(term) {
                 //d.term.replace(" ", "[^\\w]+")
             }
@@ -1143,12 +1141,14 @@ buildViz = function (d3) {
                 ['.', '#'].forEach(function(a) {termToRegex = termToRegex.replace(a, '\\' + a)})
                 */
                 termToRegex = escapeRegExp(termToRegex);
+                console.log("termToRegex")
+                console.log(termToRegex)
                 var regexp = new RegExp(boundary + '('
                     + removeUnderScoreJoin(
                         termToRegex.replace(' ', wordSep, 'gim')
                     )
                     + ')' + boundary, 'gim');
-                console.log(regexp)
+                console.log(regexp);
                 try {
                     regexp.exec('X');
                 } catch (err) {
@@ -1224,7 +1224,7 @@ buildViz = function (d3) {
                     if (fullData.docs.meta) {
                         curMatch['meta'] = fullData.docs.meta[i];
                     }
-                    
+
                     while ((match = pattern.exec(text)) != null) {
                         if (sentenceOffsets == null) {
                             sentenceOffsets = getSentenceBoundaries(text);
@@ -1256,13 +1256,13 @@ buildViz = function (d3) {
                             ];
                             notmatches[numericLabel].push(curMatch);
                         }
-                        
+
                     }
                 }
             }
-            var toRet = {'contexts': matches, 
-                         'notmatches': notmatches, 
-                         'info': d, 
+            var toRet = {'contexts': matches,
+                         'notmatches': notmatches,
+                         'info': d,
                          'docLabel': docLabel};
             return toRet;
         }
@@ -1341,7 +1341,7 @@ buildViz = function (d3) {
                     runDisplayTermContexts = this.alternativeTermFunc(this.termDict[searchTerm]);
                 }
                 if(runDisplayTermContexts) {
-                    displayTermContexts(this.data, 
+                    displayTermContexts(this.data,
                                         this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts), false,
                                         this.includeAllContexts);
                 }
@@ -1360,7 +1360,7 @@ buildViz = function (d3) {
                     .text(searchTerm + " didn't make it into the visualization.");
             } else {
                 d3.select("#" + divName + "-alertMessage").text("");
-                var circle = mysvg; 
+                var circle = mysvg;
                 console.log("mysvg"); console.log(mysvg)
                 if(circle.tagName !== "circle") { // need to clean this thing up
                     circle = mysvg._groups[0][searchTermInfo.ci];
@@ -1371,17 +1371,17 @@ buildViz = function (d3) {
                         }
                     }
                     if(circle === undefined || circle.tagName != 'circle') {
-                        console.log("circle1"); 
+                        console.log("circle1");
                         if(mysvg._groups[0][0].children !== undefined) {
                             circle = Array.prototype.filter.call(
-                                mysvg._groups[0][0].children, 
+                                mysvg._groups[0][0].children,
                                 x=> (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
                             )[0];
                         }
                         console.log(circle)
                     }
                     if((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
-                        console.log("circle2"); 
+                        console.log("circle2");
                         console.log(mysvg._groups[0][0])
                         console.log(mysvg._groups[0][0].children)
                         console.log(searchTermInfo.ci);
@@ -1444,7 +1444,7 @@ buildViz = function (d3) {
         }
 
         function processData(fullData) {
-            
+
             modelInfo = fullData['info'];
             /*
              categoryTermList.data(modelInfo['category_terms'])
@@ -1560,8 +1560,8 @@ buildViz = function (d3) {
                         .selectAll('div')
                         .remove();
                 })
-            
-            
+
+
             coords = Object();
 
             var pointStore = [];
@@ -1590,7 +1590,7 @@ buildViz = function (d3) {
                 pointStore.push([x2, y2]);
                 curLabel.remove();
             }
-            
+
             function censorCircle(xCoord, yCoord) {
                 var curLabel = svg.append("text")
                     .attr("x", x(xCoord))
@@ -1615,7 +1615,7 @@ buildViz = function (d3) {
 
             function labelPointsIfPossible(datum, myX, myY) {
                 var term = datum.term;
-                if(term == "the") 
+                if(term == "the")
                     console.log("TERM " + term + " " + myX + " " + myY)
                 //console.log('xxx'); console.log(term); console.log(term.display !== undefined && term.display === false)
                 //if(term.display !== undefined && term.display === false) {
@@ -1624,12 +1624,12 @@ buildViz = function (d3) {
                 var configs = [
                     {'anchor': 'end', 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-                    
+
                     {'anchor': 'end', 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'end', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                    
+
                     {'anchor': 'start', 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
                     {'anchor': 'start', 'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
@@ -1848,7 +1848,7 @@ buildViz = function (d3) {
                     .call(xAxis);
 
                 //rangeTree = registerFigureBBox(myXAxis);
-                
+
 
                 var xLabel = drawXLabel(svg, getLabelText('x'));
 
@@ -1894,8 +1894,8 @@ buildViz = function (d3) {
                     }
                 }
                 var yLabel = drawYLabel(svg, getLabelText('y'))
-                
-            
+
+
             } else {
                 horizontal_line_y_position_translated = 0.5;
                 if(horizontal_line_y_position !== null) {
@@ -1973,7 +1973,7 @@ buildViz = function (d3) {
                         wordObjList.push(curWordPrinted)
                         return makeWordInteractive(
                             termDataList, //data,
-                            svg, 
+                            svg,
                             curWordPrinted,
                             curTerm,
                             termDataList[i]);
@@ -2060,7 +2060,7 @@ buildViz = function (d3) {
             }
 
             function showTopTermsPane(data,
-                                       registerFigureBBox, 
+                                       registerFigureBBox,
                                        showAssociatedWordList,
                                        catName,
                                        notCatName,
@@ -2102,7 +2102,7 @@ buildViz = function (d3) {
             if (showTopTerms) {
                 payload.topTermsPane = showTopTermsPane(
                     data,
-                    registerFigureBBox, 
+                    registerFigureBBox,
                     showAssociatedWordList,
                     "Top " + fullData['info']['category_name'],
                     "Top " + fullData['info']['not_category_name'],
@@ -2158,7 +2158,7 @@ buildViz = function (d3) {
                     existingLabels[i].label.remove();
                 }
                 console.log('labeling 1')
-                
+
 
                 var labeledPoints = [];
                 //var filteredData = data.filter(d=>d.display === undefined || d.display === true);
@@ -2441,7 +2441,7 @@ buildViz = function (d3) {
                         .selectAll('div')
                         .remove();
                 })
-                
+
                 if(color !== null) {
                      circles.style("fill", d => color(d));
                 }
@@ -2449,14 +2449,14 @@ buildViz = function (d3) {
                 labeledPoints = [];
                 labeledPoints = performPartialLabeling(
                     this.fullData.data,
-                    labeledPoints, 
+                    labeledPoints,
                     (d=>d.ox), //function (d) {return xCoords[d.ci]},
                     (d=>d.oy) //function (d) {return yCoords[d.ci]}
                 );
             };
             //return [performPartialLabeling, labeledPoints];
-            return {...payload, 
-                    ...{'rerender': rerender, 
+            return {...payload,
+                    ...{'rerender': rerender,
                         'performPartialLabeling': performPartialLabeling,
                         'showToolTipForTerm': showToolTipForTerm,
                         'svg': svg,
@@ -2468,21 +2468,21 @@ buildViz = function (d3) {
                         'populateCorpusStats': populateCorpusStats}};
         };
 
-        
-        
+
+
         //fullData = getDataAndInfo();
         if (fullData.docs) {
             var corpusWordCounts = getCorpusWordCounts();
         }
         var payload = processData(fullData);
-        
+
         // The tool tip is down here in order to make sure it has the highest z-index
         var tooltip = d3.select('#' + divName)
             .append("div")
             //.attr("class", getTooltipContent == null && sortByDist ? "tooltip" : "tooltipscore")
             .attr("class", "tooltipscore")
             .style("opacity", 0);
-        
+
         plotInterface = {}
         if(payload.topTermsPane) {
             plotInterface.topTermsPane = payload.topTermsPane;
@@ -2490,7 +2490,7 @@ buildViz = function (d3) {
             plotInterface.showAssociatedWordList = payload.showAssociatedWordList;
         }
         plotInterface.includeAllContexts = includeAllContexts;
-        plotInterface.divName = divName; 
+        plotInterface.divName = divName;
         plotInterface.displayTermContexts = displayTermContexts;
         plotInterface.gatherTermContexts = gatherTermContexts;
         plotInterface.xLabel = payload.xLabel;
@@ -2516,7 +2516,7 @@ buildViz = function (d3) {
             var logTermCounts = rawLogTermCounts.map(
                 x => (x - minRawLogTermCounts)/maxRawLogTermCounts
             )
-            
+
             //var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
             //console.log("RAW SCORES")
             //console.log(rawScores);
@@ -2540,9 +2540,9 @@ buildViz = function (d3) {
             var rawScores = logOddsRatioUninformativeDirichletPrior(
                 denseRanks.fgFreqs, denseRanks.bgFreqs, 0.01);
             */
-                
-            
-            
+
+
+
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
             console.log("denseRanks")
             console.log(denseRanks);
@@ -2552,13 +2552,13 @@ buildViz = function (d3) {
                 console.log(otherDenseRanks);
                 denseRanks.bg = otherDenseRanks.fg;
                 denseRanks.bgFreqs = otherDenseRanks.fgFreqs;
-                
+
             }
-            
+
             var rawScores = denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
             var minRawScores = Math.min(...rawScores);
             var maxRawScores = Math.max(...rawScores);
-            
+
             var scores = rawScores.map(
                 function(rawScore) {
                     if(rawScore == 0) {
@@ -2572,11 +2572,11 @@ buildViz = function (d3) {
             )
             var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
-            
+
             //!!! OLD and good
             var ox = denseRanks.bg;
-            var oy = denseRanks.fg; 
-            
+            var oy = denseRanks.fg;
+
             //!!! NEW
             /*
             var oy = denseRanks.fg.map((x,i)=> x - denseRanks.bg[i]);
@@ -2586,7 +2586,7 @@ buildViz = function (d3) {
             
             var ox = denseRanks.fg;
             */
-            
+
             /*
             ox = ox.map(function(x) {
                 if (x > 0)
@@ -2602,11 +2602,11 @@ buildViz = function (d3) {
                     return 0.5 * (1 + x/Math.min(...oy));
                     
             })*/
-            
-            
-            
-            
-            
+
+
+
+
+
             var oxmax = Math.max(...ox)
             var oxmin = Math.min(...ox)
             var ox = ox.map(x => (x - oxmin)/(oxmax - oxmin))
@@ -2617,8 +2617,8 @@ buildViz = function (d3) {
             //var oy = scores;
             var xf = this.x;
             var yf = this.y;
-            
-            this.fullData.data = this.fullData.data.map(function(term, i) { 
+
+            this.fullData.data = this.fullData.data.map(function(term, i) {
                 //term.ci = i;
                 term.s = scores[i];
                 term.os = rawScores[i];
@@ -2633,23 +2633,23 @@ buildViz = function (d3) {
                 term.display = false;
                 return term;
              })
-            
+
             // Feature selection
             var targetTermsToShow = 1500;
-            
+
             var sortedBg = denseRanks.bg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
             var sortedFg = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
             var sortedScores = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
             var myFullData = this.fullData
-            
+
             sortedBg.concat(sortedFg)//.concat(sortedScores.slice(0, parseInt(targetTermsToShow/2))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4)))
                 .forEach(function(i) {
                 myFullData.data[i].display = true;
             })
-            
+
             console.log('newly filtered')
             console.log(myFullData)
-            
+
             // begin rescaling to ignore hidden terms
             /*
             function scaleDenseRanks(ranks) { 
@@ -2682,23 +2682,23 @@ buildViz = function (d3) {
             console.log("rescaled");
             */
             // end rescaling
-            
-            
+
+
             this.rerender(//denseRanks.bg, 
-                          fullData.data.map(x=>x.ox), //ox 
-                          //denseRanks.fg, 
-                          fullData.data.map(x=>x.oy), //oy,          
+                          fullData.data.map(x=>x.ox), //ox
+                          //denseRanks.fg,
+                          fullData.data.map(x=>x.oy), //oy,
                           d => d3.interpolateRdYlBu(d.s));
             this.yLabel.remove()
             this.xLabel.remove()
-            
+
             var leftName = this.fullData.info.categories[categoryNum];
             var bottomName = "Not " + this.fullData.info.categories[categoryNum];
             if(otherCategoryNum !== null) {
                 bottomName = this.fullData.info.categories[otherCategoryNum];
             }
-            
-            
+
+
             this.yLabel = this.drawYLabel(this.svg, leftName + ' Frequncy Rank')
             this.xLabel = this.drawXLabel(this.svg, bottomName + ' Frequency Rank')
             console.log(this.topTermsPane)
@@ -2707,8 +2707,8 @@ buildViz = function (d3) {
             this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
             this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
             this.showWordList = payload.showWordList;
-            
-            
+
+
             this.showAssociatedWordList = function(data, word, header, isAssociatedToCategory, length=14) {
                 var sortedData = null;
                 if(!isAssociatedToCategory) {
@@ -2716,8 +2716,8 @@ buildViz = function (d3) {
                 } else {
                     sortedData = data.map(x=>x).sort((a, b) => scores[b.i] - scores[a.i])
                 }
-                console.log('sortedData'); 
-                console.log(isAssociatedToCategory); 
+                console.log('sortedData');
+                console.log(isAssociatedToCategory);
                 console.log(sortedData.slice(0, length))
                 console.log(payload)
                 console.log(word)
@@ -2731,7 +2731,7 @@ buildViz = function (d3) {
                 "Top " + bottomName,
                 this.topTermsPane.startingOffset
             )
-            
+
             fullData.info.category_name = leftName;
             fullData.info.not_category_name = bottomName;
             fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
@@ -2741,18 +2741,18 @@ buildViz = function (d3) {
             } else {
                 fullData.info.not_category_internal_names = this.fullData.info.categories
                     .filter(x => x===this.fullData.info.categories[otherCategoryNum]);
-                
+
                 fullData.info.neutral_category_internal_names = this.fullData.info.categories
-                    .filter(x => (x!==this.fullData.info.categories[categoryNum] 
+                    .filter(x => (x!==this.fullData.info.categories[categoryNum]
                                   && x!==this.fullData.info.categories[otherCategoryNum]));
                 fullData.info.neutral_category_name = "All Others";
 
             }
             console.log("fullData.info.not_category_internal_names")
             console.log(fullData.info.not_category_internal_names)
-            ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo', 
-             'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead', 
-             'neut' 
+            ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo',
+             'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead',
+             'neut'
             ].forEach(function(divSubName) {
                 var mydiv = '#'+divName+'-'+divSubName;
                 console.log("Clearing")
@@ -2764,7 +2764,7 @@ buildViz = function (d3) {
             this.populateCorpusStats();
             console.log(fullData)
         }
-        
+
         return plotInterface
     };
 }(d3);

@@ -5,7 +5,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 from scattertext.indexstore import IndexStore
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import     ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas, CompactTerms, CSRMatrixFactory
