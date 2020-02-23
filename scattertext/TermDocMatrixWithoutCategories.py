@@ -51,7 +51,7 @@ class TermDocMatrixWithoutCategories(object):
         return self
 
 
-    def compact(self, compactor):
+    def compact(self, compactor, non_text=False):
         '''
         Compact term document matrix.
 
@@ -60,19 +60,19 @@ class TermDocMatrixWithoutCategories(object):
         compactor : object
             Object that takes a Term Doc Matrix as its first argument, and has a compact function which returns a
             Term Doc Matrix like argument
-
+        non_text : bool
+            Use non text features. False by default.
         Returns
         -------
         TermDocMatrix
-        New Term Doc Matrix
         '''
-        return compactor.compact(self)
+        return compactor.compact(self, non_text)
 
-    def select(self, compactor):
+    def select(self, compactor, non_text=False):
         '''
         Same as compact
         '''
-        return compactor.compact(self)
+        return compactor.compact(self, non_text)
 
     def get_num_terms(self):
         '''
@@ -195,10 +195,16 @@ class TermDocMatrixWithoutCategories(object):
             self.get_term_count_df()['corpus']
         )
 
-    def _get_X_after_delete_terms(self, idx_to_delete_list):
-        new_term_idx_store = self._term_idx_store.batch_delete_idx(idx_to_delete_list)
-        new_X = delete_columns(self._X, idx_to_delete_list)
+    def _get_X_after_delete_terms(self, idx_to_delete_list, non_text=False):
+        new_term_idx_store = self._get_relevant_idx_store(non_text).batch_delete_idx(idx_to_delete_list)
+        new_X = delete_columns(self._get_relevant_X(non_text), idx_to_delete_list)
         return new_X, new_term_idx_store
+
+    def _get_relevant_X(self, non_text):
+        return self._mX if non_text else self._X
+
+    def _get_relevant_idx_store(self, non_text):
+        return self._metadata_idx_store if non_text else self._term_idx_store
 
     def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker):
         '''
@@ -222,7 +228,7 @@ class TermDocMatrixWithoutCategories(object):
                            if any([word in SPACY_ENTITY_TAGS for word in term.split()])]
         return self.remove_terms(terms_to_remove)
 
-    def remove_terms(self, terms, ignore_absences=False):
+    def remove_terms(self, terms, ignore_absences=False, non_text=False):
         '''Non destructive term removal.
 
         Parameters
@@ -230,14 +236,17 @@ class TermDocMatrixWithoutCategories(object):
         terms : list
             list of terms to remove
         ignore_absences : bool, False by default
-            if term does not appear, don't raise an error, just move on.
+            If term does not appear, don't raise an error, just move on.
+        non_text : bool, False by default
+            Remove metadata terms instead of regular terms
 
         Returns
         -------
         TermDocMatrix, new object with terms removed.
         '''
-        idx_to_delete_list = self._build_term_index_list(ignore_absences, terms)
-        return self.remove_terms_by_indices(idx_to_delete_list)
+        idx_to_delete_list = self._build_term_index_list(ignore_absences, terms, non_text)
+        return self.remove_terms_by_indices(idx_to_delete_list, non_text)
+
 
     def whitelist_terms(self, whitelist_terms):
         '''
@@ -247,14 +256,15 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return self.remove_terms(list(set(self.get_terms()) - set(whitelist_terms)))
 
-    def _build_term_index_list(self, ignore_absences, terms):
+    def _build_term_index_list(self, ignore_absences, terms, non_text=False):
         idx_to_delete_list = []
+        my_term_idx_store = self._get_relevant_idx_store(non_text)
         for term in terms:
-            if term not in self._term_idx_store:
+            if term not in my_term_idx_store:
                 if not ignore_absences:
                     raise KeyError('Term %s not found' % (term))
                 continue
-            idx_to_delete_list.append(self._term_idx_store.getidx(term))
+            idx_to_delete_list.append(my_term_idx_store.getidx(term))
         return idx_to_delete_list
 
     def _make_new_term_doc_matrix(self,
@@ -270,22 +280,25 @@ class TermDocMatrixWithoutCategories(object):
             mX=new_mX if new_mX is not None else self._mX,
             term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
             metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
-            unigram_frequency_path=self._unigram_frequency_path)
+            unigram_frequency_path=self._unigram_frequency_path
+        )
 
-    def remove_terms_used_in_less_than_num_docs(self, threshold):
+    def remove_terms_used_in_less_than_num_docs(self, threshold, non_text=False):
         '''
         Parameters
         ----------
         threshold: int
             Minimum number of documents term should appear in to be kept
+        non_text: bool
+            Use non-text features instead of terms
 
         Returns
         -------
         TermDocMatrix, new object with terms removed.
         '''
-        term_counts = self._X.astype(bool).astype(int).sum(axis=0).A[0]
+        term_counts = self._get_relevant_X(non_text).astype(bool).astype(int).sum(axis=0).A[0]
         terms_to_remove = np.where(term_counts < threshold)[0]
-        return self.remove_terms_by_indices(terms_to_remove)
+        return self.remove_terms_by_indices(terms_to_remove, non_text)
 
     def get_unigram_corpus(self):
         '''
@@ -367,24 +380,27 @@ class TermDocMatrixWithoutCategories(object):
         unigram_X, _ = self._get_X_after_delete_terms(idx_to_delete_list)
         return unigram_X.sum(axis=1).A1
 
-    def remove_terms_by_indices(self, idx_to_delete_list):
+    def remove_terms_by_indices(self, idx_to_delete_list, non_text=False):
         '''
         Parameters
         ----------
         idx_to_delete_list, list
+        non_text, bool
+            Should we remove non text features or just terms?
 
         Returns
         -------
         TermDocMatrix
         '''
-        new_X, new_term_idx_store = self._get_X_after_delete_terms(idx_to_delete_list)
+        new_X, new_idx_store = self._get_X_after_delete_terms(idx_to_delete_list, non_text)
 
-        return self._make_new_term_doc_matrix(new_X=new_X,
-                                              new_mX=self._mX,
+        return self._make_new_term_doc_matrix(new_X=self._X if non_text else new_X,
+                                              new_mX=new_X if non_text else self._mX,
                                               new_y=None,
                                               new_category_idx_store=None,
-                                              new_term_idx_store=new_term_idx_store,
-                                              new_metadata_idx_store=self._metadata_idx_store,
+                                              new_term_idx_store=self._term_idx_store if non_text else new_idx_store,
+                                              new_metadata_idx_store=(new_idx_store if non_text
+                                                                      else self._metadata_idx_store),
                                               new_y_mask=np.ones(new_X.shape[0]).astype(np.bool))
 
     def get_scaled_f_scores_vs_background(self,

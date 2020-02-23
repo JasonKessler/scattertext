@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 
-version = [0, 0, 2, 58]
+version = [0, 0, 2, 59]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from scattertext.features.FeastFromSentencePiece import FeatsFromSentencePiece
+from scattertext.features.PyTextRankPhrases import PyTextRankPhrases
 from scattertext.termscoring.BetaPosterior import BetaPosterior
 from scattertext.semioticsquare.SemioticSquareFromAxes import SemioticSquareFromAxes
 from scattertext.categoryprojector.OptimalProjection import get_optimal_category_projection, \

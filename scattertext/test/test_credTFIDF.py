@@ -16,7 +16,7 @@ class TestCredTFIDF(TestCase):
         np.testing.assert_almost_equal(tfidf
                                        .get_scores()[:5], [3.0757237e-05, 4.1256023e-02, 4.1256023e-02, 5.5708409e-02,
                                                            4.1256023e-02])
-        print(tfidf.get_score_df().iloc[0])
+        #print(tfidf.get_score_df().iloc[0])
         self.assertEqual(list(tfidf.get_score_df().columns), ['pos_cred_tfidf', 'neg_cred_tfidf', 'delta_cred_tf_idf'])
 
 

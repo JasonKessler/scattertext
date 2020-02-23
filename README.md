@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.58
+# Scattertext 0.0.2.59
 
 **Table of Contents**
 
@@ -14,6 +14,7 @@
     - [Help! I don't know Python but I still want to use Scattertext](#help-i-dont-know-python-but-i-still-want-to-use-scattertext)
     - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#using-scattertext-as-a-text-analysis-library-finding-characteristic-terms-and-their-associations)
     - [Visualizing term associations](#visualizing-term-associations)
+    - [Visualizing phrase associations](#visualizing-phrase-associations)    
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
@@ -348,9 +349,192 @@ each excerpt with the speaker using the `metadata` parameter.  Finally, we write
 Below is what the webpage looks like.  Click it and wait a few minutes for the interactive version.
 [![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
 
+
+### Visualizing Phrase associations
+
+Scattertext can also be used to visualize the category association of a variety of different phrase types.  The word 
+"phrase" denotes any single or multi-word collocation.
+
+#### Using PyTextRank
+
+[PyTextRank](https://github.com/DerwenAI/pytextrank), created by Paco Nathan, is an implementation of
+ a modified version of the TextRank algorithm (Mihalcea and Tarau 2014.) 
+It involves graph centrality algorithm to extract a scored list of the most prominent phrases in a document. Here, 
+named entities recognized by spaCy. As of spaCy version 2.2, these are from an NER system trained on 
+[Ontonotes 5](https://catalog.ldc.upenn.edu/LDC2013T19). 
+
+To use, build a corpus as normal, but make sure you use spaCy to parse each document as opposed a built-in
+`whitespace_nlp`-type tokenizer.  Note that adding PyTextRank to the spaCy pipeline is not needed, as it 
+will be run separately by the `PyTextRankPhrases` object. We'll reduce the number of phrases displayed in the 
+chart to 2000 using the `AssociationCompactor`.  The phrases generated will be treated like non-textual features
+since their document scores will not correspond to word counts. 
+
+```pydocstring
+>>> import pytextrank, spacy
+>>> import scattertext as st
+>>>
+>>> nlp = spacy.load('en')
+>>>
+>>> convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
+...    parse=lambda df: df.text.apply(nlp)
+...    party=lambda df: df.party.apply({'democrat': 'Democratic', 'republican': 'Republican'}.get)
+... )
+>>> corpus = st.CorpusFromParsedDocuments(
+...    convention_df,
+...    category_col='party',
+...    parsed_col='parse',
+...    feats_from_spacy_doc=st.PyTextRankPhrases()
+... ).build(
+... ).compact(
+...    AssociationCompactor(2000, use_non_text_features=True)
+... )
+```
+
+Note that the terms present in the corpus are named entities, and, as opposed to frequency counts, their scores
+are the eigencentrality scores assigned to them by the TextRank algorithm. Running `corpus.get_metadata_freq_df('')`
+will return, for each category, the sums of terms' TextRank scores.  The dense ranks of these scores will be used to
+construct the scatter plot.  
+
+```pydocstring
+>>> term_category_scores = corpus.get_metadata_freq_df('')
+>>> print(term_category_scores)
+                democrat freq  republican freq
+term
+new jobs             0.354345         0.225979
+new workers          0.057260         0.000000
+new energy           0.055315         0.000000
+new tax breaks       0.055140         0.000000
+new challenges       0.054368         0.000000
+...                       ...              ...
+your story           0.000000         0.179696
+the beauty           0.000000         0.023856
+a hope               0.000000         0.022264
+no rhetoric          0.000000         0.019756
+the bravery          0.000000         0.019351
+
+[11440 rows x 2 columns]
+
+```  
+
+Before we construct the plot, let's some helper variables  Since the aggregate TextRank scores aren't particularly 
+interpretable, we'll display the per-category rank of each score in the `metadata_description` field. These will be 
+displayed after a term is clicked.
+
+```pydocstring
+>>> term_ranks = np.argsort(np.argsort(-term_category_scores, axis=0), axis=0) + 1
+>>> metadata_descriptions = {
+...     term: '<br/>' + '<br/>'.join(
+...         '<b>%s</b> TextRank score rank: %s/%s' % (cat, term_ranks.loc[term, cat], corpus.get_num_metadata())
+...         for cat in corpus.get_categories())
+...     for term in corpus.get_metadata()
+... }
+```
+
+We can construct term scores in a couple ways.  One is a standard dense-rank difference, a score which is used in most 
+of the two-category contrastive plots here, which will give us the most category-associated phrases. Another is to use 
+the maximum category-specific score, this will give us the most prominent phrases in each category, regardless of the 
+prominence in the other category.  We'll take both approaches in this tutorial, let's compute the second kind of score,
+the category-specific prominence below.
+
+```pydocstring
+>>> category_specific_prominence = term_category_scores.apply(
+...     lambda r: r.Democratic if r.Democratic > r.Republican else -r.Republican,
+...     axis=1
+... )
+```
+
+Now we're ready output this chart.  Note that we use a `dense_rank` transform, which places identically scalled phrases
+atop each other. We use `category_specific_prominence` as scores, and set `sort_by_dist` as `False` to ensure the 
+phrases displayed on the right-hand side of the chart are ranked by the scores and not distance to the upper-left or 
+lower-right corners. Since matching phrases are treated as non-text features, we encode them as single-phrase topic 
+modelsm and set the `topic_model_preview_size` to `0` to indicate the topic model list shouldn't be shown.  Finally,
+we set ensure the full documents are displayed.  Note the documents will be displayed in order of phrase-specific score.
+
+```pydocstring
+>>> html = produce_scattertext_explorer(
+...     corpus,
+...     category='Democratic',
+...     minimum_term_frequency=0,
+...     pmi_threshold_coefficient=0,
+...     width_in_pixels=1000,
+...     transform=dense_rank,
+...     metadata=corpus.get_df()['speaker'],
+...     scores=category_specific_prominence,
+...     sort_by_dist=False,
+...     use_non_text_features=True,
+...     topic_model_term_lists={term: [term] for term in corpus.get_metadata()},
+...     topic_model_preview_size=0,
+...     metadata_descriptions=metadata_descriptions,
+...     use_full_doc=True
+... )
+```
+
+[![PyTextRankProminenceScore.html](https://jasonkessler.github.io/PyTextRankProminence.png)](https://jasonkessler.github.io/PyTextRankProminenceScore.html)
+
+Alternatively, we can Dense Rank Difference in scores to color phrase-points and determine the top phrases to be 
+displayed on the right-hand side of the chart.  Instead of setting `scores` as category-specific prominence scores,
+we set `term_scorer=RankDifference()` to inject a way determining term scores into the scatter plot creation process.  
+
+```pydocstring
+>>> html = produce_scattertext_explorer(
+...     corpus,
+...     category='Democratic',
+...     minimum_term_frequency=0,
+...     pmi_threshold_coefficient=0,
+...     width_in_pixels=1000,
+...     transform=dense_rank,
+...     use_non_text_features=True,
+...     metadata=corpus.get_df()['speaker'],
+...     term_scorer=RankDifference(),
+...     sort_by_dist=False,
+...     topic_model_term_lists={term: [term] for term in corpus.get_metadata()},
+...     topic_model_preview_size=0, 
+...     metadata_descriptions=metadata_descriptions,
+...     use_full_doc=True
+... )
+```
+
+[![PyTextRankRankDiff.html](https://jasonkessler.github.io/PyTextRankRankDiff.png)](https://jasonkessler.github.io/PyTextRankRankDiff.html)
+
+#### Using Phrasemachine to find phrases.
+
+Phrasemachine from [AbeHandler](https://github.com/AbeHandler) (Handler et al. 2016) uses regular expressions over 
+sequences of part-of-speech tags to identify noun phrases.  This has the advantage over using spaCy's NP-chunking
+in that it tends to isolote meaningful, large noun phases which are free of appositives.
+
+A opposed to PyTextRank, we'll just use counts of these phrases, treating them like any other term. 
+
+```pydocstring
+>>> import spacy
+>>> from scattertext import SampleCorpora, PhraseMachinePhrases, dense_rank, RankDifference, AssociationCompactor, produce_scattertext_explorer
+>>> from scattertext.CorpusFromPandas import CorpusFromPandas
+>>>
+>>> corpus = (CorpusFromPandas(SampleCorpora.ConventionData2012.get_data(),
+...                            category_col='party',
+...                            text_col='text',
+...                            feats_from_spacy_doc=PhraseMachinePhrases(),
+...                            nlp=spacy.load('en', parser=False))
+...           .build().compact(AssociationCompactor(4000)))
+>>>
+>>> html = produce_scattertext_explorer(corpus,
+...                                     category='democrat',
+...                                     category_name='Democratic',
+...                                     not_category_name='Republican',
+...                                     minimum_term_frequency=0,
+...                                     pmi_threshold_coefficient=0,
+...                                     transform=dense_rank,
+...                                     metadata=corpus.get_df()['speaker'],
+...                                     term_scorer=RankDifference(),
+...                                     width_in_pixels=1000)
+```
+
+[![Phrasemachine.html](https://jasonkessler.github.io/PhraseMachine.png)](https://jasonkessler.github.io/[![Phrasemachine.html)
+
+
+
 ### Visualizing Empath topics and categories
 
-In order to visualize Empath (Fast 2016) topics and categories instead of terms, we'll need to 
+In order to visualize Empath (Fast et al., 2016) topics and categories instead of terms, we'll need to 
 create a `Corpus` of extracted topics and categories rather than unigrams and 
 bigrams. To do so, use the `FeatsOnlyFromEmpath` feature extractor.  See the source code for 
 examples of how to make your own.
@@ -2080,3 +2264,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Shinichi Nakagawa and Innes C. Cuthill. Effect size, confidence interval and statistical significance: a practical guide for biologists. 2007. In Biological Reviews 82.
 * Cynthia M. Whissell. The dictionary of affect in language. 1993. In The Measurement of Emotions.
 * David Bamman, Jacob Eisenstein, and Tyler Schnoebelen.  GENDER IDENTITY AND LEXICAL VARIATION IN SOCIAL MEDIA. 2014.
+* Rada Mihalcea, Paul Tarau. TextRank: Bringing Order into Text. EMNLP. 2014.

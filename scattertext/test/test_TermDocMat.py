@@ -180,6 +180,21 @@ class TestTermDocMat(TestCase):
         self.assertNotIn('hello', removed_df.index)
         self.assertIn('hello', df.index)
 
+    def test_remove_terms_non_text(self):
+        hamlet = get_hamlet_term_doc_matrix()
+        doc_names = [str(i) for i in range(hamlet.get_num_docs())]
+        hamlet_meta = hamlet.add_doc_names_as_metadata(doc_names)
+        with self.assertRaises(KeyError):
+            hamlet_meta.remove_terms(['xzcljzxsdjlksd'], non_text=True)
+        tdm_removed = hamlet_meta.remove_terms(['2', '4', '6'], non_text=True)
+        removed_df = tdm_removed.get_metadata_freq_df()
+        df = hamlet_meta.get_metadata_freq_df()
+        self.assertEqual(tdm_removed.get_num_docs(), hamlet_meta.get_num_docs())
+        self.assertEqual(len(removed_df), len(df) - 3)
+        self.assertNotIn('2', removed_df.index)
+        self.assertIn('2', df.index)
+
+
     def test_whitelist_terms(self):
         tdm = make_a_test_term_doc_matrix()
         tdm_removed = tdm.whitelist_terms(['hello', 'this', 'is'])

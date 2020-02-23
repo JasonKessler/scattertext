@@ -11,7 +11,7 @@ class CombineDocsIntoDomains(object):
 		'''
 		self.term_doc_matrix = term_doc_matrix
 
-	def get_new_term_doc_mat(self, doc_domains):
+	def get_new_term_doc_mat(self, doc_domains, non_text=False):
 		'''
 		Combines documents together that are in the same domain
 
@@ -26,10 +26,10 @@ class CombineDocsIntoDomains(object):
 		'''
 		assert len(doc_domains) == self.term_doc_matrix.get_num_docs()
 		doc_domain_set = set(doc_domains)
-		num_terms = self.term_doc_matrix.get_num_terms()
+		num_terms = self.term_doc_matrix.get_num_metadata() if non_text else self.term_doc_matrix.get_num_terms()
 		num_domains = len(doc_domain_set)
 		domain_mat = lil_matrix((num_domains, num_terms), dtype=int)
-		X = self.term_doc_matrix.get_term_doc_mat()
+		X = self.term_doc_matrix.get_metadata_doc_mat() if non_text else self.term_doc_matrix.get_term_doc_mat()
 		for i, domain in enumerate(doc_domain_set):
 			domain_mat[i, :] = X[np.array(doc_domains == domain)].sum(axis=0)
 		return domain_mat.tocsr()

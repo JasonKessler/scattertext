@@ -32,7 +32,7 @@ class DomainCompactor(object):
 		self.max_domain_count = (len(doc_domains) if max_domain_count is None
 		                         else max_domain_count)
 
-	def compact(self, term_doc_matrix):
+	def compact(self, term_doc_matrix, non_text=False):
 		'''
 		Parameters
 		----------
@@ -43,9 +43,12 @@ class DomainCompactor(object):
 		-------
 		New term doc matrix
 		'''
-		domain_mat = CombineDocsIntoDomains(term_doc_matrix).get_new_term_doc_mat(self.doc_domains)
+		domain_mat = CombineDocsIntoDomains(term_doc_matrix).get_new_term_doc_mat(self.doc_domains, non_text)
 		domain_count = (domain_mat > 0).sum(axis=0)
 		valid_term_mask = (self.max_domain_count >= domain_count) \
 		                  & (domain_count >= self.min_domain_count)
-		indices_to_compact = np.arange(term_doc_matrix.get_num_terms())[~valid_term_mask.A1]
-		return term_doc_matrix.remove_terms_by_indices(indices_to_compact)
+		indices_to_compact = np.arange(self._get_num_terms(term_doc_matrix, non_text))[~valid_term_mask.A1]
+		return term_doc_matrix.remove_terms_by_indices(indices_to_compact, non_text=non_text)
+
+	def _get_num_terms(self, term_doc_matrix, non_text):
+		return term_doc_matrix.get_num_metadata() if non_text else term_doc_matrix.get_num_terms()

@@ -426,7 +426,7 @@ class ScatterChart:
         bg_terms = bg_terms['Scaled f-score']
         bg_terms.name = 'bg'
         bg_terms = bg_terms.reset_index()
-        bg_terms.columns = ['term' if x == 'index' else x for x in bg_terms.columns]
+        bg_terms.columns = ['term' if x in ['index', 'word'] else x for x in bg_terms.columns]
         json_df = pd.merge(json_df, bg_terms, on='term', how='left')
         return json_df['bg'].fillna(0)
 

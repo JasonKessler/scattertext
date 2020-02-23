@@ -227,5 +227,3 @@ class ScatterplotStructure(object):
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):
         return object_name + ' = ' + self.call_build_visualization_in_javascript()
-
-

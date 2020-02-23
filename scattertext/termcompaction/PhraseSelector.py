@@ -17,7 +17,7 @@ class PhraseSelector(object):
 		'''
 		self.minimum_pmi = minimum_pmi
 
-	def compact(self, term_doc_matrix):
+	def compact(self, term_doc_matrix, non_text=False):
 		'''
 		Parameters
 		-------
@@ -28,14 +28,17 @@ class PhraseSelector(object):
 
 		New term doc matrix
 		'''
-		count_df = self._get_statistics_dataframe(term_doc_matrix)
+		count_df = self._get_statistics_dataframe(term_doc_matrix, non_text)
 
 		return term_doc_matrix.remove_terms(
-			count_df[count_df['pmi'] < self.minimum_pmi].index
+			count_df[count_df['pmi'] < self.minimum_pmi].index,
+			non_text=non_text
 		)
 
-	def _get_statistics_dataframe(self, term_doc_matrix):
-		tdf = term_doc_matrix.get_term_freq_df().sum(axis=1)
+	def _get_statistics_dataframe(self, term_doc_matrix, non_text):
+		tdf = (term_doc_matrix.get_metadata_freq_df().sum(axis=1)
+			   if non_text
+			   else term_doc_matrix.get_term_freq_df().sum(axis=1))
 		gram_df = pd.Series(tdf.index).apply(lambda x: pd.Series(list(reversed(x.split()))))
 		gram_df['c'] = tdf.values
 		gram_df['term'] = tdf.index

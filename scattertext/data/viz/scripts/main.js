@@ -917,7 +917,7 @@ buildViz = function (d3) {
                 .append('div')
                 .attr("class", "snippet_header")
                 .html(termHtml);
-            if ('metalists' in fullData && info.term in fullData.metalists) {
+            if ('metalists' in fullData && info.term in fullData.metalists && topic_model_preview_size > 0) {
                 d3.select('#'+divName+'-'+'termstats')
                     .attr("class", "topic_preview")
                     .append('div')

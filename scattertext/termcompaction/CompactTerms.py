@@ -26,27 +26,33 @@ class CompactTerms(object):
 		self.minimum_term_count = minimum_term_count
 		self.redundancy_slack = slack
 
-	def compact(self, term_doc_matrix):
+	def compact(self, term_doc_matrix, non_text=False):
 		'''
 		Parameters
 		----------
 		term_doc_matrix : TermDocMatrix
 			Term document matrix object to compact
+		non_text : bool
+			Use non-text features instead of terms
 
 		Returns
 		-------
 		New term doc matrix
 		'''
-		return term_doc_matrix.remove_terms_by_indices(self._indices_to_compact(term_doc_matrix))
+		return term_doc_matrix.remove_terms_by_indices(self._indices_to_compact(term_doc_matrix, non_text), non_text)
 
-	def _indices_to_compact(self, term_doc_matrix):
+	def _indices_to_compact(self, term_doc_matrix, non_text=False):
+		ranker = self.term_ranker(term_doc_matrix)
+		if non_text:
+			ranker = ranker.use_non_text_features()
 		indicies = self._get_term_indices_to_compact_from_term_freqs(
-			self.term_ranker(term_doc_matrix).get_ranks(),
-			term_doc_matrix
+			ranker.get_ranks(),
+			term_doc_matrix,
+			non_text
 		)
 		return list(indicies)
 
-	def _get_term_indices_to_compact_from_term_freqs(self, term_freqs, term_doc_matrix):
+	def _get_term_indices_to_compact_from_term_freqs(self, term_freqs, term_doc_matrix, non_text):
 		idx = IndexStore()
 		tdf_vals = term_freqs.values
 		valid_terms_mask = tdf_vals.sum(axis=1) >= self.minimum_term_count
@@ -67,7 +73,7 @@ class CompactTerms(object):
 		pairs = self._limit_to_non_identical_terms(pairs)
 		pairs = self._limit_to_pairs_of_bigrams_and_a_constituent_unigram(pairs, terms)
 		pairs = self._limit_to_redundant_unigrams(pairs, tdf_vals)
-		idx_store = term_doc_matrix._term_idx_store
+		idx_store = term_doc_matrix._get_relevant_idx_store(non_text)
 		redundant_terms = idx_store.getidxstrictbatch(terms[np.unique(pairs[:, 1])])
 		infrequent_terms = np.argwhere(~valid_terms_mask).T[0]
 		terms_to_remove = np.concatenate([redundant_terms, infrequent_terms])

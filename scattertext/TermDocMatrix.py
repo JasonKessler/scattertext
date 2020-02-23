@@ -112,7 +112,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()), dtype=int)
+        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()),
+                            dtype=self.get_term_doc_mat().dtype)
         for cat_i in range(self.get_num_categories()):
             freq_mat[:, cat_i] = self._X[self._y == cat_i, :].sum(axis=0)
         return freq_mat
@@ -123,7 +124,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()), dtype=int)
+        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()),
+                            dtype=self.get_term_doc_mat().dtype)
         for cat_i in range(self.get_num_categories()):
             X = (self._X[self._y == cat_i, :] > 0).astype(int)
             freq_mat[:, cat_i] = X.sum(axis=0)
@@ -135,7 +137,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(self.get_num_metadata(), self.get_num_categories()), dtype=int)
+        freq_mat = np.zeros(shape=(self.get_num_metadata(), self.get_num_categories()),
+                            dtype=self.get_metadata_doc_mat().dtype)
         for cat_i in range(self.get_num_categories()):
             mX = (self._mX[self._y == cat_i, :] > 0).astype(int)
             freq_mat[:, cat_i] = mX.sum(axis=0)
@@ -195,9 +198,18 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         -------
         pd.DataFrame indexed on metadata, with columns giving frequencies for each category
         '''
+        '''
         row = self._row_category_ids_for_meta()
         newX = csr_matrix((self._mX.data, (row, self._mX.indices)))
         return self._metadata_freq_df_from_matrix(newX, label_append)
+        '''
+        freq_mat = np.zeros(shape=(self.get_num_metadata(), self.get_num_categories()),
+                            dtype=self.get_metadata_doc_mat().dtype)
+        for cat_i in range(self.get_num_categories()):
+            freq_mat[:, cat_i] = self._mX[self._y == cat_i, :].sum(axis=0)
+        return pd.DataFrame(freq_mat,
+                            index=pd.Series(self.get_metadata(), name='term'),
+                            columns=[c + label_append for c in self.get_categories()])
 
     def _row_category_ids(self):
         row = self._X.tocoo().row
@@ -298,34 +310,42 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                              ~np.isin(self._y, idx_to_delete_list))
         return term_doc_mat_to_ret
 
-    def remove_terms_by_indices(self, idx_to_delete_list):
+    def remove_terms_by_indices(self, idx_to_delete_list, non_text=False):
         '''
         Parameters
         ----------
         idx_to_delete_list, list
+        non_text, bool
 
         Returns
         -------
         TermDocMatrix
         '''
-        new_X, new_term_idx_store = self._get_X_after_delete_terms(idx_to_delete_list)
-        return self._make_new_term_doc_matrix(new_X, self._mX, self._y, new_term_idx_store, self._category_idx_store,
-                                              self._metadata_idx_store, self._y == self._y)
+        new_X, new_idx_store = self._get_X_after_delete_terms(idx_to_delete_list, non_text)
+        return self._make_new_term_doc_matrix(
+            new_X=self._X if non_text else new_X,
+            new_mX=new_X if non_text else self._mX,
+            new_y=self._y,
+            new_term_idx_store=self._term_idx_store if non_text else new_idx_store,
+            new_category_idx_store=self._category_idx_store,
+            new_metadata_idx_store=new_idx_store if non_text else self._metadata_idx_store,
+            new_y_mask=self._y == self._y
+        )
 
     def _make_new_term_doc_matrix(self,
-                                  new_X,
-                                  new_mX,
-                                  new_y,
-                                  new_term_idx_store,
-                                  new_category_idx_store,
-                                  new_metadata_idx_store,
-                                  new_y_mask):
+                                  new_X=None,
+                                  new_mX=None,
+                                  new_y=None,
+                                  new_term_idx_store=None,
+                                  new_category_idx_store=None,
+                                  new_metadata_idx_store=None,
+                                  new_y_mask=None):
         return TermDocMatrix(X=new_X if new_X is not None else self._X,
                              mX=new_mX if new_mX is not None else self._mX,
                              y=new_y if new_y is not None else self._y,
-                             term_idx_store=new_term_idx_store if not None else self._term_idx_store,
-                             category_idx_store=new_category_idx_store if not None else self._category_idx_store,
-                             metadata_idx_store=new_metadata_idx_store if not None else self._metadata_idx_store,
+                             term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
+                             category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
+                             metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
                              unigram_frequency_path=self._unigram_frequency_path)
 
     def get_posterior_mean_ratio_scores(self, category):

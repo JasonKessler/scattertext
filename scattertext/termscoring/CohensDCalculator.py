@@ -11,7 +11,7 @@ class CohensDCalculator(object):
         smoothed_ncat_X = np.vstack([empty_ncat_X_smoothing_doc, ncat_X])
         n1, n2 = float(smoothed_cat_X.shape[0]), float(smoothed_ncat_X.shape[0])
         n = n1 + n2
-        print(cat_X.shape, type(cat_X))
+        #print(cat_X.shape, type(cat_X))
         m1 = cat_X.mean(axis=0).A1 if type(cat_X) == np.matrix else cat_X.mean(axis=0)
         m2 = ncat_X.mean(axis=0).A1 if type(ncat_X) == np.matrix else ncat_X.mean(axis=0)
         v1 = smoothed_cat_X.var(axis=0).A1 if type(smoothed_cat_X) == np.matrix else smoothed_cat_X.mean(axis=0)
