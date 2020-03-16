@@ -43,6 +43,7 @@ category_specific_prominence = term_category_scores.apply(
 html = produce_scattertext_explorer(
     corpus,
     category='Democratic',
+    not_category_name='Republican',
     minimum_term_frequency=0,
     pmi_threshold_coefficient=0,
     width_in_pixels=1000,
@@ -66,6 +67,7 @@ print('Open %s in Chrome or Firefox.' % file_name)
 html = produce_scattertext_explorer(
     corpus,
     category='Democratic',
+    not_category_name='Republican',
     width_in_pixels=1000,
     minimum_term_frequency=0,
     pmi_threshold_coefficient=0,

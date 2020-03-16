@@ -2,11 +2,12 @@ import sys
 from unittest import TestCase
 
 from scattertext import HTMLSemioticSquareViz
-from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, DEFAULT_DIV_ID
+from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, DEFAULT_DIV_ID, DEFAULT_D3_AXIS_VALUE_FORMAT
 from scattertext.test.test_semioticSquare import get_test_semiotic_square
 from scattertext.viz.BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
 from scattertext.viz.ScatterplotStructure import ScatterplotStructure
 from scattertext.viz.VizDataAdapter import VizDataAdapter
+
 
 class TestHTMLVisualizationAssembly(TestCase):
     def get_params(self, param_dict={}):
@@ -15,7 +16,9 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false',
                   'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false',
                   'null', 'null', '10', 'null', 'null', 'null', 'false', 'true', 'true', '"' + DEFAULT_DIV_ID + '"',
-                  'null', 'false']
+                  'null', 'false', 'false',
+                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
+                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -110,7 +113,7 @@ class TestHTMLVisualizationAssembly(TestCase):
             self.make_assembler().to_html(protocol='ftp')
 
     def test_height_width_default(self):
-        #assembler = self.make_assembler()
+        # assembler = self.make_assembler()
         scatterplot_structure = ScatterplotStructure(self.make_adapter())
         self.assertEqual(scatterplot_structure.call_build_visualization_in_javascript(), self.get_params())
 
@@ -370,3 +373,23 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({39: 'true'}))
 
+    def test_show_axes_and_cross_hairs(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       show_axes_and_cross_hairs=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({40: 'true'}))
+
+    def test_x_axis_values_format(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       x_axis_values_format=".4f")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({41: '".4f"'}))
+
+    def test_y_axis_values_format(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       y_axis_values_format=".5f")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({42: '".5f"'}))

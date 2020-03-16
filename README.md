@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.59
+# Scattertext 0.0.2.60
 
 **Table of Contents**
 
@@ -70,6 +70,10 @@ Scattertext should mostly work with Python 2.7.
 
 The HTML outputs look best in Chrome and Safari.
 
+## Citation
+
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
+
 ```
 @article{kessler2017scattertext,
   author    = {Kessler, Jason S.},
@@ -80,80 +84,6 @@ The HTML outputs look best in Chrome and Safari.
   publisher = {Association for Computational Linguistics},
 }
 ```
-
-
-## What's new
-In 0.0.2.44:
-* Added the following classes to support rank-based feature-selection: `AssociationCompactorByRank`, 
-`TermCategoryRanker`.
-
-In 0.0.2.43:
-* Made the term pop-up box on the category pairplot only the category name 
-* Fixed optimal projection search function 
-* Merged PR from @millengustavo to fix when a FutureWarning is issued every time the get_background_frequency_df 
-is called.
-
-In 0.0.2.42:
-* Fixed clickablity of terms, coloring in certain plots
-* Added initial number of terms to show in pairplot, using the `terms_to_show` parameter
-
-In 0.0.2.41:
-* Enabled changing protocol in pair plot
-* Fixed semiotic square creator
-* Added `use_categories_as_metadata_and_replace_terms` to `TermDocMatrix`.
-* Added `get_metadata_doc_count_df` and `get_metadata_count_mat` to TermDocMatrix
-
-In 0.0.2.40:
-* Added categories to terms in  pair plot halo, made them clickable 
-
-In 0.0.2.39:
-* Fixing failing test case
-* Adding halo to pair plot
-
-In 0.0.2.38:
-* Fixed term preview/clickability in semiotic square plots 
-* Fixed search box
-* Added preliminary `produce_pairplot`
-
-In 0.0.2.37:
-* Javascript changes to support multiple plots on a single page.
-* Added `ScatterChart.hide_terms(terms: iter[str])` which enables selected terms to be hidden from the chart.  
-* Added `ScatterChartData.score_transform` to specify the function which can change an original score into a value 
-between 0 and 1 used for term coloring. 
-
-In 0.0.2.36:
-* Added `alternative_term_func` to `produce_scattertext_explorer` which allows you to inject a function that activates
-when a term is clicked.
-* Fixed Cohen's d calculation, and added `HedgesR`, and unbiased version of Cohen's d which is a subclass of `CohensD`. 
-* Added the `frequency_transform` parameter to `produce_frequency_explorer`.  This defaults to a log transform, but 
-allows you to use any way your heart desires to order terms along the x-axis. 
-
-In 0.0.2.35:
-* Added `show_category_headings=True` to `produce_scattertext_explorer`. Setting this to False suppresses the list of categories
-which will be displayed in the term context area. 
-* Added `div_name` argument to `produce_scattertext_explorer` and name-spaced important divs and classes by `div_name`
-in HTML templates and Javascript. 
-* Added `show_cross_axes=True` to `produce_scattertext_explorer`. Setting this to `False` prevents the cross axes 
-from being displayed if `show_axes` is `True`.
-* Changed default scorer to RankDifference.
-* Made sure that term contexts were properly shown in all configurations.
-
-In 0.0.2.34:
-* `TermDocMatrix.get_metadata_freq_df` now accepts the `label_append` argument which by default adds `' freq'` to the
-end of each column.
-* `TermDocMatrix.get_num_cateogires` returns the number of categories in a term-document matrix.
-
-In 0.0.2.33:
-Added the following methods:
-* `TermDocMatrixWithoutCategories.get_num_metadata`
-* `TermDocMatrix.use_metadata_as_categories`
-* `unified_context` argument in `produce_scattertext_explorer` lists all contexts in a single column. This let's
-you see snippets organized by multiple categories in a single column.  See `demo_unified_context.py` for an example.  
-helps category-free or multi-category analyses.  
-
-In 0.0.2.32 we added a series of objects to handle uncategorized corpora. Added section on 
- [Document-Based Scatterplots](#document-based-scatterplots), and the add_doc_names_as_metadata function.
-`CategoryColorAssigner` was also added to assign colors to a qualitative categories. 
 
 ## Style Guide
 The name of this project is Scattertext.  "Scattertext" is written as a single word
@@ -358,10 +288,12 @@ Scattertext can also be used to visualize the category association of a variety 
 #### Using PyTextRank
 
 [PyTextRank](https://github.com/DerwenAI/pytextrank), created by Paco Nathan, is an implementation of
- a modified version of the TextRank algorithm (Mihalcea and Tarau 2014.) 
-It involves graph centrality algorithm to extract a scored list of the most prominent phrases in a document. Here, 
-named entities recognized by spaCy. As of spaCy version 2.2, these are from an NER system trained on 
-[Ontonotes 5](https://catalog.ldc.upenn.edu/LDC2013T19). 
+ a modified version of the TextRank algorithm (Mihalcea and Tarau 2004).  It involves graph centrality 
+ algorithm to extract a scored list of the most prominent phrases in a document. Here, 
+ named entities recognized by spaCy. As of spaCy version 2.2, these are from an NER system trained on 
+ [Ontonotes 5](https://catalog.ldc.upenn.edu/LDC2013T19). 
+
+Please install pytextrank `$ pip3 install pytextrank` before continuing with this tutorial.
 
 To use, build a corpus as normal, but make sure you use spaCy to parse each document as opposed a built-in
 `whitespace_nlp`-type tokenizer.  Note that adding PyTextRank to the spaCy pipeline is not needed, as it 
@@ -398,21 +330,16 @@ construct the scatter plot.
 term_category_scores = corpus.get_metadata_freq_df('')
 print(term_category_scores)
 '''
-                democrat freq  republican freq
+                                         Democratic  Republican
 term
-new jobs             0.354345         0.225979
-new workers          0.057260         0.000000
-new energy           0.055315         0.000000
-new tax breaks       0.055140         0.000000
-new challenges       0.054368         0.000000
-...                       ...              ...
-your story           0.000000         0.179696
-the beauty           0.000000         0.023856
-a hope               0.000000         0.022264
-no rhetoric          0.000000         0.019756
-the bravery          0.000000         0.019351
-
-[11440 rows x 2 columns]
+our future                                 1.113434    0.699103
+your country                               0.314057    0.000000
+their home                                 0.385925    0.000000
+our government                             0.185483    0.462122
+our workers                                0.199704    0.210989
+her family                                 0.540887    0.405552
+our time                                   0.510930    0.410058
+...
 '''
 ```  
 
@@ -454,6 +381,7 @@ we set ensure the full documents are displayed.  Note the documents will be disp
 html = produce_scattertext_explorer(
     corpus,
     category='Democratic',
+    not_category_name='Republican',
     minimum_term_frequency=0,
     pmi_threshold_coefficient=0,
     width_in_pixels=1000,
@@ -471,6 +399,12 @@ html = produce_scattertext_explorer(
 
 [![PyTextRankProminenceScore.html](https://jasonkessler.github.io/PyTextRankProminence.png)](https://jasonkessler.github.io/PyTextRankProminenceScore.html)
 
+The most associated terms in each category make some sense, at least on a post hoc analysis. When referring to (then) 
+Governor Romney, Democrats used his surname "Romney" in their most central mentions of him, while Republicans used the 
+more familiar and humanizing "Mitt". In terms of the President Obama, the phrase "Obama" didn't show up as a top term i
+n either, the but the first name "Barack" was one of the the most central phrases in Democratic speeches, 
+mirroring "Mitt."
+
 Alternatively, we can Dense Rank Difference in scores to color phrase-points and determine the top phrases to be 
 displayed on the right-hand side of the chart.  Instead of setting `scores` as category-specific prominence scores,
 we set `term_scorer=RankDifference()` to inject a way determining term scores into the scatter plot creation process.  
@@ -479,6 +413,7 @@ we set `term_scorer=RankDifference()` to inject a way determining term scores in
 html = produce_scattertext_explorer(
     corpus,
     category='Democratic',
+    not_category_name='Republican',
     minimum_term_frequency=0,
     pmi_threshold_coefficient=0,
     width_in_pixels=1000,
@@ -1909,9 +1844,88 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
-## 0.0.57-58
+## 0.0.2.60
+Better axis labeling (see demo_axis_crossbars_and_labels.py).
 
+## 0.0.2.59
+Pytextrank compatibility
+
+## 0.0.2.57-58
 Ensuring Pandas 1.0 compatibility fixing Issue #51 and scikit-learn stopwords import issue in #49.
+
+## 0.0.2.44:
+* Added the following classes to support rank-based feature-selection: `AssociationCompactorByRank`, 
+`TermCategoryRanker`.
+
+## 0.0.2.43:
+* Made the term pop-up box on the category pairplot only the category name 
+* Fixed optimal projection search function 
+* Merged PR from @millengustavo to fix when a FutureWarning is issued every time the get_background_frequency_df 
+is called.
+
+## 0.0.2.42:
+* Fixed clickablity of terms, coloring in certain plots
+* Added initial number of terms to show in pairplot, using the `terms_to_show` parameter
+
+## 0.0.2.41:
+* Enabled changing protocol in pair plot
+* Fixed semiotic square creator
+* Added `use_categories_as_metadata_and_replace_terms` to `TermDocMatrix`.
+* Added `get_metadata_doc_count_df` and `get_metadata_count_mat` to TermDocMatrix
+
+## 0.0.2.40:
+* Added categories to terms in  pair plot halo, made them clickable 
+
+## 0.0.2.39:
+* Fixing failing test case
+* Adding halo to pair plot
+
+## 0.0.2.38:
+* Fixed term preview/clickability in semiotic square plots 
+* Fixed search box
+* Added preliminary `produce_pairplot`
+
+## 0.0.2.37:
+* Javascript changes to support multiple plots on a single page.
+* Added `ScatterChart.hide_terms(terms: iter[str])` which enables selected terms to be hidden from the chart.  
+* Added `ScatterChartData.score_transform` to specify the function which can change an original score into a value 
+between 0 and 1 used for term coloring. 
+
+## 0.0.2.36:
+* Added `alternative_term_func` to `produce_scattertext_explorer` which allows you to inject a function that activates
+when a term is clicked.
+* Fixed Cohen's d calculation, and added `HedgesR`, and unbiased version of Cohen's d which is a subclass of `CohensD`. 
+* Added the `frequency_transform` parameter to `produce_frequency_explorer`.  This defaults to a log transform, but 
+allows you to use any way your heart desires to order terms along the x-axis. 
+
+## 0.0.2.35:
+* Added `show_category_headings=True` to `produce_scattertext_explorer`. Setting this to False suppresses the list of categories
+which will be displayed in the term context area. 
+* Added `div_name` argument to `produce_scattertext_explorer` and name-spaced important divs and classes by `div_name`
+in HTML templates and Javascript. 
+* Added `show_cross_axes=True` to `produce_scattertext_explorer`. Setting this to `False` prevents the cross axes 
+from being displayed if `show_axes` is `True`.
+* Changed default scorer to RankDifference.
+* Made sure that term contexts were properly shown in all configurations.
+
+## 0.0.2.34:
+* `TermDocMatrix.get_metadata_freq_df` now accepts the `label_append` argument which by default adds `' freq'` to the
+end of each column.
+* `TermDocMatrix.get_num_cateogires` returns the number of categories in a term-document matrix.
+
+## 0.0.2.33:
+Added the following methods:
+* `TermDocMatrixWithoutCategories.get_num_metadata`
+* `TermDocMatrix.use_metadata_as_categories`
+* `unified_context` argument in `produce_scattertext_explorer` lists all contexts in a single column. This let's
+you see snippets organized by multiple categories in a single column.  See `demo_unified_context.py` for an example.  
+helps category-free or multi-category analyses.  
+
+## 0.0.2.32 
+Added a series of objects to handle uncategorized corpora. Added section on 
+ [Document-Based Scatterplots](#document-based-scatterplots), and the add_doc_names_as_metadata function.
+`CategoryColorAssigner` was also added to assign colors to a qualitative categories. 
+
 
 ## 0.0.28-31
 
@@ -2262,4 +2276,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Shinichi Nakagawa and Innes C. Cuthill. Effect size, confidence interval and statistical significance: a practical guide for biologists. 2007. In Biological Reviews 82.
 * Cynthia M. Whissell. The dictionary of affect in language. 1993. In The Measurement of Emotions.
 * David Bamman, Jacob Eisenstein, and Tyler Schnoebelen.  GENDER IDENTITY AND LEXICAL VARIATION IN SOCIAL MEDIA. 2014.
-* Rada Mihalcea, Paul Tarau. TextRank: Bringing Order into Text. EMNLP. 2014.
+* Rada Mihalcea, Paul Tarau. TextRank: Bringing Order into Text. EMNLP. 2004.

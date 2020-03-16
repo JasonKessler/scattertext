@@ -29,7 +29,7 @@ buildViz = function (d3) {
                      centerLabelsOverPoints = false,
                      xAxisLabels = null,
                      yAxisLabels = null,
-                     topic_model_preview_size=10,
+                     topic_model_preview_size = 10,
                      verticalLines = null,
                      horizontal_line_y_position = null,
                      vertical_line_x_position = null,
@@ -38,7 +38,10 @@ buildViz = function (d3) {
                      showCrossAxes = true,
                      divName = 'd3-div-1',
                      alternativeTermFunc = null,
-                     includeAllContexts = false) {
+                     includeAllContexts = false,
+                     showAxesAndCrossHairs = false,
+                     x_axis_values_format = '.3f',
+                     y_axis_values_format = '.3f') {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -48,28 +51,33 @@ buildViz = function (d3) {
         var margin = padding,
             width = widthInPixels - margin.left - margin.right,
             height = heightInPixels - margin.top - margin.bottom;
-        fullData.data.forEach(function (x, i) {x.i = i});
+        fullData.data.forEach(function (x, i) {
+            x.i = i
+        });
 
         // Set the ranges
         var x = d3.scaleLinear().range([0, width]);
         var y = d3.scaleLinear().range([height, 0]);
 
         if (unifiedContexts) {
-            document.querySelectorAll('#'+divName+'-'+'notcol')
-                .forEach(function (x) {x.style.display = 'none'});
-            document.querySelectorAll('.'+divName+'-'+'contexts')
-                .forEach(function (x) {x.style.width = '90%'});
-        }
-        else if (showNeutral) {
-            if (showExtra) {
-                document.querySelectorAll('.'+divName+'-'+'contexts')
+            document.querySelectorAll('#' + divName + '-' + 'notcol')
                 .forEach(function (x) {
-                    x.style.width = '25%'
-                    x.style.float = 'left'
+                    x.style.display = 'none'
                 });
+            document.querySelectorAll('.' + divName + '-' + 'contexts')
+                .forEach(function (x) {
+                    x.style.width = '90%'
+                });
+        } else if (showNeutral) {
+            if (showExtra) {
+                document.querySelectorAll('.' + divName + '-' + 'contexts')
+                    .forEach(function (x) {
+                        x.style.width = '25%'
+                        x.style.float = 'left'
+                    });
 
-                ['notcol','neutcol','extracol'].forEach(function (columnName) {
-                    document.querySelectorAll('#'+divName+'-'+columnName)
+                ['notcol', 'neutcol', 'extracol'].forEach(function (columnName) {
+                    document.querySelectorAll('#' + divName + '-' + columnName)
                         .forEach(function (x) {
                             x.style.display = 'inline'
                             x.style.float = 'left'
@@ -78,14 +86,14 @@ buildViz = function (d3) {
                 })
 
             } else {
-                document.querySelectorAll('.'+divName+'-'+'contexts')
-                .forEach(function (x) {
-                    x.style.width = '33%'
-                    x.style.float = 'left'
-                });
+                document.querySelectorAll('.' + divName + '-' + 'contexts')
+                    .forEach(function (x) {
+                        x.style.width = '33%'
+                        x.style.float = 'left'
+                    });
 
-                ['notcol','neutcol'].forEach(function (columnName) {
-                    document.querySelectorAll('#'+divName+'-'+columnName)
+                ['notcol', 'neutcol'].forEach(function (columnName) {
+                    document.querySelectorAll('#' + divName + '-' + columnName)
                         .forEach(function (x) {
                             x.style.display = 'inline'
                             x.style.float = 'left'
@@ -96,7 +104,7 @@ buildViz = function (d3) {
 
             }
         } else {
-            document.querySelectorAll('.'+divName+'-'+'contexts')
+            document.querySelectorAll('.' + divName + '-' + 'contexts')
                 .forEach(function (x) {
                     x.style.width = '45%'
                     //x.style.display = 'inline'
@@ -104,7 +112,7 @@ buildViz = function (d3) {
                 });
 
             ['notcol'].forEach(function (columnName) {
-                document.querySelectorAll('#'+divName+'-'+columnName)
+                document.querySelectorAll('#' + divName + '-' + columnName)
                     .forEach(function (x) {
                         //x.style.display = 'inline'
                         x.style.float = 'left'
@@ -153,33 +161,32 @@ buildViz = function (d3) {
         console.log(fullData);
 
 
-        var sortedX = fullData.data.map(x=>x).sort(function (a, b) {
+        var sortedX = fullData.data.map(x => x).sort(function (a, b) {
             return a.x < b.x ? -1 : (a.x == b.x ? 0 : 1);
         }).map(function (x) {
             return x.x
         });
 
-        var sortedOx = fullData.data.map(x=>x).sort(function (a, b) {
+        var sortedOx = fullData.data.map(x => x).sort(function (a, b) {
             return a.ox < b.ox ? -1 : (a.ox == b.ox ? 0 : 1);
         }).map(function (x) {
             return x.ox
         });
 
-        var sortedY = fullData.data.map(x=>x).sort(function (a, b) {
+        var sortedY = fullData.data.map(x => x).sort(function (a, b) {
             return a.y < b.y ? -1 : (a.y == b.y ? 0 : 1);
         }).map(function (x) {
             return x.y
         });
 
-        var sortedOy = fullData.data.map(x=>x).sort(function (a, b) {
+        var sortedOy = fullData.data.map(x => x).sort(function (a, b) {
             return a.oy < b.oy ? -1 : (a.oy == b.oy ? 0 : 1);
         }).map(function (x) {
             return x.oy
         });
         console.log(fullData.data[0])
 
-
-        function labelWithZScore(axis, axisName, tickPoints) {
+        function labelWithZScore(axis, axisName, tickPoints, axis_values_format) {
             var myVals = axisName === 'x' ? sortedOx : sortedOy;
             var myPlotedVals = axisName === 'x' ? sortedX : sortedY;
             var ticks = tickPoints.map(function (x) {
@@ -187,12 +194,12 @@ buildViz = function (d3) {
             });
             return axis.tickValues(ticks).tickFormat(
                 function (d, i) {
-                    return tickPoints[i];
+                    return d3.format(axis_values_format)(tickPoints[i]);
                 })
         }
 
         if (xAxisValues) {
-            xAxis = labelWithZScore(d3.axisBottom(x), 'x', xAxisValues);
+            xAxis = labelWithZScore(d3.axisBottom(x), 'x', xAxisValues, x_axis_values_format);
         } else if (xAxisLabels) {
             xAxis = d3.axisBottom(x)
                 .ticks(xAxisLabels.length)
@@ -203,7 +210,7 @@ buildViz = function (d3) {
             xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
         }
         if (yAxisValues) {
-            yAxis = labelWithZScore(d3.axisLeft(y), 'y', yAxisValues);
+            yAxis = labelWithZScore(d3.axisLeft(y), 'y', yAxisValues, y_axis_values_format);
         } else if (yAxisLabels) {
             yAxis = d3.axisLeft(y)
                 .ticks(yAxisLabels.length)
@@ -328,17 +335,17 @@ buildViz = function (d3) {
         }
 
         function denseRank(ar) {
-            var markedAr = ar.map((x,i) => [x,i]).sort((a,b) => a[0] - b[0]);
+            var markedAr = ar.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]);
             var curRank = 1
             var rankedAr = markedAr.map(
-                function(x, i) {
-                    if(i > 0 && x[0] != markedAr[i-1][0]) {
+                function (x, i) {
+                    if (i > 0 && x[0] != markedAr[i - 1][0]) {
                         curRank++;
                     }
                     return [curRank, x[0], x[1]];
                 }
             )
-            return rankedAr.map(x=>x).sort((a,b) => (a[2] - b[2])).map(x => x[0]);
+            return rankedAr.map(x => x).sort((a, b) => (a[2] - b[2])).map(x => x[0]);
         }
 
 
@@ -353,9 +360,9 @@ buildViz = function (d3) {
             )
             fullData.termCounts.forEach(
                 function (categoryTermCounts, otherCategoryNum) {
-                    if(otherCategoryNum != categoryNum) {
+                    if (otherCategoryNum != categoryNum) {
                         Object.keys(categoryTermCounts).forEach(
-                           key => bgFreqs[key] += categoryTermCounts[key][0]
+                            key => bgFreqs[key] += categoryTermCounts[key][0]
                         )
                     }
                 }
@@ -366,13 +373,13 @@ buildViz = function (d3) {
             var maxfgDenseRanks = Math.max(...fgDenseRanks);
             var minfgDenseRanks = Math.min(...fgDenseRanks);
             var scalefgDenseRanks = fgDenseRanks.map(
-                x => (x - minfgDenseRanks)/(maxfgDenseRanks - minfgDenseRanks)
+                x => (x - minfgDenseRanks) / (maxfgDenseRanks - minfgDenseRanks)
             )
 
             var maxbgDenseRanks = Math.max(...bgDenseRanks);
             var minbgDenseRanks = Math.min(...bgDenseRanks);
             var scalebgDenseRanks = bgDenseRanks.map(
-                x => (x - minbgDenseRanks)/(maxbgDenseRanks - minbgDenseRanks)
+                x => (x - minbgDenseRanks) / (maxbgDenseRanks - minbgDenseRanks)
             )
 
             return {'fg': scalefgDenseRanks, 'bg': scalebgDenseRanks, 'bgFreqs': bgFreqs, 'fgFreqs': fgFreqs}
@@ -380,7 +387,7 @@ buildViz = function (d3) {
 
         function getCategoryDenseRankScores(fullData, categoryNum) {
             var denseRanks = getDenseRanks(fullData, categoryNum)
-            return denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
+            return denseRanks.fg.map((x, i) => x - denseRanks.bg[i]);
         }
 
         function getTermCounts(fullData) {
@@ -388,7 +395,7 @@ buildViz = function (d3) {
             fullData.termCounts.forEach(
                 function (categoryTermCounts) {
                     Object.keys(categoryTermCounts).forEach(
-                       key => counts[key] = categoryTermCounts[key][0]
+                        key => counts[key] = categoryTermCounts[key][0]
                     )
                 }
             )
@@ -697,8 +704,8 @@ buildViz = function (d3) {
             return false;
         }
 
-        function displayObscuredTerms(obscuredTerms, data, term, termInfo, div='#'+divName+'-'+'overlapped-terms') {
-            d3.select('#'+divName+'-'+'overlapped-terms')
+        function displayObscuredTerms(obscuredTerms, data, term, termInfo, div = '#' + divName + '-' + 'overlapped-terms') {
+            d3.select('#' + divName + '-' + 'overlapped-terms')
                 .selectAll('div')
                 .remove();
             d3.select(div)
@@ -718,7 +725,7 @@ buildViz = function (d3) {
                             svg,
                             obscuredDiv.append("text").text(term),
                             term,
-                            data.filter(t=>t.term == term)[0],//termInfo
+                            data.filter(t => t.term == term)[0],//termInfo
                             false
                         );
                         if (i < obscuredTerms.length - 1) {
@@ -729,7 +736,7 @@ buildViz = function (d3) {
             }
         }
 
-        function displayTermContexts(data, termInfo, jump=true, includeAll = false) {
+        function displayTermContexts(data, termInfo, jump = true, includeAll = false) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
             var notmatches = termInfo.notmatches;
@@ -744,11 +751,11 @@ buildViz = function (d3) {
             var catInternalName = fullData.info.category_internal_name;
 
 
-            function addSnippets(contexts, divId, isMatch=true) {
+            function addSnippets(contexts, divId, isMatch = true) {
                 var meta = contexts.meta ? contexts.meta : '&nbsp;';
                 var headClass = 'snippet_meta docLabel' + contexts.docLabel;
                 var snippetClass = 'snippet docLabel' + contexts.docLabel;
-                if(!isMatch) {
+                if (!isMatch) {
                     headClass = 'snippet_meta not_match docLabel' + contexts.docLabel;
                     snippetClass = 'snippet not_match docLabel' + contexts.docLabel;
                 }
@@ -763,49 +770,58 @@ buildViz = function (d3) {
                         .html(snippet);
                 })
             }
+
             if (unifiedContexts) {
-               divId = '#'+divName+'-'+'cat';
+                divId = '#' + divName + '-' + 'cat';
                 var docLabelCounts = fullData.docs.labels.reduce(
-                    function(map, label) {map[label] = (map[label]||0)+1; return map;},
+                    function (map, label) {
+                        map[label] = (map[label] || 0) + 1;
+                        return map;
+                    },
                     Object.create(null)
                 );
-               var numMatches = Object.create(null);
-               var temp = d3.select(divId).selectAll("div").remove();
-               var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
-               allContexts.forEach(function (singleDoc) {
-                    numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
-               });
-               var allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
+                var numMatches = Object.create(null);
+                var temp = d3.select(divId).selectAll("div").remove();
+                var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
+                allContexts.forEach(function (singleDoc) {
+                    numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel] || 0) + 1;
+                });
+                var allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
 
-               /*contexts.forEach(function(context) {
-                    context.forEach(function (singleDoc) {
-                        numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
-                        addSnippets(singleDoc, divId);
-                    });
-                });*/
+                /*contexts.forEach(function(context) {
+                     context.forEach(function (singleDoc) {
+                         numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
+                         addSnippets(singleDoc, divId);
+                     });
+                 });*/
                 var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => (
-                    {"label": fullData.docs.categories[key],
-                     "labelNum": key,
-                     "matches": numMatches[key]||0,
-                     "overall": docLabelCounts[key],
-                     'percent': (numMatches[key]||0)*100./docLabelCounts[key]}))
-                    .sort(function(a,b) {return b.percent-a.percent});
+                    {
+                        "label": fullData.docs.categories[key],
+                        "labelNum": key,
+                        "matches": numMatches[key] || 0,
+                        "overall": docLabelCounts[key],
+                        'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
+                    }))
+                    .sort(function (a, b) {
+                        return b.percent - a.percent
+                    });
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
                 console.log(numMatches)
-                console.log('#'+divName+'-'+'categoryinfo')
-                d3.select('#'+divName+'-'+'categoryinfo').selectAll("div").remove();
-                if(showCategoryHeadings) {
-                    d3.select('#'+divName+'-'+'categoryinfo').attr('display', 'inline');
+                console.log('#' + divName + '-' + 'categoryinfo')
+                d3.select('#' + divName + '-' + 'categoryinfo').selectAll("div").remove();
+                if (showCategoryHeadings) {
+                    d3.select('#' + divName + '-' + 'categoryinfo').attr('display', 'inline');
                 }
+
                 function getCategoryStatsHTML(counts) {
                     return counts.matches + " document"
-                        + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall +': '
-                        +counts['percent'].toFixed(2) + '%';
+                        + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall + ': '
+                        + counts['percent'].toFixed(2) + '%';
                 }
 
                 function getCategoryInlineHeadingHTML(counts) {
-                    return '<a name="'+divName+'-category'
+                    return '<a name="' + divName + '-category'
                         + counts.labelNum + '"></a>'
                         + counts.label + ": <span class=topic_preview>"
                         + getCategoryStatsHTML(counts)
@@ -813,10 +829,10 @@ buildViz = function (d3) {
                 }
 
 
-                docLabelCountsSorted.forEach(function(counts) {
-                    var htmlToAdd = "<b>"+counts.label + "</b>: " +  getCategoryStatsHTML(counts);
+                docLabelCountsSorted.forEach(function (counts) {
+                    var htmlToAdd = "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
 
-                    if(counts.matches > 0) {
+                    if (counts.matches > 0) {
                         d3.select(divId)
                             .append("div")
                             .attr('class', 'text_header')
@@ -826,7 +842,7 @@ buildViz = function (d3) {
                             .forEach(function (singleDoc) {
                                 addSnippets(singleDoc, divId);
                             });
-                        if(includeAll) {
+                        if (includeAll) {
                             allNotMatches
                                 .filter(singleDoc => singleDoc.docLabel == counts.labelNum)
                                 .forEach(function (singleDoc) {
@@ -836,12 +852,14 @@ buildViz = function (d3) {
                     }
 
 
-                    if(showCategoryHeadings) {
-                        d3.select('#'+divName+'-'+'categoryinfo')
+                    if (showCategoryHeadings) {
+                        d3.select('#' + divName + '-' + 'categoryinfo')
                             .attr('display', 'inline')
                             .append('div')
                             .html(htmlToAdd)
-                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
+                            .on("click", function () {
+                                window.location.hash = '#' + divName + '-' + 'category' + counts.labelNum
+                            });
                     }
 
                 })
@@ -877,13 +895,13 @@ buildViz = function (d3) {
                         //var divId = catName == catInternalName ? '#cat' : '#notcat';
                         var divId = null
                         if (fullData.info.category_internal_name == catName) {
-                            divId = '#'+divName+'-'+'cat'
+                            divId = '#' + divName + '-' + 'cat'
                         } else if (fullData.info.not_category_name == catName) {
-                            divId = '#'+divName+'-'+'notcat'
+                            divId = '#' + divName + '-' + 'notcat'
                         } else if (fullData.info.neutral_category_name == catName) {
-                            divId = '#'+divName+'-'+'neut';
+                            divId = '#' + divName + '-' + 'neut';
                         } else if (fullData.info.extra_category_name == catName) {
-                            divId = '#'+divName+'-'+'extra'
+                            divId = '#' + divName + '-' + 'extra'
                         } else {
                             return;
                         }
@@ -894,7 +912,7 @@ buildViz = function (d3) {
                         contexts[catIndex].forEach(function (context) {
                             addSnippets(context, divId);
                         });
-                        if(includeAll) {
+                        if (includeAll) {
                             notmatches[catIndex].forEach(function (context) {
                                 addSnippets(context, divId, false);
                             });
@@ -904,21 +922,21 @@ buildViz = function (d3) {
             }
 
             var obscuredTerms = getObscuredTerms(data, termInfo.info);
-            displayObscuredTerms(obscuredTerms, data, info.term, info, '#'+divName+'-'+'overlapped-terms-clicked');
+            displayObscuredTerms(obscuredTerms, data, info.term, info, '#' + divName + '-' + 'overlapped-terms-clicked');
 
-            d3.select('#'+divName+'-'+'termstats')
+            d3.select('#' + divName + '-' + 'termstats')
                 .selectAll("div")
                 .remove();
             var termHtml = 'Term: <b>' + info.term + '</b>';
             if ('metalists' in fullData && info.term in fullData.metalists) {
                 termHtml = 'Topic: <b>' + info.term + '</b>';
             }
-            d3.select('#'+divName+'-'+'termstats')
+            d3.select('#' + divName + '-' + 'termstats')
                 .append('div')
                 .attr("class", "snippet_header")
                 .html(termHtml);
             if ('metalists' in fullData && info.term in fullData.metalists && topic_model_preview_size > 0) {
-                d3.select('#'+divName+'-'+'termstats')
+                d3.select('#' + divName + '-' + 'termstats')
                     .attr("class", "topic_preview")
                     .append('div')
                     .html("<b>Topic preview</b>: "
@@ -929,7 +947,7 @@ buildViz = function (d3) {
                             }));
             }
             if ('metadescriptions' in fullData && info.term in fullData.metadescriptions) {
-                d3.select('#'+divName+'-'+'termstats')
+                d3.select('#' + divName + '-' + 'termstats')
                     .attr("class", "topic_preview")
                     .append('div')
                     .html("<b>Description</b>: " + fullData.metadescriptions[info.term]);
@@ -993,7 +1011,7 @@ buildViz = function (d3) {
 
             if (!unifiedContexts) {
                 console.log("NOT UNIFIED CONTEXTS")
-                d3.select('#'+divName+'-'+'cathead')
+                d3.select('#' + divName + '-' + 'cathead')
                     .style('fill', color(1))
                     .html(
                         getFrequencyDescription(cat_name,
@@ -1002,7 +1020,7 @@ buildViz = function (d3) {
                             termInfo.contexts[0].length * 1000 / numCatDocs
                         )
                     );
-                d3.select('#'+divName+'-'+'notcathead')
+                d3.select('#' + divName + '-' + 'notcathead')
                     .style('fill', color(0))
                     .html(
                         getFrequencyDescription(ncat_name,
@@ -1079,27 +1097,29 @@ buildViz = function (d3) {
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted)
 
-                docLabelCountsSorted.forEach(function(counts) {
-                    var htmlToAdd = "<b>"+counts.label + "</b>: " +  getCategoryStatsHTML(counts);
-                    if(showCategoryHeadings) {
+                docLabelCountsSorted.forEach(function (counts) {
+                    var htmlToAdd = "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
+                    if (showCategoryHeadings) {
                         console.log("XXXX")
-                        d3.select('#'+divName+'-'+'contexts')
+                        d3.select('#' + divName + '-' + 'contexts')
                             .append('div')
                             .html("XX" + htmlToAdd)
-                            .on("click", function() {window.location.hash = '#'+divName+'-'+'category' + counts.labelNum});
+                            .on("click", function () {
+                                window.location.hash = '#' + divName + '-' + 'category' + counts.labelNum
+                            });
                     }
                 })
             }
             if (jump) {
-                if (window.location.hash == '#'+divName+'-'+'snippets') {
-                    window.location.hash = '#'+divName+'-'+'snippetsalt';
+                if (window.location.hash == '#' + divName + '-' + 'snippets') {
+                    window.location.hash = '#' + divName + '-' + 'snippetsalt';
                 } else {
-                    window.location.hash = '#'+divName+'-'+'snippets';
+                    window.location.hash = '#' + divName + '-' + 'snippets';
                 }
             }
         }
 
-        function searchInText(d, includeAll=true) {
+        function searchInText(d, includeAll = true) {
             function stripNonWordChars(term) {
                 //d.term.replace(" ", "[^\\w]+")
             }
@@ -1131,8 +1151,9 @@ buildViz = function (d3) {
 
                 // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(string) {
-                  return string.replace(/[#.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                    return string.replace(/[#.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
                 }
+
                 /*
                 ['[', ']', '(', ')', '{', '}', '^', '$', '|', '?', '"',
                     '*', '+', '-', '=', '~', '`', '{'].forEach(function (a) {
@@ -1260,10 +1281,12 @@ buildViz = function (d3) {
                     }
                 }
             }
-            var toRet = {'contexts': matches,
-                         'notmatches': notmatches,
-                         'info': d,
-                         'docLabel': docLabel};
+            var toRet = {
+                'contexts': matches,
+                'notmatches': notmatches,
+                'info': d,
+                'docLabel': docLabel
+            };
             return toRet;
         }
 
@@ -1289,7 +1312,7 @@ buildViz = function (d3) {
             return matches;
         }
 
-        function showTooltip(data, d, pageX, pageY, showObscured=true) {
+        function showTooltip(data, d, pageX, pageY, showObscured = true) {
             deselectLastCircle();
 
             var obscuredTerms = getObscuredTerms(data, d);
@@ -1332,24 +1355,24 @@ buildViz = function (d3) {
                 .toLowerCase()
                 .replace("'", " '")
                 .trim();
-            if(this.termDict[searchTerm] !== undefined) {
+            if (this.termDict[searchTerm] !== undefined) {
                 showToolTipForTerm(this.data, this.svg, searchTerm, this.termDict[searchTerm], true);
             }
             if (this.termDict[searchTerm] != null) {
                 var runDisplayTermContexts = true;
-                if(alternativeTermFunc != null) {
+                if (alternativeTermFunc != null) {
                     runDisplayTermContexts = this.alternativeTermFunc(this.termDict[searchTerm]);
                 }
-                if(runDisplayTermContexts) {
+                if (runDisplayTermContexts) {
                     displayTermContexts(this.data,
-                                        this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts), false,
-                                        this.includeAllContexts);
+                        this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts), false,
+                        this.includeAllContexts);
                 }
             }
             return false;
         };
 
-        function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured=true) {
+        function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured = true) {
             //var searchTermInfo = termDict[searchTerm];
             console.log("showing tool tip")
             console.log(searchTerm)
@@ -1361,26 +1384,27 @@ buildViz = function (d3) {
             } else {
                 d3.select("#" + divName + "-alertMessage").text("");
                 var circle = mysvg;
-                console.log("mysvg"); console.log(mysvg)
-                if(circle.tagName !== "circle") { // need to clean this thing up
+                console.log("mysvg");
+                console.log(mysvg)
+                if (circle.tagName !== "circle") { // need to clean this thing up
                     circle = mysvg._groups[0][searchTermInfo.ci];
-                    if(circle === undefined || circle.tagName != 'circle') {
+                    if (circle === undefined || circle.tagName != 'circle') {
                         console.log("circle0")
-                        if(mysvg._groups[0].children !== undefined) {
+                        if (mysvg._groups[0].children !== undefined) {
                             circle = mysvg._groups[0].children[searchTermInfo.ci];
                         }
                     }
-                    if(circle === undefined || circle.tagName != 'circle') {
+                    if (circle === undefined || circle.tagName != 'circle') {
                         console.log("circle1");
-                        if(mysvg._groups[0][0].children !== undefined) {
+                        if (mysvg._groups[0][0].children !== undefined) {
                             circle = Array.prototype.filter.call(
                                 mysvg._groups[0][0].children,
-                                x=> (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
+                                x => (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
                             )[0];
                         }
                         console.log(circle)
                     }
-                    if((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
+                    if ((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
                         console.log("circle2");
                         console.log(mysvg._groups[0][0])
                         console.log(mysvg._groups[0][0].children)
@@ -1389,7 +1413,7 @@ buildViz = function (d3) {
                         console.log(circle)
                     }
                 }
-                if(circle) {
+                if (circle) {
                     var mySVGMatrix = circle.getScreenCTM().translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
                     var pageX = mySVGMatrix.e;
                     var pageY = mySVGMatrix.f;
@@ -1412,10 +1436,10 @@ buildViz = function (d3) {
         };
 
 
-        function makeWordInteractive(data, svg, domObj, term, termInfo, showObscured=true) {
+        function makeWordInteractive(data, svg, domObj, term, termInfo, showObscured = true) {
             return domObj
                 .on("mouseover", function (d) {
-                    console.log("mouseover" )
+                    console.log("mouseover")
                     console.log(term)
                     console.log(termInfo)
                     showToolTipForTerm(data, svg, term, termInfo, showObscured);
@@ -1427,17 +1451,17 @@ buildViz = function (d3) {
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
                     if (showObscured) {
-                        d3.select('#'+divName+'-'+'overlapped-terms')
+                        d3.select('#' + divName + '-' + 'overlapped-terms')
                             .selectAll('div')
                             .remove();
                     }
                 })
                 .on("click", function (d) {
                     var runDisplayTermContexts = true;
-                    if(alternativeTermFunc != null) {
+                    if (alternativeTermFunc != null) {
                         runDisplayTermContexts = alternativeTermFunc(termInfo);
                     }
-                    if(runDisplayTermContexts) {
+                    if (runDisplayTermContexts) {
                         displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts), true, includeAllContexts);
                     }
                 });
@@ -1461,7 +1485,7 @@ buildViz = function (d3) {
             });
 
             var padding = 0;
-            if (showAxes) {
+            if (showAxes || showAxesAndCrossHairs) {
                 padding = 0.1;
             }
 
@@ -1483,11 +1507,13 @@ buildViz = function (d3) {
             //var rangeTree = null; // keep boxes of all points and labels here
             var rectHolder = new RectangleHolder();
             // Add the scatterplot
-            data.forEach(function(d,i) {d.ci = i});
+            data.forEach(function (d, i) {
+                d.ci = i
+            });
             //console.log('XXXXX'); console.log(data)
             var mysvg = svg
                 .selectAll("dot")
-                .data(data.filter(d=>d.display === undefined || d.display === true))
+                .data(data.filter(d => d.display === undefined || d.display === true))
                 //.filter(function (d) {return d.display === undefined || d.display === true})
                 .enter()
                 .append("circle")
@@ -1518,7 +1544,7 @@ buildViz = function (d3) {
                             return interpolateLightGreys(d.s);
                         }
                     } else {
-                        if(d.term == "psychological") {
+                        if (d.term == "psychological") {
                             console.log("COLS " + d.s + " " + color(d.s) + " " + d.term)
                             console.log(d)
                             console.log(color)
@@ -1544,10 +1570,10 @@ buildViz = function (d3) {
                 })
                 .on("click", function (d) {
                     var runDisplayTermContexts = true;
-                    if(alternativeTermFunc != null) {
+                    if (alternativeTermFunc != null) {
                         runDisplayTermContexts = alternativeTermFunc(d);
                     }
-                    if(runDisplayTermContexts) {
+                    if (runDisplayTermContexts) {
                         displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
                     }
                 })
@@ -1556,7 +1582,7 @@ buildViz = function (d3) {
                         .duration(0)
                         .style("opacity", 0);
                     d3.select(this).style("stroke", null);
-                    d3.select('#'+divName+'-'+'overlapped-terms')
+                    d3.select('#' + divName + '-' + 'overlapped-terms')
                         .selectAll('div')
                         .remove();
                 })
@@ -1615,7 +1641,7 @@ buildViz = function (d3) {
 
             function labelPointsIfPossible(datum, myX, myY) {
                 var term = datum.term;
-                if(term == "the")
+                if (term == "the")
                     console.log("TERM " + term + " " + myX + " " + myY)
                 //console.log('xxx'); console.log(term); console.log(term.display !== undefined && term.display === false)
                 //if(term.display !== undefined && term.display === false) {
@@ -1769,7 +1795,7 @@ buildViz = function (d3) {
                     return b.s - a.s;
             }
 
-            var sortedData = data.map(x=>x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
+            var sortedData = data.map(x => x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
             if (doCensorPoints) {
                 for (var i in data) {
                     var d = sortedData[i];
@@ -1796,8 +1822,9 @@ buildViz = function (d3) {
                 rectHolder.add(new Rectangle(x1, y1, x2, y2));
                 //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
             }
+
             function drawXLabel(svg, labelText) {
-                    return svg.append("text")
+                return svg.append("text")
                     .attr("class", "x label")
                     .attr("text-anchor", "end")
                     .attr("x", width)
@@ -1806,18 +1833,19 @@ buildViz = function (d3) {
                     .attr('font-size', '10px')
                     .text(labelText);
             }
+
             function drawYLabel(svg, labelText) {
-                    return svg.append("text")
-                        .attr("class", "y label")
-                        .attr("text-anchor", "end")
-                        .attr("y", 6)
-                        .attr("dy", ".75em")
-                        .attr("transform", "rotate(-90)")
-                        .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                        .attr('font-size', '10px')
-                        .text(labelText);
-                        registerFigureBBox(yLabel);
-                }
+                return svg.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 6)
+                    .attr("dy", ".75em")
+                    .attr("transform", "rotate(-90)")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '10px')
+                    .text(labelText);
+                registerFigureBBox(yLabel);
+            }
 
             d3.selection.prototype.moveToBack = function () {
                 return this.each(function () {
@@ -1840,7 +1868,7 @@ buildViz = function (d3) {
                 }
             }
 
-            if (showAxes) {
+            if (showAxes || showAxesAndCrossHairs) {
 
                 var myXAxis = svg.append("g")
                     .attr("class", "x axis")
@@ -1893,52 +1921,53 @@ buildViz = function (d3) {
                             return xLabelText;
                     }
                 }
+
                 var yLabel = drawYLabel(svg, getLabelText('y'))
 
-
-            } else {
+            }
+            if (!showAxes || showAxesAndCrossHairs) {
                 horizontal_line_y_position_translated = 0.5;
-                if(horizontal_line_y_position !== null) {
-                   var loOy = null, hiOy = null, loY = null, hiY = null;
-                   for(i in fullData.data) {
+                if (horizontal_line_y_position !== null) {
+                    var loOy = null, hiOy = null, loY = null, hiY = null;
+                    for (i in fullData.data) {
                         var curOy = fullData.data[i].oy;
-                        if(curOy < horizontal_line_y_position && (curOy > loOy || loOy === null)) {
-                              loOy = curOy;
-                              loY = fullData.data[i].y
+                        if (curOy < horizontal_line_y_position && (curOy > loOy || loOy === null)) {
+                            loOy = curOy;
+                            loY = fullData.data[i].y
                         }
-                        if(curOy > horizontal_line_y_position && (curOy < hiOy || hiOy === null)) {
-                              hiOy = curOy;
-                              hiY = fullData.data[i].y
+                        if (curOy > horizontal_line_y_position && (curOy < hiOy || hiOy === null)) {
+                            hiOy = curOy;
+                            hiY = fullData.data[i].y
                         }
-                   }
-                   horizontal_line_y_position_translated = loY + (hiY - loY)/2.
-                   if(loY === null) {
+                    }
+                    horizontal_line_y_position_translated = loY + (hiY - loY) / 2.
+                    if (loY === null) {
                         horizontal_line_y_position_translated = 0;
-                   }
-                }
-                if(vertical_line_x_position === null) {
-                    vertical_line_x_position_translated = 0.5;
-                } else {
-                    if(vertical_line_x_position !== null) {
-                       var loOx = null, hiOx = null, loX = null, hiX = null;
-                       for(i in fullData.data) {
-                            var curOx = fullData.data[i].ox;
-                            if(curOx < vertical_line_x_position && (curOx > loOx || loOx === null)) {
-                                  loOx = curOx;
-                                  loX = fullData.data[i].x;
-                            }
-                            if(curOx > vertical_line_x_position && (curOx < hiOx || hiOx === null)) {
-                                  hiOx = curOx;
-                                  hiX = fullData.data[i].x
-                            }
-                       }
-                       vertical_line_x_position_translated = loX + (hiX - loX)/2.
-                       if(loX === null) {
-                            vertical_line_x_position_translated = 0;
-                       }
                     }
                 }
-                if(showCrossAxes) {
+                if (vertical_line_x_position === null) {
+                    vertical_line_x_position_translated = 0.5;
+                } else {
+                    if (vertical_line_x_position !== null) {
+                        var loOx = null, hiOx = null, loX = null, hiX = null;
+                        for (i in fullData.data) {
+                            var curOx = fullData.data[i].ox;
+                            if (curOx < vertical_line_x_position && (curOx > loOx || loOx === null)) {
+                                loOx = curOx;
+                                loX = fullData.data[i].x;
+                            }
+                            if (curOx > vertical_line_x_position && (curOx < hiOx || hiOx === null)) {
+                                hiOx = curOx;
+                                hiX = fullData.data[i].x
+                            }
+                        }
+                        vertical_line_x_position_translated = loX + (hiX - loX) / 2.
+                        if (loX === null) {
+                            vertical_line_x_position_translated = 0;
+                        }
+                    }
+                }
+                if (showCrossAxes) {
                     var x_line = svg.append("g")
                         .attr("transform", "translate(0, " + y(horizontal_line_y_position_translated) + ")")
                         .append("line")
@@ -1963,13 +1992,13 @@ buildViz = function (d3) {
                     var curTerm = termDataList[i].term;
                     word = (function (word, curTerm) {
                         var curWordPrinted = svg.append("text")
-                                .attr("text-anchor", "start")
-                                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                                .attr('font-size', '12px')
-                                .attr("x", word.node().getBBox().x)
-                                .attr("y", word.node().getBBox().y
-                                    + 2 * word.node().getBBox().height)
-                                .text(curTerm);
+                            .attr("text-anchor", "start")
+                            .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                            .attr('font-size', '12px')
+                            .attr("x", word.node().getBBox().x)
+                            .attr("y", word.node().getBBox().y
+                                + 2 * word.node().getBBox().height)
+                            .text(curTerm);
                         wordObjList.push(curWordPrinted)
                         return makeWordInteractive(
                             termDataList, //data,
@@ -1985,7 +2014,7 @@ buildViz = function (d3) {
                 return {
                     'word': word,
                     'maxWidth': maxWidth,
-                    'wordObjList':wordObjList
+                    'wordObjList': wordObjList
                 };
             }
 
@@ -2009,7 +2038,7 @@ buildViz = function (d3) {
                 return pickScoreSortAlgo(category);
             }
 
-            function showAssociatedWordList(data, word, header, isAssociatedToCategory,  length=14) {
+            function showAssociatedWordList(data, word, header, isAssociatedToCategory, length = 14) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isAssociatedToCategory);
                 sortedData = data.filter(term => (term.display === undefined || term.display === true)).sort(sortingAlgo);
@@ -2025,20 +2054,22 @@ buildViz = function (d3) {
                 return showWordList(word, sortedData.slice(0, length));
 
             }
+
             var characteristicXOffset = width;
+
             function showCatHeader(startingOffset, catName, registerFigureBBox) {
-                var catHeader =  svg.append("text")
-                .attr("text-anchor", "start")
-                .attr("x", startingOffset //width
-                     )
-                .attr("dy", "6px")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bolder')
-                .attr('font-decoration', 'underline')
-                .text(catName
-                      //"Top " + fullData['info']['category_name']
-                     );
+                var catHeader = svg.append("text")
+                    .attr("text-anchor", "start")
+                    .attr("x", startingOffset //width
+                    )
+                    .attr("dy", "6px")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bolder')
+                    .attr('font-decoration', 'underline')
+                    .text(catName
+                        //"Top " + fullData['info']['category_name']
+                    );
                 registerFigureBBox(catHeader);
                 return catHeader;
             }
@@ -2049,35 +2080,35 @@ buildViz = function (d3) {
                 console.log(word.node().getBBox().y - word.node().getBBox().height)
                 console.log(word.node().getBBox().y + word.node().getBBox().height)
                 return svg.append("text")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bolder')
-                .attr('font-decoration', 'underline')
-                .attr("text-anchor", "start")
-                .attr("x", startingOffset)
-                .attr("y", word.node().getBBox().y + 3 * word.node().getBBox().height)
-                .text(notCatName);
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bolder')
+                    .attr('font-decoration', 'underline')
+                    .attr("text-anchor", "start")
+                    .attr("x", startingOffset)
+                    .attr("y", word.node().getBBox().y + 3 * word.node().getBBox().height)
+                    .text(notCatName);
             }
 
             function showTopTermsPane(data,
-                                       registerFigureBBox,
-                                       showAssociatedWordList,
-                                       catName,
-                                       notCatName,
-                                       startingOffset) {
+                                      registerFigureBBox,
+                                      showAssociatedWordList,
+                                      catName,
+                                      notCatName,
+                                      startingOffset) {
                 data = data.filter(term => (term.display === undefined || term.display === true));
                 //var catHeader = showCatHeader(startingOffset, catName, registerFigureBBox);
                 var catHeader = svg.append("text")
-                .attr("text-anchor", "start")
-                .attr("x", startingOffset)
-                .attr("dy", "6px")
-                .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bolder')
-                .attr('font-decoration', 'underline')
-                .text(catName
-                      //"Top " + fullData['info']['category_name']
-                     );
+                    .attr("text-anchor", "start")
+                    .attr("x", startingOffset)
+                    .attr("dy", "6px")
+                    .attr('font-family', 'Helvetica, Arial, Sans-Serif')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bolder')
+                    .attr('font-decoration', 'underline')
+                    .text(catName
+                        //"Top " + fullData['info']['category_name']
+                    );
                 registerFigureBBox(catHeader);
                 var word = catHeader;
                 var wordListData = showAssociatedWordList(data, word, catHeader, true);
@@ -2093,9 +2124,11 @@ buildViz = function (d3) {
                 if (wordListData.maxWidth > maxWidth) {
                     maxWidth = wordListData.maxWidth;
                 }
-                return {wordListData, notWordListData,
-                        word, maxWidth, characteristicXOffset, startingOffset,
-                        catHeader, notCatHeader, registerFigureBBox};
+                return {
+                    wordListData, notWordListData,
+                    word, maxWidth, characteristicXOffset, startingOffset,
+                    catHeader, notCatHeader, registerFigureBBox
+                };
             }
 
             var payload = Object();
@@ -2128,8 +2161,8 @@ buildViz = function (d3) {
                     title = 'Most similar';
                     sortMethod = scoreSortReverse;
                 } else if (data.reduce(function (a, b) {
-                        return a + b.bg
-                    }, 0) === 0) {
+                    return a + b.bg
+                }, 0) === 0) {
                     title = 'Most frequent';
                 }
                 word = svg.append("text")
@@ -2163,11 +2196,11 @@ buildViz = function (d3) {
                 var labeledPoints = [];
                 //var filteredData = data.filter(d=>d.display === undefined || d.display === true);
                 //for (var i = 0; i < filteredData.length; i++) {
-                data.forEach(function(datum, i) {
+                data.forEach(function (datum, i) {
                     //console.log(datum.i, datum.ci, i)
                     //var label = labelPointsIfPossible(i, getX(filteredData[i]), getY(filteredData[i]));
-                    if(datum.display === undefined || datum.display === true) {
-                        if(datum.term == "the" || i == 1) {
+                    if (datum.display === undefined || datum.display === true) {
+                        if (datum.term == "the" || i == 1) {
                             console.log("trying to label datum # " + i + ": " + datum.term)
                             console.log(datum)
                             console.log([getX(datum), getY(datum)])
@@ -2186,10 +2219,13 @@ buildViz = function (d3) {
             //var labeledPoints = performPartialLabeling();
             var labeledPoints = [];
             labeledPoints = performPartialLabeling(data,
-                                                   labeledPoints,
-                                                   function (d) {return d.x},
-                                                   function (d) {return d.y});
-
+                labeledPoints,
+                function (d) {
+                    return d.x
+                },
+                function (d) {
+                    return d.y
+                });
 
 
             /*
@@ -2275,7 +2311,7 @@ buildViz = function (d3) {
                             .match(/\S+/g) || []
                     ).length;
                     var name = null;
-                    if(unifiedContexts) {
+                    if (unifiedContexts) {
                         var name = fullData.docs.categories[x];
                         wordCounts[name] = wordCounts[name] ? wordCounts[name] + cnt : cnt;
                     } else {
@@ -2297,7 +2333,7 @@ buildViz = function (d3) {
                 });
                 fullData.docs.labels.forEach(function (x) {
 
-                    if(unifiedContexts) {
+                    if (unifiedContexts) {
                         var name = fullData.docs.categories[x];
                         docCounts[name] = docCounts[name] ? docCounts[name] + 1 : 1
                     } else {
@@ -2330,9 +2366,9 @@ buildViz = function (d3) {
                     });
                 } else {
                     [fullData.info.category_name,
-                     fullData.info.not_category_name,
-                     fullData.info.neutral_category_name,
-                     fullData.info.extra_category_name].forEach(function (x, i) {
+                        fullData.info.not_category_name,
+                        fullData.info.neutral_category_name,
+                        fullData.info.extra_category_name].forEach(function (x, i) {
                         if (docCounts[x] > 0) {
                             messages.push('<b>' + x + '</b> document count: '
                                 + Number(docCounts[x]).toLocaleString('en')
@@ -2342,7 +2378,7 @@ buildViz = function (d3) {
                     });
                 }
 
-                d3.select('#'+divName+'-'+'corpus-stats')
+                d3.select('#' + divName + '-' + 'corpus-stats')
                     .style('width', width + margin.left + margin.right + 200)
                     .append('div')
                     .html(messages.join('<br />'));
@@ -2378,6 +2414,7 @@ buildViz = function (d3) {
                 document.body.appendChild(downloadLink);
 
             }
+
             function rerender(xCoords, yCoords, color) {
                 labeledPoints.forEach(function (p) {
                     p.label.remove();
@@ -2399,75 +2436,78 @@ buildViz = function (d3) {
                 console.log(fullData)
                 console.log(this)
                 var circles = this.svg//.select('#' + divName)
-                .selectAll("dot")
-                .data(this.fullData.data.filter(d=>d.display === undefined || d.display === true))
-                //.filter(function (d) {return d.display === undefined || d.display === true})
-                .enter()
-                .append("circle")
-                .attr("cy", d=>d.y)
-                .attr("cx", d=>d.x)
-                .attr("r", d=>2)
-                .on("mouseover", function (d) {
-                    /*var mySVGMatrix = circle.getScreenCTM()n
-                        .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
-                    var pageX = mySVGMatrix.e;
-                    var pageY = mySVGMatrix.f;*/
+                    .selectAll("dot")
+                    .data(this.fullData.data.filter(d => d.display === undefined || d.display === true))
+                    //.filter(function (d) {return d.display === undefined || d.display === true})
+                    .enter()
+                    .append("circle")
+                    .attr("cy", d => d.y)
+                    .attr("cx", d => d.x)
+                    .attr("r", d => 2)
+                    .on("mouseover", function (d) {
+                        /*var mySVGMatrix = circle.getScreenCTM()n
+                            .translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
+                        var pageX = mySVGMatrix.e;
+                        var pageY = mySVGMatrix.f;*/
 
-                    /*showTooltip(
-                        d,
-                        d3.event.pageX,
-                        d3.event.pageY
-                    );*/
-                    console.log("point MOUSOEVER")
-                    console.log(d)
-                    showToolTipForTerm(data, this, d.term, d, true);
-                    d3.select(this).style("stroke", "black");
-                })
-                .on("click", function (d) {
-                    var runDisplayTermContexts = true;
-                    if(alternativeTermFunc != null) {
-                        runDisplayTermContexts = alternativeTermFunc(d);
-                    }
-                    if(runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
-                    }
-                })
-                .on("mouseout", function (d) {
-                    tooltip.transition()
-                        .duration(0)
-                        .style("opacity", 0);
-                    d3.select(this).style("stroke", null);
-                    d3.select('#'+divName+'-'+'overlapped-terms')
-                        .selectAll('div')
-                        .remove();
-                })
+                        /*showTooltip(
+                            d,
+                            d3.event.pageX,
+                            d3.event.pageY
+                        );*/
+                        console.log("point MOUSOEVER")
+                        console.log(d)
+                        showToolTipForTerm(data, this, d.term, d, true);
+                        d3.select(this).style("stroke", "black");
+                    })
+                    .on("click", function (d) {
+                        var runDisplayTermContexts = true;
+                        if (alternativeTermFunc != null) {
+                            runDisplayTermContexts = alternativeTermFunc(d);
+                        }
+                        if (runDisplayTermContexts) {
+                            displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
+                        }
+                    })
+                    .on("mouseout", function (d) {
+                        tooltip.transition()
+                            .duration(0)
+                            .style("opacity", 0);
+                        d3.select(this).style("stroke", null);
+                        d3.select('#' + divName + '-' + 'overlapped-terms')
+                            .selectAll('div')
+                            .remove();
+                    })
 
-                if(color !== null) {
-                     circles.style("fill", d => color(d));
+                if (color !== null) {
+                    circles.style("fill", d => color(d));
                 }
-                xCoords.forEach((xCoord,i) => censorCircle(xCoord, yCoords[i]))
+                xCoords.forEach((xCoord, i) => censorCircle(xCoord, yCoords[i]))
                 labeledPoints = [];
                 labeledPoints = performPartialLabeling(
                     this.fullData.data,
                     labeledPoints,
-                    (d=>d.ox), //function (d) {return xCoords[d.ci]},
-                    (d=>d.oy) //function (d) {return yCoords[d.ci]}
+                    (d => d.ox), //function (d) {return xCoords[d.ci]},
+                    (d => d.oy) //function (d) {return yCoords[d.ci]}
                 );
             };
             //return [performPartialLabeling, labeledPoints];
-            return {...payload,
-                    ...{'rerender': rerender,
-                        'performPartialLabeling': performPartialLabeling,
-                        'showToolTipForTerm': showToolTipForTerm,
-                        'svg': svg,
-                        'data': data,
-                        'xLabel': xLabel,
-                        'yLabel': yLabel,
-                        'drawXLabel': drawXLabel,
-                        'drawYLabel': drawYLabel,
-                        'populateCorpusStats': populateCorpusStats}};
+            return {
+                ...payload,
+                ...{
+                    'rerender': rerender,
+                    'performPartialLabeling': performPartialLabeling,
+                    'showToolTipForTerm': showToolTipForTerm,
+                    'svg': svg,
+                    'data': data,
+                    'xLabel': xLabel,
+                    'yLabel': yLabel,
+                    'drawXLabel': drawXLabel,
+                    'drawYLabel': drawYLabel,
+                    'populateCorpusStats': populateCorpusStats
+                }
+            };
         };
-
 
 
         //fullData = getDataAndInfo();
@@ -2484,7 +2524,7 @@ buildViz = function (d3) {
             .style("opacity", 0);
 
         plotInterface = {}
-        if(payload.topTermsPane) {
+        if (payload.topTermsPane) {
             plotInterface.topTermsPane = payload.topTermsPane;
             plotInterface.showTopTermsPane = payload.showTopTermsPane;
             plotInterface.showAssociatedWordList = payload.showAssociatedWordList;
@@ -2509,12 +2549,12 @@ buildViz = function (d3) {
         plotInterface.x = x;
         plotInterface.tooltip = tooltip;
         plotInterface.alternativeTermFunc = alternativeTermFunc;
-        plotInterface.drawCategoryAssociation = function (categoryNum, otherCategoryNum=null) {
+        plotInterface.drawCategoryAssociation = function (categoryNum, otherCategoryNum = null) {
             var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
             var minRawLogTermCounts = Math.min(...rawLogTermCounts);
             var logTermCounts = rawLogTermCounts.map(
-                x => (x - minRawLogTermCounts)/maxRawLogTermCounts
+                x => (x - minRawLogTermCounts) / maxRawLogTermCounts
             )
 
             //var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
@@ -2542,7 +2582,6 @@ buildViz = function (d3) {
             */
 
 
-
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
             console.log("denseRanks")
             console.log(denseRanks);
@@ -2555,23 +2594,23 @@ buildViz = function (d3) {
 
             }
 
-            var rawScores = denseRanks.fg.map((x,i) => x - denseRanks.bg[i]);
+            var rawScores = denseRanks.fg.map((x, i) => x - denseRanks.bg[i]);
             var minRawScores = Math.min(...rawScores);
             var maxRawScores = Math.max(...rawScores);
 
             var scores = rawScores.map(
-                function(rawScore) {
-                    if(rawScore == 0) {
+                function (rawScore) {
+                    if (rawScore == 0) {
                         return 0.5;
-                    } else if(rawScore > 0) {
-                        return rawScore/(2.*maxRawScores) + 0.5;
-                    } else if(rawScore < 0) {
-                        return 0.5 - rawScore/(2.*minRawScores);
+                    } else if (rawScore > 0) {
+                        return rawScore / (2. * maxRawScores) + 0.5;
+                    } else if (rawScore < 0) {
+                        return 0.5 - rawScore / (2. * minRawScores);
                     }
                 }
             )
-            var fgFreqSum = denseRanks.fgFreqs.reduce((a,b) => a + b, 0)
-            var bgFreqSum = denseRanks.bgFreqs.reduce((a,b) => a + b, 0)
+            var fgFreqSum = denseRanks.fgFreqs.reduce((a, b) => a + b, 0)
+            var bgFreqSum = denseRanks.bgFreqs.reduce((a, b) => a + b, 0)
 
             //!!! OLD and good
             var ox = denseRanks.bg;
@@ -2604,48 +2643,45 @@ buildViz = function (d3) {
             })*/
 
 
-
-
-
             var oxmax = Math.max(...ox)
             var oxmin = Math.min(...ox)
-            var ox = ox.map(x => (x - oxmin)/(oxmax - oxmin))
+            var ox = ox.map(x => (x - oxmin) / (oxmax - oxmin))
             var oymax = Math.max(...oy)
             var oymin = Math.min(...oy)
-            var oy = oy.map(x => (x - oymin)/(oymax - oymin))
+            var oy = oy.map(x => (x - oymin) / (oymax - oymin))
             //var ox = logTermCounts
             //var oy = scores;
             var xf = this.x;
             var yf = this.y;
 
-            this.fullData.data = this.fullData.data.map(function(term, i) {
+            this.fullData.data = this.fullData.data.map(function (term, i) {
                 //term.ci = i;
                 term.s = scores[i];
                 term.os = rawScores[i];
                 term.cat = denseRanks.fgFreqs[i];
                 term.ncat = denseRanks.bgFreqs[i];
-                term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000/fgFreqSum);
-                term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000/bgFreqSum);
+                term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000 / fgFreqSum);
+                term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000 / bgFreqSum);
                 term.x = xf(ox[i]) // logTermCounts[term.i];
                 term.y = yf(oy[i]) // scores[term.i];
                 term.ox = ox[i];
                 term.oy = oy[i];
                 term.display = false;
                 return term;
-             })
+            })
 
             // Feature selection
             var targetTermsToShow = 1500;
 
-            var sortedBg = denseRanks.bg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
-            var sortedFg = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0,parseInt(targetTermsToShow/2));
-            var sortedScores = denseRanks.fg.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+            var sortedBg = denseRanks.bg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
+            var sortedFg = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
+            var sortedScores = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
             var myFullData = this.fullData
 
             sortedBg.concat(sortedFg)//.concat(sortedScores.slice(0, parseInt(targetTermsToShow/2))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4)))
-                .forEach(function(i) {
-                myFullData.data[i].display = true;
-            })
+                .forEach(function (i) {
+                    myFullData.data[i].display = true;
+                })
 
             console.log('newly filtered')
             console.log(myFullData)
@@ -2685,16 +2721,16 @@ buildViz = function (d3) {
 
 
             this.rerender(//denseRanks.bg, 
-                          fullData.data.map(x=>x.ox), //ox
-                          //denseRanks.fg,
-                          fullData.data.map(x=>x.oy), //oy,
-                          d => d3.interpolateRdYlBu(d.s));
+                fullData.data.map(x => x.ox), //ox
+                //denseRanks.fg,
+                fullData.data.map(x => x.oy), //oy,
+                d => d3.interpolateRdYlBu(d.s));
             this.yLabel.remove()
             this.xLabel.remove()
 
             var leftName = this.fullData.info.categories[categoryNum];
             var bottomName = "Not " + this.fullData.info.categories[categoryNum];
-            if(otherCategoryNum !== null) {
+            if (otherCategoryNum !== null) {
                 bottomName = this.fullData.info.categories[otherCategoryNum];
             }
 
@@ -2709,12 +2745,12 @@ buildViz = function (d3) {
             this.showWordList = payload.showWordList;
 
 
-            this.showAssociatedWordList = function(data, word, header, isAssociatedToCategory, length=14) {
+            this.showAssociatedWordList = function (data, word, header, isAssociatedToCategory, length = 14) {
                 var sortedData = null;
-                if(!isAssociatedToCategory) {
-                    sortedData = data.map(x=>x).sort((a, b) => scores[a.i] - scores[b.i])
+                if (!isAssociatedToCategory) {
+                    sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])
                 } else {
-                    sortedData = data.map(x=>x).sort((a, b) => scores[b.i] - scores[a.i])
+                    sortedData = data.map(x => x).sort((a, b) => scores[b.i] - scores[a.i])
                 }
                 console.log('sortedData');
                 console.log(isAssociatedToCategory);
@@ -2735,26 +2771,26 @@ buildViz = function (d3) {
             fullData.info.category_name = leftName;
             fullData.info.not_category_name = bottomName;
             fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
-            if(otherCategoryNum === null) {
+            if (otherCategoryNum === null) {
                 fullData.info.not_category_internal_names = this.fullData.info.categories
-                    .filter(x => x!==this.fullData.info.categories[categoryNum]);
+                    .filter(x => x !== this.fullData.info.categories[categoryNum]);
             } else {
                 fullData.info.not_category_internal_names = this.fullData.info.categories
-                    .filter(x => x===this.fullData.info.categories[otherCategoryNum]);
+                    .filter(x => x === this.fullData.info.categories[otherCategoryNum]);
 
                 fullData.info.neutral_category_internal_names = this.fullData.info.categories
-                    .filter(x => (x!==this.fullData.info.categories[categoryNum]
-                                  && x!==this.fullData.info.categories[otherCategoryNum]));
+                    .filter(x => (x !== this.fullData.info.categories[categoryNum]
+                        && x !== this.fullData.info.categories[otherCategoryNum]));
                 fullData.info.neutral_category_name = "All Others";
 
             }
             console.log("fullData.info.not_category_internal_names")
             console.log(fullData.info.not_category_internal_names)
-            ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo',
-             'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead',
-             'neut'
-            ].forEach(function(divSubName) {
-                var mydiv = '#'+divName+'-'+divSubName;
+                ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo',
+                'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead',
+                'neut'
+                ].forEach(function (divSubName) {
+                var mydiv = '#' + divName + '-' + divSubName;
                 console.log("Clearing")
                 console.log(mydiv)
                 d3.select(mydiv).selectAll("*").remove();

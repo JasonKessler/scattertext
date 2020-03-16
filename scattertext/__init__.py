@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-
-version = [0, 0, 2, 59]
+version = [0, 0, 2, 60]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -109,6 +108,7 @@ from scattertext.termscoring.CredTFIDF import CredTFIDF
 from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsResolver, EmbeddingAligner
 from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 
+
 def produce_scattertext_explorer(corpus,
                                  category,
                                  category_name=None,
@@ -165,9 +165,12 @@ def produce_scattertext_explorer(corpus,
                                  get_tooltip_content=None,
                                  x_axis_values=None,
                                  y_axis_values=None,
+                                 x_axis_values_format=None,
+                                 y_axis_values_format=None,
                                  color_func=None,
                                  term_scorer=None,
                                  show_axes=True,
+                                 show_axes_and_cross_hairs=False,
                                  horizontal_line_y_position=None,
                                  vertical_line_x_position=None,
                                  show_cross_axes=True,
@@ -327,6 +330,10 @@ def produce_scattertext_explorer(corpus,
         Value-labels to show on x-axis. Low, medium, high are defaults.
     y_axis_values : list, default None
         Value-labels to show on y-axis. Low, medium, high are defaults.
+    x_axis_values_format : str, default None
+        d3 format of x-axis values
+    y_axis_values_format : str, default None
+        d3 format of y-axis values
     color_func : str, default None
         Javascript function to control color of a point.  Function takes a parameter
         which is a dictionary entry produced by `ScatterChartExplorer.to_dict` and
@@ -337,6 +344,8 @@ def produce_scattertext_explorer(corpus,
         CorpusBasedTermScorer instance.
     show_axes : bool, default True
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
+    show_axes_and_cross_hairs : bool, default False
+        Show both peripheral axis labels and cross axes.
     vertical_line_x_position : float, default None
     horizontal_line_y_position : float, default None
     show_cross_axes : bool, default True
@@ -487,24 +496,33 @@ def produce_scattertext_explorer(corpus,
                                                  show_characteristic=show_characteristic,
                                                  word_vec_use_p_vals=word_vec_use_p_vals,
                                                  max_p_val=max_p_val, save_svg_button=save_svg_button,
-                                                 p_value_colors=p_value_colors, x_label=x_label, y_label=y_label,
-                                                 show_top_terms=show_top_terms, show_neutral=show_neutral,
-                                                 get_tooltip_content=get_tooltip_content, x_axis_values=x_axis_values,
-                                                 y_axis_values=y_axis_values, color_func=color_func,
+                                                 p_value_colors=p_value_colors,
+                                                 x_label=x_label,
+                                                 y_label=y_label,
+                                                 show_top_terms=show_top_terms,
+                                                 show_neutral=show_neutral,
+                                                 get_tooltip_content=get_tooltip_content,
+                                                 x_axis_values=x_axis_values,
+                                                 y_axis_values=y_axis_values,
+                                                 x_axis_values_format=x_axis_values_format,
+                                                 y_axis_values_format=y_axis_values_format,
+                                                 color_func=color_func,
                                                  show_axes=show_axes,
                                                  horizontal_line_y_position=horizontal_line_y_position,
                                                  vertical_line_x_position=vertical_line_x_position,
                                                  show_extra=show_extra,
                                                  do_censor_points=censor_points,
                                                  center_label_over_points=center_label_over_points,
-                                                 x_axis_labels=x_axis_labels, y_axis_labels=y_axis_labels,
+                                                 x_axis_labels=x_axis_labels,
+                                                 y_axis_labels=y_axis_labels,
                                                  topic_model_preview_size=topic_model_preview_size,
                                                  vertical_lines=vertical_lines,
                                                  unified_context=unified_context,
                                                  show_category_headings=show_category_headings,
                                                  show_cross_axes=show_cross_axes, div_name=div_name,
                                                  alternative_term_func=alternative_term_func,
-                                                 include_all_contexts=include_all_contexts)
+                                                 include_all_contexts=include_all_contexts,
+                                                 show_axes_and_cross_hairs=show_axes_and_cross_hairs)
     return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol,
                                                                             d3_url=d3_url,
                                                                             d3_scale_chromatic_url=d3_scale_chromatic_url,
@@ -1259,6 +1277,8 @@ def produce_pca_explorer(corpus,
                          scaler=scale,
                          show_axes=False,
                          show_dimensions_on_tooltip=True,
+                         x_label='',
+                         y_label='',
                          **kwargs):
     """
     Parameters
@@ -1324,14 +1344,17 @@ def produce_pca_explorer(corpus,
         original_y=projection['y'],
         x_coords=scaler(projection['x']),
         y_coords=scaler(projection['y']),
-        y_label='',
-        x_label='',
+        y_label=y_label,
+        x_label=x_label,
         show_axes=show_axes,
-        horizontal_line_y_position=0,
-        vertical_line_x_position=0,
+        horizontal_line_y_position=kwargs.get('horizontal_line_y_position', 0),
+        vertical_line_x_position=kwargs.get('vertical_line_x_position', 0),
         **kwargs
     )
     return html
+
+
+produce_fixed_explorer = produce_pca_explorer
 
 
 def produce_characteristic_explorer(corpus,

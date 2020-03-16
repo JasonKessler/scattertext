@@ -1,6 +1,6 @@
 import json
 
-from scattertext.Common import DEFAULT_DIV_ID
+from scattertext.Common import DEFAULT_DIV_ID, DEFAULT_D3_AXIS_VALUE_FORMAT
 
 
 class InvalidProtocolException(Exception):
@@ -18,7 +18,8 @@ class ScatterplotStructure(object):
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
                  topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
                  show_cross_axes=True, div_name=DEFAULT_DIV_ID,
-                 alternative_term_func=None, include_all_contexts=False):
+                 alternative_term_func=None, include_all_contexts=False, show_axes_and_cross_hairs=False,
+                 x_axis_values_format=None, y_axis_values_format=None):
         '''
 
         Parameters
@@ -118,6 +119,12 @@ class ScatterplotStructure(object):
             execute standard term click pipeline. Ex.: `'(function(termDict) {return true;})'`.
         include_all_contexts: bool, default False
             Include all contexts, even non-matching ones, in interface
+        show_axes_and_cross_hairs: bool, default False
+            Show both cross-axes and peripheral scales.
+        x_axis_values_format: str, default None
+            d3 format string for x-axis values (see https://github.com/d3/d3-format)
+        y_axis_values_format: str, default None
+            d3 format string for y-axis values (see https://github.com/d3/d3-format)
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -160,13 +167,21 @@ class ScatterplotStructure(object):
         self._div_name = div_name
         self._alternative_term_func = alternative_term_func
         self._include_all_contexts = include_all_contexts
+        self._show_axes_and_cross_hairs = show_axes_and_cross_hairs
+        self._x_axis_values_format = x_axis_values_format
+        self._y_axis_values_format = y_axis_values_format
+
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
             return 'undefined' if x is None else str(x)
 
-        def js_default_string(x):
-            return 'undefined' if x is None else json.dumps(str(x))
+        def js_default_string(x, default_string=None):
+            if x is not None:
+                return json.dumps(str(x))
+            if default_string is None:
+                return 'undefined'
+            return json.dumps(default_string)
 
         def js_default_value_to_null(x):
             return 'null' if x is None else str(x)
@@ -222,7 +237,11 @@ class ScatterplotStructure(object):
                      js_bool(self._show_cross_axes),
                      js_default_string(self._div_name),
                      js_default_value_to_null(self._alternative_term_func),
-                     js_bool(self._include_all_contexts)]
+                     js_bool(self._include_all_contexts),
+                     js_bool(self._show_axes_and_cross_hairs),
+                     js_default_string(self._x_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
+                     js_default_string(self._y_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
+                     ]
         return 'buildViz(' + ','.join(arguments) + ');'
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):
