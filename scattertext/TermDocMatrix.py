@@ -104,7 +104,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         mat = self.get_term_freq_mat()
         return pd.DataFrame(mat,
                             index=pd.Series(self.get_terms(), name='term'),
-                            columns=[c + label_append for c in self.get_categories()])
+                            columns=[str(c) + label_append for c in self.get_categories()])
 
     def get_term_freq_mat(self):
         '''
@@ -158,7 +158,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         mat = self.get_term_count_mat()
         return pd.DataFrame(mat,
                             index=self.get_terms(),
-                            columns=[c + label_append for c in self.get_categories()])
+                            columns=[str(c) + label_append for c in self.get_categories()])
 
     def get_metadata_doc_count_df(self, label_append=' freq'):
         '''
@@ -171,7 +171,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         mat = self.get_metadata_count_mat()
         return pd.DataFrame(mat,
                             index=self.get_metadata(),
-                            columns=[c + label_append for c in self.get_categories()])
+                            columns=[str(c) + label_append for c in self.get_categories()])
 
     def _term_freq_df_from_matrix(self, catX, label_append=' freq'):
         return self._get_freq_df_using_idx_store(catX, self._term_idx_store, label_append=label_append)
@@ -180,13 +180,13 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         d = {'term': idx_store._i2val}
         for idx, cat in self._category_idx_store.items():
             try:
-                d[cat + label_append] = catX[idx, :].A[0]
+                d[str(cat) + label_append] = catX[idx, :].A[0]
             except IndexError:
                 self._fix_problem_when_final_category_index_has_no_terms(cat, catX, d, label_append)
         return pd.DataFrame(d).set_index('term')
 
     def _fix_problem_when_final_category_index_has_no_terms(self, cat, catX, d, label_append=' freq'):
-        d[cat + label_append] = np.zeros(catX.shape[1])
+        d[str(cat) + label_append] = np.zeros(catX.shape[1])
 
     def get_metadata_freq_df(self, label_append=' freq'):
         '''
@@ -209,7 +209,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             freq_mat[:, cat_i] = self._mX[self._y == cat_i, :].sum(axis=0)
         return pd.DataFrame(freq_mat,
                             index=pd.Series(self.get_metadata(), name='term'),
-                            columns=[c + label_append for c in self.get_categories()])
+                            columns=[str(c) + label_append for c in self.get_categories()])
 
     def _row_category_ids(self):
         row = self._X.tocoo().row

@@ -18,7 +18,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'null', '10', 'null', 'null', 'null', 'false', 'true', 'true', '"' + DEFAULT_DIV_ID + '"',
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"']
+                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -393,3 +393,10 @@ class TestHTMLVisualizationAssembly(TestCase):
                                        y_axis_values_format=".5f")
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({42: '".5f"'}))
+
+    def test_match_full_line(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       match_full_line=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({43: 'true'}))

@@ -41,7 +41,8 @@ buildViz = function (d3) {
                      includeAllContexts = false,
                      showAxesAndCrossHairs = false,
                      x_axis_values_format = '.3f',
-                     y_axis_values_format = '.3f') {
+                     y_axis_values_format = '.3f',
+                     matchFullLine = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -1146,6 +1147,9 @@ buildViz = function (d3) {
                 if (isEmoji(term)) {
                     boundary = '';
                     wordSep = '';
+                }
+                if (matchFullLine) {
+                    boundary = '($|^)';
                 }
                 var termToRegex = term;
 

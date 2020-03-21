@@ -92,7 +92,8 @@ class TermCategoryFrequencies(object):
 
 	def __init__(self,
 	             category_frequency_df,
-	             document_category_df=None,
+				 document_category_df=None,
+				 metadata_frequency_df=None,
 	             unigram_frequency_path=None):
 		'''
 		Parameters
@@ -101,11 +102,15 @@ class TermCategoryFrequencies(object):
 			Index is term, columns are categories, values are counts
 		document_category_df : pd.DataFrame, optional
 			Columns are text, category. Values are text (string) and category (string)
-		unigram_frequency_path : See TermDocMatrix
+		metadata_frequency_df : pd.DataFrame, optional
+			Index is term, columns are categories, values are counts
+		unigram_frequency_path : See TermDocMatrix, optional
 		'''
 		if document_category_df is not None:
-			assert set(document_category_df.columns) == set(['text', 'category'])
+			#assert set(document_category_df.columns) == set(['text', 'category'])
+			assert 'text' in document_category_df.columns and 'category' in document_category_df.columns
 		self._document_category_df = document_category_df
+		self.metadata_frequency_df = metadata_frequency_df
 		self.term_category_freq_df = category_frequency_df
 		self._unigram_frequency_path = unigram_frequency_path
 
@@ -114,6 +119,9 @@ class TermCategoryFrequencies(object):
 
 	def get_categories(self):
 		return list(self.term_category_freq_df.columns)
+
+	def get_num_metadata(self):
+		return len(self.metadata_frequency_df)
 
 	def get_scaled_f_scores_vs_background(self,
 	                                      scaler_algo=DEFAULT_BACKGROUND_SCALER_ALGO,

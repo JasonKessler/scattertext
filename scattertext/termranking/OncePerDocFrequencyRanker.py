@@ -11,5 +11,5 @@ class OncePerDocFrequencyRanker(TermRanker):
 	def get_ranks_from_mat(self, mat, label_append=' freq'):
 		return pd.DataFrame(mat,
 							index=pd.Series(self._term_doc_matrix.get_terms(), name='term'),
-							columns=[c + label_append for c
+							columns=[str(c) + label_append for c
 									 in self._term_doc_matrix.get_categories()])

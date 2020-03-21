@@ -10,7 +10,7 @@ class InvalidProtocolException(Exception):
 class ScatterplotStructure(object):
     def __init__(self, visualization_data, width_in_pixels=None, height_in_pixels=None, max_snippets=None, color=None,
                  grey_zero_scores=False, sort_by_dist=True, reverse_sort_scores_for_not_category=True,
-                 use_full_doc=False, asian_mode=False, use_non_text_features=False, show_characteristic=True,
+                 use_full_doc=False, asian_mode=False, match_full_line=False, use_non_text_features=False, show_characteristic=True,
                  word_vec_use_p_vals=False, max_p_val=0.1, save_svg_button=False, p_value_colors=False, x_label=None,
                  y_label=None, full_data=None, show_top_terms=True, show_neutral=False, get_tooltip_content=None,
                  x_axis_values=None, y_axis_values=None, color_func=None, show_axes=True,
@@ -134,6 +134,7 @@ class ScatterplotStructure(object):
         self._sort_by_dist = sort_by_dist
         self._use_full_doc = use_full_doc
         self._asian_mode = asian_mode
+        self._match_full_line = match_full_line
         self._grey_zero_scores = grey_zero_scores
         self._use_non_text_features = use_non_text_features
         self._show_characteristic = show_characteristic
@@ -241,6 +242,7 @@ class ScatterplotStructure(object):
                      js_bool(self._show_axes_and_cross_hairs),
                      js_default_string(self._x_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
                      js_default_string(self._y_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
+                     js_bool(self._match_full_line),
                      ]
         return 'buildViz(' + ','.join(arguments) + ');'
 

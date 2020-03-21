@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 60]
+version = [0, 0, 2, 61]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -140,6 +140,7 @@ def produce_scattertext_explorer(corpus,
                                  gray_zero_scores=False,
                                  term_ranker=None,
                                  asian_mode=False,
+                                 match_full_line=False,
                                  use_non_text_features=False,
                                  show_top_terms=True,
                                  show_characteristic=True,
@@ -270,6 +271,8 @@ def produce_scattertext_explorer(corpus,
         TermRanker class for determining term frequency ranks.
     asian_mode : bool, optional
         Use a special Javascript regular expression that's specific to chinese or japanese
+    match_full_line : bool, optional
+        Has the javascript regex match the full line instead of part of it
     use_non_text_features : bool, optional
         Show non-bag-of-words features (e.g., Empath) instead of text.  False by default.
     show_top_terms : bool, default True
@@ -489,9 +492,12 @@ def produce_scattertext_explorer(corpus,
                                                  height_in_pixels=height_in_pixels,
                                                  max_snippets=max_snippets,
                                                  color=color,
-                                                 grey_zero_scores=gray_zero_scores, sort_by_dist=sort_by_dist,
+                                                 grey_zero_scores=gray_zero_scores,
+                                                 sort_by_dist=sort_by_dist,
                                                  reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
-                                                 use_full_doc=use_full_doc, asian_mode=asian_mode,
+                                                 use_full_doc=use_full_doc,
+                                                 asian_mode=asian_mode,
+                                                 match_full_line=match_full_line,
                                                  use_non_text_features=use_non_text_features,
                                                  show_characteristic=show_characteristic,
                                                  word_vec_use_p_vals=word_vec_use_p_vals,
