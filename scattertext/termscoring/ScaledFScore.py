@@ -296,8 +296,10 @@ class ScaledFScore(object):
         recall = cat_word_counts * 1. / cat_word_counts.sum()
         precision_normcdf = ScaledFScore._safe_scaler(scaler_algo, precision)
         recall_normcdf = ScaledFScore._safe_scaler(scaler_algo, recall)
-        scores = (1 + beta ** 2) * (precision_normcdf * recall_normcdf) \
-                 / ((beta ** 2) * precision_normcdf + recall_normcdf)
+        scores_numerator = (1 + beta ** 2) * (precision_normcdf * recall_normcdf)
+        scores_denominator = ((beta ** 2) * precision_normcdf + recall_normcdf)
+        scores_denominator[scores_denominator == 0]  = 1
+        scores = scores_numerator/scores_denominator
         scores[np.isnan(scores)] = 0.
         if old_cat_word_counts is None:
             return scores

@@ -1352,29 +1352,47 @@ buildViz = function (d3) {
         }
 
         handleSearch = function (event) {
-            deselectLastCircle();
             var searchTerm = document
                 .getElementById(this.divName + "-searchTerm")
-                .value
-                .toLowerCase()
+                .value;
+            handleSearchTerm(searchTerm);
+            return false;
+        };
+
+        function highlightTerm(searchTerm, showObscured) {
+            deselectLastCircle();
+            var cleanedTerm = searchTerm.toLowerCase()
                 .replace("'", " '")
                 .trim();
-            if (this.termDict[searchTerm] !== undefined) {
-                showToolTipForTerm(this.data, this.svg, searchTerm, this.termDict[searchTerm], true);
+            if (this.termDict[cleanedTerm] === undefined) {
+                cleanedTerm = searchTerm.replace("'", " '").trim();
             }
+            if (this.termDict[cleanedTerm] !== undefined) {
+                showToolTipForTerm(this.data, this.svg, cleanedTerm, this.termDict[cleanedTerm], showObscured);
+            }
+            return cleanedTerm;
+        }
+
+        function handleSearchTerm(searchTerm) {
+            console.log("Handle search term."); console.log(searchTerm);
+            console.log("this"); console.log(this)
+            highlighted = highlightTerm.call(this, searchTerm, true);
+            console.log("found searchTerm"); console.log(searchTerm);
             if (this.termDict[searchTerm] != null) {
                 var runDisplayTermContexts = true;
                 if (alternativeTermFunc != null) {
                     runDisplayTermContexts = this.alternativeTermFunc(this.termDict[searchTerm]);
                 }
                 if (runDisplayTermContexts) {
-                    displayTermContexts(this.data,
-                        this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts), false,
-                        this.includeAllContexts);
+                    displayTermContexts(
+                        this.data,
+                        this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts),
+                        false,
+                        this.includeAllContexts
+                    );
                 }
             }
-            return false;
-        };
+        }
 
         function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured = true) {
             //var searchTermInfo = termDict[searchTerm];
@@ -2549,6 +2567,8 @@ buildViz = function (d3) {
         plotInterface.rerender = payload.rerender;
         plotInterface.populateCorpusStats = payload.populateCorpusStats;
         plotInterface.handleSearch = handleSearch;
+        plotInterface.handleSearchTerm = handleSearchTerm;
+        plotInterface.highlightTerm = highlightTerm;
         plotInterface.y = y;
         plotInterface.x = x;
         plotInterface.tooltip = tooltip;
@@ -2788,24 +2808,25 @@ buildViz = function (d3) {
                 fullData.info.neutral_category_name = "All Others";
 
             }
-            console.log("fullData.info.not_category_internal_names")
-            console.log(fullData.info.not_category_internal_names)
-                ['snippets', 'snippetsalt', 'termstats', 'overlapped-terms-clicked', 'categoryinfo',
-                'cathead', 'cat', 'corpus-stats', 'notcathead', 'notcat', 'neuthead',
-                'neut'
-                ].forEach(function (divSubName) {
+            console.log("fullData.info.not_category_internal_names");
+            console.log(fullData.info.not_category_internal_names);
+            ['snippets', 'snippetsalt', 'termstats',
+                'overlapped-terms-clicked', 'categoryinfo',
+                'cathead', 'cat', 'corpus-stats', 'notcathead',
+                'notcat', 'neuthead', 'neut'
+            ].forEach(function (divSubName) {
                 var mydiv = '#' + divName + '-' + divSubName;
-                console.log("Clearing")
-                console.log(mydiv)
+                console.log("Clearing");
+                console.log(mydiv);
                 d3.select(mydiv).selectAll("*").remove();
                 d3.select(mydiv).html("");
 
-            })
+            });
             this.populateCorpusStats();
             console.log(fullData)
-        }
+        };
 
         return plotInterface
     };
 }(d3);
- 
+

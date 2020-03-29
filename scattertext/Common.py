@@ -13,6 +13,8 @@ DEFAULT_MINIMUM_TERM_FREQUENCY = 3
 DEFAULT_DIV_ID = 'd3-div-1'
 
 DEFAULT_HTML_VIZ_FILE_NAME = 'scattertext.html'
+AUTOCOMPLETE_CSS_FILE_NAME = 'autocomplete.css'
+SEARCH_FORM_FILE_NAME = 'search_form.html'
 SEMIOTIC_SQUARE_HTML_PATH = 'data/viz/semiotic_new.html'
 PAIR_PLOT_HTML_VIZ_FILE_NAME = 'pairplot.html'
 PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME = 'pairplot_without_halo.html'

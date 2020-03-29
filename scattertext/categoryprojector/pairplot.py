@@ -50,12 +50,13 @@ def produce_category_focused_pairplot(corpus,
     projection_to_plot = np.array([uncorrelated_components.T[least_correlated_dimension],
                                    similarity_to_category_scores]).T
 
-    return produce_pairplot(corpus,
-                            initial_category=category,
-                            category_projection=uncorrelated_components_projection.use_alternate_projection(
-                                projection_to_plot),
-                            category_focused=True,
-                            **kwargs)
+    return produce_pairplot(
+        corpus,
+        initial_category=category,
+        category_projection=uncorrelated_components_projection.use_alternate_projection(projection_to_plot),
+        category_focused=True,
+        **kwargs
+    )
 
 
 def produce_pairplot(corpus,
@@ -95,38 +96,19 @@ def produce_pairplot(corpus,
 
     if initial_category is None:
         initial_category = corpus.get_categories()[0]
-    initial_category_idx = corpus.get_categories().index(initial_category)
 
-    category_scatter_chart_explorer = ScatterChartExplorer(category_projection.get_corpus(),
-                                                           minimum_term_frequency=0,
-                                                           minimum_not_category_term_frequency=0,
-                                                           pmi_threshold_coefficient=0,
-                                                           filter_unigrams=False,
-                                                           jitter=0,
-                                                           max_terms=None,
-                                                           term_ranker=term_ranker,
-                                                           use_non_text_features=True,
-                                                           term_significance=None,
-                                                           terms_to_include=None,
-                                                           verbose=verbose)
-    proj_df = category_projection.get_pandas_projection()
-    category_scatter_chart_explorer.inject_coordinates(x_coords=scaler(proj_df['x']),
-                                                       y_coords=scaler(proj_df['y']),
-                                                       original_x=proj_df['x'],
-                                                       original_y=proj_df['y'])
+    category_scatter_chart_explorer = _get_category_scatter_chart_explorer(
+        category_projection, scaler, term_ranker, verbose
+    )
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
         category=initial_category,
         max_docs_per_category=0,
     )
 
     category_tooltip_func = '(function(d) {return d.term})'
-    if category_focused:
-        term_plot_change_func = ('(function (termInfo) {termPlotInterface.drawCategoryAssociation(%s, termInfo.i);'
-                                 % (initial_category_idx)
-                                 + ' return false;})')
-    else:
-        term_plot_change_func = '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i);' \
-                                + ' return false;})'
+
+    initial_category_idx = corpus.get_categories().index(initial_category)
+    term_plot_change_func = _get_term_plot_change_js_func(category_focused, initial_category_idx)
 
     category_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(category_scatter_chart_data),
@@ -169,7 +151,6 @@ def produce_pairplot(corpus,
     ).hide_terms(terms_to_hide)
 
     if default_to_term_comparison:
-
         if topic_model_term_lists is not None:
             term_scatter_chart_explorer.inject_metadata_term_lists(topic_model_term_lists)
         if metadata_descriptions is not None:
@@ -179,6 +160,7 @@ def produce_pairplot(corpus,
             tdf = corpus.get_metadata_freq_df('')
         else:
             tdf = corpus.get_term_freq_df('')
+
         scores = RankDifference().get_scores(
             tdf[initial_category], tdf[[c for c in corpus.get_categories() if c != initial_category]].sum(axis=1)
         )
@@ -190,10 +172,10 @@ def produce_pairplot(corpus,
             transform=dense_rank,
             **kwargs
         )
-        y_label=initial_category,
-        x_label='Not ' + initial_category,
+        y_label = initial_category,
+        x_label = 'Not ' + initial_category,
         color_func = None
-        show_top_terms=True
+        show_top_terms = True
 
     else:
         term_projection = category_projection.get_term_projection()
@@ -206,7 +188,7 @@ def produce_pairplot(corpus,
         show_axes = False
         horizontal_line_y_position = 0
         vertical_line_x_position = 0
-        #import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         term_scatter_chart_explorer.inject_coordinates(x_coords,
                                                        y_coords,
                                                        original_x=original_x,
@@ -220,11 +202,10 @@ def produce_pairplot(corpus,
             category=initial_category,
             category_name=initial_category,
             include_term_category_counts=True,
-            #transform=dense_rank,
+            # transform=dense_rank,
         )
         color_func = '(function(x) {return "#5555FF"})'
-        show_top_terms=False
-
+        show_top_terms = False
 
     term_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(term_scatter_chart_data),
@@ -260,3 +241,36 @@ def produce_pairplot(corpus,
         y_dim=y_dim,
         protocol=protocol
     ).to_html()
+
+
+def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranker, verbose):
+    category_scatter_chart_explorer = ScatterChartExplorer(
+        category_projection.get_corpus(),
+        minimum_term_frequency=0,
+        minimum_not_category_term_frequency=0,
+        pmi_threshold_coefficient=0,
+        filter_unigrams=False,
+        jitter=0,
+        max_terms=None,
+        term_ranker=term_ranker,
+        use_non_text_features=True,
+        term_significance=None,
+        terms_to_include=None,
+        verbose=verbose
+    )
+    proj_df = category_projection.get_pandas_projection()
+    category_scatter_chart_explorer.inject_coordinates(
+        x_coords=scaler(proj_df['x']),
+        y_coords=scaler(proj_df['y']),
+        original_x=proj_df['x'],
+        original_y=proj_df['y']
+    )
+    return category_scatter_chart_explorer
+
+
+def _get_term_plot_change_js_func(category_focused, initial_category_idx):
+    if category_focused:
+        return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(%s, termInfo.i); return false;})' % (
+                initial_category_idx
+        )
+    return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'

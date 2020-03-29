@@ -70,10 +70,14 @@ class PairPlotFromScatterplotStructure(object):
             self.category_scatterplot_structure.get_js_to_call_build_scatterplot(self.category_plot_interface),
             self.term_scatterplot_structure._visualization_data.to_javascript('getTermDataAndInfo'),
             self.term_scatterplot_structure.get_js_to_call_build_scatterplot(self.term_plot_interface),
+            PackedDataUtils.javascript_post_build_viz('categorySearch', self.category_plot_interface),
+            PackedDataUtils.javascript_post_build_viz('termSearch', self.term_plot_interface),
         ])
+        autocomplete_css = PackedDataUtils.full_content_of_default_autocomplete_css()
         html_template = self._get_html_template()
         html_content = (
             html_template
+                .replace('/***AUTOCOMPLETE CSS***/', autocomplete_css, 1)
                 .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
                 .replace('<!--D3URL-->', self.d3_url_struct.get_d3_url(), 1)
                 .replace('<!--D3SCALECHROMATIC-->', self.d3_url_struct.get_d3_scale_chromatic_url())

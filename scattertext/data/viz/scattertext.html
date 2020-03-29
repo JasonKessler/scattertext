@@ -81,7 +81,7 @@ div.label {
   border: 0;
   pointer-events: none;
 }
-
+/*
 input {
   border: 1px dotted #ccc;
   background: white;
@@ -90,7 +90,7 @@ input {
   font-size: 14px;
   margin: 20px 10px 30px 0;
   color: darkred;
-}
+}*/
 
 .alert {
   font-family: monospace;
@@ -105,11 +105,11 @@ ul.top_terms li {
   font-size: 30pt;
   color: red;
 }
-
+/*
 input:focus {
   background-color: lightyellow;
   outline: none;
-}
+}*/
 
 .snippet {
   padding-bottom: 10px;
@@ -232,22 +232,19 @@ input:focus {
 #d3-div-1-neutcol {
   display: none;
 }
-
+/***AUTOCOMPLETE CSS***/
 </style>
+
 <script src="<!--D3URL-->" charset="utf-8"></script>
 <script src="<!--D3SCALECHROMATIC-->" charset="utf-8"></script>
 <!-- EXTRA LIBS -->
 <!-- INSERT SEMIOTIC SQUARE -->
 <!--<a onclick="maxFreq = Math.log(data.map(d => d.cat + d.ncat).reduce((a,b) => Math.max(a,b))); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, false); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, true)">View Score Plot</a>-->
 <span id="d3-div-1-title-div"></span>
-<div class="scattertext" id="d3-div-1"></div>
+<div class="scattertext" id="d3-div-1" style="float: left"></div>
+<!-- INSERT SEARCH FORM -->
 <div id="d3-div-1-corpus-stats"></div>
 <div id="d3-div-1-overlapped-terms"></div>
-<form name="d3-div-1-termForm" onSubmit="plotInterface.handleSearch(); return false;">
-  <input name="Submit" type="submit" value="Search for term">
-  <input type="text" id="d3-div-1-searchTerm" placeholder="Type a word or two&hellip;">
-  <span id="d3-div-1-alertMessage" class="alert"></span>
-</form>
 <a name="d3-div-1-snippets"></a>
 <a name="d3-div-1-snippetsalt"></a>
 <div id="d3-div-1-termstats"></div>

@@ -1,6 +1,9 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 61]
+from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
+from scattertext.features.UseFullDocAsMetadata import UseFullDocAsMetadata
+
+version = [0, 0, 2, 62]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import warnings
@@ -470,69 +473,76 @@ def produce_scattertext_explorer(corpus,
     if semiotic_square:
         html_base = get_semiotic_square_html(num_terms_semiotic_square,
                                              semiotic_square)
-    scatter_chart_data = scatter_chart_explorer.to_dict(category=category,
-                                                        category_name=category_name,
-                                                        not_category_name=not_category_name,
-                                                        not_categories=not_categories,
-                                                        transform=transform,
-                                                        scores=scores,
-                                                        max_docs_per_category=max_docs_per_category,
-                                                        metadata=metadata,
-                                                        alternative_text_field=alternative_text_field,
-                                                        neutral_category_name=neutral_category_name,
-                                                        extra_category_name=extra_category_name,
-                                                        neutral_categories=neutral_categories,
-                                                        extra_categories=extra_categories,
-                                                        background_scorer=characteristic_scorer,
-                                                        include_term_category_counts=include_term_category_counts)
+    scatter_chart_data = scatter_chart_explorer.to_dict(
+        category=category,
+        category_name=category_name,
+        not_category_name=not_category_name,
+        not_categories=not_categories,
+        transform=transform,
+        scores=scores,
+        max_docs_per_category=max_docs_per_category,
+        metadata=metadata,
+        alternative_text_field=alternative_text_field,
+        neutral_category_name=neutral_category_name,
+        extra_category_name=extra_category_name,
+        neutral_categories=neutral_categories,
+        extra_categories=extra_categories,
+        background_scorer=characteristic_scorer,
+        include_term_category_counts=include_term_category_counts
+    )
+
     if return_data:
         return scatter_chart_data
-    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
-                                                 width_in_pixels=width_in_pixels,
-                                                 height_in_pixels=height_in_pixels,
-                                                 max_snippets=max_snippets,
-                                                 color=color,
-                                                 grey_zero_scores=gray_zero_scores,
-                                                 sort_by_dist=sort_by_dist,
-                                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
-                                                 use_full_doc=use_full_doc,
-                                                 asian_mode=asian_mode,
-                                                 match_full_line=match_full_line,
-                                                 use_non_text_features=use_non_text_features,
-                                                 show_characteristic=show_characteristic,
-                                                 word_vec_use_p_vals=word_vec_use_p_vals,
-                                                 max_p_val=max_p_val, save_svg_button=save_svg_button,
-                                                 p_value_colors=p_value_colors,
-                                                 x_label=x_label,
-                                                 y_label=y_label,
-                                                 show_top_terms=show_top_terms,
-                                                 show_neutral=show_neutral,
-                                                 get_tooltip_content=get_tooltip_content,
-                                                 x_axis_values=x_axis_values,
-                                                 y_axis_values=y_axis_values,
-                                                 x_axis_values_format=x_axis_values_format,
-                                                 y_axis_values_format=y_axis_values_format,
-                                                 color_func=color_func,
-                                                 show_axes=show_axes,
-                                                 horizontal_line_y_position=horizontal_line_y_position,
-                                                 vertical_line_x_position=vertical_line_x_position,
-                                                 show_extra=show_extra,
-                                                 do_censor_points=censor_points,
-                                                 center_label_over_points=center_label_over_points,
-                                                 x_axis_labels=x_axis_labels,
-                                                 y_axis_labels=y_axis_labels,
-                                                 topic_model_preview_size=topic_model_preview_size,
-                                                 vertical_lines=vertical_lines,
-                                                 unified_context=unified_context,
-                                                 show_category_headings=show_category_headings,
-                                                 show_cross_axes=show_cross_axes, div_name=div_name,
-                                                 alternative_term_func=alternative_term_func,
-                                                 include_all_contexts=include_all_contexts,
-                                                 show_axes_and_cross_hairs=show_axes_and_cross_hairs)
-    return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol,
-                                                                            d3_url=d3_url,
-                                                                            d3_scale_chromatic_url=d3_scale_chromatic_url,
-                                                                            html_base=html_base)
+
+    scatterplot_structure = ScatterplotStructure(
+        VizDataAdapter(scatter_chart_data),
+        width_in_pixels=width_in_pixels,
+        height_in_pixels=height_in_pixels,
+        max_snippets=max_snippets,
+        color=color,
+        grey_zero_scores=gray_zero_scores,
+        sort_by_dist=sort_by_dist,
+        reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
+        use_full_doc=use_full_doc,
+        asian_mode=asian_mode,
+        match_full_line=match_full_line,
+        use_non_text_features=use_non_text_features,
+        show_characteristic=show_characteristic,
+        word_vec_use_p_vals=word_vec_use_p_vals,
+        max_p_val=max_p_val, save_svg_button=save_svg_button,
+        p_value_colors=p_value_colors,
+        x_label=x_label,
+        y_label=y_label,
+        show_top_terms=show_top_terms,
+        show_neutral=show_neutral,
+        get_tooltip_content=get_tooltip_content,
+        x_axis_values=x_axis_values,
+        y_axis_values=y_axis_values,
+        x_axis_values_format=x_axis_values_format,
+        y_axis_values_format=y_axis_values_format,
+        color_func=color_func,
+        show_axes=show_axes,
+        horizontal_line_y_position=horizontal_line_y_position,
+        vertical_line_x_position=vertical_line_x_position,
+        show_extra=show_extra,
+        do_censor_points=censor_points,
+        center_label_over_points=center_label_over_points,
+        x_axis_labels=x_axis_labels,
+        y_axis_labels=y_axis_labels,
+        topic_model_preview_size=topic_model_preview_size,
+        vertical_lines=vertical_lines,
+        unified_context=unified_context,
+        show_category_headings=show_category_headings,
+        show_cross_axes=show_cross_axes, div_name=div_name,
+        alternative_term_func=alternative_term_func,
+        include_all_contexts=include_all_contexts,
+        show_axes_and_cross_hairs=show_axes_and_cross_hairs
+    )
+    return (BasicHTMLFromScatterplotStructure(scatterplot_structure)
+            .to_html(protocol=protocol,
+                     d3_url=d3_url,
+                     d3_scale_chromatic_url=d3_scale_chromatic_url,
+                     html_base=html_base))
 
 
 def get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral,

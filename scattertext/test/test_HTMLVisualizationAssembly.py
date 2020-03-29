@@ -18,7 +18,8 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'null', '10', 'null', 'null', 'null', 'false', 'true', 'true', '"' + DEFAULT_DIV_ID + '"',
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"', 'false']
+                  '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
+                  'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'

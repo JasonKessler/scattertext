@@ -3,12 +3,44 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.61
+# Scattertext 0.0.2.62
+
+A tool for finding distinguishing terms in corpora, and presenting them in an 
+interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
+so that they don't overlap with other labels or points. 
+
+Below is an example of using Scattertext to create visualize terms used in 2012 American
+political conventions.  The 2,000 most party-associated unigrams are displayed as 
+points in the scatter plot. Their x- and y- axes are the dense ranks of their usage by 
+Republican and Democratic speakers respectively.
+
+```pydocstring
+import scattertext as st
+
+df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
+)
+
+corpus = st.CorpusFromParsedDocuments(
+    df, category_col='party', parsed_col='parse'
+).build().get_unigram_corpus().compact(st.AssociationCompactor(2000))
+
+html = st.produce_scattertext_explorer(
+    corpus,
+    category='democrat', category_name='Democratic', not_category_name='Republican',
+    minimum_term_frequency=0, pmi_threshold_coefficient=0,
+    width_in_pixels=1000, metadata=corpus.get_df()['speaker'],
+    transform=st.Scalers.dense_rank
+)
+open('./demo_compact.html', 'w').write(html)
+```
+The HTML file written would look like the image below. Click on it for the actual interactive visualization.
+[![demo_compact.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_compact.png)](https://jasonkessler.github.io/demo_compact.html)
 
 **Table of Contents**
 
-- [Installation](#installation)
 - [Citation](#citation)
+- [Installation](#installation)
 - [Overview](#overview)
 - [Tutorial](#tutorial)
     - [Help! I don't know Python but I still want to use Scattertext](#help-i-dont-know-python-but-i-still-want-to-use-scattertext)
@@ -38,42 +70,9 @@
 - [What's new](#whats-new)
 - [Sources](#sources)
 
-A tool for finding distinguishing terms in small-to-medium-sized
-corpora, and presenting them in a sexy, interactive scatter plot with 
-non-overlapping term labels.  Exploratory data analysis just 
-got more fun.
-
-Feel free to use the Gitter community [gitter.im/scattertext](https://gitter.im/scattertext/Lobby) for help or to discuss the project.   
-
-[![Conventions-Visualization.html](https://jasonkessler.github.io/2012conventions0.0.2.2.png)](https://jasonkessler.github.io/Conventions-Visualization.html)
-
 ## Citation
 Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
-
 Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
-
-## Installation 
-Install Python 3.4 or higher and run:
-
-`$ pip install scattertext`
-
-If you cannot (or don't want to) install spaCy, substitute `nlp = spacy.en.English()` lines with
-`nlp = scattertext.WhitespaceNLP.whitespace_nlp`.  Note, this is not compatible 
-with `word_similarity_explorer`, and the tokenization and sentence boundary detection 
-capabilities will be low-performance regular expressions. See `demo_without_spacy.py`
-for an example. 
-
-It is recommended you install `jieba`, `spacy`, `empath`, `astropy`, `gensim` and `umap-learn` in order to 
-take full advantage of Scattertext. 
-
-Scattertext should mostly work with Python 2.7.   
-
-The HTML outputs look best in Chrome and Safari.
-
-## Citation
-
-Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
-
 ```
 @article{kessler2017scattertext,
   author    = {Kessler, Jason S.},
@@ -84,6 +83,24 @@ Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora 
   publisher = {Association for Computational Linguistics},
 }
 ```
+## Installation 
+Install Python 3.4 or higher and run:
+
+`$ pip install scattertext`
+
+If you cannot (or don't want to) install spaCy, substitute `nlp = spacy.load('en')` lines with
+`nlp = scattertext.WhitespaceNLP.whitespace_nlp`.  Note, this is not compatible 
+with `word_similarity_explorer`, and the tokenization and sentence boundary detection 
+capabilities will be low-performance regular expressions. See `demo_without_spacy.py`
+for an example. 
+
+It is recommended you install `jieba`, `spacy`, `empath`, `astropy`, `gensim` and `umap-learn` in order to 
+take full advantage of Scattertext. 
+
+Scattertext should mostly work with Python 2.7, but it may not.  
+
+The HTML outputs look best in Chrome and Safari.
+
 
 ## Style Guide
 The name of this project is Scattertext.  "Scattertext" is written as a single word

@@ -1,13 +1,11 @@
+from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
 from scattertext import SampleCorpora, whitespace_nlp_with_sentences
 from scattertext import produce_scattertext_explorer
-from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.termscoring.ScaledFScore import ScaledFScorePresets
 
-convention_df = SampleCorpora.ConventionData2012.get_data()
-corpus = CorpusFromPandas(convention_df,
-                          category_col='party',
-                          text_col='text',
-                          nlp=whitespace_nlp_with_sentences).build()
+convention_df = SampleCorpora.ConventionData2012.get_data().assign(
+	parse = lambda df: df.text.apply(whitespace_nlp_with_sentences)
+)
+corpus = CorpusFromParsedDocuments(convention_df, category_col='party', parsed_col='parse').build()
 
 html = produce_scattertext_explorer(
 	corpus,
@@ -18,7 +16,6 @@ html = produce_scattertext_explorer(
 	pmi_threshold_coefficient=8,
 	width_in_pixels=1000,
 	metadata=convention_df['speaker'],
-	#term_scorer=ScaledFScorePresets(one_to_neg_one=True, beta=1),
 	d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
 	d3_url='scattertext/data/viz/scripts/d3.min.js',
 )
