@@ -1,5 +1,4 @@
 import scattertext as st
-import scattertext.interface.ProduceScattertextExplorer
 
 convention_df = st.SampleCorpora.ConventionData2012.get_data()
 corpus = (st.CorpusFromPandas(convention_df,
@@ -8,7 +7,7 @@ corpus = (st.CorpusFromPandas(convention_df,
                               nlp=st.whitespace_nlp_with_sentences)
           .build().get_unigram_corpus())
 
-html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
+html = st.produce_scattertext_explorer(
     corpus,
     category='BARACK OBAMA',
     sort_by_dist=False,

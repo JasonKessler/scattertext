@@ -3,7 +3,6 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
 
 import scattertext as st
-import scattertext.interface.ProduceScattertextExplorer
 
 convention_df = st.SampleCorpora.ConventionData2012.get_data()
 convention_df['parse'] = convention_df['text'].apply(st.whitespace_nlp_with_sentences)
@@ -30,7 +29,7 @@ topic_corpus = st.CorpusFromParsedDocuments(
 	feats_from_spacy_doc=topic_feature_builder
 ).build()
 
-html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
+html = st.produce_scattertext_explorer(
 	topic_corpus,
 	category='democrat',
 	category_name='Democratic',

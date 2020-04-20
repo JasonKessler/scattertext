@@ -1,7 +1,6 @@
 import pandas as pd
 from urllib.request import urlopen
 import scattertext as st
-import scattertext.interface.ProduceScattertextExplorer
 
 
 def main():
@@ -15,7 +14,7 @@ def main():
 	corpus = st.CorpusFromParsedDocuments(df,
 	                                      category_col='title',
 	                                      parsed_col='text').build()
-	html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(corpus,
+	html = st.produce_scattertext_explorer(corpus,
                                                                                          category='Shisei',
                                                                                          category_name='Shisei',
                                                                                          not_category_name='Horadanshaku tabimiyage',
