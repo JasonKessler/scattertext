@@ -110,28 +110,18 @@ def produce_pairplot(corpus,
     initial_category_idx = corpus.get_categories().index(initial_category)
     term_plot_change_func = _get_term_plot_change_js_func(category_focused, initial_category_idx)
 
-    category_scatterplot_structure = ScatterplotStructure(
-        VizDataAdapter(category_scatter_chart_data),
-        width_in_pixels=category_width_in_pixels,
-        height_in_pixels=category_height_in_pixels,
-        asian_mode=asian_mode,
-        use_non_text_features=True,
-        show_top_terms=False,
-        show_characteristic=False,
-        get_tooltip_content=category_tooltip_func,
-        color_func=category_color_func,
-        show_axes=False,
-        unified_context=True,
-        show_category_headings=False,
-        show_cross_axes=True,
-        horizontal_line_y_position=0,
-        vertical_line_x_position=0,
-        y_label='',
-        x_label='',
-        full_data='getCategoryDataAndInfo()',
-        alternative_term_func=term_plot_change_func,
-        div_name='cat-plot'
-    )
+    category_scatterplot_structure = ScatterplotStructure(VizDataAdapter(category_scatter_chart_data),
+                                                          width_in_pixels=category_width_in_pixels,
+                                                          height_in_pixels=category_height_in_pixels,
+                                                          asian_mode=asian_mode, use_non_text_features=True,
+                                                          show_characteristic=False, x_label='', y_label='',
+                                                          full_data='getCategoryDataAndInfo()', show_top_terms=False,
+                                                          get_tooltip_content=category_tooltip_func,
+                                                          color_func=category_color_func, show_axes=False,
+                                                          horizontal_line_y_position=0, vertical_line_x_position=0,
+                                                          unified_context=True, show_category_headings=False,
+                                                          show_cross_axes=True, div_name='cat-plot',
+                                                          alternative_term_func=term_plot_change_func)
 
     compacted_corpus = AssociationCompactor(terms_to_show).compact(corpus)
     terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
@@ -207,26 +197,17 @@ def produce_pairplot(corpus,
         color_func = '(function(x) {return "#5555FF"})'
         show_top_terms = False
 
-    term_scatterplot_structure = ScatterplotStructure(
-        VizDataAdapter(term_scatter_chart_data),
-        width_in_pixels=term_width_in_pixels,
-        height_in_pixels=term_height_in_pixels,
-        asian_mode=asian_mode,
-        use_non_text_features=use_metadata,
-        show_top_terms=show_top_terms,
-        show_characteristic=False,
-        get_tooltip_content=None,
-        show_category_headings=False,
-        use_full_doc=use_metadata or use_full_doc,
-        horizontal_line_y_position=0,
-        vertical_line_x_position=0,
-        topic_model_preview_size=topic_model_preview_size,
-        x_label=x_label,
-        y_label=y_label,
-        full_data='getTermDataAndInfo()',
-        div_name='d3-div-1',
-        color_func=color_func,
-    )
+    term_scatterplot_structure = ScatterplotStructure(VizDataAdapter(term_scatter_chart_data),
+                                                      width_in_pixels=term_width_in_pixels,
+                                                      height_in_pixels=term_height_in_pixels,
+                                                      use_full_doc=use_metadata or use_full_doc, asian_mode=asian_mode,
+                                                      use_non_text_features=use_metadata, show_characteristic=False,
+                                                      x_label=x_label, y_label=y_label,
+                                                      full_data='getTermDataAndInfo()', show_top_terms=show_top_terms,
+                                                      get_tooltip_content=None, color_func=color_func,
+                                                      horizontal_line_y_position=0, vertical_line_x_position=0,
+                                                      topic_model_preview_size=topic_model_preview_size,
+                                                      show_category_headings=False, div_name='d3-div-1')
 
     return PairPlotFromScatterplotStructure(
         category_scatterplot_structure,

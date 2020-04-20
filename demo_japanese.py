@@ -1,6 +1,8 @@
 import pandas as pd
 from urllib.request import urlopen
 import scattertext as st
+import scattertext.interface.ProduceScattertextExplorer
+
 
 def main():
 	shisei = _parse_geutenberg('http://www.gutenberg.org/files/31617/31617-0.txt')
@@ -13,14 +15,14 @@ def main():
 	corpus = st.CorpusFromParsedDocuments(df,
 	                                      category_col='title',
 	                                      parsed_col='text').build()
-	html = st.produce_scattertext_explorer(corpus,
-	                                       category='Shisei',
-	                                       category_name='Shisei',
-	                                       not_category_name='Horadanshaku tabimiyage',
-	                                       minimum_term_frequency=5,
-	                                       width_in_pixels=1000,
-	                                       metadata=df['title'] + ' by ' + df['author'],
-	                                       asian_mode=True)
+	html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(corpus,
+                                                                                         category='Shisei',
+                                                                                         category_name='Shisei',
+                                                                                         not_category_name='Horadanshaku tabimiyage',
+                                                                                         minimum_term_frequency=5,
+                                                                                         width_in_pixels=1000,
+                                                                                         metadata=df['title'] + ' by ' + df['author'],
+                                                                                         asian_mode=True)
 	open('./demo_japanese.html', 'w').write(html)
 	print('Open ./demo_japanese.html in Chrome or Firefox.')
 

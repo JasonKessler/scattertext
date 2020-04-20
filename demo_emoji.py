@@ -7,6 +7,7 @@ import pandas as pd
 import urllib.request
 
 import scattertext as st
+import scattertext.interface.ProduceScattertextExplorer
 from scattertext.termranking import OncePerDocFrequencyRanker
 
 try:
@@ -36,7 +37,7 @@ corpus = st.CorpusFromParsedDocuments(
 	feats_from_spacy_doc=st.FeatsFromSpacyDocOnlyEmoji()
 ).build()
 
-html = st.produce_scattertext_explorer(
+html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
 	corpus,
 	category='f',
 	category_name='Female',

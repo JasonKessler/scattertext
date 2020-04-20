@@ -1,6 +1,7 @@
 from collections import Counter
 from flashtext import KeywordProcessor
 import scattertext as st
+import scattertext.interface.ProduceScattertextExplorer
 
 
 class FlashTextExtact(st.FeatsFromSpacyDoc):
@@ -47,7 +48,7 @@ corpus = (st.CorpusFromPandas(convention_df,
 
 print(corpus.get_term_freq_df())
 
-html = st.produce_scattertext_explorer(
+html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
     corpus,
     category='democrat',
     category_name='Democratic',

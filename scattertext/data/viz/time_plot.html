@@ -1,0 +1,291 @@
+<!-- some code adapted from www.degeneratestate.org/static/metal_lyrics/metal_line.html -->
+<!-- <!DOCTYPE html>
+<meta content="utf-8"> -->
+<style> /* set the CSS */
+
+body {
+    font: 12px Arial;
+}
+
+svg {
+    font: 12px Helvetica;
+}
+
+path {
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.grid line {
+    stroke: lightgrey;
+    stroke-opacity: 0.4;
+    shape-rendering: crispEdges;
+}
+
+.grid path {
+    stroke-width: 0;
+}
+
+.axis path,
+.axis lineper {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 150px;
+    height: 28px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+div.tooltipscore {
+    position: absolute;
+    text-align: center;
+    width: 150px;
+    height: 50px;
+    padding: 2px;
+    font: 10px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.category_header {
+    font: 12px sans-serif;
+    font-weight: bolder;
+    text-decoration: underline;
+}
+
+div.label {
+    color: rgb(252, 251, 253);
+    color: rgb(63, 0, 125);
+    color: rgb(158, 155, 201);
+
+    position: absolute;
+    text-align: left;
+    padding: 1px;
+    border-spacing: 1px;
+    font: 10px sans-serif;
+    font-family: Sans-Serif;
+    border: 0;
+    pointer-events: none;
+}
+
+.alert {
+    font-family: monospace;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin: 20px 10px 30px 0;
+    color: darkred;
+}
+
+ul.top_terms li {
+    padding-right: 20px;
+    font-size: 30pt;
+    color: red;
+}
+
+
+.snippet {
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    white-space: pre-wrap;
+}
+
+.snippet_header {
+    font-size: 20px;
+    font-family: Helvetica, Arial, Sans-Serif;
+    font-weight: bolder;
+    #text-decoration: underline;
+    text-align: center;
+    border-bottom-width: 10px;
+    border-bottom-color: #888888;
+    padding-bottom: 10px;
+}
+
+.topic_preview {
+    font-size: 12px;
+    font-family: Helvetica, Arial, Sans-Serif;
+    text-align: center;
+    padding-bottom: 10px;
+    font-weight: normal;
+    text-decoration: none;
+}
+
+
+#d3-div-1-categoryinfo {
+    font-size: 12px;
+    font-family: Helvetica, Arial, Sans-Serif;
+    text-align: center;
+    padding-bottom: 10px;
+
+}
+
+
+#d3-div-1-title-div {
+    font-size: 20px;
+    font-family: Helvetica, Arial, Sans-Serif;
+    text-align: center;
+}
+
+.text_header {
+    font: 18px sans-serif;
+    font-size: 18px;
+    font-family: Helvetica, Arial, Sans-Serif;
+
+    font-weight: bolder;
+    text-decoration: underline;
+    text-align: center;
+    color: darkblue;
+    padding-bottom: 10px;
+}
+
+.text_subheader {
+    font-size: 14px;
+    font-family: Helvetica, Arial, Sans-Serif;
+
+    text-align: center;
+}
+
+.snippet_meta {
+    border-top: 3px solid #4588ba;
+    font-size: 12px;
+    font-family: Helvetica, Arial, Sans-Serif;
+    color: darkblue;
+}
+
+.contexts {
+    width: 45%;
+    float: left;
+}
+
+.neut_display {
+    display: none;
+    float: left
+}
+
+.scattertext {
+    font-size: 10px;
+    font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.label {
+    font-size: 10px;
+    font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.obscured {
+    /*font-size: 14px;
+    font-weight: normal;
+    color: dimgrey;
+    font-family: Helvetica;*/
+    text-align: center;
+}
+
+.halo {
+    font-size: 9px;
+    background-color: #ddd;
+}
+
+.small_label {
+    font-size: 10px;
+}
+
+#d3-div-1-corpus-stats {
+    text-align: center;
+}
+
+#d3-div-1-cat {
+}
+
+#d3-div-1-notcat {
+}
+
+#d3-div-1-neut {
+}
+
+#d3-div-1-neutcol {
+    display: none;
+}
+
+
+/***AUTOCOMPLETE CSS***/
+</style>
+<script src="<!--D3URL-->" charset="utf-8"></script>
+<script src="<!--D3SCALECHROMATIC-->" charset="utf-8"></script>
+<!--<script src='https://unpkg.com/panzoom@8.7.3/dist/panzoom.min.js' name='pz'></script>-->
+<!--<script src="https://code.easypz.io/easypz.latest.min.js"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.0/dist/svg-pan-zoom.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap" rel="stylesheet">
+<!-- EXTRA LIBS -->
+<!-- INSERT SEMIOTIC SQUARE -->
+<!--<a onclick="maxFreq = Math.log(data.map(d => d.cat + d.ncat).reduce((a,b) => Math.max(a,b))); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, false); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, true)">View Score Plot</a>-->
+
+<div>
+    <p>
+        <!-- INSERT GRAPH -->
+    </p>
+</div>
+
+<div>
+    <span id="d3-div-1-title-div"></span>
+
+    <table style="float: left">
+        <tr>
+            <td>
+                <div class="scattertext" id="d3-div-1" style="float: left"></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div autocomplete="off" style="text-align: center">
+                    <div class="autocomplete">
+                        <input id="termSearch" type="text" placeholder="Search categories">
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <!-- <div id="terms">{terms}</div>
+    <div class="scattertext" id="cat-plot" style="float: left"></div>-->
+</div>
+<br/>
+<div align="center" style="width: 100%; text-align: center; float: left">
+    <div>
+        <a name="d3-div-1-snippets"></a>
+        <a name="d3-div-1-snippetsalt"></a>
+        <div id="d3-div-1-termstats"></div>
+        <div id="d3-div-1-overlapped-terms-clicked"></div>
+        <div id="d3-div-1-categoryinfo"></div>
+        <div id="d3-div-2">
+            <div class="d3-div-1-contexts">
+                <div class="snippet_header" id="d3-div-1-cathead"></div>
+                <div class="snippet" id="d3-div-1-cat"></div>
+            </div>
+            <div id="d3-div-1-notcol" class="d3-div-1-contexts">
+                <div class="snippet_header" id="d3-div-1-notcathead"></div>
+                <div class="snippet" id="d3-div-1-notcat"></div>
+            </div>
+            <div id="d3-div-1-neutcol" class="d3-div-1-contexts">
+                <div class="snippet_header" id="d3-div-1-neuthead"></div>
+                <div class="snippet" id="d3-div-1-neut"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script charset="utf-8">
+    <!-- INSERT SCRIPT -->
+</script>

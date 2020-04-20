@@ -19,7 +19,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false']
+                  'false', '-1', 'true', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -362,42 +362,56 @@ class TestHTMLVisualizationAssembly(TestCase):
 
     def test_alternative_term_func(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       alternative_term_func='(function(termDict) {return true;})')
+        params = (ScatterplotStructure(visualization_data, alternative_term_func='(function(termDict) {return true;})')
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({38: '(function(termDict) {return true;})'}))
 
     def test_include_all_contexts(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       include_all_contexts=True)
+        params = (ScatterplotStructure(visualization_data, include_all_contexts=True)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({39: 'true'}))
 
     def test_show_axes_and_cross_hairs(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       show_axes_and_cross_hairs=True)
+        params = (ScatterplotStructure(visualization_data, show_axes_and_cross_hairs=True)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({40: 'true'}))
 
     def test_x_axis_values_format(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       x_axis_values_format=".4f")
+        params = (ScatterplotStructure(visualization_data, x_axis_values_format=".4f")
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({41: '".4f"'}))
 
     def test_y_axis_values_format(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       y_axis_values_format=".5f")
+        params = (ScatterplotStructure(visualization_data, y_axis_values_format=".5f")
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({42: '".5f"'}))
 
     def test_match_full_line(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       match_full_line=True)
+        params = (ScatterplotStructure(visualization_data, match_full_line=True)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({43: 'true'}))
+
+    def test_max_overlapping(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, max_overlapping=10)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({44: '10'}))
+
+
+    def test_show_corpus_stats(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, show_corpus_stats=False)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({45: 'false'}))
+
+    def test_sort_doc_labels_by_name(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       sort_doc_labels_by_name=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({46: 'true'}))

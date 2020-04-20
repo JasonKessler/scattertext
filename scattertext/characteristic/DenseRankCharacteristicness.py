@@ -51,15 +51,17 @@ class DenseRankCharacteristicness(CharacteristicScorer):
 
 		freq_df = pd.DataFrame({
 			'corpus': term_ranks.sum(axis=1),
-			'standard': self.background_frequencies.get_background_frequency_df()['background']}
-		).dropna()
+			'standard': self.background_frequencies.get_background_frequency_df()[
+				'background'
+			]
+		})
+
+		freq_df = freq_df.loc[freq_df['corpus'].dropna().index].fillna(0)
+
 		corpus_rank = rankdata(freq_df.corpus, 'dense')
 		standard_rank = rankdata(freq_df.standard, 'dense')
 		scores = corpus_rank/corpus_rank.max() - standard_rank/standard_rank.max()
 
-
-		#scores = RankDifference().get_scores(bg['corpus'], bg['bg']).sort_values()
-		# import pdb; pdb.set_trace()
 		if self.rerank_ranks:
 			rank_scores, zero_marker = self._rerank_scores(scores)
 			freq_df['score'] = pd.Series(rank_scores, index=freq_df.index)

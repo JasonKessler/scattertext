@@ -68,19 +68,19 @@ class CorpusFromParsedDocuments(object):
 			self._mX_factory[row.name, meta_idx] = val
 
 	def _make_new_term_doc_matrix(self,
-	                              new_X,
-	                              new_mX,
-	                              new_y,
-	                              new_term_idx_store,
-	                              new_category_idx_store,
-	                              new_metadata_idx_store,
-	                              new_y_mask):
-		return ParsedCorpus(self._df[new_y_mask],
-		                    new_X,
-		                    new_mX,
-		                    new_y,
-		                    new_term_idx_store,
-		                    new_category_idx_store,
-		                    new_metadata_idx_store,
+	                              new_X=None,
+	                              new_mX=None,
+	                              new_y=None,
+	                              new_term_idx_store=None,
+	                              new_category_idx_store=None,
+	                              new_metadata_idx_store=None,
+	                              new_y_mask=None):
+		return ParsedCorpus(self._df[new_y_mask] if new_y_mask else self._df,
+		                    self._X if new_X is None else new_X,
+		                    self._mX if new_mX is None else new_mX,
+		                    self._y if new_y is None else new_y,
+		                    self._term_idx_store if new_term_idx_store is None else new_term_idx_store,
+		                    self._category_idx_store if new_category_idx_store is None else new_category_idx_store,
+		                    self._metadata_idx_store if new_metadata_idx_store is None else new_metadata_idx_store,
 		                    self._parsed_col,
 		                    self._category_col)

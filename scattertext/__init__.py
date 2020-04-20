@@ -1,15 +1,19 @@
 from __future__ import print_function
 
-from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
-from scattertext.features.UseFullDocAsMetadata import UseFullDocAsMetadata
+from scattertext.diachronic.TimeStructure import TimeStructure
 
-version = [0, 0, 2, 62]
+version = [0, 0, 2, 63]
 __version__ = '.'.join([str(e) for e in version])
 import re
-import warnings
 import numpy as np
 import pandas as pd
-
+import warnings
+from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
+from scattertext.features.UseFullDocAsMetadata import UseFullDocAsMetadata
+from scattertext.graphs.ComponentDiGraph import ComponentDiGraph
+from scattertext.graphs.ComponentDiGraphHTMLRenderer import ComponentDiGraphHTMLRenderer
+from scattertext.graphs.GraphStructure import GraphStructure
+from scattertext.graphs.SimpleDiGraph import SimpleDiGraph
 from scattertext.features.FeastFromSentencePiece import FeatsFromSentencePiece
 from scattertext.features.PyTextRankPhrases import PyTextRankPhrases
 from scattertext.termscoring.BetaPosterior import BetaPosterior
@@ -95,7 +99,8 @@ from scattertext.termcompaction.ClassPercentageCompactor import ClassPercentageC
 from scattertext.termcompaction.CompactTerms import CompactTerms
 from scattertext.termcompaction.PhraseSelector import PhraseSelector
 from scattertext.topicmodel.SentencesForTopicModeling import SentencesForTopicModeling
-from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies
+from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBackgroundFrequencies, \
+    BackgroundFrequenciesFromCorpus
 from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
@@ -110,6 +115,7 @@ from scattertext.distancemeasures.DistanceMeasureBase import DistanceMeasureBase
 from scattertext.termscoring.CredTFIDF import CredTFIDF
 from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsResolver, EmbeddingAligner
 from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
+from scattertext.features.SpacyEntities import SpacyEntities
 
 
 def produce_scattertext_explorer(corpus,
@@ -196,8 +202,12 @@ def produce_scattertext_explorer(corpus,
                                  div_name=None,
                                  alternative_term_func=None,
                                  term_metadata=None,
+                                 max_overlapping=-1,
                                  include_all_contexts=False,
-                                 return_data=False):
+                                 show_corpus_stats=True,
+                                 sort_doc_labels_by_name=False,
+                                 return_data=False,
+                                 return_scatterplot_structure=False):
     '''Returns html code of visualization.
 
     Parameters
@@ -403,9 +413,17 @@ def produce_scattertext_explorer(corpus,
         or the get_tooltip_content function. These will appear in termDict.etc
     include_all_contexts: bool, default False
         Include all contexts, even non-matching ones, in interface
+    max_overlapping: int, default -1
+        Number of overlapping terms to dislay. If -1, display all. (default)
+    show_corpus_stats: bool, default True
+        Show the corpus stats div
+    sort_doc_labels_by_name: bool default False
+        If unified, sort the document labels by name
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
+    return_scatterplot_structure : bool, default False
+        return ScatterplotStructure instead of html
     Returns
     -------
     str
@@ -509,7 +527,8 @@ def produce_scattertext_explorer(corpus,
         use_non_text_features=use_non_text_features,
         show_characteristic=show_characteristic,
         word_vec_use_p_vals=word_vec_use_p_vals,
-        max_p_val=max_p_val, save_svg_button=save_svg_button,
+        max_p_val=max_p_val,
+        save_svg_button=save_svg_button,
         p_value_colors=p_value_colors,
         x_label=x_label,
         y_label=y_label,
@@ -518,8 +537,6 @@ def produce_scattertext_explorer(corpus,
         get_tooltip_content=get_tooltip_content,
         x_axis_values=x_axis_values,
         y_axis_values=y_axis_values,
-        x_axis_values_format=x_axis_values_format,
-        y_axis_values_format=y_axis_values_format,
         color_func=color_func,
         show_axes=show_axes,
         horizontal_line_y_position=horizontal_line_y_position,
@@ -533,11 +550,21 @@ def produce_scattertext_explorer(corpus,
         vertical_lines=vertical_lines,
         unified_context=unified_context,
         show_category_headings=show_category_headings,
-        show_cross_axes=show_cross_axes, div_name=div_name,
+        show_cross_axes=show_cross_axes,
+        div_name=div_name,
         alternative_term_func=alternative_term_func,
         include_all_contexts=include_all_contexts,
-        show_axes_and_cross_hairs=show_axes_and_cross_hairs
+        show_axes_and_cross_hairs=show_axes_and_cross_hairs,
+        x_axis_values_format=x_axis_values_format,
+        y_axis_values_format=y_axis_values_format,
+        max_overlapping=max_overlapping,
+        show_corpus_stats=show_corpus_stats,
+        sort_doc_labels_by_name=sort_doc_labels_by_name
     )
+
+    if return_scatterplot_structure:
+        return scatterplot_structure
+
     return (BasicHTMLFromScatterplotStructure(scatterplot_structure)
             .to_html(protocol=protocol,
                      d3_url=d3_url,
@@ -1381,6 +1408,11 @@ def produce_characteristic_explorer(corpus,
                                     characteristic_scorer=DenseRankCharacteristicness(),
                                     term_ranker=termranking.AbsoluteFrequencyRanker,
                                     term_scorer=RankDifference(),
+                                    x_label='Characteristic to Corpus',
+                                    y_label=None,
+                                    y_axis_labels=None,
+                                    scores=None,
+                                    vertical_lines=None,
                                     **kwargs):
     '''
     Parameters
@@ -1411,21 +1443,16 @@ def produce_characteristic_explorer(corpus,
         category, category_name, not_categories, not_category_name)
 
     zero_point, characteristic_scores = characteristic_scorer.get_scores(corpus)
-    corpus = corpus.remove_terms(set(corpus.get_terms()) - set(characteristic_scores.index))
+    corpus = corpus.remove_terms(
+        set(corpus.get_terms()) - set(characteristic_scores.index)
+    )
     characteristic_scores = characteristic_scores.loc[corpus.get_terms()]
     term_freq_df = term_ranker(corpus).get_ranks()
     scores = term_scorer.get_scores(
         term_freq_df[category + ' freq'],
         term_freq_df[[c + ' freq' for c in not_categories]].sum(axis=1)
-    )
-    kwargs['scores'] = kwargs.get('scores', scores)
-    max_score = np.floor(np.max(kwargs['scores']) * 100) / 100
-    min_score = np.ceil(np.min(kwargs['scores']) * 100) / 100
-    if min_score < 0 and max_score > 0:
-        central = 0
-    else:
-        central = 0.5
-    scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
+    ) if scores is None else scores
+    scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(scores)
     html = produce_scattertext_explorer(
         corpus=corpus,
         category=category,
@@ -1436,14 +1463,12 @@ def produce_characteristic_explorer(corpus,
         sort_by_dist=False,
         x_coords=characteristic_scores,
         y_coords=scores_scaled_for_charting,
-        y_axis_labels=kwargs.get('y_axis_labels',
-                                 ['More ' + not_category_name,
-                                  'Even',
-                                  'More ' + category_name]),
-        x_label=kwargs.get('x_label', 'Characteristic to Corpus'),
-        y_label=kwargs.get('y_label', term_scorer.get_name()),
-        vertical_lines=kwargs.get('vertical_lines', []),
-        characteristic_scorer=kwargs.get('characteristic_scorer', characteristic_scorer),
+        y_axis_labels=['More ' + not_category_name, 'Even', 'More ' + category_name
+                       ] if y_axis_labels is None else y_axis_labels,
+        x_label=x_label,
+        y_label=term_scorer.get_name() if y_label is None else y_label,
+        vertical_lines=[] if vertical_lines is None else vertical_lines,
+        characteristic_scorer=characteristic_scorer,
         **kwargs
     )
     return html
@@ -1617,4 +1642,83 @@ def produce_two_axis_plot(corpus,
                                         term_metadata=explanations.to_dict(),
                                         use_non_text_features=use_non_text_features,
                                         **kwargs)
+    return html
+
+
+def produce_scattertext_digraph(
+        df,
+        text_col,
+        source_col,
+        dest_col,
+        source_name='Source',
+        dest_name='Destination',
+        graph_width=500,
+        graph_height=500,
+        metadata_func=None,
+        enable_pan_and_zoom=True,
+        **kwargs,
+):
+    graph_df = pd.concat([
+        df.assign(
+            __text=lambda df: df[source_col],
+            __alttext=lambda df: df[text_col],
+            __category='source'
+        ),
+        df.assign(
+            __text=lambda df: df[dest_col],
+            __alttext=lambda df: df[text_col],
+            __category='target'
+        )
+    ])
+
+    corpus = CorpusFromParsedDocuments(
+        graph_df,
+        category_col='__category',
+        parsed_col='__text',
+        feats_from_spacy_doc=UseFullDocAsMetadata()
+    ).build()
+
+    edges = (corpus.get_df()[[source_col, dest_col]]
+             .rename(columns={source_col: 'source', dest_col: 'target'})
+             .drop_duplicates())
+
+    component_graph = SimpleDiGraph(edges).make_component_digraph()
+
+    graph_renderer = ComponentDiGraphHTMLRenderer(
+        component_graph,
+        height=graph_height,
+        width=graph_width,
+        enable_pan_and_zoom=enable_pan_and_zoom
+    )
+
+    alternative_term_func = '''(function(termDict) {
+        document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
+        showTermGraph(termDict['term']);
+        return true;
+    })'''
+
+    scatterplot_structure = produce_scattertext_explorer(
+        corpus,
+        category='source',
+        category_name=source_name,
+        not_category_name=dest_name,
+        minimum_term_frequency=0,
+        pmi_threshold_coefficient=0,
+        alternative_text_field='__alttext',
+        use_non_text_features=True,
+        transform=dense_rank,
+        metadata=corpus.get_df().apply(metadata_func, axis=1) if metadata_func else None,
+        return_scatterplot_structure=True,
+        width_in_pixels=kwargs.get('width_in_pixels', 700),
+        max_overlapping=kwargs.get('max_overlapping', 3),
+        color_func=kwargs.get('color_func', '(function(x) {return "#5555FF"})'),
+        alternative_term_func=alternative_term_func,
+        **kwargs
+    )
+
+    html = GraphStructure(
+        scatterplot_structure,
+        graph_renderer=graph_renderer
+    ).to_html()
+
     return html

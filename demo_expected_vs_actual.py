@@ -2,8 +2,7 @@ import numpy as np
 import spacy
 from sklearn.linear_model import LogisticRegression
 
-from scattertext import SampleCorpora
-from scattertext import produce_scattertext_explorer
+from scattertext import SampleCorpora, produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 nlp = spacy.load('en')

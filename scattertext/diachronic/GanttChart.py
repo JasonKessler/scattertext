@@ -31,7 +31,7 @@ class GanttChart(object):
 		term_doc_matrix : TermDocMatrix
 		category_to_timestep_func : lambda
 		is_gap_between_sequences_func : lambda
-		timesteps_to_lag : int
+			timesteps_to_lag : int
 		num_top_terms_each_timestep : int
 		num_terms_to_include : int
 		starting_time_step : object
@@ -154,3 +154,5 @@ class GanttChart(object):
 		if len(cur_sequence) != []:
 			sequences.append([cur_sequence[0], cur_sequence[-1]])
 		return sequences
+
+

@@ -1,4 +1,4 @@
-class IndexStore:
+class IndexStore(object):
 	def __init__(self):
 		self._next_i = 0
 		self._i2val = []

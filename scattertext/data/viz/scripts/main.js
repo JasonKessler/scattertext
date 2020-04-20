@@ -42,7 +42,10 @@ buildViz = function (d3) {
                      showAxesAndCrossHairs = false,
                      x_axis_values_format = '.3f',
                      y_axis_values_format = '.3f',
-                     matchFullLine = false) {
+                     matchFullLine = false,
+                     maxOverlapping = -1,
+                     showCorpusStats = true,
+                     sortDocLabelsByName = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -712,7 +715,7 @@ buildViz = function (d3) {
             d3.select(div)
                 .selectAll('div')
                 .remove();
-            if (obscuredTerms.length > 1) {
+            if (obscuredTerms.length > 1 && maxOverlapping !== 0) {
                 var obscuredDiv = d3.select(div)
                     .append('div')
                     .attr("class", "obscured")
@@ -721,16 +724,21 @@ buildViz = function (d3) {
                     .html("<b>\"" + term + "\" obstructs</b>: ");
                 obscuredTerms.map(
                     function (term, i) {
-                        makeWordInteractive(
-                            data,
-                            svg,
-                            obscuredDiv.append("text").text(term),
-                            term,
-                            data.filter(t => t.term == term)[0],//termInfo
-                            false
-                        );
-                        if (i < obscuredTerms.length - 1) {
-                            obscuredDiv.append("text").text(", ");
+                        if (maxOverlapping === -1 || i < maxOverlapping) {
+                            makeWordInteractive(
+                                data,
+                                svg,
+                                obscuredDiv.append("text").text(term),
+                                term,
+                                data.filter(t => t.term === term)[0],//termInfo
+                                false
+                            );
+                            if (i < obscuredTerms.length - 1
+                                && (maxOverlapping === -1 || i < maxOverlapping - 1)) {
+                                obscuredDiv.append("text").text(", ");
+                            }
+                        } else if (i === maxOverlapping && i !== obscuredTerms.length - 1) {
+                            obscuredDiv.append("text").text("...");
                         }
                     }
                 )
@@ -804,7 +812,11 @@ buildViz = function (d3) {
                         'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
                     }))
                     .sort(function (a, b) {
-                        return b.percent - a.percent
+                        if (sortDocLabelsByName) {
+                            return a['label'] < b['label'] ? 1 : a['label'] > b['label'] ? -1 : 0;
+                        } else {
+                            return b.percent - a.percent;
+                        }
                     });
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
@@ -1373,11 +1385,14 @@ buildViz = function (d3) {
             return cleanedTerm;
         }
 
-        function handleSearchTerm(searchTerm) {
-            console.log("Handle search term."); console.log(searchTerm);
-            console.log("this"); console.log(this)
+        function handleSearchTerm(searchTerm, jump = false) {
+            console.log("Handle search term.");
+            console.log(searchTerm);
+            console.log("this");
+            console.log(this)
             highlighted = highlightTerm.call(this, searchTerm, true);
-            console.log("found searchTerm"); console.log(searchTerm);
+            console.log("found searchTerm");
+            console.log(searchTerm);
             if (this.termDict[searchTerm] != null) {
                 var runDisplayTermContexts = true;
                 if (alternativeTermFunc != null) {
@@ -1387,7 +1402,7 @@ buildViz = function (d3) {
                     displayTermContexts(
                         this.data,
                         this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts),
-                        false,
+                        jump,
                         this.includeAllContexts
                     );
                 }
@@ -2400,10 +2415,12 @@ buildViz = function (d3) {
                     });
                 }
 
-                d3.select('#' + divName + '-' + 'corpus-stats')
-                    .style('width', width + margin.left + margin.right + 200)
-                    .append('div')
-                    .html(messages.join('<br />'));
+                if (showCorpusStats) {
+                    d3.select('#' + divName + '-' + 'corpus-stats')
+                        .style('width', width + margin.left + margin.right + 200)
+                        .append('div')
+                        .html(messages.join('<br />'));
+                }
             }
 
 
@@ -2451,7 +2468,7 @@ buildViz = function (d3) {
                     .attr("cy", function (d) {return y(yCoords[d.i])})
                     .transition(0)
                     .attr("cx", function (d) {return x(xCoords[d.i])})
-                    .transition(0);    
+                    .transition(0);
                 */
                 d3.select('#' + divName).selectAll("dot").remove();
                 d3.select('#' + divName).selectAll("circle").remove();
@@ -2499,7 +2516,7 @@ buildViz = function (d3) {
                         d3.select('#' + divName + '-' + 'overlapped-terms')
                             .selectAll('div')
                             .remove();
-                    })
+                    });
 
                 if (color !== null) {
                     circles.style("fill", d => color(d));
@@ -2512,7 +2529,8 @@ buildViz = function (d3) {
                     (d => d.ox), //function (d) {return xCoords[d.ci]},
                     (d => d.oy) //function (d) {return yCoords[d.ci]}
                 );
-            };
+            }
+
             //return [performPartialLabeling, labeledPoints];
             return {
                 ...payload,
@@ -2529,7 +2547,7 @@ buildViz = function (d3) {
                     'populateCorpusStats': populateCorpusStats
                 }
             };
-        };
+        }
 
 
         //fullData = getDataAndInfo();
@@ -2573,6 +2591,16 @@ buildViz = function (d3) {
         plotInterface.x = x;
         plotInterface.tooltip = tooltip;
         plotInterface.alternativeTermFunc = alternativeTermFunc;
+
+        plotInterface.showTooltipSimple = function (term) {
+            plotInterface.showToolTipForTerm(
+                plotInterface.data,
+                plotInterface.svg,
+                term.replace("'", "\\'"),
+                plotInterface.termDict[term.replace("'", "\\'")]
+            )
+        };
+
         plotInterface.drawCategoryAssociation = function (categoryNum, otherCategoryNum = null) {
             var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
@@ -2592,7 +2620,7 @@ buildViz = function (d3) {
                 var bgL = bgFreqs.map(x => (x + alpha)/((1+alpha)*bgVocabSize - x - alpha))
                 var pooledVar = fgFreqs.map(function(x, i) {
                     return (
-                        1/(x + alpha) 
+                        1/(x + alpha)
                         + 1/((1+alpha)*fgVocabSize - x - alpha)
                         + 1/(bgFreqs[i] + alpha)
                         + 1/((1+alpha)*bgVocabSize - bgFreqs[i] - alpha))
@@ -2646,7 +2674,7 @@ buildViz = function (d3) {
             var ox = denseRanks.fgFreqs.map((x,i)=> x/fgFreqSum - denseRanks.bgFreqs[i]/bgFreqSum);
             */
             /*
-            
+
             var ox = denseRanks.fg;
             */
 
@@ -2656,14 +2684,14 @@ buildViz = function (d3) {
                     return 0.5 * x/Math.max(...ox) + 0.5;
                 else
                     return 0.5 * (1 + x/Math.min(...ox));
-                    
+
             })
             oy = oy.map(function(x) {
                 if (x > 0)
                     return 0.5 * x/Math.max(...oy) + 0.5;
                 else
                     return 0.5 * (1 + x/Math.min(...oy));
-                    
+
             })*/
 
 
@@ -2712,9 +2740,9 @@ buildViz = function (d3) {
 
             // begin rescaling to ignore hidden terms
             /*
-            function scaleDenseRanks(ranks) { 
-                var max = Math.max(...ranks); 
-                return ranks.map(x=>x/max) 
+            function scaleDenseRanks(ranks) {
+                var max = Math.max(...ranks);
+                return ranks.map(x=>x/max)
             }
             var filteredData = myFullData.data.filter(d=>d.display);
             var catRanks = scaleDenseRanks(denseRank(filteredData.map(d=>d.cat)))
@@ -2744,7 +2772,7 @@ buildViz = function (d3) {
             // end rescaling
 
 
-            this.rerender(//denseRanks.bg, 
+            this.rerender(//denseRanks.bg,
                 fullData.data.map(x => x.ox), //ox
                 //denseRanks.fg,
                 fullData.data.map(x => x.oy), //oy,

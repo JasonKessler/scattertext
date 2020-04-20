@@ -1,6 +1,7 @@
 import pandas as pd
 
 import scattertext as st
+import scattertext.interface.ProduceScattertextExplorer
 
 '''
 Sample genre frequencies from the Corpus of Contemporary American English via 
@@ -16,7 +17,7 @@ df = (pd.read_excel('https://www.wordfrequency.info/files/genres_sample.xls')
 
 term_cat_freq = st.TermCategoryFrequencies(df)
 
-html = st.produce_scattertext_explorer(
+html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
 	term_cat_freq,
 	category='SPOKEN',
 	category_name='Spoken',
@@ -41,7 +42,7 @@ document_df = pd.DataFrame(
 
 doc_term_cat_freq = st.TermCategoryFrequencies(df, document_category_df=document_df)
 
-html = st.produce_scattertext_explorer(
+html = scattertext.interface.ProduceScattertextExplorer.produce_scattertext_explorer(
 	doc_term_cat_freq,
 	category='SPOKEN',
 	category_name='Spoken',

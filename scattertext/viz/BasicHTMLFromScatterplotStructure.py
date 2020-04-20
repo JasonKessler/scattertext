@@ -112,7 +112,7 @@ class BasicHTMLFromScatterplotStructure(object):
             PackedDataUtils.full_content_of_javascript_files(),
             self.scatterplot_structure._visualization_data.to_javascript(),
             self.scatterplot_structure.get_js_to_call_build_scatterplot(),
-            PackedDataUtils.javascript_post_build_viz(search_input_id, 'plotInterface')
+            PackedDataUtils.javascript_post_build_viz(search_input_id, 'plotInterface'),
         ])
         html_template = (PackedDataUtils.full_content_of_default_html_template()
                          if html_base is None

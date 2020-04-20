@@ -10,16 +10,16 @@ class InvalidProtocolException(Exception):
 class ScatterplotStructure(object):
     def __init__(self, visualization_data, width_in_pixels=None, height_in_pixels=None, max_snippets=None, color=None,
                  grey_zero_scores=False, sort_by_dist=True, reverse_sort_scores_for_not_category=True,
-                 use_full_doc=False, asian_mode=False, match_full_line=False, use_non_text_features=False, show_characteristic=True,
-                 word_vec_use_p_vals=False, max_p_val=0.1, save_svg_button=False, p_value_colors=False, x_label=None,
-                 y_label=None, full_data=None, show_top_terms=True, show_neutral=False, get_tooltip_content=None,
-                 x_axis_values=None, y_axis_values=None, color_func=None, show_axes=True,
-                 horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
+                 use_full_doc=False, asian_mode=False, match_full_line=False, use_non_text_features=False,
+                 show_characteristic=True, word_vec_use_p_vals=False, max_p_val=0.1, save_svg_button=False,
+                 p_value_colors=False, x_label=None, y_label=None, full_data=None, show_top_terms=True,
+                 show_neutral=False, get_tooltip_content=None, x_axis_values=None, y_axis_values=None, color_func=None,
+                 show_axes=True, horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
                  do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
                  topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
-                 show_cross_axes=True, div_name=DEFAULT_DIV_ID,
-                 alternative_term_func=None, include_all_contexts=False, show_axes_and_cross_hairs=False,
-                 x_axis_values_format=None, y_axis_values_format=None):
+                 show_cross_axes=True, div_name=DEFAULT_DIV_ID, alternative_term_func=None, include_all_contexts=False,
+                 show_axes_and_cross_hairs=False, x_axis_values_format=None, y_axis_values_format=None,
+                 max_overlapping=-1, show_corpus_stats=True, sort_doc_labels_by_name=False):
         '''
 
         Parameters
@@ -125,6 +125,13 @@ class ScatterplotStructure(object):
             d3 format string for x-axis values (see https://github.com/d3/d3-format)
         y_axis_values_format: str, default None
             d3 format string for y-axis values (see https://github.com/d3/d3-format)
+        max_overlapping: int, default -1
+            Maximum number of overlapping terms to output.  Show all if -1 (default)
+        show_corpus_stats: bool, default True
+            Populate corpus stats div
+        sort_doc_labels_by_name: bool, default False
+            If unified document labels, sort the labels by name instead of value.
+
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -171,7 +178,9 @@ class ScatterplotStructure(object):
         self._show_axes_and_cross_hairs = show_axes_and_cross_hairs
         self._x_axis_values_format = x_axis_values_format
         self._y_axis_values_format = y_axis_values_format
-
+        self._max_overlapping = max_overlapping
+        self._show_corpus_stats = show_corpus_stats
+        self._sort_doc_labels_by_name = sort_doc_labels_by_name
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -196,54 +205,61 @@ class ScatterplotStructure(object):
         def js_float(x):
             return str(float(x))
 
+        def js_int(x):
+            return str(int(x))
+
         def js_default_full_data(full_data):
             return full_data if full_data is not None else "getDataAndInfo()"
 
-        arguments = [js_default_value(self._width_in_pixels),
-                     js_default_value(self._height_in_pixels),
-                     js_default_value_to_null(self._max_snippets),
-                     js_default_value_to_null(self._color),
-                     js_bool(self._sort_by_dist),
-                     js_bool(self._use_full_doc),
-                     js_bool(self._grey_zero_scores),
-                     js_bool(self._asian_mode),
-                     js_bool(self._use_non_text_features),
-                     js_bool(self._show_characteristic),
-                     js_bool(self._word_vec_use_p_vals),
-                     js_bool(self._save_svg_button),
-                     js_bool(self._reverse_sort_scores_for_not_category),
-                     js_float(self._max_p_val),
-                     js_bool(self._p_value_colors),
-                     js_default_string(self._x_label),
-                     js_default_string(self._y_label),
-                     js_default_full_data(self._full_data),
-                     js_bool(self._show_top_terms),
-                     js_bool(self._show_neutral),
-                     js_default_value_to_null(self._get_tooltip_content),
-                     js_default_value_to_null(self._x_axis_values),
-                     js_default_value_to_null(self._y_axis_values),
-                     js_default_value_to_null(self._color_func),
-                     js_bool(self._show_axes),
-                     js_bool(self._show_extra),
-                     js_bool(self._do_censor_points),
-                     js_bool(self._center_label_over_points),
-                     js_list_or_null(self._x_axis_labels),
-                     js_list_or_null(self._y_axis_labels),
-                     js_default_value(self._topic_model_preview_size),
-                     js_list_or_null(self._vertical_lines),
-                     js_default_value_to_null(self._horizontal_line_y_position),
-                     js_default_value_to_null(self._vertical_line_x_position),
-                     js_bool(self._unified_context),
-                     js_bool(self._show_category_headings),
-                     js_bool(self._show_cross_axes),
-                     js_default_string(self._div_name),
-                     js_default_value_to_null(self._alternative_term_func),
-                     js_bool(self._include_all_contexts),
-                     js_bool(self._show_axes_and_cross_hairs),
-                     js_default_string(self._x_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
-                     js_default_string(self._y_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
-                     js_bool(self._match_full_line),
-                     ]
+        arguments = [
+            js_default_value(self._width_in_pixels),
+            js_default_value(self._height_in_pixels),
+            js_default_value_to_null(self._max_snippets),
+            js_default_value_to_null(self._color),
+            js_bool(self._sort_by_dist),
+            js_bool(self._use_full_doc),
+            js_bool(self._grey_zero_scores),
+            js_bool(self._asian_mode),
+            js_bool(self._use_non_text_features),
+            js_bool(self._show_characteristic),
+            js_bool(self._word_vec_use_p_vals),
+            js_bool(self._save_svg_button),
+            js_bool(self._reverse_sort_scores_for_not_category),
+            js_float(self._max_p_val),
+            js_bool(self._p_value_colors),
+            js_default_string(self._x_label),
+            js_default_string(self._y_label),
+            js_default_full_data(self._full_data),
+            js_bool(self._show_top_terms),
+            js_bool(self._show_neutral),
+            js_default_value_to_null(self._get_tooltip_content),
+            js_default_value_to_null(self._x_axis_values),
+            js_default_value_to_null(self._y_axis_values),
+            js_default_value_to_null(self._color_func),
+            js_bool(self._show_axes),
+            js_bool(self._show_extra),
+            js_bool(self._do_censor_points),
+            js_bool(self._center_label_over_points),
+            js_list_or_null(self._x_axis_labels),
+            js_list_or_null(self._y_axis_labels),
+            js_default_value(self._topic_model_preview_size),
+            js_list_or_null(self._vertical_lines),
+            js_default_value_to_null(self._horizontal_line_y_position),
+            js_default_value_to_null(self._vertical_line_x_position),
+            js_bool(self._unified_context),
+            js_bool(self._show_category_headings),
+            js_bool(self._show_cross_axes),
+            js_default_string(self._div_name),
+            js_default_value_to_null(self._alternative_term_func),
+            js_bool(self._include_all_contexts),
+            js_bool(self._show_axes_and_cross_hairs),
+            js_default_string(self._x_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
+            js_default_string(self._y_axis_values_format, DEFAULT_D3_AXIS_VALUE_FORMAT),
+            js_bool(self._match_full_line),
+            js_int(self._max_overlapping),
+            js_bool(self._show_corpus_stats),
+            js_bool(self._sort_doc_labels_by_name)
+        ]
         return 'buildViz(' + ','.join(arguments) + ');'
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):

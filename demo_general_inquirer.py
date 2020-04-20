@@ -2,9 +2,8 @@ from __future__ import print_function
 
 from scattertext.WhitespaceNLP import whitespace_nlp_with_sentences
 
-from scattertext import FeatsFromGeneralInquirer
+from scattertext import FeatsFromGeneralInquirer, produce_scattertext_explorer
 from scattertext import SampleCorpora
-from scattertext import produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 

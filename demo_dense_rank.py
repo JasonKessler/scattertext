@@ -4,8 +4,7 @@ from scattertext.termscoring.RankDifference import RankDifference
 
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor
 
-from scattertext import SampleCorpora, whitespace_nlp_with_sentences
-from scattertext import produce_scattertext_explorer
+from scattertext import SampleCorpora, whitespace_nlp_with_sentences, produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 convention_df = SampleCorpora.ConventionData2012.get_data()

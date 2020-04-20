@@ -1,7 +1,7 @@
 import spacy
 
-from scattertext import SampleCorpora
-from scattertext import produce_scattertext_explorer, produce_scattertext_html
+from scattertext import SampleCorpora, produce_scattertext_explorer
+from scattertext import produce_scattertext_html
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 nlp = spacy.load('en')

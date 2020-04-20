@@ -332,6 +332,15 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             new_y_mask=self._y == self._y
         )
 
+    def change_category_names(self, new_category_names):
+        if len(new_category_names) != self.get_num_categories():
+            raise Exception("The number of category names passed (%s) needs to equal "
+                            "the number of categories in the corpus (%s)." %
+                            (len(new_category_names), self.get_num_categories()))
+        return self._make_new_term_doc_matrix(
+            new_category_idx_store=IndexStoreFromList.build(new_category_names)
+        )
+
     def _make_new_term_doc_matrix(self,
                                   new_X=None,
                                   new_mX=None,

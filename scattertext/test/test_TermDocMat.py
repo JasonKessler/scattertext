@@ -479,6 +479,22 @@ class TestTermDocMat(TestCase):
         self.assertEqual(list(corpus.get_metadata_doc_count_df().index),
                          ['cat1'])
 
+    def test_change_categories(self):
+        corpus = build_hamlet_jz_corpus_with_meta()
+        with self.assertRaisesRegex(
+                Exception,
+                r"The number of category names passed \(0\) needs to equal the number of categories in the corpus \(2\)\."
+        ):
+            corpus.change_category_names([])
+        with self.assertRaisesRegex(
+                Exception,
+                r"The number of category names passed \(1\) needs to equal the number of categories in the corpus \(2\)\."
+        ):
+            corpus.change_category_names(['a'])
+
+        new_corpus = corpus.change_category_names(['aaa', 'bcd'])
+        self.assertEquals(new_corpus.get_categories(), ['aaa', 'bcd'])
+        self.assertEquals(corpus.get_categories(), ['hamlet', 'jay-z/r. kelly'])
 
 def get_hamlet_term_doc_matrix():
     # type: () -> TermDocMatrix

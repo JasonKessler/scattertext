@@ -1,6 +1,5 @@
 
-from scattertext import SampleCorpora
-from scattertext import produce_scattertext_explorer
+from scattertext import SampleCorpora, produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.WhitespaceNLP import whitespace_nlp
 

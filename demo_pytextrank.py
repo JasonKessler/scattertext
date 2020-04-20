@@ -1,5 +1,5 @@
-from scattertext import SampleCorpora, RankDifference, dense_rank, PyTextRankPhrases, AssociationCompactor
-from scattertext import produce_scattertext_explorer
+from scattertext import SampleCorpora, RankDifference, dense_rank, PyTextRankPhrases, AssociationCompactor, \
+    produce_scattertext_explorer
 from scattertext import CorpusFromParsedDocuments
 import spacy
 import numpy as np

@@ -1,6 +1,5 @@
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
-from scattertext import SampleCorpora, whitespace_nlp_with_sentences
-from scattertext import produce_scattertext_explorer
+from scattertext import SampleCorpora, whitespace_nlp_with_sentences, produce_scattertext_explorer
 
 convention_df = SampleCorpora.ConventionData2012.get_data().assign(
 	parse = lambda df: df.text.apply(whitespace_nlp_with_sentences)

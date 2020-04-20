@@ -89,13 +89,13 @@ class Corpus(TermDocMatrix):
 		return mask
 
 	def _make_new_term_doc_matrix(self,
-	                              new_X,
-	                              new_mX,
-	                              new_y,
-	                              new_term_idx_store,
-	                              new_category_idx_store,
-	                              new_metadata_idx_store,
-	                              new_y_mask):
+	                              new_X=None,
+	                              new_mX=None,
+	                              new_y=None,
+	                              new_term_idx_store=None,
+	                              new_category_idx_store=None,
+	                              new_metadata_idx_store=None,
+	                              new_y_mask=None):
 		return Corpus(X=new_X if new_X is not None else self._X,
 		              mX=new_mX if new_mX is not None else self._mX,
 		              y=new_y if new_y is not None else self._y,
