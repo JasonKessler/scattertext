@@ -1861,6 +1861,9 @@ $ python2.7 src/main.py <script file name> --enable-volume-trees \
 ```
 
 ## What's new
+## 0.0.2.64
+Adding in code to ensure that term statistics will show up even if no documents are present in visualization.
+
 ## 0.0.2.60
 Better axis labeling (see demo_axis_crossbars_and_labels.py).
 
