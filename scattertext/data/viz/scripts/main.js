@@ -750,7 +750,7 @@ buildViz = function (d3) {
             var info = termInfo.info;
             var notmatches = termInfo.notmatches;
             if (contexts[0].length + contexts[1].length + contexts[2].length + contexts[3].length == 0) {
-                return null;
+                //return null;
             }
             //!!! Future feature: context words
             //var contextWords = getContextWordSFS(info.term);
@@ -977,7 +977,7 @@ buildViz = function (d3) {
                 })
                 .reduce(function (a, b) {
                     return a + b;
-                })
+                }, 0);
 
             var notCategoryNumList = fullData.docs.categories.map(function (x, i) {
                 if (fullData.info.not_category_internal_names.indexOf(x) > -1) {
@@ -996,16 +996,21 @@ buildViz = function (d3) {
                 })
                 .reduce(function (a, b) {
                     return a + b;
-                });
+                }, 0);
 
             function getFrequencyDescription(name, count25k, count, ndocs) {
-                var desc = name + ' frequency: <div class=text_subhead>' + count25k
-                    + ' per 25,000 terms</div><div class=text_subhead>' + Math.round(ndocs)
-                    + ' per 1,000 docs</div>';
+                var desc = name + ' frequency: <div class=text_subhead>' + count25k + ' per 25,000 terms</div>';
+                if (!isNaN(Math.round(ndocs))) {
+                    desc += '<div class=text_subhead>' + Math.round(ndocs) + ' per 1,000 docs</div>';
+                }
                 if (count == 0) {
                     desc += '<u>Not found in any ' + name + ' documents.</u>';
                 } else {
-                    desc += '<u>Some of the ' + count + ' mentions:</u>';
+                    if (!isNaN(Math.round(ndocs))) {
+                        desc += '<u>Some of the ' + count + ' mentions:</u>';
+                    } else {
+                        desc += count + ' mentions';
+                    }
                 }
                 /*
                 desc += '<br><b>Discriminative:</b> ';
@@ -1063,7 +1068,7 @@ buildViz = function (d3) {
                         })
                         .reduce(function (a, b) {
                             return a + b;
-                        });
+                        }, 0);
 
                     d3.select("#" + divName + "-neuthead")
                         .style('fill', color(0))
@@ -1092,7 +1097,7 @@ buildViz = function (d3) {
                             })
                             .reduce(function (a, b) {
                                 return a + b;
-                            });
+                            }, 0);
 
                         d3.select("#" + divName + "-extrahead")
                             .style('fill', color(0))
