@@ -1656,7 +1656,7 @@ def produce_scattertext_digraph(
         graph_height=500,
         metadata_func=None,
         enable_pan_and_zoom=True,
-        **kwargs,
+        **kwargs
 ):
     graph_df = pd.concat([
         df.assign(
