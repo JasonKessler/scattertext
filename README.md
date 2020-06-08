@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.64
+# Scattertext 0.0.2.65
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -48,6 +48,7 @@ The HTML file written would look like the image below. Click on it for the actua
     - [Visualizing term associations](#visualizing-term-associations)
     - [Visualizing phrase associations](#visualizing-phrase-associations)    
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
+    - [Visualizing the Moral Foundations 2.0 Dictionary](#visualizing-the-moral-foundations-2.0-dictionary)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
@@ -391,7 +392,7 @@ Now we're ready output this chart.  Note that we use a `dense_rank` transform, w
 atop each other. We use `category_specific_prominence` as scores, and set `sort_by_dist` as `False` to ensure the 
 phrases displayed on the right-hand side of the chart are ranked by the scores and not distance to the upper-left or 
 lower-right corners. Since matching phrases are treated as non-text features, we encode them as single-phrase topic 
-modelsm and set the `topic_model_preview_size` to `0` to indicate the topic model list shouldn't be shown.  Finally,
+models and set the `topic_model_preview_size` to `0` to indicate the topic model list shouldn't be shown.  Finally,
 we set ensure the full documents are displayed.  Note the documents will be displayed in order of phrase-specific score.
 
 ```pydocstring
@@ -565,6 +566,82 @@ Here's the resulting chart.
 [![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
    
 [![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer2.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
+
+### Visualizing the Moral Foundations 2.0 Dictionary
+
+The  [[Moral Foundations Theory]](https://moralfoundations.org/) proposes six psychological constructs 
+as building blocks of moral thinking, as described in Graham et al. (2013).  These foundations are, 
+as described on [[moralfoundations.org]](https://moralfoundations.org/): care/harm, fairness/cheating, loyalty/betrayal, 
+authority/subversion, sanctity/degradation, and  liberty/oppression. Please see the site for a more in-depth discussion 
+of these foundations.
+
+Frimer et al. (2019) created the Moral Foundations Dictionary 2.0, or a lexicon of terms which invoke a moral foundation 
+as a virtue (favorable toward the foundation) or a vice (in opposition to the foundation).
+
+This dictionary can be used in the same way as the General Inquirer. In this example, we can plot the Cohen's d scores of
+ foundation-word counts relative to the frequencies words involving those foundations were invoked.
+ 
+We can first load the the corpus as normal, and use `st.FeatsFromMoralFoundationsDictionary()` to extract features.
+
+```python
+import scattertext as st
+
+convention_df = st.SampleCorpora.ConventionData2012.get_data()
+moral_foundations_feats = st.FeatsFromMoralFoundationsDictionary()
+corpus = st.CorpusFromPandas(convention_df,
+                             category_col='party',
+                             text_col='text',
+                             nlp=st.whitespace_nlp_with_sentences,
+                             feats_from_spacy_doc=moral_foundations_feats).build()
+```
+
+Next, let's use Cohen's d term scorer to analyze the corpus, and describe a set of Cohen's d association scores. 
+
+```python
+cohens_d_scorer = st.CohensD(corpus).use_metadata()
+term_scorer = cohens_d_scorer.set_categories('democrat', ['republican']).term_scorer.get_score_df()
+```
+
+Which yields the following data frame:
+ 
+|                  |   cohens_d |   cohens_d_se |   cohens_d_z |   cohens_d_p |   hedges_r |   hedges_r_se |   hedges_r_z |   hedges_r_p |         m1 |         m2 |   count1 |   count2 |   docs1 |   docs2 |
+|:-----------------|-----------:|--------------:|-------------:|-------------:|-----------:|--------------:|-------------:|-------------:|-----------:|-----------:|---------:|---------:|--------:|--------:|
+| care.virtue      |  0.662891  |      0.149425 |     4.43629  |  4.57621e-06 |  0.660257  |      0.159049 |     4.15129  |  1.65302e-05 | 0.195049   | 0.12164    |      760 |      379 |     115 |      54 |
+| care.vice        |  0.24435   |      0.146025 |     1.67335  |  0.0471292   |  0.243379  |      0.152654 |     1.59432  |  0.0554325   | 0.0580005  | 0.0428358  |      244 |      121 |      80 |      41 |
+| fairness.virtue  |  0.176794  |      0.145767 |     1.21286  |  0.112592    |  0.176092  |      0.152164 |     1.15725  |  0.123586    | 0.0502469  | 0.0403369  |      225 |      107 |      71 |      39 |
+| fairness.vice    |  0.0707162 |      0.145528 |     0.485928 |  0.313509    |  0.0704352 |      0.151711 |     0.464273 |  0.321226    | 0.00718627 | 0.00573227 |       32 |       14 |      21 |      10 |
+| authority.virtue | -0.0187793 |      0.145486 |    -0.12908  |  0.551353    | -0.0187047 |      0.15163  |    -0.123357 |  0.549088    | 0.358192   | 0.361191   |     1281 |      788 |     122 |      66 |
+| authority.vice   | -0.0354164 |      0.145494 |    -0.243422 |  0.596161    | -0.0352757 |      0.151646 |    -0.232619 |  0.591971    | 0.00353465 | 0.00390602 |       20 |       14 |      14 |      10 |
+| sanctity.virtue  | -0.512145  |      0.147848 |    -3.46399  |  0.999734    | -0.51011   |      0.156098 |    -3.26788  |  0.999458    | 0.0587987  | 0.101677   |      265 |      309 |      74 |      48 |    
+| sanctity.vice    | -0.108011  |      0.145589 |    -0.74189  |  0.770923    | -0.107582  |      0.151826 |    -0.708585 |  0.760709    | 0.00845048 | 0.0109339  |       35 |       28 |      23 |      20 |
+| loyalty.virtue   | -0.413696  |      0.147031 |    -2.81367  |  0.997551    | -0.412052  |      0.154558 |    -2.666    |  0.996162    | 0.259296   | 0.309776   |     1056 |      717 |     119 |      66 |
+| loyalty.vice     | -0.0854683 |      0.145549 |    -0.587213 |  0.72147     | -0.0851287 |      0.151751 |    -0.560978 |  0.712594    | 0.00124518 | 0.00197022 |        5 |        5 |       5 |       4 |
+
+This data frame gives us Cohen's d scores (and their standard errors and z-scores), Hedge's r scores (ditto), 
+the mean document-length normalized topic usage per category (where the in-focus category is m1 [in this case Democrats] 
+and the out-of-focus is m2), the raw number of words used in for each topic (count1 and count2), and the number of documents
+in each category with the topic (docs1 and docs2).    
+
+Note that Cohen's d is the difference of m1 and m2 divided by their pooled standard deviation.
+
+Now, let's plot the d-scores of foundations vs. their frequencies.
+```python
+html = st.produce_frequency_explorer(
+    corpus,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    metadata=convention_df['speaker'],
+    use_non_text_features=True,
+    use_full_doc=True,
+    term_scorer=st.CohensD(corpus).use_metadata(),
+    grey_threshold=0,
+    width_in_pixels=1000,
+    topic_model_term_lists=moral_foundations_feats.get_top_model_term_lists(),                
+    metadata_descriptions=moral_foundations_feats.get_definitions()
+)
+```
+[![demo_moral_foundations.html](https://jasonkessler.github.io/demo_moral_foundations.png)](https://jasonkessler.github.io/demo_moral_foundations.html)
 
 
 ### Ordering Terms by Corpus Characteristicness
@@ -2297,3 +2374,5 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Cynthia M. Whissell. The dictionary of affect in language. 1993. In The Measurement of Emotions.
 * David Bamman, Jacob Eisenstein, and Tyler Schnoebelen.  GENDER IDENTITY AND LEXICAL VARIATION IN SOCIAL MEDIA. 2014.
 * Rada Mihalcea, Paul Tarau. TextRank: Bringing Order into Text. EMNLP. 2004.
+* Frimer, J. A., Boghrati, R., Haidt, J., Graham, J., & Dehgani, M. Moral Foundations Dictionary for Linguistic Analyses 2.0. Unpublished manuscript. 2019.
+* Jesse Graham, Jonathan Haidt, Sena Koleva, Matt Motyl, Ravi Iyer, Sean P Wojcik, and Peter H Ditto. 2013. Moral foundations theory: The pragmatic validity of moral pluralism. Advances in Experimental Social Psychology, 47, 55-130

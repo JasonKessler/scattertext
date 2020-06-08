@@ -44,13 +44,15 @@ class CohensD(CorpusBasedTermScorer, CohensDCalculator):
         #
         # Modification: when calculating variance, an empty document is added to each set
         X = self._get_X().astype(np.float64)
-        X = X / X.sum(axis=1)
-        X[np.isnan(X)] = 0
-        cat_X, ncat_X = self._get_cat_and_ncat(X)
+        X_doc_len_norm = X / X.sum(axis=1)
+        X_doc_len_norm[np.isnan(X_doc_len_norm)] = 0
+        cat_X, ncat_X = self._get_cat_and_ncat(X_doc_len_norm)
+        orig_cat_X, orig_ncat_X = self._get_cat_and_ncat(X)
         score_df = (self
-                    .get_cohens_d_df(cat_X, ncat_X, correction_method)
-                    .set_index(np.array(self.corpus_.get_terms())))
+                    .get_cohens_d_df(cat_X, ncat_X, orig_cat_X, orig_ncat_X, correction_method)
+                    .set_index(np.array(self._get_index())))
         return score_df
+
 
     def get_name(self):
         return "Cohen's d"

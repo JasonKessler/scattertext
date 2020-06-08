@@ -8,20 +8,25 @@ class GraphRenderer(object):
         raise NotImplementedError
 
 class ComponentDiGraphHTMLRenderer(GraphRenderer):
-    def __init__(self, component_graph, width=1000, height=1000, enable_pan_and_zoom=True):
+    def __init__(self,
+                 component_graph,
+                 width=1000,
+                 height=1000,
+                 enable_pan_and_zoom=True,
+                 engine='dot'):
         self.component_graph = component_graph
         self.width = width
         self.height = height
         self.enable_pan_and_zoom = enable_pan_and_zoom
+        self.engine = engine
 
     def get_graph(self):
-        import graphviz as gv
 
         selected_components = self.component_graph.get_components_at_least_size(0)
         all_svg = ''
         for i, component in enumerate(selected_components):
             dot_str = self.component_graph.get_dot(component)
-            raw_svg = gv.Source(dot_str, format='svg').pipe().decode('utf-8')
+            raw_svg = self.get_svg(dot_str)
             lines = raw_svg.split('\n')
             lines[9] = lines[9].replace('graph0', 'graph%s' % (component))
             lines[6] = ('<svg easypz width="{width}pt" height="{height}pt" id="svg{component}"'
@@ -33,6 +38,11 @@ class ComponentDiGraphHTMLRenderer(GraphRenderer):
                     continue
                 all_svg += line + '\n'
         return all_svg
+
+    def get_svg(self, dot_str):
+        import graphviz as gv
+
+        return gv.Source(dot_str, format='svg', engine=self.engine).pipe().decode('utf-8')
 
     def get_javascript(self):
         return '''
@@ -66,6 +76,8 @@ class ComponentDiGraphHTMLRenderer(GraphRenderer):
         
             //panZoomInstance.reset();
                         
+                        
+            console.log("ZOOMING TO "); console.log(name);
             panZoomInstance.fit();
             panZoomInstance.center(); 
             
@@ -75,9 +87,22 @@ class ComponentDiGraphHTMLRenderer(GraphRenderer):
             var newX = centerX*pzSizes["width"]/pzSizes["viewBox"]["width"];
             var newY = centerY*pzSizes["height"]/pzSizes["viewBox"]["height"];
             
-            var zoomRatio = 1/(pzSizes["width"]/pzSizes["viewBox"]["width"]);
-                            
+            //var zoomRatio = 1/(pzSizes["width"]/pzSizes["viewBox"]["width"]);
+            console.log('zr '.concat(name, ' ', pzSizes, ' ', centerX, ' ', centerY, ' ', newX, ' ', newY));       
             panZoomInstance.zoomAtPointBy(5, {'x':newX, 'y':newY});
+        }
+        
+        function panToName(name) {
+            var x = name_to_coord[name].x; 
+            var y = panZoomInstance.getSizes().viewBox.height + Number.parseInt(name_to_coord[name].y); 
+            panZoomInstance.reset() 
+            panZoomInstance.zoom(1/panZoomInstance.getSizes().realZoom, true)
+            panZoomInstance.pan({x:0,y:0});
+            var realZoom = panZoomInstance.getSizes().realZoom; 
+            var destX = -((x * realZoom) - (panZoomInstance.getSizes().width/2));
+            var destY = -((y * realZoom) - (panZoomInstance.getSizes().height/2));
+            panZoomInstance.pan({'x':0,'y':0}); 
+            panZoomInstance.pan({'x': destX, 'y': destY})
         }
             
         
@@ -85,7 +110,7 @@ class ComponentDiGraphHTMLRenderer(GraphRenderer):
             var nodeName = 'svg' + name_to_component[term];
             document.getElementById(nodeName).style.display='block'; 
             %s
-            //zoomToName(term);
+            panToName(term);
         }
 
         Array.from(document.querySelectorAll('.node')).map(
@@ -126,6 +151,7 @@ class ComponentDiGraphHTMLRenderer(GraphRenderer):
                     controlIconsEnabled: true,
                     fit: true,
                     center: true,
+                    maxZoom: 100000,
                     minZoom: 0.1
                   });
             '''

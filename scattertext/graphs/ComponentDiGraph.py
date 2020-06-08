@@ -1,19 +1,43 @@
 import numpy as np
 import pandas as pd
 
+DEFAULT_GRAPH_PARAMS = {
+    'charset': "latin1",
+    'outputorder': "edgesfirst",
+    'overlap': "prism"
+}
+
+DEFAULT_NODE_PARAMS = {
+    'fontname': "'IBM Plex Sans'",
+    'fontsize': 10
+}
+
+
 class ComponentDiGraph(object):
-    def __init__(self, orig_edge_df, id_node_df, node_df, edge_df, components):
+    def __init__(self, orig_edge_df, id_node_df, node_df, edge_df, components, graph_params=None, node_params=None):
         self.edge_df = edge_df
         self.orig_edge_df = orig_edge_df
         self.id_node_df = id_node_df
         self.node_df = node_df
         self.components = components
+        self.graph_params = DEFAULT_GRAPH_PARAMS
+        if graph_params is not None:
+            for k, v in graph_params.items():
+                self.graph_params[k] = v
+        self.node_params = DEFAULT_NODE_PARAMS
+        if node_params is not None:
+            for k, v in node_params.items():
+                self.node_params[k] = v
 
     def get_dot(self, component):
         # graph = '''digraph {\n node [fixedsize="true", fontname="'IBM Plex Sans'", height="0.0001", label="\n", margin="0", shape="plaintext", width="0.0001"];\n'''
 
         # graph = '''digraph  \n{\n graph [bb="0,0,1297.2,881.5", charset="latin1", outputorder="edgesfirst", overlap="prism"]\n node [fontname="'IBM Plex Sans'", fontsize=10] ;\n'''
-        graph = '''digraph  \n{\n graph [charset="latin1", outputorder="edgesfirst", overlap="prism"]\n node [fontname="'IBM Plex Sans'", fontsize=10] ;\n'''
+        graph = '''digraph  \n{\n graph [%s]\n node [%s] ;\n''' % (
+            self._format_graphviz_paramters(self.graph_params),
+            self._format_graphviz_paramters(self.node_params)
+        )
+
         mynode_df = self.id_node_df[self.id_node_df['Component'] == component]
         nodes = '\n'.join(mynode_df
                           .reset_index()
@@ -36,3 +60,7 @@ class ComponentDiGraph(object):
 
     def component_to_node_list_dict(self):
         return self.id_node_df.groupby('Component')['name'].apply(list).to_dict()
+
+    def _format_graphviz_paramters(self, params):
+        return ', '.join([k + '=' + ('"' if type(v) == str else '') + str(v) + ('"' if type(v) == str else '')
+                          for k, v in params.items()])

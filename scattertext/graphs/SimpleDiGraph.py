@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
@@ -21,14 +20,16 @@ class SimpleDiGraph(object):
             right_index=True
         ).rename(columns={'index': 'target_id'})
 
-    def make_component_digraph(self):
+    def make_component_digraph(self, graph_params, node_params):
         components = self.get_connected_components()
         return ComponentDiGraph(
             edge_df=self.edge_df.assign(Component=lambda df: components[df.source_id]),
             orig_edge_df=self.orig_edge_df.assign(Component=components[self.edge_df.source_id]),
             node_df=self.node_df.assign(Component=lambda df: components[df['index']]),
             id_node_df=self.id_node_df.assign(Component=lambda df: components[df.index]),
-            components=components
+            components=components,
+            graph_params=graph_params,
+            node_params=node_params
         )
 
     def get_connected_subgraph_df(self):

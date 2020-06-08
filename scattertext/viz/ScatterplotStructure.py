@@ -19,7 +19,7 @@ class ScatterplotStructure(object):
                  topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
                  show_cross_axes=True, div_name=DEFAULT_DIV_ID, alternative_term_func=None, include_all_contexts=False,
                  show_axes_and_cross_hairs=False, x_axis_values_format=None, y_axis_values_format=None,
-                 max_overlapping=-1, show_corpus_stats=True, sort_doc_labels_by_name=False):
+                 max_overlapping=-1, show_corpus_stats=True, sort_doc_labels_by_name=False, always_jump=True):
         '''
 
         Parameters
@@ -131,6 +131,8 @@ class ScatterplotStructure(object):
             Populate corpus stats div
         sort_doc_labels_by_name: bool, default False
             If unified document labels, sort the labels by name instead of value.
+        always_jump: bool, default True
+            Always jump to term contexts if a term is clicked.
 
         '''
         self._visualization_data = visualization_data
@@ -181,6 +183,7 @@ class ScatterplotStructure(object):
         self._max_overlapping = max_overlapping
         self._show_corpus_stats = show_corpus_stats
         self._sort_doc_labels_by_name = sort_doc_labels_by_name
+        self._always_jump = always_jump
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -258,7 +261,8 @@ class ScatterplotStructure(object):
             js_bool(self._match_full_line),
             js_int(self._max_overlapping),
             js_bool(self._show_corpus_stats),
-            js_bool(self._sort_doc_labels_by_name)
+            js_bool(self._sort_doc_labels_by_name),
+            js_bool(self._always_jump),
         ]
         return 'buildViz(' + ','.join(arguments) + ');'
 

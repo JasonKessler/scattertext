@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.diachronic.TimeStructure import TimeStructure
 
-version = [0, 0, 2, 64]
+version = [0, 0, 2, 65]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -66,6 +66,7 @@ from scattertext.WhitespaceNLP import whitespace_nlp, whitespace_nlp_with_senten
     tweet_tokenizier_factory
 from scattertext.external.phrasemachine import phrasemachine
 from scattertext.features.FeatsFromGeneralInquirer import FeatsFromGeneralInquirer
+from scattertext.features.FeatsFromMoralFoundationsDictionary import FeatsFromMoralFoundationsDictionary
 from scattertext.features.FeatsFromOnlyEmpath import FeatsFromOnlyEmpath
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 from scattertext.features.UnigramsFromSpacyDoc import UnigramsFromSpacyDoc
@@ -206,6 +207,7 @@ def produce_scattertext_explorer(corpus,
                                  include_all_contexts=False,
                                  show_corpus_stats=True,
                                  sort_doc_labels_by_name=False,
+                                 always_jump=True,
                                  return_data=False,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
@@ -419,6 +421,8 @@ def produce_scattertext_explorer(corpus,
         Show the corpus stats div
     sort_doc_labels_by_name: bool default False
         If unified, sort the document labels by name
+    always_jump: bool, default True
+        Always jump to term contexts if a term is clicked
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -512,55 +516,53 @@ def produce_scattertext_explorer(corpus,
     if return_data:
         return scatter_chart_data
 
-    scatterplot_structure = ScatterplotStructure(
-        VizDataAdapter(scatter_chart_data),
-        width_in_pixels=width_in_pixels,
-        height_in_pixels=height_in_pixels,
-        max_snippets=max_snippets,
-        color=color,
-        grey_zero_scores=gray_zero_scores,
-        sort_by_dist=sort_by_dist,
-        reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
-        use_full_doc=use_full_doc,
-        asian_mode=asian_mode,
-        match_full_line=match_full_line,
-        use_non_text_features=use_non_text_features,
-        show_characteristic=show_characteristic,
-        word_vec_use_p_vals=word_vec_use_p_vals,
-        max_p_val=max_p_val,
-        save_svg_button=save_svg_button,
-        p_value_colors=p_value_colors,
-        x_label=x_label,
-        y_label=y_label,
-        show_top_terms=show_top_terms,
-        show_neutral=show_neutral,
-        get_tooltip_content=get_tooltip_content,
-        x_axis_values=x_axis_values,
-        y_axis_values=y_axis_values,
-        color_func=color_func,
-        show_axes=show_axes,
-        horizontal_line_y_position=horizontal_line_y_position,
-        vertical_line_x_position=vertical_line_x_position,
-        show_extra=show_extra,
-        do_censor_points=censor_points,
-        center_label_over_points=center_label_over_points,
-        x_axis_labels=x_axis_labels,
-        y_axis_labels=y_axis_labels,
-        topic_model_preview_size=topic_model_preview_size,
-        vertical_lines=vertical_lines,
-        unified_context=unified_context,
-        show_category_headings=show_category_headings,
-        show_cross_axes=show_cross_axes,
-        div_name=div_name,
-        alternative_term_func=alternative_term_func,
-        include_all_contexts=include_all_contexts,
-        show_axes_and_cross_hairs=show_axes_and_cross_hairs,
-        x_axis_values_format=x_axis_values_format,
-        y_axis_values_format=y_axis_values_format,
-        max_overlapping=max_overlapping,
-        show_corpus_stats=show_corpus_stats,
-        sort_doc_labels_by_name=sort_doc_labels_by_name
-    )
+    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
+                                                 width_in_pixels=width_in_pixels,
+                                                 height_in_pixels=height_in_pixels,
+                                                 max_snippets=max_snippets,
+                                                 color=color, grey_zero_scores=gray_zero_scores,
+                                                 sort_by_dist=sort_by_dist,
+                                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
+                                                 use_full_doc=use_full_doc,
+                                                 asian_mode=asian_mode,
+                                                 match_full_line=match_full_line,
+                                                 use_non_text_features=use_non_text_features,
+                                                 show_characteristic=show_characteristic,
+                                                 word_vec_use_p_vals=word_vec_use_p_vals,
+                                                 max_p_val=max_p_val,
+                                                 save_svg_button=save_svg_button,
+                                                 p_value_colors=p_value_colors,
+                                                 x_label=x_label,
+                                                 y_label=y_label,
+                                                 show_top_terms=show_top_terms,
+                                                 show_neutral=show_neutral,
+                                                 get_tooltip_content=get_tooltip_content,
+                                                 x_axis_values=x_axis_values,
+                                                 y_axis_values=y_axis_values,
+                                                 color_func=color_func,
+                                                 show_axes=show_axes,
+                                                 horizontal_line_y_position=horizontal_line_y_position,
+                                                 vertical_line_x_position=vertical_line_x_position,
+                                                 show_extra=show_extra,
+                                                 do_censor_points=censor_points,
+                                                 center_label_over_points=center_label_over_points,
+                                                 x_axis_labels=x_axis_labels,
+                                                 y_axis_labels=y_axis_labels,
+                                                 topic_model_preview_size=topic_model_preview_size,
+                                                 vertical_lines=vertical_lines,
+                                                 unified_context=unified_context,
+                                                 show_category_headings=show_category_headings,
+                                                 show_cross_axes=show_cross_axes,
+                                                 div_name=div_name,
+                                                 alternative_term_func=alternative_term_func,
+                                                 include_all_contexts=include_all_contexts,
+                                                 show_axes_and_cross_hairs=show_axes_and_cross_hairs,
+                                                 x_axis_values_format=x_axis_values_format,
+                                                 y_axis_values_format=y_axis_values_format,
+                                                 max_overlapping=max_overlapping,
+                                                 show_corpus_stats=show_corpus_stats,
+                                                 sort_doc_labels_by_name=sort_doc_labels_by_name,
+                                                 always_jump=always_jump)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -815,7 +817,7 @@ def produce_frequency_explorer(corpus,
                                use_term_significance=False,
                                term_scorer=None,
                                not_categories=None,
-                               grey_threshold=1.96,
+                               grey_threshold=0,
                                y_axis_values=None,
                                frequency_transform=lambda x: scale(np.log(x) - np.log(1)),
                                **kwargs):
@@ -1656,8 +1658,29 @@ def produce_scattertext_digraph(
         graph_height=500,
         metadata_func=None,
         enable_pan_and_zoom=True,
-        **kwargs,
+        engine='dot',
+        graph_params = None,
+        node_params = None,
+        **kwargs
 ):
+    '''
+
+    :param df: pd.DataFrame
+    :param text_col: str
+    :param source_col: str
+    :param dest_col: str
+    :param source_name: str
+    :param dest_name: str
+    :param graph_width: int
+    :param graph_height: int
+    :param metadata_func: lambda
+    :param enable_pan_and_zoom: bool
+    :param engine: str, The graphviz engine (e.g., dot or neat)
+    :param graph_params dict or None, graph parameters in graph viz
+    :param node_params dict or None, node parameters in graph viz
+    :param kwargs: dicdt
+    :return:
+    '''
     graph_df = pd.concat([
         df.assign(
             __text=lambda df: df[source_col],
@@ -1682,13 +1705,17 @@ def produce_scattertext_digraph(
              .rename(columns={source_col: 'source', dest_col: 'target'})
              .drop_duplicates())
 
-    component_graph = SimpleDiGraph(edges).make_component_digraph()
+    component_graph = SimpleDiGraph(edges).make_component_digraph(
+        graph_params=graph_params,
+        node_params=node_params
+    )
 
     graph_renderer = ComponentDiGraphHTMLRenderer(
         component_graph,
         height=graph_height,
         width=graph_width,
-        enable_pan_and_zoom=enable_pan_and_zoom
+        enable_pan_and_zoom=enable_pan_and_zoom,
+        engine=engine,
     )
 
     alternative_term_func = '''(function(termDict) {
@@ -1722,3 +1749,5 @@ def produce_scattertext_digraph(
     ).to_html()
 
     return html
+
+

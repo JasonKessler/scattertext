@@ -4,7 +4,7 @@ from scipy.stats import norm
 
 
 class CohensDCalculator(object):
-    def get_cohens_d_df(self, cat_X, ncat_X, correction_method=None):
+    def get_cohens_d_df(self, cat_X, ncat_X, orig_cat_X, orig_ncat_X, correction_method=None):
         empty_cat_X_smoothing_doc = np.zeros((1, cat_X.shape[1]))
         empty_ncat_X_smoothing_doc = np.zeros((1, ncat_X.shape[1]))
         smoothed_cat_X = np.vstack([empty_cat_X_smoothing_doc, cat_X])
@@ -36,6 +36,10 @@ class CohensDCalculator(object):
             'hedges_r_p': hedges_r_p,
             'm1': m1,
             'm2': m2,
+            'count1': orig_cat_X.sum(axis=0).A1,
+            'count2': orig_ncat_X.sum(axis=0).A1,
+            'docs1': (orig_cat_X > 0).sum(axis=0).A1,
+            'docs2': (orig_ncat_X > 0).sum(axis=0).A1,
         }).fillna(0)
         if correction_method is not None:
             from statsmodels.stats.multitest import multipletests

@@ -45,7 +45,8 @@ buildViz = function (d3) {
                      matchFullLine = false,
                      maxOverlapping = -1,
                      showCorpusStats = true,
-                     sortDocLabelsByName = false) {
+                     sortDocLabelsByName = false,
+                     alwaysJump = true) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -745,7 +746,7 @@ buildViz = function (d3) {
             }
         }
 
-        function displayTermContexts(data, termInfo, jump = true, includeAll = false) {
+        function displayTermContexts(data, termInfo, jump = alwaysJump, includeAll = false) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
             var notmatches = termInfo.notmatches;
@@ -1407,7 +1408,7 @@ buildViz = function (d3) {
                     displayTermContexts(
                         this.data,
                         this.gatherTermContexts(this.termDict[searchTerm], this.includeAllContexts),
-                        jump,
+                        alwaysJump,
                         this.includeAllContexts
                     );
                 }
@@ -1504,7 +1505,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(termInfo);
                     }
                     if (runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts), true, includeAllContexts);
+                        displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts), alwaysJump, includeAllContexts);
                     }
                 });
         }
@@ -1616,7 +1617,7 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(d);
                     }
                     if (runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
+                        displayTermContexts(data, gatherTermContexts(d), alwaysJump, includeAllContexts);
                     }
                 })
                 .on("mouseout", function (d) {
@@ -2510,7 +2511,7 @@ buildViz = function (d3) {
                             runDisplayTermContexts = alternativeTermFunc(d);
                         }
                         if (runDisplayTermContexts) {
-                            displayTermContexts(data, gatherTermContexts(d), true, includeAllContexts);
+                            displayTermContexts(data, gatherTermContexts(d), alwaysJump, includeAllContexts);
                         }
                     })
                     .on("mouseout", function (d) {

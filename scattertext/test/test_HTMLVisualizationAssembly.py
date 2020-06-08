@@ -19,7 +19,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false', '-1', 'true', 'false']
+                  'false', '-1', 'true', 'false', 'true']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -411,7 +411,13 @@ class TestHTMLVisualizationAssembly(TestCase):
 
     def test_sort_doc_labels_by_name(self):
         visualization_data = self.make_adapter()
-        params = (ScatterplotStructure(visualization_data,
-                                       sort_doc_labels_by_name=True)
+        params = (ScatterplotStructure(visualization_data, sort_doc_labels_by_name=True)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({46: 'true'}))
+
+    def test_always_jump(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       always_jump=False)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({47: 'false'}))
