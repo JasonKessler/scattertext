@@ -357,8 +357,8 @@ class ScatterChart:
         if self.scatterchartdata.terms_to_include is not None:
             json_df = self._use_only_selected_terms(json_df)
 
-        category_terms = list(json_df.sort_values('s')['term'][:10])
-        not_category_terms = list(json_df.sort_values('s')['term'][:10])
+        category_terms = list(json_df.sort_values('s', ascending=False)['term'][:10])
+        not_category_terms = list(json_df.sort_values('s', ascending=True)['term'][:10])
         if category_name is None:
             category_name = category
         if not_category_name is None:
@@ -386,7 +386,7 @@ class ScatterChart:
         if self.term_colors is not None:
             j['info']['term_colors'] = self.term_colors
 
-        #j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+        # j['data'] = json_df.sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
         j['data'] = json_df.to_dict(orient='records')
         if self.hidden_terms is not None:
             for term_obj in j['data']:
@@ -432,14 +432,14 @@ class ScatterChart:
 
     def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
         json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
-                               / term_freq_df[category + ' freq'].sum()) * 25000)
+                               / term_freq_df[category + ' freq'].sum()) * 25000).fillna(0)
                              .apply(np.round).astype(np.int))
         json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
-                                / term_freq_df['not cat freq'].sum()) * 25000)
+                                / term_freq_df['not cat freq'].sum()) * 25000).fillna(0)
                               .apply(np.round).astype(np.int))
         if 'neut cat freq' in term_freq_df:
             json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
-                                    / term_freq_df['neut cat freq'].sum()) * 25000)
+                                    / term_freq_df['neut cat freq'].sum()) * 25000).fillna(0)
                                   .apply(np.round).astype(np.int))
             json_df['neut'] = term_freq_df['neut cat freq']
         else:
@@ -447,7 +447,7 @@ class ScatterChart:
             json_df['neut'] = 0
         if 'extra cat freq' in term_freq_df:
             json_df['extra25k'] = (((term_freq_df['extra cat freq'] * 1.
-                                     / term_freq_df['extra cat freq'].sum()) * 25000)
+                                     / term_freq_df['extra cat freq'].sum()) * 25000).fillna(0)
                                    .apply(np.round).astype(np.int))
             json_df['extra'] = term_freq_df['extra cat freq']
         else:

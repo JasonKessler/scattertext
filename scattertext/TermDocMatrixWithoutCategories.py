@@ -433,6 +433,17 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return self._X
 
+    def get_term_doc_mat_coo(self):
+        '''
+        Returns sparse matrix representation of term-doc-matrix
+
+        Returns
+        -------
+        scipy.sparse.coo_matrix
+        '''
+        return self._X.astype(np.double).tocoo()
+
+
     def get_metadata_doc_mat(self):
         '''
         Returns sparse matrix representation of term-doc-matrix

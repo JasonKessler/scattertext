@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.diachronic.TimeStructure import TimeStructure
 
-version = [0, 0, 2, 65]
+version = [0, 0, 2, 66]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -106,7 +106,7 @@ from scattertext.termcompaction.DomainCompactor import DomainCompactor
 from scattertext.termscoring.ZScores import ZScores
 from scattertext.termscoring.RelativeEntropy import RelativeEntropy
 from scattertext.categoryprojector.pairplot import produce_pairplot, produce_category_focused_pairplot
-from scattertext.categoryprojector.CategoryProjection import CategoryProjection
+from scattertext.categoryprojector.CategoryProjection import CategoryProjection, project_raw_corpus
 from scattertext.categoryprojector.CategoryProjectorEvaluator import RipleyKCategoryProjectorEvaluator, \
     EmbeddingsProjectorEvaluator
 from scattertext.representations.Doc2VecBuilder import Doc2VecBuilder

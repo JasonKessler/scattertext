@@ -44,6 +44,9 @@ class SentencesForTopicModeling(object):
 					matfact[senti, termi] = 1
 		self.sentX = matfact.get_csr_matrix().astype(bool)
 
+	def get_sentence_word_mat(self):
+		return self.sentX.astype(np.double).tocoo()
+
 	def get_topics_from_model(
 			self,
 			pipe=Pipeline([

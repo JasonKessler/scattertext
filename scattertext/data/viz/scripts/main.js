@@ -1715,8 +1715,8 @@ buildViz = function (d3) {
                 for (var configI in configs) {
                     var config = configs[configI];
                     var curLabel = svg.append("text")
-                    //.attr("x", x(data[i].x) + config['xoff'])
-                    //.attr("y", y(data[i].y) + config['yoff'])
+                        //.attr("x", x(data[i].x) + config['xoff'])
+                        //.attr("y", y(data[i].y) + config['yoff'])
                         .attr("x", x(myX) + config['xoff'])
                         .attr("y", y(myY) + config['yoff'])
                         .attr('class', 'label')
@@ -2478,8 +2478,10 @@ buildViz = function (d3) {
                 */
                 d3.select('#' + divName).selectAll("dot").remove();
                 d3.select('#' + divName).selectAll("circle").remove();
-                console.log(fullData)
+                console.log(this.fullData)
                 console.log(this)
+                console.log("X/Y coords")
+                console.log(this.fullData.data.filter(d => d.display === undefined || d.display === true).map(d=>[d.x, d.y]))
                 var circles = this.svg//.select('#' + divName)
                     .selectAll("dot")
                     .data(this.fullData.data.filter(d => d.display === undefined || d.display === true))
@@ -2525,6 +2527,8 @@ buildViz = function (d3) {
                     });
 
                 if (color !== null) {
+                    console.log("COLOR")
+                    console.log(color)
                     circles.style("fill", d => color(d));
                 }
                 xCoords.forEach((xCoord, i) => censorCircle(xCoord, yCoords[i]))
@@ -2674,33 +2678,6 @@ buildViz = function (d3) {
             var ox = denseRanks.bg;
             var oy = denseRanks.fg;
 
-            //!!! NEW
-            /*
-            var oy = denseRanks.fg.map((x,i)=> x - denseRanks.bg[i]);
-            var ox = denseRanks.fgFreqs.map((x,i)=> x/fgFreqSum - denseRanks.bgFreqs[i]/bgFreqSum);
-            */
-            /*
-
-            var ox = denseRanks.fg;
-            */
-
-            /*
-            ox = ox.map(function(x) {
-                if (x > 0)
-                    return 0.5 * x/Math.max(...ox) + 0.5;
-                else
-                    return 0.5 * (1 + x/Math.min(...ox));
-
-            })
-            oy = oy.map(function(x) {
-                if (x > 0)
-                    return 0.5 * x/Math.max(...oy) + 0.5;
-                else
-                    return 0.5 * (1 + x/Math.min(...oy));
-
-            })*/
-
-
             var oxmax = Math.max(...ox)
             var oxmin = Math.min(...ox)
             var ox = ox.map(x => (x - oxmin) / (oxmax - oxmin))
@@ -2783,9 +2760,12 @@ buildViz = function (d3) {
                 //denseRanks.fg,
                 fullData.data.map(x => x.oy), //oy,
                 d => d3.interpolateRdYlBu(d.s));
-            this.yLabel.remove()
-            this.xLabel.remove()
-
+            if (this.yLabel !== undefined) {
+                this.yLabel.remove()
+            }
+            if (this.xLabel !== undefined) {
+                this.xLabel.remove()
+            }
             var leftName = this.fullData.info.categories[categoryNum];
             var bottomName = "Not " + this.fullData.info.categories[categoryNum];
             if (otherCategoryNum !== null) {
@@ -2795,11 +2775,12 @@ buildViz = function (d3) {
 
             this.yLabel = this.drawYLabel(this.svg, leftName + ' Frequncy Rank')
             this.xLabel = this.drawXLabel(this.svg, bottomName + ' Frequency Rank')
-            console.log(this.topTermsPane)
-            this.topTermsPane.catHeader.remove()
-            this.topTermsPane.notCatHeader.remove()
-            this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
-            this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
+            if (this.topTermsPane !== undefined) {
+                this.topTermsPane.catHeader.remove()
+                this.topTermsPane.notCatHeader.remove()
+                this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
+                this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
+            }
             this.showWordList = payload.showWordList;
 
 
@@ -2817,14 +2798,15 @@ buildViz = function (d3) {
                 console.log(word)
                 return payload.showWordList(word, sortedData.slice(0, length));
             }
-            this.topTermsPane = payload.showTopTermsPane(
-                this.data,
-                this.topTermsPane.registerFigureBBox,
-                this.showAssociatedWordList,
-                "Top " + leftName,
-                "Top " + bottomName,
-                this.topTermsPane.startingOffset
-            )
+            if (this.topTermsPane !== undefined)
+                this.topTermsPane = payload.showTopTermsPane(
+                    this.data,
+                    this.topTermsPane.registerFigureBBox,
+                    this.showAssociatedWordList,
+                    "Top " + leftName,
+                    "Top " + bottomName,
+                    this.topTermsPane.startingOffset
+                )
 
             fullData.info.category_name = leftName;
             fullData.info.not_category_name = bottomName;
@@ -2842,6 +2824,138 @@ buildViz = function (d3) {
                 fullData.info.neutral_category_name = "All Others";
 
             }
+            console.log("fullData.info.not_category_internal_names");
+            console.log(fullData.info.not_category_internal_names);
+            ['snippets', 'snippetsalt', 'termstats',
+                'overlapped-terms-clicked', 'categoryinfo',
+                'cathead', 'cat', 'corpus-stats', 'notcathead',
+                'notcat', 'neuthead', 'neut'
+            ].forEach(function (divSubName) {
+                var mydiv = '#' + divName + '-' + divSubName;
+                console.log("Clearing");
+                console.log(mydiv);
+                d3.select(mydiv).selectAll("*").remove();
+                d3.select(mydiv).html("");
+
+            });
+            this.populateCorpusStats();
+            console.log(fullData)
+        };
+
+        plotInterface.yAxisLogCounts = function (categoryNum) {
+            var denseRanks = getDenseRanks(this.fullData, categoryNum)
+            console.log("denseRanks")
+            console.log(denseRanks);
+
+            var rawScores = denseRanks.fg.map((x, i) => x - denseRanks.bg[i]);
+            var minRawScores = Math.min(...rawScores);
+            var maxRawScores = Math.max(...rawScores);
+
+            var scores = rawScores.map(
+                function (rawScore) {
+                    if (rawScore == 0) {
+                        return 0.5;
+                    } else if (rawScore > 0) {
+                        return rawScore / (2. * maxRawScores) + 0.5;
+                    } else if (rawScore < 0) {
+                        return 0.5 - rawScore / (2. * minRawScores);
+                    }
+                }
+            )
+            var fgFreqSum = denseRanks.fgFreqs.reduce((a, b) => a + b, 0)
+            var bgFreqSum = denseRanks.bgFreqs.reduce((a, b) => a + b, 0)
+
+            var oy = denseRanks.fgFreqs.map(count => Math.log(count + 1)/Math.log(2))
+
+            var oymax = Math.max(...oy)
+            var oymin = Math.min(...oy)
+            oy = oy.map(x => (x - oymin) / (oymax - oymin))
+            var xf = this.x;
+            var yf = this.y;
+
+            this.fullData.data = this.fullData.data.map(function (term, i) {
+                term.s = scores[i];
+                term.os = rawScores[i];
+                term.cat = denseRanks.fgFreqs[i];
+                term.ncat = denseRanks.bgFreqs[i];
+                term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000 / fgFreqSum);
+                term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000 / bgFreqSum);
+                term.x = xf(ox[i]) // scores[term.i];
+                term.y = yf(oy[i]) // scores[term.i];
+                term.oy = oy[i];
+                term.display = false;
+                return term;
+            })
+
+            // Feature selection
+            var targetTermsToShow = 1500;
+
+            var sortedBg = denseRanks.bg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
+            var sortedFg = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
+            var sortedScores = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
+            var myFullData = this.fullData
+
+            sortedBg.concat(sortedFg)//.concat(sortedScores.slice(0, parseInt(targetTermsToShow/2))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4)))
+                .forEach(function (i) {
+                    myFullData.data[i].display = true;
+                })
+
+            console.log('newly filtered')
+            console.log(myFullData)
+
+
+            this.rerender(//denseRanks.bg,
+                this.fullData.data.map(x => x.ox), //ox
+                this.fullData.data.map(x => x.oy), //oy,
+                d => d3.interpolateRdYlBu(d.s));
+
+            if (this.yLabel !== undefined) {
+                this.yLabel.remove()
+                this.yLabel = this.drawYLabel(this.svg, this.fullData.info.categories[categoryNum] + ' log freq.')
+            }
+
+            if (this.topTermsPane !== undefined) {
+                this.topTermsPane.catHeader.remove()
+                this.topTermsPane.notCatHeader.remove()
+                this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
+                this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
+            }
+            this.showWordList = payload.showWordList;
+
+
+            this.showAssociatedWordList = function (data, word, header, isAssociatedToCategory, length = 14) {
+                var sortedData = null;
+                if (!isAssociatedToCategory) {
+                    sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])
+                } else {
+                    sortedData = data.map(x => x).sort((a, b) => scores[b.i] - scores[a.i])
+                }
+                console.log('sortedData');
+                console.log(isAssociatedToCategory);
+                console.log(sortedData.slice(0, length))
+                console.log(payload)
+                console.log(word)
+                return payload.showWordList(word, sortedData.slice(0, length));
+            }
+            var leftName = this.fullData.info.categories[categoryNum];
+            var bottomName = "Not " + this.fullData.info.categories[categoryNum];
+
+            if (this.topTermsPane !== undefined)
+                this.topTermsPane = payload.showTopTermsPane(
+                    this.data,
+                    this.topTermsPane.registerFigureBBox,
+                    this.showAssociatedWordList,
+                    "Top " + leftName,
+                    "Top " + bottomName,
+                    this.topTermsPane.startingOffset
+                )
+
+            fullData.info.category_name = leftName;
+            fullData.info.not_category_name = bottomName;
+            fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
+            fullData.info.not_category_internal_names = this.fullData.info.categories
+                .filter(x => x !== this.fullData.info.categories[categoryNum]);
+
             console.log("fullData.info.not_category_internal_names");
             console.log(fullData.info.not_category_internal_names);
             ['snippets', 'snippetsalt', 'termstats',

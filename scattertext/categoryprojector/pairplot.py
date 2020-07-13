@@ -15,6 +15,8 @@ from scattertext.Scalers import scale_neg_1_to_1_with_zero_mean
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
 
 
+
+
 def produce_category_focused_pairplot(corpus,
                                       category,
                                       category_projector=CategoryProjector(projector=TruncatedSVD(20)),
@@ -86,17 +88,21 @@ def produce_pairplot(corpus,
                      verbose=False,
                      use_full_doc=True,
                      default_to_term_comparison=True,
+                     category_x_label='',
+                     category_y_label='',
+                     category_show_axes_and_cross_hairs=False,
+                     term_x_label=None,  # used if default_to_term_comparison
+                     term_y_label=None,  # used if default_to_term_comparison
+                     wordfish_style=False,
                      **kwargs):
     if category_projection is None:
         if use_metadata:
             category_projection = category_projector.project_with_metadata(corpus, x_dim=x_dim, y_dim=y_dim)
-            term_projection = category_projector
         else:
             category_projection = category_projector.project(corpus, x_dim=x_dim, y_dim=y_dim)
 
     if initial_category is None:
         initial_category = corpus.get_categories()[0]
-
     category_scatter_chart_explorer = _get_category_scatter_chart_explorer(
         category_projection, scaler, term_ranker, verbose
     )
@@ -108,19 +114,28 @@ def produce_pairplot(corpus,
     category_tooltip_func = '(function(d) {return d.term})'
 
     initial_category_idx = corpus.get_categories().index(initial_category)
-    term_plot_change_func = _get_term_plot_change_js_func(category_focused, initial_category_idx)
+    term_plot_change_func = _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category_idx)
 
     category_scatterplot_structure = ScatterplotStructure(VizDataAdapter(category_scatter_chart_data),
                                                           width_in_pixels=category_width_in_pixels,
                                                           height_in_pixels=category_height_in_pixels,
-                                                          asian_mode=asian_mode, use_non_text_features=True,
-                                                          show_characteristic=False, x_label='', y_label='',
-                                                          full_data='getCategoryDataAndInfo()', show_top_terms=False,
+                                                          asian_mode=asian_mode,
+                                                          use_non_text_features=True,
+                                                          show_characteristic=False,
+                                                          x_label=category_x_label,
+                                                          y_label=category_y_label,
+                                                          show_axes_and_cross_hairs=category_show_axes_and_cross_hairs,
+                                                          full_data='getCategoryDataAndInfo()',
+                                                          show_top_terms=False,
                                                           get_tooltip_content=category_tooltip_func,
-                                                          color_func=category_color_func, show_axes=False,
-                                                          horizontal_line_y_position=0, vertical_line_x_position=0,
-                                                          unified_context=True, show_category_headings=False,
-                                                          show_cross_axes=True, div_name='cat-plot',
+                                                          color_func=category_color_func,
+                                                          show_axes=False,
+                                                          horizontal_line_y_position=0,
+                                                          vertical_line_x_position=0,
+                                                          unified_context=True,
+                                                          show_category_headings=False,
+                                                          show_cross_axes=True,
+                                                          div_name='cat-plot',
                                                           alternative_term_func=term_plot_change_func)
 
     compacted_corpus = AssociationCompactor(terms_to_show).compact(corpus)
@@ -166,19 +181,18 @@ def produce_pairplot(corpus,
         x_label = 'Not ' + initial_category,
         color_func = None
         show_top_terms = True
-
+        show_axes = False
     else:
         term_projection = category_projection.get_term_projection()
         original_x = term_projection['x']
         original_y = term_projection['y']
         x_coords = scaler(term_projection['x'])
         y_coords = scaler(term_projection['y'])
-        y_label = ''
-        x_label = ''
-        show_axes = False
+        x_label = term_x_label if term_x_label is not None else ''
+        y_label = term_y_label if term_y_label is not None else ''
+        show_axes = True
         horizontal_line_y_position = 0
         vertical_line_x_position = 0
-        # import pdb; pdb.set_trace()
         term_scatter_chart_explorer.inject_coordinates(x_coords,
                                                        y_coords,
                                                        original_x=original_x,
@@ -197,18 +211,25 @@ def produce_pairplot(corpus,
         color_func = '(function(x) {return "#5555FF"})'
         show_top_terms = False
 
-    term_scatterplot_structure = ScatterplotStructure(VizDataAdapter(term_scatter_chart_data),
-                                                      width_in_pixels=term_width_in_pixels,
-                                                      height_in_pixels=term_height_in_pixels,
-                                                      use_full_doc=use_metadata or use_full_doc, asian_mode=asian_mode,
-                                                      use_non_text_features=use_metadata, show_characteristic=False,
-                                                      x_label=x_label, y_label=y_label,
-                                                      full_data='getTermDataAndInfo()', show_top_terms=show_top_terms,
-                                                      get_tooltip_content=None, color_func=color_func,
-                                                      horizontal_line_y_position=0, vertical_line_x_position=0,
-                                                      topic_model_preview_size=topic_model_preview_size,
-                                                      show_category_headings=False, div_name='d3-div-1')
-
+    term_scatterplot_structure = ScatterplotStructure(
+        VizDataAdapter(term_scatter_chart_data),
+        width_in_pixels=term_width_in_pixels,
+        height_in_pixels=term_height_in_pixels,
+        use_full_doc=use_metadata or use_full_doc, asian_mode=asian_mode,
+        use_non_text_features=use_metadata, show_characteristic=False,
+        x_label=x_label,
+        y_label=y_label,
+        full_data='getTermDataAndInfo()',
+        show_top_terms=show_top_terms,
+        get_tooltip_content=None,
+        color_func=color_func,
+        # horizontal_line_y_position=0,
+        # vertical_line_x_position=0,
+        show_axes=show_axes,
+        topic_model_preview_size=topic_model_preview_size,
+        show_category_headings=False,
+        div_name='d3-div-1'
+    )
     return PairPlotFromScatterplotStructure(
         category_scatterplot_structure,
         term_scatterplot_structure,
@@ -223,7 +244,6 @@ def produce_pairplot(corpus,
         protocol=protocol
     ).to_html()
 
-
 def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranker, verbose):
     category_scatter_chart_explorer = ScatterChartExplorer(
         category_projection.get_corpus(),
@@ -233,7 +253,7 @@ def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranke
         filter_unigrams=False,
         jitter=0,
         max_terms=None,
-        term_ranker=term_ranker,
+        #term_ranker=term_ranker,
         use_non_text_features=True,
         term_significance=None,
         terms_to_include=None,
@@ -249,9 +269,11 @@ def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranke
     return category_scatter_chart_explorer
 
 
-def _get_term_plot_change_js_func(category_focused, initial_category_idx):
+def _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category_idx):
+    if wordfish_style:
+        return '(function (termInfo) {termPlotInterface.yAxisLogCounts(termInfo.i); return false;})'
     if category_focused:
         return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(%s, termInfo.i); return false;})' % (
-                initial_category_idx
+            initial_category_idx
         )
     return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'

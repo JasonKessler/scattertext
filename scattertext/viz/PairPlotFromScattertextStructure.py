@@ -42,7 +42,6 @@ class PairPlotFromScatterplotStructure(object):
         '''
         self.category_scatterplot_structure = category_scatterplot_structure
         self.term_scatterplot_structure = term_scatterplot_structure
-        assert issubclass(type(category_projection), CategoryProjectionBase)
         self.category_projection = category_projection
         self.d3_url_struct = d3_url_struct if d3_url_struct else D3URLs()
         ExternalJSUtilts.ensure_valid_protocol(protocol)
