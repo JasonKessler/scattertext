@@ -103,7 +103,7 @@ class CredTFIDF(CorpusBasedTermScorer):
             'pos_cred_tfidf': pos_cred_tfidf,
             'neg_cred_tfidf': neg_cred_tfidf,
             'delta_cred_tf_idf': pos_cred_tfidf - neg_cred_tfidf
-        }, index=self.corpus_.get_terms())
+        }, index=self._get_index())
         return score_df
 
     def _set_scorer_args(self, **kwargs):

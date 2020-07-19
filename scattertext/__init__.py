@@ -1,8 +1,6 @@
 from __future__ import print_function
 
-from scattertext.diachronic.TimeStructure import TimeStructure
-
-version = [0, 0, 2, 66]
+version = [0, 0, 2, 67]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -117,6 +115,8 @@ from scattertext.termscoring.CredTFIDF import CredTFIDF
 from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsResolver, EmbeddingAligner
 from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 from scattertext.features.SpacyEntities import SpacyEntities
+from scattertext.diachronic.TimeStructure import TimeStructure
+from scattertext.features.PhraseFeatsFromTopicModel import PhraseFeatsFromTopicModel
 
 
 def produce_scattertext_explorer(corpus,
