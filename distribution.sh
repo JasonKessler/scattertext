@@ -3,9 +3,9 @@
 rm dist/*
 python setup.py sdist bdist_wheel
 twine upload dist/*
-source activate py2
+#source activate py2
 rm dist/*
-python setup.py sdist bdist_wheel
-twine upload dist/*py2*
-source deactivate
+#python setup.py sdist bdist_wheel
+#twine upload dist/*py2*
+#source deactivate
 rm -rf build

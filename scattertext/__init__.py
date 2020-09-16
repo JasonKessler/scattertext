@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 67]
+version = [0, 0, 2, 68]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -116,8 +116,8 @@ from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsRes
 from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 from scattertext.features.SpacyEntities import SpacyEntities
 from scattertext.diachronic.TimeStructure import TimeStructure
-from scattertext.features.PhraseFeatsFromTopicModel import PhraseFeatsFromTopicModel
 
+PhraseFeatsFromTopicModel = FeatsFromTopicModel # Ensure backwards compatibility
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -199,6 +199,7 @@ def produce_scattertext_explorer(corpus,
                                  term_colors=None,
                                  unified_context=False,
                                  show_category_headings=True,
+                                 highlight_selected_category=False,
                                  include_term_category_counts=False,
                                  div_name=None,
                                  alternative_term_func=None,
@@ -403,6 +404,8 @@ def produce_scattertext_explorer(corpus,
         Boolean displays contexts in a single pane as opposed to separate columns.
     show_category_headings : bool, default True
         Show category headings if unified_context is True.
+    highlight_selected_category : bool, default False
+        Highlight selected category if unified_context is True.
     include_term_category_counts : bool, default False
         Include the termCounts object in the plot definition.
     div_name : str, None by default
@@ -552,6 +555,7 @@ def produce_scattertext_explorer(corpus,
                                                  vertical_lines=vertical_lines,
                                                  unified_context=unified_context,
                                                  show_category_headings=show_category_headings,
+                                                 highlight_selected_category=highlight_selected_category,
                                                  show_cross_axes=show_cross_axes,
                                                  div_name=div_name,
                                                  alternative_term_func=alternative_term_func,

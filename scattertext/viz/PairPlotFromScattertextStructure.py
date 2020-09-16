@@ -66,9 +66,17 @@ class PairPlotFromScatterplotStructure(object):
         javascript_to_insert = '\n'.join([
             PackedDataUtils.full_content_of_javascript_files(),
             self.category_scatterplot_structure._visualization_data.to_javascript('getCategoryDataAndInfo'),
-            self.category_scatterplot_structure.get_js_to_call_build_scatterplot(self.category_plot_interface),
+            self.category_scatterplot_structure.get_js_to_call_build_scatterplot_with_a_function(
+                self.category_plot_interface
+            ),
             self.term_scatterplot_structure._visualization_data.to_javascript('getTermDataAndInfo'),
-            self.term_scatterplot_structure.get_js_to_call_build_scatterplot(self.term_plot_interface),
+            self.term_scatterplot_structure.get_js_to_call_build_scatterplot_with_a_function(
+                self.term_plot_interface
+            ),
+            self.term_scatterplot_structure.get_js_reset_function(
+                values_to_set = [self.category_plot_interface, self.term_plot_interface],
+                functions_to_reset = ['build'+self.category_plot_interface, 'build'+self.term_plot_interface]
+            ),
             PackedDataUtils.javascript_post_build_viz('categorySearch', self.category_plot_interface),
             PackedDataUtils.javascript_post_build_viz('termSearch', self.term_plot_interface),
         ])

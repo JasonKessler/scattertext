@@ -8,18 +8,58 @@ class InvalidProtocolException(Exception):
 
 
 class ScatterplotStructure(object):
-    def __init__(self, visualization_data, width_in_pixels=None, height_in_pixels=None, max_snippets=None, color=None,
-                 grey_zero_scores=False, sort_by_dist=True, reverse_sort_scores_for_not_category=True,
-                 use_full_doc=False, asian_mode=False, match_full_line=False, use_non_text_features=False,
-                 show_characteristic=True, word_vec_use_p_vals=False, max_p_val=0.1, save_svg_button=False,
-                 p_value_colors=False, x_label=None, y_label=None, full_data=None, show_top_terms=True,
-                 show_neutral=False, get_tooltip_content=None, x_axis_values=None, y_axis_values=None, color_func=None,
-                 show_axes=True, horizontal_line_y_position=None, vertical_line_x_position=None, show_extra=False,
-                 do_censor_points=True, center_label_over_points=False, x_axis_labels=None, y_axis_labels=None,
-                 topic_model_preview_size=10, vertical_lines=None, unified_context=False, show_category_headings=True,
-                 show_cross_axes=True, div_name=DEFAULT_DIV_ID, alternative_term_func=None, include_all_contexts=False,
-                 show_axes_and_cross_hairs=False, x_axis_values_format=None, y_axis_values_format=None,
-                 max_overlapping=-1, show_corpus_stats=True, sort_doc_labels_by_name=False, always_jump=True):
+    def __init__(
+            self,
+            visualization_data,
+            width_in_pixels=None,
+            height_in_pixels=None,
+            max_snippets=None,
+            color=None,
+            grey_zero_scores=False,
+            sort_by_dist=True,
+            reverse_sort_scores_for_not_category=True,
+            use_full_doc=False,
+            asian_mode=False,
+            match_full_line=False,
+            use_non_text_features=False,
+            show_characteristic=True,
+            word_vec_use_p_vals=False,
+            max_p_val=0.1,
+            save_svg_button=False,
+            p_value_colors=False,
+            x_label=None,
+            y_label=None,
+            full_data=None,
+            show_top_terms=True,
+            show_neutral=False,
+            get_tooltip_content=None,
+            x_axis_values=None,
+            y_axis_values=None,
+            color_func=None,
+            show_axes=True,
+            horizontal_line_y_position=None,
+            vertical_line_x_position=None,
+            show_extra=False,
+            do_censor_points=True,
+            center_label_over_points=False,
+            x_axis_labels=None,
+            y_axis_labels=None,
+            topic_model_preview_size=10,
+            vertical_lines=None,
+            unified_context=False,
+            show_category_headings=True,
+            highlight_selected_category=False,
+            show_cross_axes=True,
+            div_name=DEFAULT_DIV_ID,
+            alternative_term_func=None,
+            include_all_contexts=False,
+            show_axes_and_cross_hairs=False,
+            x_axis_values_format=None,
+            y_axis_values_format=None,
+            max_overlapping=-1,
+            show_corpus_stats=True,
+            sort_doc_labels_by_name=False,
+            always_jump=True):
         '''
 
         Parameters
@@ -110,6 +150,8 @@ class ScatterplotStructure(object):
             Display all context in a single column.
         show_category_headings: bool, default True
             If unified_context, should we show the category headings?
+        highlight_selected_category: bool, default False
+            Highlight selected category in unified view
         show_cross_axes: bool, default True
             If show_axes is False, do we show cross-axes?
         div_name: str, default DEFAULT_DIV_ID
@@ -173,6 +215,7 @@ class ScatterplotStructure(object):
         self._vertical_lines = vertical_lines
         self._unified_context = unified_context
         self._show_category_headings = show_category_headings
+        self._highlight_selected_category = highlight_selected_category
         self._show_cross_axes = show_cross_axes
         self._div_name = div_name
         self._alternative_term_func = alternative_term_func
@@ -263,8 +306,32 @@ class ScatterplotStructure(object):
             js_bool(self._show_corpus_stats),
             js_bool(self._sort_doc_labels_by_name),
             js_bool(self._always_jump),
+            js_bool(self._highlight_selected_category)
         ]
         return 'buildViz(' + ','.join(arguments) + ');'
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):
         return object_name + ' = ' + self.call_build_visualization_in_javascript()
+
+    def get_js_to_call_build_scatterplot_with_a_function(self, object_name='plotInterface', function_name=None):
+        if function_name is None:
+            function_name = 'build' + object_name
+        function_text = ('function ' + function_name + '() { return '
+                         + self.call_build_visualization_in_javascript() + ';}')
+        return function_text + '\n\n' + object_name + ' = ' + function_name + '();'
+
+    def get_js_reset_function(self, values_to_set, functions_to_reset, reset_function_name='reset'):
+        '''
+
+        :param functions_to_reset: List[str]
+        :param values_to_set: List[str]
+        :param reset_function_name: str, default = rest
+        :return: str
+        '''
+        return ('function ' + reset_function_name + '() {'
+                + "document.querySelectorAll('.scattertext').forEach(element=>element.innerHTML=null);\n"
+                + "document.querySelectorAll('#d3-div-1-corpus-stats').forEach(element=>element.innerHTML=null);\n"
+                + ' '.join([value + ' = ' + function_name + '();'
+                            for value, function_name
+                            in zip(values_to_set, functions_to_reset)])
+                + '}')

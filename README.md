@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.67
+# Scattertext 0.0.2.68
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -1645,11 +1645,6 @@ topic_model = {
   'family':['mother','father','mom','dad','sister','brother','grandfather','grandmother','son','daughter']
 }
 ```
-
-Note that these topics are consist of terms which are *single* tokens. If you'd like to make use of terms which 
-consist of multiple tokens (e.g., have spaces in them) please use the `PhraseFeatsFromTopicModel` 
-instead of `FeatsFromTopicModel` in the example below. Note that `PhraseFeatsFromTopicModel` requires the 
-[`flashtext`](https://github.com/vi3k6i5/flashtext) library installed.  
 
 We can use the `FeatsFromTopicModel` class to transform this topic model into one which
 can be visualized using Scattertext. This is used just like any other feature builder,

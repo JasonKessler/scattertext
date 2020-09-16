@@ -350,7 +350,8 @@ class TermDocMatrixWithoutCategories(object):
     def _remove_terms_from_list(self, stoplist):
         terms_to_ignore = [term for term
                            in self._term_idx_store._i2val
-                           if ' ' in term or (self._strict_unigram_definition and "'" in term)
+                           if ' ' in term or (self._strict_unigram_definition
+                                              and ("'" in term or '’' in term))
                            or term in stoplist]
         return self.remove_terms(terms_to_ignore)
 

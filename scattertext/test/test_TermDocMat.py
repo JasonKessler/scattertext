@@ -5,13 +5,12 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 from scattertext.indexstore import IndexStore
-from sklearn.feature_extraction.text import     ENGLISH_STOP_WORDS
 from sklearn.linear_model import LinearRegression
 
 from scattertext import TermDocMatrixFromPandas, CompactTerms, CSRMatrixFactory
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.TermDocMatrix import TermDocMatrix, CannotCreateATermDocMatrixWithASignleCategoryException
-from scattertext.Common import SPACY_ENTITY_TAGS
+from scattertext.Common import SPACY_ENTITY_TAGS, MY_ENGLISH_STOP_WORDS
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
 from scattertext.termscoring.ScaledFScore import InvalidScalerException
@@ -129,7 +128,7 @@ class TestTermDocMat(TestCase):
         self.assertEqual(set(term for term in term_df.index
                              if ' ' not in term
                              and "'" not in term
-                             and term not in ENGLISH_STOP_WORDS),
+                             and term not in MY_ENGLISH_STOP_WORDS),
                          set(uni_term_df.index)),
 
     def test_allow_single_quotes_in_unigrams(self):
@@ -140,7 +139,7 @@ class TestTermDocMat(TestCase):
         uni_term_df = uni_tdm.get_term_freq_df()
         self.assertEqual(set(term for term in term_df.index
                              if ' ' not in term
-                             and term not in ENGLISH_STOP_WORDS),
+                             and term not in MY_ENGLISH_STOP_WORDS),
                          set(uni_term_df.index)),
 
     def test_get_stoplisted_unigram_corpus_and_custom(self):
@@ -158,7 +157,7 @@ class TestTermDocMat(TestCase):
                              if ' ' not in term
                              and 'joe' != term.lower()
                              and "'" not in term
-                             and term not in ENGLISH_STOP_WORDS),
+                             and term not in MY_ENGLISH_STOP_WORDS),
                          set(uni_term_df.index)),
 
     def test_term_doc_lists(self):

@@ -19,7 +19,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false', '-1', 'true', 'false', 'true']
+                  'false', '-1', 'true', 'false', 'true', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -421,3 +421,10 @@ class TestHTMLVisualizationAssembly(TestCase):
                                        always_jump=False)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({47: 'false'}))
+
+    def test_highlight_selected_category(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       highlight_selected_category=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({48: 'true'}))

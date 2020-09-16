@@ -40,8 +40,18 @@ SPACY_ENTITY_TAGS = ['person', 'norp', 'facility', 'org', 'gpe',
                      'ordinal', 'cardinal']
 
 # Adjust stopword set for spaCy tokenization
-MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {'hasn', 'won', 'don', 'haven', 'shouldn', 'isn', 'couldn', 'wouldn',
-                                                   'aren', 'didn', 'wasn', 'dosen', 'weren', 'doesn', 's', 't'}
+MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {
+    "d'ye", 'na', 'there', "he've", 'are', "'d", "gon't", 'I', 't', 'aren', "y'", 'did', 's', 'have', 'what', 'is',
+    'twas', "'s", 'howdy', 'could', 'might', 'couldn', 'has', "ol'", "which're", "which'll", "willn't", 'hasn', 'innit',
+    'sha', "these've", "amn't", 'aight', "giv'n", 'tis', 'won', "so're", 'it', 'got', 'were', "y'all're", 'had',
+    "shalln't", 'how', 'ca', "these're", 'this', 'wo', 'ai', "those've", 'gimme', "o'er", "o'clock", 'she', 'iunno',
+    "'cause", 'somebody', 'does', 'doesn', "which've", 'he', "'ll", 'wanna', 'where', 'someone', 'dosen', 'dare',
+    "ma'am", "daresn't", 'why', "'", 'we', 'shouldn', "I'm'o", 'would', 'need', "g'day", 'dunno', "which'd", 'wonnot',
+    'you', "dasn't", 'all', 'ought', 'noun', 'was', 'who', 'let', 'didn', "y'all'd've", 'must', "to've", "'re", "'m",
+    'gon', 'do', 'isn', 'may', 'weren', "had've", 'they', "'ve", "may've", 'finna', 'which', "I'm'a", "n't", 'should',
+    "e'er", 'when', 'ta', 'nal', 'haven', "y'all'd'n've", "those're", 'don', 'wasn', 'everybody', 'wouldn', "ne'er",
+    'something', 'that', 'everyone', 'methinks', '-'
+}
 
 # Qualitative Colors From Tableau
 
@@ -50,4 +60,4 @@ QUALITATIVE_COLORS = [[31, 119, 180], [174, 199, 232], [255, 127, 14], [255, 187
                       [227, 119, 194], [247, 182, 210], [127, 127, 127], [199, 199, 199], [188, 189, 34],
                       [219, 219, 141], [23, 190, 207], [158, 218, 229],  # tableau 20
                       [177, 3, 24], [219, 161, 58], [48, 147, 67], [216, 37, 38], [255, 193, 86], [105, 183, 100],
-                      [242, 108, 100], [255, 221, 113], [159, 205, 153]] # traffic light 9
+                      [242, 108, 100], [255, 221, 113], [159, 205, 153]]  # traffic light 9

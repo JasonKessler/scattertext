@@ -65,10 +65,35 @@ div.tooltipscore {
     pointer-events: none;
 }
 
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    height: 40px;
+}
+.separator::before, .separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #000;
+}
+.separator::before {
+    margin-right: .25em;
+}
+.separator::after {
+    margin-left: .25em;
+}
+
 .category_header {
     font: 12px sans-serif;
     font-weight: bolder;
     text-decoration: underline;
+}
+
+.category_text_header {
+    font: 12px sans-serif;
+    font-weight: bolder;
+    text-decoration: underline;
+    background-color: rgb(255,255,224);
 }
 
 div.label {
@@ -240,6 +265,15 @@ input:focus {
     display: none;
 }
 
+#d3-reset-div {
+    color: rgb(158, 155, 201);
+    text-decoration: underline;
+}
+#d3-reset-div:hover {
+    color: darkblue;
+    text-decoration: underline;
+}
+
 /***AUTOCOMPLETE CSS***/
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
@@ -303,6 +337,8 @@ input:focus {
 <!-- <div id="terms">{terms}</div>
 <div class="scattertext" id="cat-plot" style="float: left"></div>-->
 <!-- <div style="float: left; width: {width}"> -->
+<br>
+<span id="d3-reset-div" style="text-decoration: underline;" onclick="reset()">Reset plot</span>
 <span style="width: {width}">
     <p>
     <div class="scattertext" id="d3-div-1"></div>
@@ -311,7 +347,7 @@ input:focus {
             <input id="termSearch" type="text" placeholder="Search terms">
         </div>
     </div>
-    <div style="text-align: center; width: 100%" id="d3-div-1-corpus-stats" align="center"></div>
+    <div style="text-align: center; width: 100%; height: 100px; overflow: auto;" id="d3-div-1-corpus-stats" align="center"></div>
     <div style="text-align: center; width: 100%" id="d3-div-1-overlapped-terms" align="center"></div>
     </p>
 </span>

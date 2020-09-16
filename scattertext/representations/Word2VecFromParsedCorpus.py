@@ -79,7 +79,12 @@ class GensimPhraseAdder(object):
 
 class CorpusAdapterForGensim(object):
 	@staticmethod
-	def get_sentences(corpus):
+	def get_token_format(token):
+		return token.lower_
+
+
+	@classmethod
+	def get_sentences(cls, corpus):
 		'''
 		Parameters
 		----------
@@ -90,7 +95,9 @@ class CorpusAdapterForGensim(object):
 		iter: [sentence1word1, ...], [sentence2word1, ...]
 		'''
 		assert isinstance(corpus, ParsedCorpus)
-		return itertools.chain(*[[[t.lower_ for t in sent if not t.is_punct]
+		return itertools.chain(*[[[cls.get_token_format(t)
+								   for t in sent
+								   if not t.is_punct]
 		                          for sent in doc.sents]
 		                         for doc in corpus.get_parsed_docs()])
 
@@ -152,7 +159,7 @@ class Word2VecFromParsedCorpus(Word2VecDefault):
 
 		self._scan_and_build_vocab()
 		for _ in range(training_iterations):
-			self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
+				self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
 			                 total_examples=self.model.corpus_count,
 			                 epochs=epochs)
 		return self.model

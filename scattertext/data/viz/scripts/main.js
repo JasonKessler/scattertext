@@ -46,7 +46,8 @@ buildViz = function (d3) {
                      maxOverlapping = -1,
                      showCorpusStats = true,
                      sortDocLabelsByName = false,
-                     alwaysJump = true) {
+                     alwaysJump = true,
+                     highlightSelectedCategory = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -804,6 +805,7 @@ buildViz = function (d3) {
                          addSnippets(singleDoc, divId);
                      });
                  });*/
+                console.log("ORDERING !!!!!"); console.log(fullData.info.category_name); console.log(sortDocLabelsByName);
                 var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => (
                     {
                         "label": fullData.docs.categories[key],
@@ -813,6 +815,14 @@ buildViz = function (d3) {
                         'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
                     }))
                     .sort(function (a, b) {
+                        if(highlightSelectedCategory) {
+                            if (a['label'] === fullData.info.category_name) {
+                                return -1;
+                            }
+                            if (b['label'] === fullData.info.category_name) {
+                                return 1;
+                            }
+                        }
                         if (sortDocLabelsByName) {
                             return a['label'] < b['label'] ? 1 : a['label'] > b['label'] ? -1 : 0;
                         } else {
@@ -847,10 +857,18 @@ buildViz = function (d3) {
                     var htmlToAdd = "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
 
                     if (counts.matches > 0) {
+                        var headerClassName = 'text_header';
+                        if((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
+                            d3.select(divId)
+                                .append('div')
+                                .attr('class', 'separator')
+                                .html("<b>Selected category</b>");
+                        }
                         d3.select(divId)
                             .append("div")
-                            .attr('class', 'text_header')
+                            .attr('class', headerClassName)
                             .html(getCategoryInlineHeadingHTML(counts));
+
                         allContexts
                             .filter(singleDoc => singleDoc.docLabel == counts.labelNum)
                             .forEach(function (singleDoc) {
@@ -862,6 +880,10 @@ buildViz = function (d3) {
                                 .forEach(function (singleDoc) {
                                     addSnippets(singleDoc, divId, false);
                                 });
+                        }
+                        if((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
+                            d3.select(divId).append('div').attr('class', 'separator').html("<b>End selected category</b>");
+                            d3.select(divId).append('div').html("<br />");
                         }
                     }
 
@@ -2839,10 +2861,12 @@ buildViz = function (d3) {
 
             });
             this.populateCorpusStats();
+
             console.log(fullData)
         };
 
-        plotInterface.yAxisLogCounts = function (categoryNum) {
+        plotInterface.yAxisLogCounts = function (categoryName) {
+            var categoryNum = this.fullData.docs.categories.indexOf(categoryName);
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
             console.log("denseRanks")
             console.log(denseRanks);
@@ -2869,45 +2893,39 @@ buildViz = function (d3) {
 
             var oymax = Math.max(...oy)
             var oymin = Math.min(...oy)
-            oy = oy.map(x => (x - oymin) / (oymax - oymin))
+            oy = oy.map(y => (y - oymin) / (oymax - oymin))
             var xf = this.x;
             var yf = this.y;
+            var ox = this.fullData.data.map(term => term.ox);
+            var oxmax = Math.max(...ox)
+            var oxmin = Math.min(...ox)
+            ox = ox.map(y => (y - oxmin) / (oxmax - oxmin))
+
 
             this.fullData.data = this.fullData.data.map(function (term, i) {
-                term.s = scores[i];
+                term.s = 1;//scores[i];
                 term.os = rawScores[i];
                 term.cat = denseRanks.fgFreqs[i];
                 term.ncat = denseRanks.bgFreqs[i];
                 term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000 / fgFreqSum);
                 term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000 / bgFreqSum);
-                term.x = xf(ox[i]) // scores[term.i];
+                //term.x = xf(term.ox) // scores[term.i];
+                //term.ox = term.ox;
                 term.y = yf(oy[i]) // scores[term.i];
                 term.oy = oy[i];
-                term.display = false;
+                term.x = xf(ox[i]) // scores[term.i];
+                term.ox = ox[i];
+                term.display = true;
                 return term;
             })
 
-            // Feature selection
-            var targetTermsToShow = 1500;
-
-            var sortedBg = denseRanks.bg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
-            var sortedFg = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]).slice(0, parseInt(targetTermsToShow / 2));
-            var sortedScores = denseRanks.fg.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
-            var myFullData = this.fullData
-
-            sortedBg.concat(sortedFg)//.concat(sortedScores.slice(0, parseInt(targetTermsToShow/2))).concat(sortedScores.slice(-parseInt(targetTermsToShow/4)))
-                .forEach(function (i) {
-                    myFullData.data[i].display = true;
-                })
-
-            console.log('newly filtered')
-            console.log(myFullData)
 
 
             this.rerender(//denseRanks.bg,
-                this.fullData.data.map(x => x.ox), //ox
-                this.fullData.data.map(x => x.oy), //oy,
-                d => d3.interpolateRdYlBu(d.s));
+                this.fullData.data.map(point => point.ox), //ox
+                this.fullData.data.map(point => point.oy), //oy,
+                d => d3.interpolateRdYlBu(d.s)
+            );
 
             if (this.yLabel !== undefined) {
                 this.yLabel.remove()
@@ -2971,7 +2989,6 @@ buildViz = function (d3) {
 
             });
             this.populateCorpusStats();
-            console.log(fullData)
         };
 
         return plotInterface
