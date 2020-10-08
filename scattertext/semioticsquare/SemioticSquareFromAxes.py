@@ -74,5 +74,6 @@ class SemioticSquareFromAxes(SemioticSquareBase):
         ]:
             #scores = np.linalg.norm(np.array([self.axes['x'] - x_coord, self.axes['y'] - y_coord]), 2, axis=0)
             scores = self._distance_measure.distances(x_coord, y_coord, self.axes['x'], self.axes['y'])
+            
             lexicons[label] = list(self.axes.index[np.argsort(scores)])[:num_terms]
         return lexicons

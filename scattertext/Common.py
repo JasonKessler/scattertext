@@ -50,7 +50,7 @@ MY_ENGLISH_STOP_WORDS = set(ENGLISH_STOP_WORDS) | {
     'you', "dasn't", 'all', 'ought', 'noun', 'was', 'who', 'let', 'didn', "y'all'd've", 'must', "to've", "'re", "'m",
     'gon', 'do', 'isn', 'may', 'weren', "had've", 'they', "'ve", "may've", 'finna', 'which', "I'm'a", "n't", 'should',
     "e'er", 'when', 'ta', 'nal', 'haven', "y'all'd'n've", "those're", 'don', 'wasn', 'everybody', 'wouldn', "ne'er",
-    'something', 'that', 'everyone', 'methinks', '-'
+    'something', 'that', 'everyone', 'methinks', '-', '-pron-'
 }
 
 # Qualitative Colors From Tableau

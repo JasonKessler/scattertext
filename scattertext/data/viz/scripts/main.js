@@ -1195,7 +1195,7 @@ buildViz = function (d3) {
 
                 // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(string) {
-                    return string.replace(/[#.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                    return string.replace(/[#.*+?^${}()|[\]\\]'\%/g, '\\$&'); // $& means the whole matched string
                 }
 
                 /*
@@ -1208,11 +1208,11 @@ buildViz = function (d3) {
                 termToRegex = escapeRegExp(termToRegex);
                 console.log("termToRegex")
                 console.log(termToRegex)
+
                 var regexp = new RegExp(boundary + '('
                     + removeUnderScoreJoin(
                         termToRegex.replace(' ', wordSep, 'gim')
-                    )
-                    + ')' + boundary, 'gim');
+                    ) + ')' + boundary, 'gim');
                 console.log(regexp);
                 try {
                     regexp.exec('X');

@@ -68,7 +68,7 @@ class FeatsFromSpacyDoc(object):
 				elif tok.tag_ in self._tag_types_to_censor:
 					unigrams.append(tok.tag_)
 				elif self._use_lemmas and tok.lemma_.strip():
-					unigrams.append(self._post_process_term(tok.lemma_.strip()))
+					unigrams.append(self._post_process_term(tok.lemma_.strip().lower()))
 				elif tok.lower_.strip():
 					unigrams.append(self._post_process_term(tok.lower_.strip()))
 		return unigrams
