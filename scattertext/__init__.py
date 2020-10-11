@@ -1,8 +1,6 @@
 from __future__ import print_function
 
-from scattertext.features.PyatePhrases import PyatePhrases
-
-version = [0, 0, 2, 69]
+version = [0, 0, 2, 70]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -118,6 +116,7 @@ from scattertext.representations.CategoryEmbeddings import CategoryEmbeddingsRes
 from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 from scattertext.features.SpacyEntities import SpacyEntities
 from scattertext.diachronic.TimeStructure import TimeStructure
+from scattertext.features.PyatePhrases import PyatePhrases
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel # Ensure backwards compatibility
 

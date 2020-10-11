@@ -13,8 +13,6 @@ convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
 
 topic_feature_builder = st.FeatsFromTopicModel(topic_model)
 
-import pdb; pdb.set_trace()
-
 topic_corpus = st.CorpusFromParsedDocuments(
     convention_df,
     category_col='party',

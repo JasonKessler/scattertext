@@ -56,8 +56,11 @@ class FeatsFromTopicModel(FeatsFromTopicModelBase, FeatsFromSpacyDoc):
                  strip_final_period=False,
                  keyword_processor_args={'case_sensitive': False}):
         self._keyword_processor = KeywordProcessor(**keyword_processor_args)
-        self._topic_model = topic_model
-        for keyphrase in reduce(lambda x, y: set(x) | set(y), topic_model.values()):
+        self._topic_model = topic_model.copy()
+        if keyword_processor_args.get('case_sensitive', None) is False:
+            for k, v in self._topic_model.items():
+                self._topic_model[k] = [e.lower() for e in v]
+        for keyphrase in reduce(lambda x, y: set(x) | set(y), self._topic_model.values()):
             self._keyword_processor.add_keyword(keyphrase)
         FeatsFromSpacyDoc.__init__(self, use_lemmas, entity_types_to_censor,
                                    tag_types_to_censor, strip_final_period)
