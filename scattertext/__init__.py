@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 70]
+version = [0, 0, 2, 71]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -183,6 +183,7 @@ def produce_scattertext_explorer(corpus,
                                  term_scorer=None,
                                  show_axes=True,
                                  show_axes_and_cross_hairs=False,
+                                 show_diagonal=False,
                                  horizontal_line_y_position=None,
                                  vertical_line_x_position=None,
                                  show_cross_axes=True,
@@ -366,6 +367,8 @@ def produce_scattertext_explorer(corpus,
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     show_axes_and_cross_hairs : bool, default False
         Show both peripheral axis labels and cross axes.
+    show_diagonal : bool, default False
+        Show a diagonal line leading from the lower-left ot the upper-right
     vertical_line_x_position : float, default None
     horizontal_line_y_position : float, default None
     show_cross_axes : bool, default True
@@ -562,6 +565,7 @@ def produce_scattertext_explorer(corpus,
                                                  alternative_term_func=alternative_term_func,
                                                  include_all_contexts=include_all_contexts,
                                                  show_axes_and_cross_hairs=show_axes_and_cross_hairs,
+                                                 show_diagonal=show_diagonal,
                                                  x_axis_values_format=x_axis_values_format,
                                                  y_axis_values_format=y_axis_values_format,
                                                  max_overlapping=max_overlapping,

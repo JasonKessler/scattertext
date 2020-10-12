@@ -59,7 +59,8 @@ class ScatterplotStructure(object):
             max_overlapping=-1,
             show_corpus_stats=True,
             sort_doc_labels_by_name=False,
-            always_jump=True):
+            always_jump=True,
+            show_diagonal=False):
         '''
 
         Parameters
@@ -175,7 +176,8 @@ class ScatterplotStructure(object):
             If unified document labels, sort the labels by name instead of value.
         always_jump: bool, default True
             Always jump to term contexts if a term is clicked.
-
+        show_diagonal: bool, default False
+            Show a diagonal line from the lower-left to the upper-right of the chart
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -227,6 +229,7 @@ class ScatterplotStructure(object):
         self._show_corpus_stats = show_corpus_stats
         self._sort_doc_labels_by_name = sort_doc_labels_by_name
         self._always_jump = always_jump
+        self._show_diagonal = show_diagonal
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -306,7 +309,8 @@ class ScatterplotStructure(object):
             js_bool(self._show_corpus_stats),
             js_bool(self._sort_doc_labels_by_name),
             js_bool(self._always_jump),
-            js_bool(self._highlight_selected_category)
+            js_bool(self._highlight_selected_category),
+            js_bool(self._show_diagonal),
         ]
         return 'buildViz(' + ','.join(arguments) + ');'
 

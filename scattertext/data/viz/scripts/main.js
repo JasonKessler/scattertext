@@ -47,7 +47,8 @@ buildViz = function (d3) {
                      showCorpusStats = true,
                      sortDocLabelsByName = false,
                      alwaysJump = true,
-                     highlightSelectedCategory = false) {
+                     highlightSelectedCategory = false,
+                     showDiagonal = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -2048,6 +2049,17 @@ buildViz = function (d3) {
                         .style("stroke-width", "1px")
                         .moveToBack();
                 }
+            }
+            if (showDiagonal) {
+                var diagonal = svg.append("g")
+                    .append("line")
+                    .attr("x1", 0)
+                    .attr("y1", height)
+                    .attr("x2", width)
+                    .attr("y2", 0)
+                    .style("stroke", "#cccccc")
+                    .style("stroke-width", "1px")
+                    .moveToBack();
             }
 
             function showWordList(word, termDataList) {
