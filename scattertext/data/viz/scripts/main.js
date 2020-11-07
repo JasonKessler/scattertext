@@ -2050,13 +2050,15 @@ buildViz = function (d3) {
                         .moveToBack();
                 }
             }
-            if (showDiagonal) {
+
+              if (showDiagonal) {
                 var diagonal = svg.append("g")
                     .append("line")
                     .attr("x1", 0)
                     .attr("y1", height)
                     .attr("x2", width)
                     .attr("y2", 0)
+                    .style("stroke-dasharray", "5,5")
                     .style("stroke", "#cccccc")
                     .style("stroke-width", "1px")
                     .moveToBack();
