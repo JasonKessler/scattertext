@@ -60,7 +60,8 @@ class ScatterplotStructure(object):
             show_corpus_stats=True,
             sort_doc_labels_by_name=False,
             always_jump=True,
-            show_diagonal=False):
+            show_diagonal=False,
+            use_global_scale=False):
         '''
 
         Parameters
@@ -178,6 +179,9 @@ class ScatterplotStructure(object):
             Always jump to term contexts if a term is clicked.
         show_diagonal: bool, default False
             Show a diagonal line from the lower-left to the upper-right of the chart
+        use_global_scale: bool, default False
+            Use the same scaling for the x and y axis. Without this show_diagonal may not
+            make sense.
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -230,6 +234,7 @@ class ScatterplotStructure(object):
         self._sort_doc_labels_by_name = sort_doc_labels_by_name
         self._always_jump = always_jump
         self._show_diagonal = show_diagonal
+        self._use_global_scale = use_global_scale
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -311,6 +316,7 @@ class ScatterplotStructure(object):
             js_bool(self._always_jump),
             js_bool(self._highlight_selected_category),
             js_bool(self._show_diagonal),
+            js_bool(self._use_global_scale)
         ]
         return 'buildViz(' + ','.join(arguments) + ');'
 

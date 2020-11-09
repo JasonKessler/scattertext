@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.71
+# Scattertext 0.0.2.72
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -54,6 +54,7 @@ The HTML file written would look like the image below. Click on it for the actua
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
+- [The position-select-plot process](#the-position-select-plot-process)
 - [Advanced Uses](#advanced-uses)
     - [Visualizing differences based on only term frequencies](#visualizing-differences-based-on-only-term-frequencies)
     - [Visualizing query-based categorical differences](#visualizing-query-based-categorical-differences)
@@ -66,6 +67,8 @@ The HTML file written would look like the image below. Click on it for the actua
     - [Visualizing topic models](#visualizing-topic-models)
     - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
     - [Using SVD to visualize any kind of word embeddings](#using-svd-to-visualize-any-kind-of-word-embeddings)
+    - [Using the same scale for both axes](#using-the-same-scale-for-both-axes)
+
 - [Examples](#examples)
 - [A note on chart layout](#a-note-on-chart-layout)
 - [What's new](#whats-new)
@@ -988,6 +991,156 @@ view a notebook which describes how other class association scores work and can 
 
 * [Google Colab Notebook](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS) (recommend).
 * [Jupyter Notebook via NBViewer](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS).
+
+### The position-select-plot process
+New in 0.0.2.72
+
+Scattertext was originally set up to visualize corpora objects, which are connected sets of documents and 
+terms to visualize. The "compaction" process allows users to eliminate terms which may not be associated with a
+category using a variety of feature selection methods. The issue with this is that the terms eliminated during
+the selection process are not taken into account when scaling term positions.
+
+This issue can be mitigated by using the position-select-plot process, where term positions are pre-determined
+before the selection process is made.
+
+Let's first use the 2012 conventions corpus, update the category names, and create a unigram corpus.
+
+```python
+import scattertext as st
+import numpy as np
+
+df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
+).assign(party=lambda df: df['party'].apply({'democrat': 'Democratic',  'republican': 'Republican'}.get))
+
+corpus = st.CorpusFromParsedDocuments(
+    df, category_col='party', parsed_col='parse'
+).build().get_unigram_corpus()
+
+category_name = 'Democratic'
+not_category_name = 'Republican'
+```
+
+Next, let's create a dataframe consisting of the original counts and their log-scale positions.
+
+```python
+def get_log_scale_df(corpus, y_category, x_category):
+    term_coord_df = corpus.get_term_freq_df('')
+
+    # Log scale term counts (with a smoothing constant) as the initial coordinates
+    coord_columns = []
+    for category in [y_category, x_category]:
+        col_name = category + '_coord'
+        term_coord_df[col_name] = np.log(term_coord_df[category] + 1e-6) / np.log(2)
+        coord_columns.append(col_name)
+
+    # Scale these coordinates to between 0 and 1
+    min_offset = term_coord_df[coord_columns].min(axis=0).min()
+    for coord_column in coord_columns:
+        term_coord_df[coord_column] -= min_offset
+    max_offset = term_coord_df[coord_columns].max(axis=0).max()
+    for coord_column in coord_columns:
+        term_coord_df[coord_column] /= max_offset
+    return term_coord_df
+
+# Get term coordinates from original corpus
+term_coordinates = get_log_scale_df(corpus, category_name, not_category_name)
+print(term_coordinates)
+```
+
+Here is a preview of the `term_coordinates` dataframe. The `Democrat` and 
+`Republican` columns contain the term counts, while the `_coord` columns
+contain their logged coordinates.  Visualizing 7,973 terms is difficult (but 
+possible) for people running Scattertext on most computers.  
+
+```
+          Democratic  Republican  Democratic_coord  Republican_coord
+term
+thank            158         205          0.860166          0.872032
+you              836         794          0.936078          0.933729
+so               337         212          0.894681          0.873562
+much              84          76          0.831380          0.826820
+very              62          75          0.817543          0.826216
+...              ...         ...               ...               ...
+precinct           0           2          0.000000          0.661076
+godspeed           0           1          0.000000          0.629493
+beauty             0           1          0.000000          0.629493
+bumper             0           1          0.000000          0.629493
+sticker            0           1          0.000000          0.629493
+
+[7973 rows x 4 columns]
+```
+
+We can visualize this full data set by running the following code block. We'll create a custom 
+Javascript function to populate the tooltip with the original term counts, and create a 
+Scattertext Explorer where the x and y coordinates and original values are specified from the data
+frame. Additionally, we can use `show_diagonal=True` to draw a dashed diagonal line across the plot area.
+
+You can click the chart below to see the interactive version. Note that it will take a while to load.
+
+
+```
+# The tooltip JS function. Note that d is is the term data object, and ox and oy are the original x- and y-
+# axis counts.
+get_tooltip_content = ('(function(d) {return d.term + "<br/>' + not_category_name + ' Count: " ' +
+                       '+ d.ox +"<br/>' + category_name + ' Count: " + d.oy})')
+
+
+html_orig = st.produce_scattertext_explorer(
+    corpus,
+    category=category_name,
+    not_category_name=not_category_name,
+    minimum_term_frequency=0,
+    pmi_threshold_coefficient=0,
+    width_in_pixels=1000,
+    metadata=corpus.get_df()['speaker'],
+    show_diagonal=True,
+    original_y=term_coordinates[category_name],
+    original_x=term_coordinates[not_category_name],
+    x_coords=term_coordinates[category_name + '_coord'],
+    y_coords=term_coordinates[not_category_name + '_coord'],
+    max_overlapping=3,
+    use_global_scale=True,
+    get_tooltip_content=get_tooltip_content,
+)
+```
+[![demo_global_scale_log_orig.png](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_global_scale_log_orig.png)](https://jasonkessler.github.io/demo_global_scale_log_orig.html)
+
+Next, we can visualize the compacted version of the corpus. The compaction, using `ClassPercentageCompactor`,
+selects terms which frequently in each category. The `term_count` parameter, set to 2, is used to determine
+the percentage threshold for terms to keep in a particular category. This is done using by calculating the
+percentile of terms (types) in each category which appear more than two times. We find the smallest percentile,
+and only include terms which occur above that percentile in a given category.
+
+Note that this compaction leaves only 2,828 terms. This number is much easier for Scattertext to display 
+in a browser.
+
+```python
+# Select terms which appear a minimum threshold in both corpora
+compact_corpus = corpus.compact(st.ClassPercentageCompactor(term_count=2))
+
+# Only take term coordinates of terms remaining in corpus
+term_coordinates = term_coordinates.loc[compact_corpus.get_terms()]
+
+html_compact = st.produce_scattertext_explorer(
+    compact_corpus,
+    category=category_name,
+    not_category_name=not_category_name,
+    minimum_term_frequency=0,
+    pmi_threshold_coefficient=0,
+    width_in_pixels=1000,
+    metadata=corpus.get_df()['speaker'],
+    show_diagonal=True,
+    original_y=term_coordinates[category_name],
+    original_x=term_coordinates[not_category_name],
+    x_coords=term_coordinates[category_name + '_coord'],
+    y_coords=term_coordinates[not_category_name + '_coord'],
+    max_overlapping=3,
+    use_global_scale=True,
+    get_tooltip_content=get_tooltip_content,
+)
+```
+[![demo_global_scale_log.png](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_global_scale_log.png)](https://jasonkessler.github.io/demo_global_scale_log.html)
 
 ## Advanced uses
 

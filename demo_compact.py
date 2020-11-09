@@ -16,7 +16,7 @@ html = st.produce_scattertext_explorer(
     minimum_term_frequency=0, pmi_threshold_coefficient=0,
     width_in_pixels=1000, metadata=corpus.get_df()['speaker'],
     transform=st.Scalers.dense_rank,
-    show_diagonal=True,
+    show_diagonal=False,
     max_overlapping=3
 )
 open('./demo_compact.html', 'w').write(html)

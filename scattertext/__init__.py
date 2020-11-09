@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 71]
+version = [0, 0, 2, 72]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -184,6 +184,7 @@ def produce_scattertext_explorer(corpus,
                                  show_axes=True,
                                  show_axes_and_cross_hairs=False,
                                  show_diagonal=False,
+                                 use_global_scale=False,
                                  horizontal_line_y_position=None,
                                  vertical_line_x_position=None,
                                  show_cross_axes=True,
@@ -368,7 +369,10 @@ def produce_scattertext_explorer(corpus,
     show_axes_and_cross_hairs : bool, default False
         Show both peripheral axis labels and cross axes.
     show_diagonal : bool, default False
-        Show a diagonal line leading from the lower-left ot the upper-right
+        Show a diagonal line leading from the lower-left ot the upper-right; only makes
+        sense to use this if use_global_scale is true.
+    use_global_scale : bool, default False
+        Use same scale for both axes
     vertical_line_x_position : float, default None
     horizontal_line_y_position : float, default None
     show_cross_axes : bool, default True
@@ -566,6 +570,7 @@ def produce_scattertext_explorer(corpus,
                                                  include_all_contexts=include_all_contexts,
                                                  show_axes_and_cross_hairs=show_axes_and_cross_hairs,
                                                  show_diagonal=show_diagonal,
+                                                 use_global_scale=use_global_scale,
                                                  x_axis_values_format=x_axis_values_format,
                                                  y_axis_values_format=y_axis_values_format,
                                                  max_overlapping=max_overlapping,

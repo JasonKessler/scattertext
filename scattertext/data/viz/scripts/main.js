@@ -48,7 +48,8 @@ buildViz = function (d3) {
                      sortDocLabelsByName = false,
                      alwaysJump = true,
                      highlightSelectedCategory = false,
-                     showDiagonal = false) {
+                     showDiagonal = false,
+                     useGlobalScale = false) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -1556,12 +1557,27 @@ buildViz = function (d3) {
             }
 
             // Scale the range of the data.  Add some space on either end.
-            x.domain([-1 * padding, d3.max(data, function (d) {
-                return d.x;
-            }) + padding]);
-            y.domain([-1 * padding, d3.max(data, function (d) {
-                return d.y;
-            }) + padding]);
+            if(useGlobalScale) {
+                var axisMax = Math.max(
+                    d3.max(data, function (d) {return d.x;}),
+                    d3.max(data, function (d) {return d.y;}),
+                )
+                var axisMin = Math.min(
+                    d3.min(data, function (d) {return d.x;}),
+                    d3.min(data, function (d) {return d.y;}),
+                )
+                x.domain([axisMin, axisMax]);
+                y.domain([axisMin, axisMax]);
+            } else {
+                var xMax = d3.max(data, function (d) {
+                    return d.x;
+                });
+                var yMax = d3.max(data, function (d) {
+                    return d.y;
+                })
+                x.domain([-1 * padding, xMax + padding]);
+                y.domain([-1 * padding, yMax + padding]);
+            }
 
             /*
              data.sort(function (a, b) {
@@ -2057,6 +2073,7 @@ buildViz = function (d3) {
                     .attr("y1", height)
                     .attr("x2", width)
                     .attr("y2", 0)
+                    .style("stroke-dasharray", "5,5")
                     .style("stroke", "#cccccc")
                     .style("stroke-width", "1px")
                     .moveToBack();
