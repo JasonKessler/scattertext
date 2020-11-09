@@ -2066,7 +2066,8 @@ buildViz = function (d3) {
                         .moveToBack();
                 }
             }
-            if (showDiagonal) {
+
+              if (showDiagonal) {
                 var diagonal = svg.append("g")
                     .append("line")
                     .attr("x1", 0)
