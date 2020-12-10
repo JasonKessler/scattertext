@@ -449,6 +449,17 @@ class TestTermDocMat(TestCase):
                             == (meta_hamlet.get_category_names_by_row() == 'jay-z/r. kelly')))
         np.testing.assert_array_equal(meta_hamlet.get_term_doc_mat().todense(), hamlet.get_metadata_doc_mat().toarray())
 
+    def test_copy_terms_to_metadata(self):
+        tdm = get_hamlet_term_doc_matrix()
+        tdm_meta = tdm.copy_terms_to_metadata()
+        self.assertEqual(tdm.get_metadata_doc_mat().shape, (1,1))
+        self.assertEqual(tdm.get_term_doc_mat().shape, (211, 26875))
+        self.assertEqual(tdm_meta.get_term_doc_mat().shape, (211, 26875))
+        self.assertEqual(tdm_meta.get_metadata_doc_mat().shape, (211, 26875))
+        np.testing.assert_array_equal(tdm.get_term_freq_df().index, tdm_meta.get_metadata_freq_df().index)
+
+
+
     def test_get_num_metadata(self):
         self.assertEqual(get_hamlet_term_doc_matrix().use_categories_as_metadata().get_num_metadata(), 2)
 

@@ -247,7 +247,6 @@ class TermDocMatrixWithoutCategories(object):
         idx_to_delete_list = self._build_term_index_list(ignore_absences, terms, non_text)
         return self.remove_terms_by_indices(idx_to_delete_list, non_text)
 
-
     def whitelist_terms(self, whitelist_terms):
         '''
 

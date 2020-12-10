@@ -1,6 +1,8 @@
 from __future__ import print_function
 
-version = [0, 0, 2, 72]
+from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
+
+version = [0, 0, 2, 73]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -26,7 +28,7 @@ import scattertext.viz
 from scattertext.CategoryColorAssigner import CategoryColorAssigner
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor, TermCategoryRanker, \
-    AssociationCompactorByRank
+    AssociationCompactorByRank, JSDCompactor
 from scattertext.termscoring.CohensD import CohensD, HedgesR
 from scattertext.termscoring.MannWhitneyU import MannWhitneyU
 from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
@@ -207,10 +209,12 @@ def produce_scattertext_explorer(corpus,
                                  div_name=None,
                                  alternative_term_func=None,
                                  term_metadata=None,
+                                 term_metadata_df=None,
                                  max_overlapping=-1,
                                  include_all_contexts=False,
                                  show_corpus_stats=True,
                                  sort_doc_labels_by_name=False,
+                                 enable_term_category_description=True,
                                  always_jump=True,
                                  return_data=False,
                                  return_scatterplot_structure=False):
@@ -424,6 +428,8 @@ def produce_scattertext_explorer(corpus,
     term_metadata : dict, None by default
         Dict mapping terms to dictionaries containing additional information which can be used in the color_func
         or the get_tooltip_content function. These will appear in termDict.etc
+    term_metadata_df : pd.DataFrame, None by default
+        Datframe version of term_metadata
     include_all_contexts: bool, default False
         Include all contexts, even non-matching ones, in interface
     max_overlapping: int, default -1
@@ -434,6 +440,8 @@ def produce_scattertext_explorer(corpus,
         If unified, sort the document labels by name
     always_jump: bool, default True
         Always jump to term contexts if a term is clicked
+    enable_term_category_description: bool, default True
+        List term/metadata statistics under category
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -500,6 +508,11 @@ def produce_scattertext_explorer(corpus,
         scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
     if term_colors is not None:
         scatter_chart_explorer.inject_term_colors(term_colors)
+
+    if term_metadata_df is not None and term_metadata is not None:
+        raise Exception("Both term_metadata_df and term_metadata cannot be values which are not None.")
+    if term_metadata_df is not None:
+        scatter_chart_explorer.inject_term_metadata_df(term_metadata_df)
     if term_metadata is not None:
         scatter_chart_explorer.inject_term_metadata(term_metadata)
     html_base = None
@@ -576,6 +589,7 @@ def produce_scattertext_explorer(corpus,
                                                  max_overlapping=max_overlapping,
                                                  show_corpus_stats=show_corpus_stats,
                                                  sort_doc_labels_by_name=sort_doc_labels_by_name,
+                                                 enable_term_category_description=enable_term_category_description,
                                                  always_jump=always_jump)
 
     if return_scatterplot_structure:

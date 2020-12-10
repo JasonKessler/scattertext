@@ -742,6 +742,32 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                  self._metadata_idx_store, new_y == new_y)
         return new_tdm
 
+    def use_external_metadata_lists(self, metadata_lists):
+        '''
+        Takes a list of string lists. Each list corresponds to metadata to associate its corresponding document.
+        :param metadata: List[List[str]]
+        :return: new TermDocMatrix
+        '''
+        metadata_index_store = IndexStore()
+        metadata_csr_factory = CSRMatrixFactory()
+        assert len(metadata_lists) == self.get_num_docs()
+        print("STARTING")
+        for doc_i, metadata_list in enumerate(metadata_lists):
+            print("L", metadata_list)
+            for metadatum in metadata_list:
+                print("METADATUM", metadatum)
+                #raise Exception(str(metadatum)
+                #                + " " + str(type(metadatum)) + " " + str(len(metadatum)) + str(metadata_list)
+                #                + " " + str(type(metadata_list)) + " " + str(len(metadata_list)) + str(metadata_lists))
+                #raise Exception(f"METADATUM {metadatum} " + metadatum + ":::" + metadata_list)
+                metadata_csr_factory[doc_i, metadata_index_store.getidx(metadatum)] = 1
+
+        return self._make_new_term_doc_matrix(
+            new_mX=metadata_csr_factory.get_csr_matrix(dtype=int),
+            new_metadata_idx_store=metadata_index_store,
+            new_y_mask=self._y == self._y
+        )
+
     def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_'):
         '''
         Makes the metadata of a new TermDocMatrix a copy of the term-document matrix, except each term is prefixed
@@ -844,6 +870,19 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                                  copy(self._category_idx_store),
                                                  self._y == self._y)
         return new_tdm
+
+    def copy_terms_to_metadata(self):
+        '''
+        Returns a TermDocMatrix which is identical to self except the metadata values are now identical to the
+        term document matrix.
+
+        :return: TermDocMatrix
+        '''
+        return self._make_new_term_doc_matrix(
+            new_mX=copy(self._X),
+            new_metadata_idx_store=copy(self._term_idx_store),
+            new_y_mask=self._y == self._y
+        )
 
     def get_num_categories(self):
         '''

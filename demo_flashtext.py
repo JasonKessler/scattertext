@@ -33,7 +33,7 @@ keyword_processor = KeywordProcessor(case_sensitive=False)
 for phrase in ['the president', 'presidents', 'presidential', 'barack obama', 'mitt romney', 'george bush',
                'george w. bush', 'bill clinton', 'ronald regan', 'obama', 'romney',
                'barack', 'mitt', 'bush', 'clinton', 'reagan', 'mr. president', 'united states of america']:
-    keyword_processor.add_keyword(phrase)
+        keyword_processor.add_keyword(phrase)
 feature_extractor = FlashTextExtact().set_keyword_processor(keyword_processor)
 
 convention_df = st.SampleCorpora.ConventionData2012.get_data()

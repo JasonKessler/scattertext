@@ -49,7 +49,9 @@ buildViz = function (d3) {
                      alwaysJump = true,
                      highlightSelectedCategory = false,
                      showDiagonal = false,
-                     useGlobalScale = false) {
+                     useGlobalScale = false,
+                     enableTermCategoryDescription = true,
+                     ) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -1024,7 +1026,11 @@ buildViz = function (d3) {
                 }, 0);
 
             function getFrequencyDescription(name, count25k, count, ndocs) {
-                var desc = name + ' frequency: <div class=text_subhead>' + count25k + ' per 25,000 terms</div>';
+                var desc = name;
+                if (!enableTermCategoryDescription) {
+                    return desc + ':';
+                }
+                desc += ' frequency: <div class=text_subhead>' + count25k + ' per 25,000 terms</div>';
                 if (!isNaN(Math.round(ndocs))) {
                     desc += '<div class=text_subhead>' + Math.round(ndocs) + ' per 1,000 docs</div>';
                 }
@@ -1154,7 +1160,7 @@ buildViz = function (d3) {
                 })
             }
             if (jump) {
-                if (window.location.hash == '#' + divName + '-' + 'snippets') {
+                if (window.location.hash === '#' + divName + '-' + 'snippets') {
                     window.location.hash = '#' + divName + '-' + 'snippetsalt';
                 } else {
                     window.location.hash = '#' + divName + '-' + 'snippets';
@@ -1551,7 +1557,7 @@ buildViz = function (d3) {
                 //termDict[x.term].i = i;
             });
 
-            var padding = 0;
+            var padding = 0.1;
             if (showAxes || showAxesAndCrossHairs) {
                 padding = 0.1;
             }
@@ -1566,6 +1572,8 @@ buildViz = function (d3) {
                     d3.min(data, function (d) {return d.x;}),
                     d3.min(data, function (d) {return d.y;}),
                 )
+                axisMin = axisMin - (axisMax - axisMin) * padding;
+                axisMax = axisMax + (axisMax - axisMin) * padding;
                 x.domain([axisMin, axisMax]);
                 y.domain([axisMin, axisMax]);
             } else {
@@ -1720,37 +1728,45 @@ buildViz = function (d3) {
                 pointStore.push([x2, y2]);
                 curLabel.remove();
             }
+            var configs = [
+                {'anchor': 'end', 'group': 1, 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 1,'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
 
+                {'anchor': 'end', 'group': 2,'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2,'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2,'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2,'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+
+                {'anchor': 'start', 'group': 1, 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 1,'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+
+                {'anchor': 'start', 'group': 2,'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 2,'xoff': 5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+
+                {'anchor': 'start', 'group': 3,'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3,'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3,'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3,'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+            ];
+            if (centerLabelsOverPoints) {
+                configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
+            }
             function labelPointsIfPossible(datum, myX, myY) {
                 var term = datum.term;
-                if (term == "the")
-                    console.log("TERM " + term + " " + myX + " " + myY)
                 //console.log('xxx'); console.log(term); console.log(term.display !== undefined && term.display === false)
                 //if(term.display !== undefined && term.display === false) {
                 //    return false;
                 //}
-                var configs = [
-                    {'anchor': 'end', 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'end', 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-
-                    {'anchor': 'end', 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'end', 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'end', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'end', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-
-                    {'anchor': 'start', 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': 5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                    {'anchor': 'start', 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                ];
-                if (centerLabelsOverPoints) {
-                    configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
+                if (datum.x > datum.y) {
+                    configs.sort((a,b) => a.anchor == 'end' && b.anchor=='end'
+                        ? a.group - b.group : (a.anchor == 'end') - (b.anchor=='end'));
+                } else {
+                    configs.sort((a,b) => a.anchor == 'start' && b.anchor=='start'
+                        ? a.group - b.group : (a.anchor == 'start') - (b.anchor=='start'));
                 }
                 var matchedElement = null;
+
+
                 for (var configI in configs) {
                     var config = configs[configI];
                     var curLabel = svg.append("text")
@@ -2291,7 +2307,8 @@ buildViz = function (d3) {
                 var labeledPoints = [];
                 //var filteredData = data.filter(d=>d.display === undefined || d.display === true);
                 //for (var i = 0; i < filteredData.length; i++) {
-                data.forEach(function (datum, i) {
+                data.sort((a,b)=>Math.min(a.x, 1-a.x, a.y, 1-a.y)-Math.min(b.x, 1-b.x, b.y, 1-b.y))
+                    .forEach(function (datum, i) {
                     //console.log(datum.i, datum.ci, i)
                     //var label = labelPointsIfPossible(i, getX(filteredData[i]), getY(filteredData[i]));
                     if (datum.display === undefined || datum.display === true) {

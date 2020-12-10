@@ -185,3 +185,13 @@ class ScatterChartExplorer(ScatterChart):
         '''
         self._term_metadata = metadata
         return self
+
+
+    def inject_term_metadata_df(self, metadata_df):
+        '''
+
+        :param metadata_df: pd.DataFrame, indexed on terms with columns as structure
+        :return: ScatterChartExplorer
+        '''
+        term_metadata_dict = metadata_df.T.to_dict()
+        return self.inject_term_metadata(term_metadata_dict)

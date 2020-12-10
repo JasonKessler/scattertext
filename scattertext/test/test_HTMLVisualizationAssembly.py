@@ -19,7 +19,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false']
+                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ','.join(params) + ');'
@@ -441,3 +441,9 @@ class TestHTMLVisualizationAssembly(TestCase):
         params = (ScatterplotStructure(visualization_data, use_global_scale=True)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({50: 'true'}))
+
+    def test_use_global_scale(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, enable_term_category_description=False)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({51: 'false'}))

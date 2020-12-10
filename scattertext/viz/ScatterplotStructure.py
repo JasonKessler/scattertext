@@ -61,6 +61,7 @@ class ScatterplotStructure(object):
             sort_doc_labels_by_name=False,
             always_jump=True,
             show_diagonal=False,
+            enable_term_category_description=True,
             use_global_scale=False):
         '''
 
@@ -182,6 +183,8 @@ class ScatterplotStructure(object):
         use_global_scale: bool, default False
             Use the same scaling for the x and y axis. Without this show_diagonal may not
             make sense.
+        enable_term_category_description: bool, default True
+            List term/metadata statistics under category
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -235,6 +238,8 @@ class ScatterplotStructure(object):
         self._always_jump = always_jump
         self._show_diagonal = show_diagonal
         self._use_global_scale = use_global_scale
+        self._enable_term_category_description = enable_term_category_description
+
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -316,7 +321,8 @@ class ScatterplotStructure(object):
             js_bool(self._always_jump),
             js_bool(self._highlight_selected_category),
             js_bool(self._show_diagonal),
-            js_bool(self._use_global_scale)
+            js_bool(self._use_global_scale),
+            js_bool(self._enable_term_category_description),
         ]
         return 'buildViz(' + ','.join(arguments) + ');'
 

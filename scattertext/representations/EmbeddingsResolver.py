@@ -49,7 +49,6 @@ class EmbeddingsResolver:
         self.vocab_ = model.wv.vocab
         return self
 
-
     def project_embeddings(self, projection_model=None, x_dim=0, y_dim=1):
         '''
 

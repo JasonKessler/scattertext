@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.72
+# Scattertext 0.0.2.73
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -991,6 +991,9 @@ view a notebook which describes how other class association scores work and can 
 
 * [Google Colab Notebook](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS) (recommend).
 * [Jupyter Notebook via NBViewer](https://colab.research.google.com/drive/1snxAP8X6EIDi42FugJ_h5U-fBGDCqtyS).
+
+New in 0.0.2.73 is the delta JS-Divergence scorer `DeltaJSDivergence` scorer (Gallagher et al. 2020), and its 
+corresponding compactor (JSDCompactor.) See `demo_deltajsd.py` for an example usage. 
 
 ### The position-select-plot process
 New in 0.0.2.72
@@ -2529,3 +2532,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Rada Mihalcea, Paul Tarau. TextRank: Bringing Order into Text. EMNLP. 2004.
 * Frimer, J. A., Boghrati, R., Haidt, J., Graham, J., & Dehgani, M. Moral Foundations Dictionary for Linguistic Analyses 2.0. Unpublished manuscript. 2019.
 * Jesse Graham, Jonathan Haidt, Sena Koleva, Matt Motyl, Ravi Iyer, Sean P Wojcik, and Peter H Ditto. 2013. Moral foundations theory: The pragmatic validity of moral pluralism. Advances in Experimental Social Psychology, 47, 55-130
+* Ryan J. Gallagher, Morgan R. Frank, Lewis Mitchell, Aaron J. Schwartz, Andrew J. Reagan, Christopher M. Danforth, and Peter Sheridan Dodds. Generalized Word Shift Graphs: A Method for Visualizing and Explaining Pairwise Comparisons Between Texts. 2020. Arxiv. https://arxiv.org/pdf/2008.02250.pdf

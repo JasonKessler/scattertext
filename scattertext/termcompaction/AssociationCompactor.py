@@ -52,6 +52,24 @@ class BaseAssociationCompactor(object):
     def _remove_terms(self, term_doc_matrix, term_to_remove):
         return term_doc_matrix.remove_terms(term_to_remove, non_text=self.scorer.use_non_text_features)
 
+class JSDCompactor(BaseAssociationCompactor):
+    def __init__(self,
+                 max_terms,
+                 term_ranker=AbsoluteFrequencyRanker,
+                 use_non_text_features=False):
+        self.max_terms = max_terms
+        BaseAssociationCompactor.__init__(self, term_ranker=term_ranker, use_non_text_features=use_non_text_features)
+
+    def compact(self, term_doc_matrix, verbose=False):
+        rank_df = self.scorer.get_rank_df(term_doc_matrix)
+        p_df = rank_df/rank_df.sum(axis=0) + 0.001
+        m = p_df.sum(axis=1)
+        def lg(x): return np.log(x) / np.log(2)
+        rank_df['Score'] = m * lg(1/m) - (p_df * lg(1/p_df)).sum(axis=1)
+        terms_to_remove = rank_df.sort_values(
+            by='Score', ascending=False
+        ).iloc[self.max_terms:].index
+        return term_doc_matrix.remove_terms(terms_to_remove, self.scorer.use_non_text_features)
 
 class AssociationCompactor(BaseAssociationCompactor):
     def __init__(self,
