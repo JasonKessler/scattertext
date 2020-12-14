@@ -51,6 +51,9 @@ buildViz = function (d3) {
                      showDiagonal = false,
                      useGlobalScale = false,
                      enableTermCategoryDescription = true,
+                     getCustomTermHtml = null,
+                     headerNames = null,
+                     headerSortingAlgos = null
                      ) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
@@ -970,6 +973,12 @@ buildViz = function (d3) {
             var termHtml = 'Term: <b>' + info.term + '</b>';
             if ('metalists' in fullData && info.term in fullData.metalists) {
                 termHtml = 'Topic: <b>' + info.term + '</b>';
+            }
+            console.log("HERE")
+            console.log(getCustomTermHtml)
+            if(getCustomTermHtml !== null) {
+                console.log("Making custom html")
+                termHtml = getCustomTermHtml(info);
             }
             d3.select('#' + divName + '-' + 'termstats')
                 .append('div')
@@ -2134,28 +2143,34 @@ buildViz = function (d3) {
                 return euclideanDistanceSortForNotCategory;
             }
 
-            function pickScoreSortAlgo(category) {
+            function pickScoreSortAlgo(isTopPane) {
                 console.log("PICK SCORE ALGO")
-                console.log(category)
-                if (category == true) {
+                console.log(isTopPane)
+                if (isTopPane === true) {
+                    if (headerSortingAlgos !== null && headerSortingAlgos['upper'] !== undefined)
+                        return headerSortingAlgos['upper'];
                     return scoreSortForCategory;
                 } else {
+                    if(headerSortingAlgos !== null && headerSortingAlgos['lower'] !== undefined)
+                        return headerSortingAlgos['lower'];
                     return scoreSortForNotCategory;
                 }
+
             }
 
-            function pickTermSortingAlgorithm(category) {
-                if (sortByDist) return pickEuclideanDistanceSortAlgo(category);
-                return pickScoreSortAlgo(category);
+            function pickTermSortingAlgorithm(isUpperPane) {
+                if (sortByDist) return pickEuclideanDistanceSortAlgo(isUpperPane);
+                return pickScoreSortAlgo(isUpperPane);
             }
 
-            function showAssociatedWordList(data, word, header, isAssociatedToCategory, length = 14) {
+            function showAssociatedWordList(data, word, header, isUpperPane, length = 14) {
                 var sortedData = null;
-                var sortingAlgo = pickTermSortingAlgorithm(isAssociatedToCategory);
+                var sortingAlgo = pickTermSortingAlgorithm(isUpperPane);
+                console.log("showAssociatedWordList"); console.log(header); console.log("WORD"); console.log(word)
                 sortedData = data.filter(term => (term.display === undefined || term.display === true)).sort(sortingAlgo);
                 if (wordVecMaxPValue) {
                     function signifTest(x) {
-                        if (isAssociatedToCategory)
+                        if (isUpperPane)
                             return x.p >= 1 - minPVal;
                         return x.p <= minPVal;
                     }
@@ -2204,8 +2219,8 @@ buildViz = function (d3) {
             function showTopTermsPane(data,
                                       registerFigureBBox,
                                       showAssociatedWordList,
-                                      catName,
-                                      notCatName,
+                                      upperHeaderName,
+                                      lowerHeaderName,
                                       startingOffset) {
                 data = data.filter(term => (term.display === undefined || term.display === true));
                 //var catHeader = showCatHeader(startingOffset, catName, registerFigureBBox);
@@ -2217,7 +2232,7 @@ buildViz = function (d3) {
                     .attr('font-size', '12px')
                     .attr('font-weight', 'bolder')
                     .attr('font-decoration', 'underline')
-                    .text(catName
+                    .text(upperHeaderName
                         //"Top " + fullData['info']['category_name']
                     );
                 registerFigureBBox(catHeader);
@@ -2226,7 +2241,7 @@ buildViz = function (d3) {
                 word = wordListData.word;
                 var maxWidth = wordListData.maxWidth;
 
-                var notCatHeader = showNotCatHeader(startingOffset, word, notCatName);
+                var notCatHeader = showNotCatHeader(startingOffset, word, lowerHeaderName);
                 word = notCatHeader;
                 characteristicXOffset = catHeader.node().getBBox().x + maxWidth + 10;
 
@@ -2244,17 +2259,26 @@ buildViz = function (d3) {
 
             var payload = Object();
             if (showTopTerms) {
+                var upperHeaderName = "Top " + fullData['info']['category_name'];
+                var lowerHeaderName = "Top " + fullData['info']['not_category_name'];
+                if(headerNames !== null) {
+                    if(headerNames.upper !== undefined)
+                        upperHeaderName = headerNames.upper;
+                    if(headerNames.lower !== undefined)
+                        lowerHeaderName = headerNames.lower;
+                }
                 payload.topTermsPane = showTopTermsPane(
                     data,
                     registerFigureBBox,
                     showAssociatedWordList,
-                    "Top " + fullData['info']['category_name'],
-                    "Top " + fullData['info']['not_category_name'],
+                    upperHeaderName,
+                    lowerHeaderName,
                     width
                 );
                 payload.showTopTermsPane = showTopTermsPane;
                 payload.showAssociatedWordList = showAssociatedWordList;
                 payload.showWordList = showWordList;
+
                 /*var wordListData = topTermsPane.wordListData;
                 var word = topTermsPane.word;
                 var maxWidth = topTermsPane.maxWidth;
@@ -2853,15 +2877,21 @@ buildViz = function (d3) {
             this.showWordList = payload.showWordList;
 
 
-            this.showAssociatedWordList = function (data, word, header, isAssociatedToCategory, length = 14) {
+            this.showAssociatedWordList = function (
+                data,
+                word,
+                header,
+                isUpperPane,
+                length = 14
+            ) {
                 var sortedData = null;
-                if (!isAssociatedToCategory) {
+                if (!isUpperPane) {
                     sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])
                 } else {
                     sortedData = data.map(x => x).sort((a, b) => scores[b.i] - scores[a.i])
                 }
                 console.log('sortedData');
-                console.log(isAssociatedToCategory);
+                console.log(isUpperPane);
                 console.log(sortedData.slice(0, length))
                 console.log(payload)
                 console.log(word)
@@ -2988,15 +3018,16 @@ buildViz = function (d3) {
             this.showWordList = payload.showWordList;
 
 
-            this.showAssociatedWordList = function (data, word, header, isAssociatedToCategory, length = 14) {
+            this.showAssociatedWordList = function (data, word, header, isUpperPane, length = 14) {
                 var sortedData = null;
-                if (!isAssociatedToCategory) {
+                if (!isUpperPane) {
                     sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])
                 } else {
                     sortedData = data.map(x => x).sort((a, b) => scores[b.i] - scores[a.i])
                 }
+                console.log("HEADERHEADER222")
                 console.log('sortedData');
-                console.log(isAssociatedToCategory);
+                console.log(isUpperPane);
                 console.log(sortedData.slice(0, length))
                 console.log(payload)
                 console.log(word)

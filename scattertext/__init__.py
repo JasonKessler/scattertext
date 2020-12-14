@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
 
-version = [0, 0, 2, 73]
+version = [0, 0, 2, 74]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np
@@ -216,6 +216,9 @@ def produce_scattertext_explorer(corpus,
                                  sort_doc_labels_by_name=False,
                                  enable_term_category_description=True,
                                  always_jump=True,
+                                 get_custom_term_html=None,
+                                 header_names=None,
+                                 header_sorting_algos=None,
                                  return_data=False,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
@@ -442,6 +445,14 @@ def produce_scattertext_explorer(corpus,
         Always jump to term contexts if a term is clicked
     enable_term_category_description: bool, default True
         List term/metadata statistics under category
+    get_custom_term_html: str, default None
+        Javascript function which displays term summary from term info
+    header_names: Dict[str, str], default None
+        Dictionary giving names of term lists shown to the right of the plot. Valid keys are
+        upper, lower and right.
+    header_sorting_algos: Dict[str, str], default None
+        Dictionary giving javascript sorting algorithms for panes. Valid keys are upper, lower
+        and right. Value is a JS function which takes the "data" object.
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -534,7 +545,7 @@ def produce_scattertext_explorer(corpus,
         neutral_categories=neutral_categories,
         extra_categories=extra_categories,
         background_scorer=characteristic_scorer,
-        include_term_category_counts=include_term_category_counts
+        include_term_category_counts=include_term_category_counts,
     )
 
     if return_data:
@@ -590,7 +601,10 @@ def produce_scattertext_explorer(corpus,
                                                  show_corpus_stats=show_corpus_stats,
                                                  sort_doc_labels_by_name=sort_doc_labels_by_name,
                                                  enable_term_category_description=enable_term_category_description,
-                                                 always_jump=always_jump)
+                                                 always_jump=always_jump,
+                                                 get_custom_term_html=get_custom_term_html,
+                                                 header_names=header_names,
+                                                 header_sorting_algos=header_sorting_algos)
 
     if return_scatterplot_structure:
         return scatterplot_structure

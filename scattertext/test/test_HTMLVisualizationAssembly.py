@@ -19,10 +19,10 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true']
+                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null']
         for i, val in param_dict.items():
             params[i] = val
-        return 'buildViz(' + ','.join(params) + ');'
+        return 'buildViz(' + ',\n'.join(params) + ');\n'
 
     def make_assembler(self):
         scatterplot_structure = ScatterplotStructure(self.make_adapter())
@@ -402,7 +402,6 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({44: '10'}))
 
-
     def test_show_corpus_stats(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data, show_corpus_stats=False)
@@ -442,8 +441,40 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({50: 'true'}))
 
-    def test_use_global_scale(self):
+    def test_enable_term_category_description(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data, enable_term_category_description=False)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({51: 'false'}))
+
+    def test_get_custom_term_html(self):
+        visualization_data = self.make_adapter()
+        html = '(function(x) {return "Term: " + x.term})'
+        params = (ScatterplotStructure(
+            visualization_data,
+            get_custom_term_html=html
+        ).call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({52: html}))
+
+    def test_header_names(self):
+        visualization_data = self.make_adapter()
+        header_names = {'upper': 'Upper Header Name', 'lower': 'Lower Header Name'}
+        params = (ScatterplotStructure(
+            visualization_data,
+            header_names=header_names
+        ).call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params(
+            {53: '''{"upper": "Upper Header Name", "lower": "Lower Header Name"}'''}
+        ))
+
+    def test_header_sorting_algos(self):
+        visualization_data = self.make_adapter()
+        header_sorting_algos = {'upper': '(function(a, b) {return b.s - a.s})',
+                                'lower': '(function(a, b) {return a.s - b.s})'}
+        params = (ScatterplotStructure(
+            visualization_data,
+            header_sorting_algos=header_sorting_algos
+        ).call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params(
+            {54: '''{"lower": (function(a, b) {return a.s - b.s}), "upper": (function(a, b) {return b.s - a.s})}'''}
+        ))

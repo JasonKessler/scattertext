@@ -3,7 +3,7 @@ from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
 
 from scattertext.termcompaction.AssociationCompactor import JSDCompactor
 
-from scattertext import SampleCorpora, whitespace_nlp_with_sentences, produce_frequency_explorer
+from scattertext import SampleCorpora, whitespace_nlp_with_sentences, produce_frequency_explorer, RankDifference
 from scattertext.CorpusFromPandas import CorpusFromPandas
 
 convention_df = SampleCorpora.ConventionData2012.get_data()
@@ -13,6 +13,20 @@ corpus = CorpusFromPandas(
     text_col='text',
     nlp=whitespace_nlp_with_sentences
 ).build().get_unigram_corpus().compact(JSDCompactor(1000))
+
+term_etc_df = corpus.get_term_freq_df('').assign(
+    DemocraticRank=lambda df: dense_rank(df['democrat']),
+    RepublicanRank=lambda df: dense_rank(df['republican']),
+    RankDiff=lambda df: RankDifference().get_scores(df['democrat'], df['republican']),
+)
+
+get_custom_term_html = '(function(x) {return "Term: " + x.term + "<span class=topic_preview>"' + ' '.join(
+    f''' + "<br>{name}: " + x.etc.{key}.toFixed(5)'''
+    for name, key in
+    [('Democratic Rank', 'DemocraticRank'),
+     ('Republican Rank', 'RepublicanRank'),
+     ('Rank Difference Score', 'RankDiff')]
+) + '+ "</span>" ;})'
 
 html = produce_frequency_explorer(
     corpus,
@@ -25,8 +39,13 @@ html = produce_frequency_explorer(
     metadata=convention_df['speaker'],
     term_scorer=DeltaJSDivergence(),
     transform=dense_rank,
-    term_metadata_df=corpus.get_term_freq_df(''),
-    enable_term_category_description=False
+    term_metadata_df=term_etc_df,
+    get_custom_term_html=get_custom_term_html,
+    enable_term_category_description=False,
+    header_names={'upper': 'Top Dem. RankDiff',
+                  'lower': 'Top GOP RankDiff'},
+    header_sorting_algos={'upper': '(function(a, b) {return b.etc.RankDiff - a.etc.RankDiff})',
+                          'lower': '(function(a, b) {return a.etc.RankDiff - b.etc.RankDiff})'}
 )
 
 open('./demo_JSDivergence.html', 'wb').write(html.encode('utf-8'))

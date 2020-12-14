@@ -62,7 +62,10 @@ class ScatterplotStructure(object):
             always_jump=True,
             show_diagonal=False,
             enable_term_category_description=True,
-            use_global_scale=False):
+            use_global_scale=False,
+            get_custom_term_html=None,
+            header_names=None,
+            header_sorting_algos=None):
         '''
 
         Parameters
@@ -185,6 +188,14 @@ class ScatterplotStructure(object):
             make sense.
         enable_term_category_description: bool, default True
             List term/metadata statistics under category
+        get_custom_term_html: str, default None
+            Javascript function which takes term info and outputs custom term HTML
+        header_names: Dict[str, str], default None
+            Dictionary giving names of term lists shown to the right of the plot. Valid keys are
+            upper, lower and right.
+        header_sorting_algos: Dict[str, str], default None
+            Dictionary giving javascript sorting algorithms for panes. Valid keys are upper, lower
+            and right. Value is a JS function which takes the "data" object.
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -239,7 +250,9 @@ class ScatterplotStructure(object):
         self._show_diagonal = show_diagonal
         self._use_global_scale = use_global_scale
         self._enable_term_category_description = enable_term_category_description
-
+        self._get_custom_term_html = get_custom_term_html
+        self._header_names = header_names
+        self._header_sorting_algos = header_sorting_algos
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -255,7 +268,7 @@ class ScatterplotStructure(object):
         def js_default_value_to_null(x):
             return 'null' if x is None else str(x)
 
-        def js_list_or_null(x):
+        def json_or_null(x):
             return 'null' if x is None else json.dumps(x)
 
         def js_bool(x):
@@ -269,6 +282,18 @@ class ScatterplotStructure(object):
 
         def js_default_full_data(full_data):
             return full_data if full_data is not None else "getDataAndInfo()"
+
+        def json_with_jsvalue_or_null(x):
+            if x is None:
+                return 'null'
+            to_ret = '{'
+            first = True
+            for key, val in sorted(x.items()):
+                if not first: to_ret += ', '
+                to_ret += '"%s": %s' % (key, val)
+                first = False
+            to_ret += '}'
+            return to_ret
 
         arguments = [
             js_default_value(self._width_in_pixels),
@@ -299,10 +324,10 @@ class ScatterplotStructure(object):
             js_bool(self._show_extra),
             js_bool(self._do_censor_points),
             js_bool(self._center_label_over_points),
-            js_list_or_null(self._x_axis_labels),
-            js_list_or_null(self._y_axis_labels),
+            json_or_null(self._x_axis_labels),
+            json_or_null(self._y_axis_labels),
             js_default_value(self._topic_model_preview_size),
-            js_list_or_null(self._vertical_lines),
+            json_or_null(self._vertical_lines),
             js_default_value_to_null(self._horizontal_line_y_position),
             js_default_value_to_null(self._vertical_line_x_position),
             js_bool(self._unified_context),
@@ -323,8 +348,11 @@ class ScatterplotStructure(object):
             js_bool(self._show_diagonal),
             js_bool(self._use_global_scale),
             js_bool(self._enable_term_category_description),
+            js_default_value_to_null(self._get_custom_term_html),
+            json_or_null(self._header_names),
+            json_with_jsvalue_or_null(self._header_sorting_algos)
         ]
-        return 'buildViz(' + ','.join(arguments) + ');'
+        return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 
     def get_js_to_call_build_scatterplot(self, object_name='plotInterface'):
         return object_name + ' = ' + self.call_build_visualization_in_javascript()

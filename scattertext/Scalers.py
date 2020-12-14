@@ -6,6 +6,26 @@ from scipy.stats import rankdata
 def scale(vec, terms=None, other_vec=None):
 	return (vec - vec.min()) / (vec.max() - vec.min())
 
+def scale_jointly(x, y):
+	ar = np.array([x, y])
+	scale_min = np.min(ar)
+	scale_max = np.min(ar)
+	return(
+        ((x / scale_max * (x > 0) + (x / scale_min) * (x <= 0) * -1) + 1) * 0.5,
+        ((y / scale_max * (y > 0) + (y / scale_min) * (y <= 0) * -1) + 1) * 0.5
+    )
+
+def rotate_degrees(x, y, degrees):
+	return rotate_radians(y, x, np.pi * (degrees) / 180)
+
+def rotate_radians(y, x, radians):
+	y = np.array(y)
+	x = np.array(x)
+	return (
+		x * np.cos(radians) - y * np.sin(radians),
+		x * np.sin(radians) + y * np.cos(radians)
+	)
+
 
 def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
 	max_abs = max(vec.max(), -vec.min())
