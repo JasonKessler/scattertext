@@ -22,9 +22,12 @@ function autocomplete(inputField, autocompleteValues, myPlotInterface) {
                 matchedCandidateDiv = document.createElement("div");
                 matchedCandidateDiv.innerHTML = "<strong>" + candidatePrefix + "</strong>";
                 matchedCandidateDiv.innerHTML += candidate.substr(userInput.length);
-                matchedCandidateDiv.innerHTML += "<input type='hidden' value='" + candidate + "'>";
+                matchedCandidateDiv.innerHTML += '<input type=hidden value="' + encodeURIComponent(candidate) + '">';
                 matchedCandidateDiv.addEventListener("click", function (e) {
-                    inputField.value = this.getElementsByTagName("input")[0].value;
+                    console.log("CLICK")
+                    console.log(this.getElementsByTagName("input")[0].value)
+                    inputField.value = decodeURIComponent(this.getElementsByTagName("input")[0].value);
+                    console.log(inputField.value)
                     closeAllLists();
                     myPlotInterface.handleSearchTerm(inputField.value);
                 });
@@ -84,7 +87,8 @@ function autocomplete(inputField, autocompleteValues, myPlotInterface) {
         );
 
         if (selectedCandidate) {
-            var candidateValue = selectedCandidate.children[1].value;
+            var candidateValue = decodeURIComponent(selectedCandidate.children[1].value);
+
             myPlotInterface.highlightTerm(candidateValue);
             inputField.value = candidateValue;
         }

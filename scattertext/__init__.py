@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
 
-version = [0, 0, 2, 74]
+version = [0, 0, 2, 75]
 __version__ = '.'.join([str(e) for e in version])
 import re
 import numpy as np

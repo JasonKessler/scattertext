@@ -651,7 +651,7 @@ buildViz = function (d3) {
             if ('metalists' in fullData && term in fullData.metalists) {
                 // from https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(str) {
-                    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\']/g, "\\$&");
+                    return str.replace(/[\\?\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\']/g, "\\$&");
                 }
 
                 console.log('term');
@@ -1212,7 +1212,8 @@ buildViz = function (d3) {
 
                 // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(string) {
-                    return string.replace(/[#.*+?^${}()|[\]\\]'\%/g, '\\$&'); // $& means the whole matched string
+                    return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\,\\\^\$\|\'#?]/g, "\\$&");
+                    //return string.replace(/[\?#.*+^${}()|[\]\\]'\%/g, '\\$&'); // $& means the whole matched string
                 }
 
                 /*
@@ -1964,9 +1965,12 @@ buildViz = function (d3) {
             };
 
             if (verticalLines) {
+                if(typeof(verticalLines) === "number") {
+                    verticalLines = [verticalLines]; // r likes to make single element vectors doubles; this is a hackish workaround
+                }
                 for (i in verticalLines) {
                     svg.append("g")
-                        .attr("transform", "translate(" + x(verticalLines) + ", 1)")
+                        .attr("transform", "translate(" + x(verticalLines[i]) + ", 1)")
                         .append("line")
                         .attr("y2", height)
                         .style("stroke", "#dddddd")
@@ -2092,17 +2096,17 @@ buildViz = function (d3) {
                 }
             }
 
-              if (showDiagonal) {
-                var diagonal = svg.append("g")
-                    .append("line")
-                    .attr("x1", 0)
-                    .attr("y1", height)
-                    .attr("x2", width)
-                    .attr("y2", 0)
-                    .style("stroke-dasharray", "5,5")
-                    .style("stroke", "#cccccc")
-                    .style("stroke-width", "1px")
-                    .moveToBack();
+            if (showDiagonal) {
+                  var diagonal = svg.append("g")
+                      .append("line")
+                      .attr("x1", 0)
+                      .attr("y1", height)
+                      .attr("x2", width)
+                      .attr("y2", 0)
+                      .style("stroke-dasharray", "5,5")
+                      .style("stroke", "#cccccc")
+                      .style("stroke-width", "1px")
+                      .moveToBack();
             }
 
             function showWordList(word, termDataList) {
