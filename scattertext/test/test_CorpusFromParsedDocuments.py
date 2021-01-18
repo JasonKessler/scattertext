@@ -96,10 +96,10 @@ class TestCorpusFromParsedDocuments(TestCase):
 		return corpus
 
 	def test_get_y_and_populate_category_idx_store(self):
-		self.corpus_fact.build()
-		self.assertEqual([0, 0, 0, 0, 1, 1, 1, 1, 1, 2], list(self.corpus_fact._y))
+		corpus = self.corpus_fact.build()
+		self.assertEqual([0, 0, 0, 0, 1, 1, 1, 1, 1, 2], list(corpus._y))
 		self.assertEqual([(0, 'hamlet'), (1, 'jay-z/r. kelly'), (2, '???')],
-		                 list(sorted(list(self.corpus_fact._category_idx_store.items()))))
+		                 list(sorted(list(corpus._category_idx_store.items()))))
 
 	def test_get_term_idx_and_x(self):
 		docs = [whitespace_nlp('aa aa bb.'),
@@ -118,7 +118,7 @@ class TestCorpusFromParsedDocuments(TestCase):
 		                 ['a', 'aa', 'aa a', 'aa aa', 'aa bb', 'bb', 'bb aa'])
 
 		def assert_word_in_doc_cnt(doc, word, count):
-			self.assertEqual(corpus_fact._X[doc, corpus_fact._term_idx_store.getidx(word)], count)
+			self.assertEqual(corpus._X[doc, corpus._term_idx_store.getidx(word)], count)
 
 		assert_word_in_doc_cnt(0, 'aa', 2)
 		assert_word_in_doc_cnt(0, 'bb', 1)
@@ -148,6 +148,6 @@ class TestCorpusFromParsedDocuments(TestCase):
 
 		# !!! to do verify term doc matrix
 		play_term_idx = corpus_fact._term_idx_store.getidx('play')
-		play_X = corpus_fact._X.todok()[:, play_term_idx]
+		play_X = corpus._X.todok()[:, play_term_idx]
 
 		self.assertEqual(play_X.sum(), 37 + 5)

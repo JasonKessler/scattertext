@@ -65,7 +65,15 @@ class ScatterplotStructure(object):
             use_global_scale=False,
             get_custom_term_html=None,
             header_names=None,
-            header_sorting_algos=None):
+            header_sorting_algos=None,
+            ignore_categories=False,
+            background_labels=None,
+            label_priority_column=None,
+            text_color_column=None,
+            suppress_text_column=None,
+            censor_point_column=None,
+            background_color=None
+    ):
         '''
 
         Parameters
@@ -196,6 +204,20 @@ class ScatterplotStructure(object):
         header_sorting_algos: Dict[str, str], default None
             Dictionary giving javascript sorting algorithms for panes. Valid keys are upper, lower
             and right. Value is a JS function which takes the "data" object.
+        ignore_categories: bool, default False
+            Signals plot should ignore category names.
+        background_labels: List[Dict]: default None
+            List of [{"Text": "Label", "X": xpos, "Y": ypos}, ...] to be background labels on plot
+        label_priority_column : str, default None
+            Column in term_metadata_df; smaler values in the column indicate a term should be labeled first
+        text_color_column: str, default None
+            Column in term_metadata_df which supplies term colors
+        suppress_text_column: str, default None
+            Column in term_metadata_df which is of boolean value. Indicates if a term should be labeled.
+        censor_point_column : str, default None
+            Should we prevent labels from being drawn over a point?
+        background_color: str, default None
+            Color to set document.body's background
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -253,6 +275,13 @@ class ScatterplotStructure(object):
         self._get_custom_term_html = get_custom_term_html
         self._header_names = header_names
         self._header_sorting_algos = header_sorting_algos
+        self._ignore_categories = ignore_categories
+        self._background_labels = background_labels
+        self._label_priority_column = label_priority_column
+        self._text_color_column = text_color_column
+        self._suppress_label_column = suppress_text_column
+        self._censor_point_column = censor_point_column
+        self._background_color = background_color
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -350,7 +379,14 @@ class ScatterplotStructure(object):
             js_bool(self._enable_term_category_description),
             js_default_value_to_null(self._get_custom_term_html),
             json_or_null(self._header_names),
-            json_with_jsvalue_or_null(self._header_sorting_algos)
+            json_with_jsvalue_or_null(self._header_sorting_algos),
+            js_bool(self._ignore_categories),
+            json_or_null(self._background_labels),
+            js_default_string(self._label_priority_column),
+            js_default_string(self._text_color_column),
+            js_default_string(self._suppress_label_column),
+            js_default_string(self._background_color),
+            js_default_string(self._censor_point_column),
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 

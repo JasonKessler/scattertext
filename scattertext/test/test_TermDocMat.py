@@ -58,6 +58,8 @@ class TestTermDocMat(TestCase):
                          [2, 2, 1])
 
     def test_single_category_term_doc_matrix_should_error(self):
+        # I'm going to let corpora be multi-category and see how it goes
+        '''
         with self.assertRaisesRegex(
                 expected_exception=CannotCreateATermDocMatrixWithASignleCategoryException,
                 expected_regex='Documents must be labeled with more than one category. '
@@ -67,6 +69,12 @@ class TestTermDocMat(TestCase):
                  for category, text
                  in get_test_categories_and_documents()]
             )
+        '''
+        single_category_tdm = build_from_category_whitespace_delimited_text(
+            [['a', text]
+             for category, text
+             in get_test_categories_and_documents()]
+        )
 
     def test_total_unigram_count(self):
         self.assertEqual(self.tdm.get_total_unigram_count(), 36)

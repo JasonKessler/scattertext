@@ -1,22 +1,36 @@
-<!--- Thanks for submitting an issue!
+## Thank you for submitting a bug report!
+<!--
+Ensure you try the latest version of Scattertext before submitting an issue.
+Provide a description of the issue you are experiencing and what you'd expect to see.
 
-Please include a summary of the issue here.
-
-If you're seeing a Python error, please include a
-code snippet that shows the way you called Scattertext and the data that was passed into
-Scattetext, along with the full stack trace.
-
-If you're seeing an HTML error, please upload a screenshot, and any Javascript errors you're
- receiving.  If possible then please upload the full HTML file if possible.
-
-The more infor
+Note that bug reports which to not follow this template are liable to be closed.
 -->
 
+## Steps to Reproduce
 
-## Your Environment
-<!-- Include details of your environment -->
-* Operating System:
-* Python Version Used:
-* Scattertext Version Used:
-* Environment Information:
-* Browser used (if an HTML error):
+<!--
+Include a program which can be run using a publicly available dataset. Ideally, the data should be loaded
+from a web-accessible CSV or JSON file, but a link to a structured CSV file is mandatory.
+
+A user should be able to copy and paste this code out of the bug report and run it, reproducing the unwanted
+behavior.
+-->
+
+## Expected behavior
+
+<!-- A clear and concise description of what you expected to happen.
+If it involves something about the UI, please upload an illustrated what went wrong and what you expect to happend.
+-->
+
+## Environment
+
+ - Scattertext version (e.g., 0.0.2.75):
+ - OS (e.g., Linux):
+ - How you installed PyTorch (`conda`, `pip`, source):
+ - Build command you used (if compiling from source):
+ - Python version:
+ - Any other relevant information:
+
+## Additional context
+
+<!-- Add any other context about the problem here. -->

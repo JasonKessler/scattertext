@@ -1,9 +1,9 @@
 import pandas as pd
 
-from scattertext.Corpus import Corpus
+from scattertext.DataFrameCorpus import DataFrameCorpus
 
 
-class CorpusDF(Corpus):
+class CorpusDF(DataFrameCorpus):
     def __init__(self,
                  df,
                  X,
@@ -34,17 +34,17 @@ class CorpusDF(Corpus):
         unigram_frequency_path : str or None
             Path to term frequency file.
         '''
-        self._df = df
         self._text_col = text_col
-        Corpus.__init__(self,
-                        X,
-                        mX,
-                        y,
-                        term_idx_store,
-                        category_idx_store,
-                        metadata_idx_store,
-                        df[text_col],
-                        unigram_frequency_path)
+        DataFrameCorpus.__init__(self,
+                                 X,
+                                 mX,
+                                 y,
+                                 term_idx_store,
+                                 category_idx_store,
+                                 metadata_idx_store,
+                                 df[text_col],
+                                 df,
+                                 unigram_frequency_path)
 
     def get_texts(self):
         '''
@@ -54,22 +54,6 @@ class CorpusDF(Corpus):
         '''
         return self._df[self._text_col]
 
-    def get_df(self):
-        return self._df
-
-    def search(self, ngram):
-        '''
-        Parameters
-        ----------
-        ngram, str or unicode, string to search for
-
-        Returns
-        -------
-        pd.DataFrame, {self._parsed_col: <matching texts>, self._category_col: <corresponding categories>, ...}
-
-        '''
-        mask = self._document_index_mask(ngram)
-        return self._df[mask]
 
     def _make_new_term_doc_matrix(self,
                                   new_X=None,
@@ -78,12 +62,15 @@ class CorpusDF(Corpus):
                                   new_term_idx_store=None,
                                   new_category_idx_store=None,
                                   new_metadata_idx_store=None,
-                                  new_y_mask=None):
+                                  new_y_mask=None,
+                                  new_df=None):
+        X, mX, y = self._update_X_mX_y(new_X, new_mX, new_y, new_y_mask)
+
         return CorpusDF(
-            df=self._df[new_y_mask] if new_y_mask is not None else self._df,
-            X=new_X if new_X is not None else self._X,
-            mX=new_mX if new_mX is not None else self._mX,
-            y=new_y if new_y is not None else self._y,
+            df=self._apply_mask_to_df(new_y_mask, new_df),
+            X=X,
+            mX=mX,
+            y=y,
             term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
             category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
             metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,

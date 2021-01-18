@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.0.2.75
+# Scattertext 0.1.0.0
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -42,6 +42,7 @@ The HTML file written would look like the image below. Click on it for the actua
 - [Citation](#citation)
 - [Installation](#installation)
 - [Overview](#overview)
+- [Customizing the Visualization](#customizing-the-visualizations)
 - [Tutorial](#tutorial)
     - [Help! I don't know Python but I still want to use Scattertext](#help-i-dont-know-python-but-i-still-want-to-use-scattertext)
     - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#using-scattertext-as-a-text-analysis-library-finding-characteristic-terms-and-their-associations)
@@ -135,7 +136,7 @@ by Republicans.  Likewise, terms frequently used by Republicans and infrequently
 Terms are colored by their association.  Those that are more associated with Democrats are blue, and those 
 more associated with Republicans red.  
 
-Terms (only unigrams for now) that are most characteristic of the both sets of documents are displayed
+Terms that are most characteristic of the both sets of documents are displayed
  on the far-right of the visualization.
    
 The inspiration for this visualization came from Dataclysm (Rudder, 2014).
@@ -149,11 +150,175 @@ Poking around the code and tests should give you a good idea of how things work.
 
 The library covers some novel and effective term-importance formulas, including **Scaled F-Score**.
 
+## Customizing the Visualization
+
+New in Scattertext 0.1.0, one can use a dataframe for term/metadata positions and other term-specific data.  We
+can also use it to determine term-specific information which is shown after a term is clicked.
+
+Note that it is possible to disable the use of document categories in Scattertext, as we shall see in this example.
+
+This example covers plotting term dispersion against word frequency and identifying the terms which are most and least
+dispersed given their frequencies. Using the Rosengren's S dispersion measure (Gries 2021), terms tend to increase in their 
+dispersion scores as they get more frequent. We'll see how we can both plot this effect and factor out the effect
+of frequency.  
+
+
+This, along with a number of other dispersion metrics presented in Gries (2021), are available and documented
+ in the `Dispersion` class, which we'll use later in the section.  
+
+Let's start by creating a Convention corpus, but we'll use the `CorpusWithoutCategoriesFromParsedDocuments` factory
+to ensure that no categories are included in the corpus. If we try to find document categories, we'll see that 
+all documents have the category '_'. 
+
+```python
+import scattertext as st
+
+df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences))
+corpus = st.CorpusWithoutCategoriesFromParsedDocuments(
+    df, parsed_col='parse'
+).build().get_unigram_corpus().remove_infrequent_words(minimum_term_count=6)
+
+corpus.get_categories()
+# Returns ['_']
+```
+Next, we'll create a dataframe for all terms we'll plot.  We'll just start by creating a dataframe where we capture
+the frequency of each term and various dispersion metrics. These will be shown after a term is activated in the plot.
+```python
+dispersion = st.Dispersion(corpus)
+
+dispersion_df = dispersion.get_df()
+dispersion_df.head(3)
+```
+
+Which returns
+```
+       Frequency  Range         SD        VC  Juilland's D  Rosengren's S        DP   DP norm  KL-divergence
+thank        363    134   3.108113  1.618274      0.707416       0.694898  0.391548  0.391560       0.748808
+you         1630    177  12.383708  1.435902      0.888596       0.898805  0.233627  0.233635       0.263337
+so           549    155   3.523380  1.212967      0.774299       0.822244  0.283151  0.283160       0.411750
+```
+
+These are discussed in detail in [Gries 2021](http://www.stgries.info/research/ToApp_STG_Dispersion_PHCL.pdf).
+
+We'll use Rosengren's S to find the dispersion of each term. It's which a metric designed for corpus parts 
+(convention speeches in our case) of varying length. Where n is the number of documents in the corpus, s_i is the 
+percentage of tokens in the corpus found in  document i, v_i is term count in document i, and f is the total number 
+of tokens in the corpus of type term type. 
+
+![Rosengren's S](https://render.githubusercontent.com/render/math?math=\frac{\Sum_{i=1}^{n}\sqrt{s_i%20\cdot%20\v_i})^2}{f})
+
+In order to start plotting, we'll need to add coordinates for each term to the data frame.
+
+To use the `dataframe_scattertext` function, you need, at a minimum a dataframe with 'X' and 'Y' columns.
+
+The `Xpos` and `Ypos` columns indicate the positions of the original `X` and `Y` values on the scatterplot, and
+need to be between 0 and 1. Functions in `st.Scalers` perform this scaling.  Absent `Xpos` or `Ypos`,
+ `st.Scalers.scale` would be used.
+
+Here is a sample of values:
+
+* `st.Scalers.scale(vec)` Rescales the vector to where the minimum value is 0 and the maximum is 1.
+* `st.Scalers.log_scale(vec)` Rescales the lgo of the vector
+* `st.Scalers.dense_ranke(vec)` Rescales the dense rank of the vector
+* `st.Scalers.scale_center_zero_abs(vec)` Rescales a vector with both positive and negative values such that the 0 value in the original vector is plotted at 0.5, negative values are projected from [-argmax(abs(vec)), 0] to [0, 0.5] and positive values projected from [0, argmax(abs(vec))] to [0.5, 1]. 
+
+```python
+dispersion_df = dispersion_df.assign(
+    X=lambda df: df.Frequency,
+    Xpos=lambda df: st.Scalers.log_scale(df.X),
+    Y=lambda df: df["Rosengren's S"],
+    Ypos=lambda df: st.Scalers.scale(df.Y),
+)
+```   
+
+Note that the `Ypos` column here is not necessary since `Y` would automatically be scaled. 
+
+Finally, since we are not distinguishing between categories, we can set `ignore_categories=True`. 
+ 
+We can now plot this graph using the `dataframe_scattertext` function:
+
+```python
+html = st.dataframe_scattertext(
+    corpus,
+    plot_df=dispersion_df,
+    metadata=corpus.get_df()['speaker'] + ' (' + corpus.get_df()['party'].str.upper() + ')',
+    ignore_categories=True,
+    x_label='Log Frequency',
+    y_label="Rosengren's S",
+    y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+)
+```
+
+Which yields (click for an interactive version):
+[![dispersion-basic.html](https://jasonkessler.github.io/dispersion-basic.png)](https://jasonkessler.github.io/dispersion-basic.html)
+
+Note that we can see various dispersion statistics under a term's name, in addition to the standard usage statistics. To 
+customize the statistics which are displayed, set the `term_description_column=[...]` parameter with a list of column
+names to be displayed.
+
+One issue in this dispersion chart, which tends to be common to dispersion metrics in general, is that dispersion
+and frequency tend to have a high correlation, but with a complex, non-linear curve. Depending on the metric,
+this correlation curve could be power, linear, sigmoidal, or typically, something else.
+
+In order to factor out this correlation, we can predict the dispersion from frequency using a non-parametric regressor,
+and see which terms have the highest and lowest residuals with respect to their expected dispersions based on their
+frequencies. 
+
+In this case, we'll use a KNN regressor with 10 neighbors to predict Rosengren'S from term frequencies 
+(`dispersion_df.X` and `.Y` respectively), and compute the residual. 
+
+We'll the residual to color points, with a neutral color for residuals around 0 and other colors for positive and 
+negative values. We'll add a column in the data frame for point colors, and call it ColorScore. It is populated
+with values between 0 and 1, with 0.5 as a netural color on the `d3 interpolateWarm` color scale. We use 
+`st.Scalers.scale_center_zero_abs`, discussed above, to make this transformation.
+
+```python
+from sklearn.neighbors import KNeighborsRegressor
+
+dispersion_df = dispersion_df.assign(
+    Expected=lambda df: KNeighborsRegressor(n_neighbors=10).fit(
+        df.X.values.reshape(-1, 1), df.Y
+    ).predict(df.X.values.reshape(-1, 1)),
+    Residual=lambda df: df.Y - df.Expected,
+    ColorScore=lambda df: st.Scalers.scale_center_zero_abs(df.Residual)
+)    
+```
+
+Now we are ready to plot our colored dispersion chart.  We assign the ColorScore column name to the `color_score_column`
+paramter in `dataframe_scattertext`. 
+
+Additionally, We'd like to populate the two term lists on the
+left with terms that have high and low residual values, indicating terms which have the most dispersion relative to 
+their frequency-expected level and the lowest. We can do this by the `left_list_column` parameter. We can specify
+ the upper and lower term list names using the `header_names` parameter. Finally, we can  spiff-up the plot by
+ adding an appealing background color.  
+
+```python
+html = st.dataframe_scattertext(
+    corpus,
+    plot_df=dispersion_df,
+    metadata=corpus.get_df()['speaker'] + ' (' + corpus.get_df()['party'].str.upper() + ')',
+    ignore_categories=True,
+    x_label='Log Frequency',
+    y_label="Rosengren's S",
+    y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+    color_score_column='ColorScore',
+    header_names={'upper': 'Lower than Expected', 'lower': 'More than Expected'},
+    left_list_column='Residual',
+    background_color='#e5e5e3'
+)
+```
+
+Which yields (click for an interactive version):
+[![dispersion-residual.html](https://jasonkessler.github.io/dispersion-residual.png)](https://jasonkessler.github.io/dispersion-residual.html)
+
+
 ## Tutorial
 
 ### Help! I don't know Python but I still want to use Scattertext.
 While you should learn Python fully use Scattertext, I've put some of the basic 
-functionality in a commandline tool.  The tool is installed when you follow the procedure layed out
+functionality in a commandline tool.  The tool is installed when you follow the procedure laid out
 above.
 
 Run `$ scattertext --help` from the commandline to see the full usage information.  Here's a quick example of

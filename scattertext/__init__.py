@@ -1,9 +1,10 @@
 from __future__ import print_function
 
-from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
+from scattertext.dispersion.Dispersion import Dispersion
 
-version = [0, 0, 2, 75]
+version = [0, 1, 0, 0]
 __version__ = '.'.join([str(e) for e in version])
+
 import re
 import numpy as np
 import pandas as pd
@@ -119,8 +120,14 @@ from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 from scattertext.features.SpacyEntities import SpacyEntities
 from scattertext.diachronic.TimeStructure import TimeStructure
 from scattertext.features.PyatePhrases import PyatePhrases
+from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
+from scattertext.CorpusFromTermFrequencies import CorpusFromTermFrequencies
+from scattertext.helpers.MakeUnique import make_unique
+from scattertext.viz.TermInfo import get_tooltip_js_function, get_custom_term_info_js_function
+from scattertext.CorpusWithoutCategoriesFromParsedDocuments import CorpusWithoutCategoriesFromParsedDocuments
 
-PhraseFeatsFromTopicModel = FeatsFromTopicModel # Ensure backwards compatibility
+PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
+
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -219,6 +226,22 @@ def produce_scattertext_explorer(corpus,
                                  get_custom_term_html=None,
                                  header_names=None,
                                  header_sorting_algos=None,
+                                 ignore_categories=False,
+                                 d3_color_scale=None,
+                                 background_labels=None,
+                                 tooltip_columns=None,
+                                 tooltip_column_names=None,
+                                 term_description_columns=None,
+                                 term_description_column_names=None,
+                                 term_word_in_term_description='Term',
+                                 color_column=None,
+                                 color_score_column=None,
+                                 label_priority_column=None,
+                                 text_color_column=None,
+                                 suppress_text_column=None,
+                                 background_color=None,
+                                 left_list_column=None,
+                                 censor_point_column=None,
                                  return_data=False,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
@@ -453,6 +476,28 @@ def produce_scattertext_explorer(corpus,
     header_sorting_algos: Dict[str, str], default None
         Dictionary giving javascript sorting algorithms for panes. Valid keys are upper, lower
         and right. Value is a JS function which takes the "data" object.
+    ignore_categories: bool, default False
+        Signals the plot shouldn't display category names. Used in single category plots.
+    suppress_text_column: str, default None
+        Column in term_metadata_df which indicates term should be hidden
+    left_list_column: str, default None
+        Column in term_metadata_df which should be used for sorting words into upper and lower
+        parts of left word-list sections. Highest values in upper, lowest in lower.
+    tooltip_columns: List[str]
+    tooltip_column_names: Dict[str, str]
+    term_description_columns: List[str]
+    term_description_column_names: Dict[str]
+    term_word_in_term_description: str, default None
+    color_column: str, default None:
+        column in term_metadata_df which indicates color
+    color_score_column: str, default None
+        column in term_metadata df; contains value between 0 and 1 which will be used to assign a color
+    label_priority_column : str, default None
+        Column in term_metadata_df; smaller values in the column indicate a term should be labeled first
+    censor_point_column : str, default None
+        Should we allow labels to be drawn over point?
+    background_color : str, default None
+        Changes document.body's background color to background_color
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -464,9 +509,8 @@ def produce_scattertext_explorer(corpus,
     html of visualization
 
     '''
-    color = None
     if singleScoreMode or word_vec_use_p_vals:
-        color = 'd3.interpolatePurples'
+        d3_color_scale = 'd3.interpolatePurples'
     if singleScoreMode or not sort_by_dist:
         sort_by_dist = False
     else:
@@ -551,11 +595,48 @@ def produce_scattertext_explorer(corpus,
     if return_data:
         return scatter_chart_data
 
+    if tooltip_columns is not None:
+        assert get_tooltip_content is None
+        get_tooltip_content = get_tooltip_js_function(
+            term_metadata_df,
+            tooltip_column_names,
+            tooltip_columns
+        )
+
+    if term_description_columns is not None:
+        assert get_custom_term_html is None
+        get_custom_term_html = get_custom_term_info_js_function(
+            term_metadata_df,
+            term_description_column_names,
+            term_description_columns,
+            term_word_in_term_description
+        )
+
+    if color_column:
+        assert color_func is None
+        color_func = '(function(d) {return d.etc["%s"]})' % color_column
+
+    if color_score_column:
+        assert color_func is None
+        color_func = '(function(d) {return d3.interpolateWarm(d.etc["%s"])})' % color_score_column
+
+    if header_sorting_algos is not None:
+        assert 'upper' not in header_sorting_algos
+        assert 'lower' not in header_sorting_algos
+    if left_list_column is not None:
+        assert term_metadata_df is not None
+        assert left_list_column in term_metadata_df
+        header_sorting_algos = {
+            "upper": '((a,b) => b.etc["'+left_list_column+'"] - a.etc["'+left_list_column+'"])',
+            "lower": '((a,b) => a.etc["'+left_list_column+'"] - b.etc["'+left_list_column+'"])'
+        }
+
     scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
                                                  width_in_pixels=width_in_pixels,
                                                  height_in_pixels=height_in_pixels,
                                                  max_snippets=max_snippets,
-                                                 color=color, grey_zero_scores=gray_zero_scores,
+                                                 color=d3_color_scale,
+                                                 grey_zero_scores=gray_zero_scores,
                                                  sort_by_dist=sort_by_dist,
                                                  reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
                                                  use_full_doc=use_full_doc,
@@ -604,7 +685,14 @@ def produce_scattertext_explorer(corpus,
                                                  always_jump=always_jump,
                                                  get_custom_term_html=get_custom_term_html,
                                                  header_names=header_names,
-                                                 header_sorting_algos=header_sorting_algos)
+                                                 header_sorting_algos=header_sorting_algos,
+                                                 ignore_categories=ignore_categories,
+                                                 background_labels=background_labels,
+                                                 label_priority_column=label_priority_column,
+                                                 text_color_column=text_color_column,
+                                                 suppress_text_column=suppress_text_column,
+                                                 background_color=background_color,
+                                                 censor_point_column=censor_point_column)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -1701,8 +1789,8 @@ def produce_scattertext_digraph(
         metadata_func=None,
         enable_pan_and_zoom=True,
         engine='dot',
-        graph_params = None,
-        node_params = None,
+        graph_params=None,
+        node_params=None,
         **kwargs
 ):
     '''
@@ -1793,3 +1881,49 @@ def produce_scattertext_digraph(
     return html
 
 
+def dataframe_scattertext(
+        corpus,
+        plot_df,
+        **kwargs
+):
+    assert 'X' in plot_df
+    assert 'Y' in plot_df
+    if 'Xpos' not in plot_df:
+        plot_df['Xpos'] = Scalers.scale(plot_df['X'])
+    if 'Ypos' not in plot_df:
+        plot_df['Ypos'] = Scalers.scale(plot_df['Y'])
+
+    assert len(plot_df) > 0
+
+    if 'term_description_columns' not in kwargs:
+        kwargs['term_description_columns'] = [x for x in plot_df.columns if x not in
+                                              ['X', 'Y', 'Xpos', 'Ypos']]
+
+    if 'tooltip_columns' not in kwargs:
+        kwargs['tooltip_columns'] = ['Xpos', 'Ypos']
+        kwargs['tooltip_column_names'] = {'Xpos': kwargs.get('x_label', 'X'), 'Ypos': kwargs.get('y_label', 'Y')}
+
+    #kwargs.setdefault('color_func',
+    #                  "(function(d) {return d.etc['Color']})" if 'Color' in plot_df else None)
+    kwargs.setdefault('metadata', None),
+    kwargs.setdefault('scores', plot_df['Score'] if 'Score' in plot_df else 0),
+    kwargs.setdefault('minimum_term_frequency', 0)
+    kwargs.setdefault('pmi_threshold_coefficient', 0)
+    kwargs.setdefault('category', corpus.get_categories()[0])
+    kwargs.setdefault('original_x', plot_df['X'])
+    kwargs.setdefault('original_y', plot_df['Y'])
+    kwargs.setdefault('x_coords', plot_df['Xpos'])
+    kwargs.setdefault('y_coords', plot_df['Ypos'])
+    kwargs.setdefault('use_global_scale', True)
+    kwargs.setdefault('ignore_categories', True)
+    kwargs.setdefault('show_axes_and_cross_hairs', 1)
+    kwargs.setdefault('unified_context', 1)
+    kwargs.setdefault('show_top_terms', False)
+    kwargs.setdefault('x_label', 'X')
+    kwargs.setdefault('y_label', 'Y')
+
+    return produce_scattertext_explorer(
+        corpus,
+        term_metadata_df=plot_df,
+        **kwargs
+    )

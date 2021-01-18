@@ -53,8 +53,15 @@ buildViz = function (d3) {
                      enableTermCategoryDescription = true,
                      getCustomTermHtml = null,
                      headerNames = null,
-                     headerSortingAlgos = null
-                     ) {
+                     headerSortingAlgos = null,
+                     ignoreCategories = false,
+                     backgroundLabels = null,
+                     labelPriorityColumn = null,
+                     textColorColumn = undefined,
+                     suppressTextColumn = undefined,
+                     backgroundColor = undefined,
+                     censorPointColumn = undefined,
+    ) {
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -246,10 +253,18 @@ buildViz = function (d3) {
             color = d3.interpolateRdYlBu;
             //color = d3.interpolateWarm;
         }
+        if((headerNames !== undefined && headerNames !== null)
+            && (headerSortingAlgos !== undefined && headerSortingAlgos !== null)) {
+            showTopTerms = true;
+        }
 
         var pixelsToAddToWidth = 200;
         if (!showTopTerms && !showCharacteristic) {
             pixelsToAddToWidth = 0;
+        }
+
+        if (backgroundColor !== undefined) {
+            document.body.style.backgroundColor = backgroundColor;
         }
 
         // Adds the svg canvas
@@ -789,7 +804,41 @@ buildViz = function (d3) {
                 })
             }
 
-            if (unifiedContexts) {
+
+            if (ignoreCategories) {
+                divId = '#' + divName + '-' + 'cat';
+
+                var numMatches = Object.create(null);
+                var temp = d3.select(divId).selectAll("div").remove();
+                var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
+                var allNotMatches = [];
+                if (notmatches !== undefined)
+                    allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
+                d3.select('#' + divName + '-' + 'categoryinfo').selectAll("div").remove();
+                var numDocs = fullData.docs.texts.length.toLocaleString('en');
+                var numMatches = allContexts.length;
+                d3.select(divId)
+                    .append("div")
+                    .attr('class', 'topic_preview')
+                    .attr('text-align', "center")
+                    .html(
+                        "Matched " + numMatches + " out of " + numDocs + ' documents: '
+                        + (100 * numMatches / numDocs).toFixed(2) + '%'
+                    );
+
+                if (allContexts.length > 0) {
+                    var headerClassName = 'text_header';
+                    allContexts.forEach(function (singleDoc) {
+                        addSnippets(singleDoc, divId);
+                    });
+                    if (includeAll) {
+                        allNotMatches.forEach(function (singleDoc) {
+                            addSnippets(singleDoc, divId, false);
+                        });
+                    }
+                }
+
+            } else if (unifiedContexts) {
                 divId = '#' + divName + '-' + 'cat';
                 var docLabelCounts = fullData.docs.labels.reduce(
                     function (map, label) {
@@ -804,7 +853,9 @@ buildViz = function (d3) {
                 allContexts.forEach(function (singleDoc) {
                     numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel] || 0) + 1;
                 });
-                var allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
+                var allNotMatches = [];
+                if (notmatches !== undefined)
+                    allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
 
                 /*contexts.forEach(function(context) {
                      context.forEach(function (singleDoc) {
@@ -812,7 +863,9 @@ buildViz = function (d3) {
                          addSnippets(singleDoc, divId);
                      });
                  });*/
-                console.log("ORDERING !!!!!"); console.log(fullData.info.category_name); console.log(sortDocLabelsByName);
+                console.log("ORDERING !!!!!");
+                console.log(fullData.info.category_name);
+                console.log(sortDocLabelsByName);
                 var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => (
                     {
                         "label": fullData.docs.categories[key],
@@ -822,7 +875,7 @@ buildViz = function (d3) {
                         'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
                     }))
                     .sort(function (a, b) {
-                        if(highlightSelectedCategory) {
+                        if (highlightSelectedCategory) {
                             if (a['label'] === fullData.info.category_name) {
                                 return -1;
                             }
@@ -854,18 +907,23 @@ buildViz = function (d3) {
                 function getCategoryInlineHeadingHTML(counts) {
                     return '<a name="' + divName + '-category'
                         + counts.labelNum + '"></a>'
-                        + counts.label + ": <span class=topic_preview>"
+                        + (ignoreCategories ? "" : counts.label + ": ") + "<span class=topic_preview>"
                         + getCategoryStatsHTML(counts)
                         + "</span>";
                 }
 
 
                 docLabelCountsSorted.forEach(function (counts) {
-                    var htmlToAdd = "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
+
+                    var htmlToAdd = "";
+                    if (!ignoreCategories) {
+                        htmlToAdd += "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
+                        ;
+                    }
 
                     if (counts.matches > 0) {
                         var headerClassName = 'text_header';
-                        if((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
+                        if ((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
                             d3.select(divId)
                                 .append('div')
                                 .attr('class', 'separator')
@@ -888,7 +946,7 @@ buildViz = function (d3) {
                                     addSnippets(singleDoc, divId, false);
                                 });
                         }
-                        if((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
+                        if ((counts.label === fullData.info.category_name) && highlightSelectedCategory) {
                             d3.select(divId).append('div').attr('class', 'separator').html("<b>End selected category</b>");
                             d3.select(divId).append('div').html("<br />");
                         }
@@ -976,7 +1034,7 @@ buildViz = function (d3) {
             }
             console.log("HERE")
             console.log(getCustomTermHtml)
-            if(getCustomTermHtml !== null) {
+            if (getCustomTermHtml !== null) {
                 console.log("Making custom html")
                 termHtml = getCustomTermHtml(info);
             }
@@ -1067,7 +1125,7 @@ buildViz = function (d3) {
                 return desc;
             }
 
-            if (!unifiedContexts) {
+            if (!unifiedContexts && !ignoreCategories) {
                 console.log("NOT UNIFIED CONTEXTS")
                 d3.select('#' + divName + '-' + 'cathead')
                     .style('fill', color(1))
@@ -1150,18 +1208,17 @@ buildViz = function (d3) {
 
                     }
                 }
-            } else {
+            } else if (unifiedContexts && !ignoreCategories) {
                 // extra unified context code goes here
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted)
 
                 docLabelCountsSorted.forEach(function (counts) {
-                    var htmlToAdd = "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
+                    var htmlToAdd = (ignoreCategories ? "" : "<b>" + counts.label + "</b>: ") + getCategoryStatsHTML(counts);
                     if (showCategoryHeadings) {
-                        console.log("XXXX")
                         d3.select('#' + divName + '-' + 'contexts')
                             .append('div')
-                            .html("XX" + htmlToAdd)
+                            .html(htmlToAdd)
                             .on("click", function () {
                                 window.location.hash = '#' + divName + '-' + 'category' + counts.labelNum
                             });
@@ -1455,6 +1512,30 @@ buildViz = function (d3) {
             }
         }
 
+        function getCircleForSearchTerm(mysvg, searchTermInfo) {
+            var circle = mysvg;
+            if (circle.tagName !== "circle") { // need to clean this thing up
+                circle = mysvg._groups[0][searchTermInfo.ci];
+                if (circle === undefined || circle.tagName != 'circle') {
+                    if (mysvg._groups[0].children !== undefined) {
+                        circle = mysvg._groups[0].children[searchTermInfo.ci];
+                    }
+                }
+                if (circle === undefined || circle.tagName != 'circle') {
+                    if (mysvg._groups[0][0].children !== undefined) {
+                        circle = Array.prototype.filter.call(
+                            mysvg._groups[0][0].children,
+                            x => (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
+                        )[0];
+                    }
+                }
+                if ((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
+                    circle = mysvg._groups[0][0].children[searchTermInfo.ci];
+                }
+            }
+            return circle;
+        }
+
         function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured = true) {
             //var searchTermInfo = termDict[searchTerm];
             console.log("showing tool tip")
@@ -1466,36 +1547,7 @@ buildViz = function (d3) {
                     .text(searchTerm + " didn't make it into the visualization.");
             } else {
                 d3.select("#" + divName + "-alertMessage").text("");
-                var circle = mysvg;
-                console.log("mysvg");
-                console.log(mysvg)
-                if (circle.tagName !== "circle") { // need to clean this thing up
-                    circle = mysvg._groups[0][searchTermInfo.ci];
-                    if (circle === undefined || circle.tagName != 'circle') {
-                        console.log("circle0")
-                        if (mysvg._groups[0].children !== undefined) {
-                            circle = mysvg._groups[0].children[searchTermInfo.ci];
-                        }
-                    }
-                    if (circle === undefined || circle.tagName != 'circle') {
-                        console.log("circle1");
-                        if (mysvg._groups[0][0].children !== undefined) {
-                            circle = Array.prototype.filter.call(
-                                mysvg._groups[0][0].children,
-                                x => (x.tagName == "circle" && x.__data__['term'] == searchTermInfo.term)
-                            )[0];
-                        }
-                        console.log(circle)
-                    }
-                    if ((circle === undefined || circle.tagName != 'circle') && mysvg._groups[0][0].children !== undefined) {
-                        console.log("circle2");
-                        console.log(mysvg._groups[0][0])
-                        console.log(mysvg._groups[0][0].children)
-                        console.log(searchTermInfo.ci);
-                        circle = mysvg._groups[0][0].children[searchTermInfo.ci];
-                        console.log(circle)
-                    }
-                }
+                var circle = getCircleForSearchTerm(mysvg, searchTermInfo);
                 if (circle) {
                     var mySVGMatrix = circle.getScreenCTM().translate(circle.cx.baseVal.value, circle.cy.baseVal.value);
                     var pageX = mySVGMatrix.e;
@@ -1573,14 +1625,22 @@ buildViz = function (d3) {
             }
 
             // Scale the range of the data.  Add some space on either end.
-            if(useGlobalScale) {
+            if (useGlobalScale) {
                 var axisMax = Math.max(
-                    d3.max(data, function (d) {return d.x;}),
-                    d3.max(data, function (d) {return d.y;}),
+                    d3.max(data, function (d) {
+                        return d.x;
+                    }),
+                    d3.max(data, function (d) {
+                        return d.y;
+                    }),
                 )
                 var axisMin = Math.min(
-                    d3.min(data, function (d) {return d.x;}),
-                    d3.min(data, function (d) {return d.y;}),
+                    d3.min(data, function (d) {
+                        return d.x;
+                    }),
+                    d3.min(data, function (d) {
+                        return d.y;
+                    }),
                 )
                 axisMin = axisMin - (axisMax - axisMin) * padding;
                 axisMax = axisMax + (axisMax - axisMin) * padding;
@@ -1606,14 +1666,25 @@ buildViz = function (d3) {
 
             //var rangeTree = null; // keep boxes of all points and labels here
             var rectHolder = new RectangleHolder();
+            var axisRectHolder = new RectangleHolder();
             // Add the scatterplot
             data.forEach(function (d, i) {
                 d.ci = i
             });
             //console.log('XXXXX'); console.log(data)
+
+
+
+            function getFilter(data) {
+                return data.filter(d => d.display === undefined || d.display === true);
+            }
+
+
+
+
             var mysvg = svg
                 .selectAll("dot")
-                .data(data.filter(d => d.display === undefined || d.display === true))
+                .data(getFilter(data))
                 //.filter(function (d) {return d.display === undefined || d.display === true})
                 .enter()
                 .append("circle")
@@ -1644,7 +1715,7 @@ buildViz = function (d3) {
                             return interpolateLightGreys(d.s);
                         }
                     } else {
-                        if (d.term == "psychological") {
+                        if (d.term === "the") {
                             console.log("COLS " + d.s + " " + color(d.s) + " " + d.term)
                             console.log(d)
                             console.log(color)
@@ -1738,45 +1809,52 @@ buildViz = function (d3) {
                 pointStore.push([x2, y2]);
                 curLabel.remove();
             }
+
             var configs = [
                 {'anchor': 'end', 'group': 1, 'xoff': -5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'end', 'group': 1,'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 1, 'xoff': -5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
 
-                {'anchor': 'end', 'group': 2,'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'end', 'group': 2,'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'end', 'group': 2,'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'end', 'group': 2,'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2, 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2, 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2, 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'end', 'group': 2, 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
 
                 {'anchor': 'start', 'group': 1, 'xoff': 3, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'start', 'group': 1,'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 1, 'xoff': 3, 'yoff': -3, 'alignment-baseline': 'ideographic'},
 
-                {'anchor': 'start', 'group': 2,'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'start', 'group': 2,'xoff': 5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 2, 'xoff': 5, 'yoff': 10, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 2, 'xoff': 5, 'yoff': -3, 'alignment-baseline': 'ideographic'},
 
-                {'anchor': 'start', 'group': 3,'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'start', 'group': 3,'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'start', 'group': 3,'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
-                {'anchor': 'start', 'group': 3,'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3, 'xoff': 10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3, 'xoff': -10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3, 'xoff': 10, 'yoff': -15, 'alignment-baseline': 'ideographic'},
+                {'anchor': 'start', 'group': 3, 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
             ];
             if (centerLabelsOverPoints) {
                 configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
             }
+
             function labelPointsIfPossible(datum, myX, myY) {
+                if (suppressTextColumn !== undefined
+                    && datum.etc !== undefined
+                    && datum.etc[suppressTextColumn] === true) {
+                    return false;
+                }
+
                 var term = datum.term;
-                //console.log('xxx'); console.log(term); console.log(term.display !== undefined && term.display === false)
-                //if(term.display !== undefined && term.display === false) {
-                //    return false;
-                //}
                 if (datum.x > datum.y) {
-                    configs.sort((a,b) => a.anchor == 'end' && b.anchor=='end'
-                        ? a.group - b.group : (a.anchor == 'end') - (b.anchor=='end'));
+                    configs.sort((a, b) => a.anchor == 'end' && b.anchor == 'end'
+                        ? a.group - b.group : (a.anchor == 'end') - (b.anchor == 'end'));
                 } else {
-                    configs.sort((a,b) => a.anchor == 'start' && b.anchor=='start'
-                        ? a.group - b.group : (a.anchor == 'start') - (b.anchor=='start'));
+                    configs.sort((a, b) => a.anchor == 'start' && b.anchor == 'start'
+                        ? a.group - b.group : (a.anchor == 'start') - (b.anchor == 'start'));
                 }
                 var matchedElement = null;
 
-
+                var termColor = 'rgb(0,0,0)';
+                if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
+                    termColor = datum.etc[textColorColumn];
+                }
                 for (var configI in configs) {
                     var config = configs[configI];
                     var curLabel = svg.append("text")
@@ -1790,12 +1868,10 @@ buildViz = function (d3) {
                         .attr('font-size', '10px')
                         .attr("text-anchor", config['anchor'])
                         .attr("alignment-baseline", config['alignment'])
+                        .attr("fill", termColor)
                         .text(term);
                     var bbox = curLabel.node().getBBox();
-                    var borderToRemove = .25;
-                    if (doCensorPoints) {
-                        var borderToRemove = .5;
-                    }
+                    var borderToRemove = doCensorPoints ? 0.5 : .25;
 
                     var x1 = bbox.x + borderToRemove,
                         y1 = bbox.y + borderToRemove,
@@ -1904,30 +1980,40 @@ buildViz = function (d3) {
             }
 
             var sortedData = data.map(x => x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
+            console.log("CENSOR COL"); console.log(censorPointColumn);
             if (doCensorPoints) {
                 for (var i in data) {
                     var d = sortedData[i];
-                    censorPoints(
-                        d,
-                        function (d) {
-                            return d.x
-                        },
-                        function (d) {
-                            return d.y
-                        }
-                    );
+
+                    if(!(censorPointColumn !== undefined
+                        && d.etc !== undefined
+                        && d.etc[censorPointColumn] === false)) {
+                        console.log("CENSOR COL"); console.log(censorPointColumn);
+
+                        censorPoints(
+                            d,
+                            function (d) { return d.x },
+                            function (d) { return d.y }
+                        );
+                    }
+
                 }
             }
 
 
-            function registerFigureBBox(curLabel) {
+            function registerFigureBBox(curLabel, axis = false) {
                 var bbox = curLabel.node().getBBox();
                 var borderToRemove = 1.5;
                 var x1 = bbox.x + borderToRemove,
                     y1 = bbox.y + borderToRemove,
                     x2 = bbox.x + bbox.width - borderToRemove,
                     y2 = bbox.y + bbox.height - borderToRemove;
-                rectHolder.add(new Rectangle(x1, y1, x2, y2));
+                var rect = new Rectangle(x1, y1, x2, y2)
+                if (axis) {
+                    axisRectHolder.add(rect)
+                } else {
+                    rectHolder.add(rect);
+                }
                 //return insertRangeTree(rangeTree, x1, y1, x2, y2, '~~_other_');
             }
 
@@ -1952,7 +2038,6 @@ buildViz = function (d3) {
                     .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                     .attr('font-size', '10px')
                     .text(labelText);
-                registerFigureBBox(yLabel);
             }
 
             d3.selection.prototype.moveToBack = function () {
@@ -1965,7 +2050,7 @@ buildViz = function (d3) {
             };
 
             if (verticalLines) {
-                if(typeof(verticalLines) === "number") {
+                if (typeof (verticalLines) === "number") {
                     verticalLines = [verticalLines]; // r likes to make single element vectors doubles; this is a hackish workaround
                 }
                 for (i in verticalLines) {
@@ -2017,7 +2102,8 @@ buildViz = function (d3) {
                         .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                         .attr('font-size', '10px');
                 }
-                registerFigureBBox(myYAxis);
+                registerFigureBBox(myYAxis, true);
+                registerFigureBBox(myXAxis, true);
 
                 function getLabelText(axis) {
                     if (axis == 'y') {
@@ -2036,6 +2122,7 @@ buildViz = function (d3) {
                 var yLabel = drawYLabel(svg, getLabelText('y'))
 
             }
+
             if (!showAxes || showAxesAndCrossHairs) {
                 horizontal_line_y_position_translated = 0.5;
                 if (horizontal_line_y_position !== null) {
@@ -2097,28 +2184,35 @@ buildViz = function (d3) {
             }
 
             if (showDiagonal) {
-                  var diagonal = svg.append("g")
-                      .append("line")
-                      .attr("x1", 0)
-                      .attr("y1", height)
-                      .attr("x2", width)
-                      .attr("y2", 0)
-                      .style("stroke-dasharray", "5,5")
-                      .style("stroke", "#cccccc")
-                      .style("stroke-width", "1px")
-                      .moveToBack();
+                var diagonal = svg.append("g")
+                    .append("line")
+                    .attr("x1", 0)
+                    .attr("y1", height)
+                    .attr("x2", width)
+                    .attr("y2", 0)
+                    .style("stroke-dasharray", "5,5")
+                    .style("stroke", "#cccccc")
+                    .style("stroke-width", "1px")
+                    .moveToBack();
             }
 
             function showWordList(word, termDataList) {
                 var maxWidth = word.node().getBBox().width;
                 var wordObjList = [];
                 for (var i in termDataList) {
-                    var curTerm = termDataList[i].term;
+                    var datum = termDataList[i];
+                    var curTerm = datum.term;
                     word = (function (word, curTerm) {
+                        var termColor = 'rgb(0,0,0)';
+                        if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
+                            termColor = datum.etc[textColorColumn];
+                        }
+
                         var curWordPrinted = svg.append("text")
                             .attr("text-anchor", "start")
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                             .attr('font-size', '12px')
+                            .attr("fill", termColor)
                             .attr("x", word.node().getBBox().x)
                             .attr("y", word.node().getBBox().y
                                 + 2 * word.node().getBBox().height)
@@ -2155,7 +2249,7 @@ buildViz = function (d3) {
                         return headerSortingAlgos['upper'];
                     return scoreSortForCategory;
                 } else {
-                    if(headerSortingAlgos !== null && headerSortingAlgos['lower'] !== undefined)
+                    if (headerSortingAlgos !== null && headerSortingAlgos['lower'] !== undefined)
                         return headerSortingAlgos['lower'];
                     return scoreSortForNotCategory;
                 }
@@ -2170,7 +2264,10 @@ buildViz = function (d3) {
             function showAssociatedWordList(data, word, header, isUpperPane, length = 14) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isUpperPane);
-                console.log("showAssociatedWordList"); console.log(header); console.log("WORD"); console.log(word)
+                console.log("showAssociatedWordList");
+                console.log(header);
+                console.log("WORD");
+                console.log(word)
                 sortedData = data.filter(term => (term.display === undefined || term.display === true)).sort(sortingAlgo);
                 if (wordVecMaxPValue) {
                     function signifTest(x) {
@@ -2265,10 +2362,10 @@ buildViz = function (d3) {
             if (showTopTerms) {
                 var upperHeaderName = "Top " + fullData['info']['category_name'];
                 var lowerHeaderName = "Top " + fullData['info']['not_category_name'];
-                if(headerNames !== null) {
-                    if(headerNames.upper !== undefined)
+                if (headerNames !== null) {
+                    if (headerNames.upper !== undefined)
                         upperHeaderName = headerNames.upper;
-                    if(headerNames.lower !== undefined)
+                    if (headerNames.lower !== undefined)
                         lowerHeaderName = headerNames.lower;
                 }
                 payload.topTermsPane = showTopTermsPane(
@@ -2293,9 +2390,13 @@ buildViz = function (d3) {
             }
 
 
-            if (!nonTextFeaturesMode && !asianMode && showCharacteristic) {
+            if ((!nonTextFeaturesMode && !asianMode && showCharacteristic)
+                || (headerNames !== null && headerNames.right !== undefined)) {
                 var sortMethod = backgroundScoreSort;
                 var title = 'Characteristic';
+                if (headerNames !== null && headerNames.right !== undefined) {
+                    title = headerNames.right;
+                }
                 if (wordVecMaxPValue) {
                     title = 'Most similar';
                     sortMethod = scoreSortReverse;
@@ -2314,7 +2415,11 @@ buildViz = function (d3) {
                     .attr("dy", "6px")
                     .text(title);
 
-                var wordListData = showWordList(word, data.filter(term => (term.display === undefined || term.display === true)).sort(sortMethod).slice(0, 30));
+                var wordListData = showWordList(
+                    word,
+                    data.filter(term => (term.display === undefined || term.display === true))
+                        .sort(sortMethod).slice(0, 30)
+                );
 
                 word = wordListData.word;
                 maxWidth = wordListData.maxWidth;
@@ -2324,23 +2429,27 @@ buildViz = function (d3) {
                 svg.attr('width', word.node().getBBox().x + 3 * maxWidth + 10);
             }
 
-            function performPartialLabeling(data, existingLabels, getX, getY) {
+            function performPartialLabeling(
+                data,
+                existingLabels,
+                getX,
+                getY,
+                labelPriorityFunction = ((a, b) => Math.min(a.x, 1 - a.x, a.y, 1 - a.y) - Math.min(b.x, 1 - b.x, b.y, 1 - b.y))
+            ) {
                 for (i in existingLabels) {
                     rectHolder.remove(existingLabels[i].rect);
                     existingLabels[i].label.remove();
                 }
-                console.log('labeling 1')
-
 
                 var labeledPoints = [];
+
                 //var filteredData = data.filter(d=>d.display === undefined || d.display === true);
                 //for (var i = 0; i < filteredData.length; i++) {
-                data.sort((a,b)=>Math.min(a.x, 1-a.x, a.y, 1-a.y)-Math.min(b.x, 1-b.x, b.y, 1-b.y))
-                    .forEach(function (datum, i) {
+                data.sort(labelPriorityFunction).forEach(function (datum, i) {
                     //console.log(datum.i, datum.ci, i)
                     //var label = labelPointsIfPossible(i, getX(filteredData[i]), getY(filteredData[i]));
                     if (datum.display === undefined || datum.display === true) {
-                        if (datum.term == "the" || i == 1) {
+                        if (i === 1) {
                             console.log("trying to label datum # " + i + ": " + datum.term)
                             console.log(datum)
                             console.log([getX(datum), getY(datum)])
@@ -2358,6 +2467,11 @@ buildViz = function (d3) {
 
             //var labeledPoints = performPartialLabeling();
             var labeledPoints = [];
+            var labelPriorityFunction = ((a, b) => Math.min(a.x, 1 - a.x, a.y, 1 - a.y) - Math.min(b.x, 1 - b.x, b.y, 1 - b.y))
+            if (labelPriorityColumn !== undefined && labelPriorityColumn !== null) {
+                labelPriorityFunction = (a, b) => a.etc[labelPriorityColumn] - b.etc[labelPriorityColumn];
+            }
+
             labeledPoints = performPartialLabeling(data,
                 labeledPoints,
                 function (d) {
@@ -2365,7 +2479,30 @@ buildViz = function (d3) {
                 },
                 function (d) {
                     return d.y
-                });
+                },
+                labelPriorityFunction
+            );
+
+            if (backgroundLabels !== null) {
+                backgroundLabels.map(
+                    function (label) {
+                        svg.append("text")
+                            .attr("x", x(label.X))
+                            .attr("y", y(label.Y))
+                            .attr("text-anchor", "middle")
+                            .style("font-size", "30")
+                            .style("fill", "rgb(200,200,200)")
+                            .text(label.Text)
+                            .lower()
+                            .on('mouseover', function (d) {
+                                d3.select(this).style('stroke', 'black').style('stroke-width', '1px').raise()
+                            })
+                            .on('mouseout', function (d) {
+                                d3.select(this).style('stroke-width', '0px').style('fill', 'rgb(200,200,200)').lower()
+                            })
+                    }
+                )
+            }
 
 
             /*
@@ -2495,13 +2632,24 @@ buildViz = function (d3) {
                 console.log("docCounts");
                 console.log(docCounts)
                 var messages = [];
-                if (unifiedContexts) {
+                if (ignoreCategories) {
+                    var wordCount = getCorpusWordCounts();
+                    console.log("wordCount")
+                    console.log(wordCount)
+                    messages.push(
+                        '<b>Document count: </b>' + fullData.docs.texts.length.toLocaleString('en') +
+                        '; <b>word count: </b>'
+                        + wordCount['sums'].reduce((a, b) => a + b, 0).toLocaleString('en')
+                    )
+                } else if (unifiedContexts) {
                     fullData.docs.categories.forEach(function (x, i) {
                         if (docCounts[x] > 0) {
-                            messages.push('<b>' + x + '</b> document count: '
+                            var message = '<b>' + x + '</b>: ';
+                            message += 'document count: '
                                 + Number(docCounts[x]).toLocaleString('en')
                                 + '; word count: '
-                                + Number(wordCounts[x]).toLocaleString('en'));
+                                + Number(wordCounts[x]).toLocaleString('en')
+                            messages.push(message);
                         }
                     });
                 } else {
@@ -2578,7 +2726,7 @@ buildViz = function (d3) {
                 console.log(this.fullData)
                 console.log(this)
                 console.log("X/Y coords")
-                console.log(this.fullData.data.filter(d => d.display === undefined || d.display === true).map(d=>[d.x, d.y]))
+                console.log(this.fullData.data.filter(d => d.display === undefined || d.display === true).map(d => [d.x, d.y]))
                 var circles = this.svg//.select('#' + divName)
                     .selectAll("dot")
                     .data(this.fullData.data.filter(d => d.display === undefined || d.display === true))
@@ -2635,6 +2783,7 @@ buildViz = function (d3) {
                     labeledPoints,
                     (d => d.ox), //function (d) {return xCoords[d.ci]},
                     (d => d.oy) //function (d) {return yCoords[d.ci]}
+
                 );
             }
 
@@ -2970,7 +3119,7 @@ buildViz = function (d3) {
             var fgFreqSum = denseRanks.fgFreqs.reduce((a, b) => a + b, 0)
             var bgFreqSum = denseRanks.bgFreqs.reduce((a, b) => a + b, 0)
 
-            var oy = denseRanks.fgFreqs.map(count => Math.log(count + 1)/Math.log(2))
+            var oy = denseRanks.fgFreqs.map(count => Math.log(count + 1) / Math.log(2))
 
             var oymax = Math.max(...oy)
             var oymin = Math.min(...oy)
@@ -2999,7 +3148,6 @@ buildViz = function (d3) {
                 term.display = true;
                 return term;
             })
-
 
 
             this.rerender(//denseRanks.bg,

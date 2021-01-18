@@ -25,6 +25,7 @@ corpus = st.CorpusFromScikit(
 	raw_texts=newsgroups_train.data
 ).build()
 
+
 html = st.produce_frequency_explorer(
 	corpus,
 	'alt.atheism',
