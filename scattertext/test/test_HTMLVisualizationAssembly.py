@@ -19,7 +19,8 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'null', 'false', 'false',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
-                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null']
+                  'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
+                  'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -262,7 +263,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                           .call_build_visualization_in_javascript()),
                          self.get_params({21: "[1, 2, 3]"}))
 
-    def test_x_axis_labels(self):
+    def test_y_axis_labels(self):
         visualization_data = self.make_adapter()
         self.assertEqual((ScatterplotStructure(visualization_data, y_axis_values=[4, 5, 6])
                           .call_build_visualization_in_javascript()),
@@ -478,3 +479,51 @@ class TestHTMLVisualizationAssembly(TestCase):
         self.assertEqual(params, self.get_params(
             {54: '''{"lower": (function(a, b) {return a.s - b.s}), "upper": (function(a, b) {return b.s - a.s})}'''}
         ))
+
+    def test_ignore_categories(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, ignore_categories=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({55: 'true'}))
+
+    def test_background_labels(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, background_labels=[
+            {'Text': 'Topic 0', 'X': 0.5242579971278757, 'Y': 0.8272937510221724},
+            {'Text': 'Topic 1', 'X': 0.7107755717675702, 'Y': 0.5034326824672314},
+            {'Text': 'Topic 2', 'X': 0.09014690078982, 'Y': 0.6261596586530888}])
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params(
+            {56: '[{"Text": "Topic 0", "X": 0.5242579971278757, "Y": 0.8272937510221724}, '
+                 '{"Text": "Topic 1", "X": 0.7107755717675702, "Y": 0.5034326824672314}, '
+                 '{"Text": "Topic 2", "X": 0.09014690078982, "Y": 0.6261596586530888}]'}))
+
+    def test_label_priority_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, label_priority_column='LabelPriority')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({57: '"LabelPriority"'}))
+
+    def test_text_color_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, text_color_column='TextColor')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({58: '"TextColor"'}))
+
+    def test_suppress_label_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, suppress_text_column='Suppress')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({59: '"Suppress"'}))
+
+    def test_background_color(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, background_color='#444444')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({60: '"#444444"'}))
+
+    def test_censor_point_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, censor_point_column='CensorPoint')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({61: '"CensorPoint"'}))

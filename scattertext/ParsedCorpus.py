@@ -2,11 +2,11 @@ import sys
 
 import pandas as pd
 
-from scattertext.Corpus import Corpus
+from scattertext.DataFrameCorpus import DataFrameCorpus
 from scattertext.indexstore.IndexStore import IndexStore
 
 
-class ParsedCorpus(Corpus):
+class ParsedCorpus(DataFrameCorpus):
     def __init__(self,
                  df,
                  X,
@@ -32,13 +32,13 @@ class ParsedCorpus(Corpus):
         category_col str, columns in convention_df containing category
         unigram_frequency_path str, None by default, path of unigram counts file
         '''
-        self._df = df
         self._parsed_col = parsed_col
         self._category_col = category_col
-        Corpus.__init__(self, X, mX, y, term_idx_store, category_idx_store,
-                                           metadata_idx_store,
-                                           self._df[self._parsed_col],
-                                           unigram_frequency_path)
+        DataFrameCorpus.__init__(self, X, mX, y, term_idx_store, category_idx_store,
+                                 metadata_idx_store,
+                                 df[self._parsed_col],
+                                 df,
+                                 unigram_frequency_path)
 
     def get_texts(self):
         '''
@@ -50,26 +50,6 @@ class ParsedCorpus(Corpus):
             return self._df[self._parsed_col]
         return self._df[self._parsed_col].apply(str)
 
-    def get_df(self):
-        '''
-        Returns
-        -------
-        pd.DataFrame
-        '''
-        return self._df
-
-    def get_field(self, field):
-        '''
-        Parameters
-        ----------
-        field: str, field name
-
-        Returns
-        -------
-        pd.Series, all members of field
-        '''
-        return self._df[field]
-
     def get_parsed_docs(self):
         '''
         Returns
@@ -77,20 +57,6 @@ class ParsedCorpus(Corpus):
         pd.Series, Doc represententions of texts.
         '''
         return self._df[self._parsed_col]
-
-    def search(self, ngram):
-        '''
-        Parameters
-        ----------
-        ngram, str or unicode, string to search for
-
-        Returns
-        -------
-        pd.DataFrame, {self._parsed_col: <matching texts>, self._category_col: <corresponding categories>, ...}
-
-        '''
-        mask = self._document_index_mask(ngram)
-        return self._df[mask]
 
     def _document_index_mask(self, ngram):
         idx = self._term_idx_store.getidxstrict(ngram.lower())
@@ -129,17 +95,20 @@ class ParsedCorpus(Corpus):
                                   new_term_idx_store=None,
                                   new_category_idx_store=None,
                                   new_metadata_idx_store=None,
-                                  new_y_mask=None):
+                                  new_y_mask=None,
+                                  new_df=None):
+
+        X, mX, y = self._update_X_mX_y(new_X, new_mX, new_y, new_y_mask)
         return ParsedCorpus(
-            X=new_X if new_X is not None else self._X,
-            mX=new_mX if new_mX is not None else self._mX,
-            y=new_y if new_y is not None else self._y,
+            X=X,
+            mX=mX,
+            y=y,
             parsed_col=self._parsed_col,
             category_col=self._category_col,
             term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
             category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
             metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
-            df=self._df[new_y_mask] if new_y_mask is not None else self._df,
+            df=self._apply_mask_to_df(new_y_mask, new_df),
             unigram_frequency_path=self._unigram_frequency_path
         )
 

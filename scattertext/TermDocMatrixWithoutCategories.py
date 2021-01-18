@@ -50,7 +50,6 @@ class TermDocMatrixWithoutCategories(object):
         self._strict_unigram_definition = False
         return self
 
-
     def compact(self, compactor, non_text=False):
         '''
         Compact term document matrix.
@@ -151,8 +150,8 @@ class TermDocMatrixWithoutCategories(object):
     def _get_corpus_unigram_freq(self, corpus_freq_df):
         unigram_validator = re.compile('^[A-Za-z]+$')
         corpus_unigram_freq = corpus_freq_df.loc[[term for term
-                                                 in corpus_freq_df.index
-                                                 if unigram_validator.match(term) is not None]]
+                                                  in corpus_freq_df.index
+                                                  if unigram_validator.match(term) is not None]]
         return corpus_unigram_freq
 
     def _get_background_unigram_frequencies(self):
@@ -299,6 +298,44 @@ class TermDocMatrixWithoutCategories(object):
         terms_to_remove = np.where(term_counts < threshold)[0]
         return self.remove_terms_by_indices(terms_to_remove, non_text)
 
+    def remove_document_ids(self, document_ids, remove_unused_terms=True, remove_unused_metadata=False):
+        '''
+
+        :param document_ids: List[int], list of document ids to remove
+        :return: Corpus
+        '''
+        y_mask = ~np.isin(np.arange(self.get_num_docs()), np.array(document_ids))
+        updated_tdm = self._make_new_term_doc_matrix(
+            new_X=self._X,
+            new_mX=self._mX,
+            new_y=None,
+            new_category_idx_store=None,
+            new_term_idx_store=self._term_idx_store,
+            new_metadata_idx_store=self._metadata_idx_store,
+            new_y_mask=y_mask
+        )
+
+        if remove_unused_terms:
+            unused_term_idx = np.where(self._X[y_mask, :].sum(axis=0) == 0)[1]
+            updated_tdm = updated_tdm.remove_terms_by_indices(unused_term_idx, non_text=False)
+
+        if remove_unused_metadata:
+            unused_metadata_mask = np.mask(self._mX[y_mask, :].sum(axis=0) == 0)[0]
+            updated_tdm = updated_tdm.remove_terms_by_indices(unused_metadata_mask, non_text=True)
+
+        return updated_tdm
+
+    def remove_documents_less_than_length(self, max_length, non_text=False):
+        '''
+            `
+
+        :param max_length: int, length of document in terms registered in corpus
+        :return: Corpus
+        '''
+        tdm = self.get_metadata_doc_mat() if non_text else self.get_term_doc_mat()
+        doc_ids_to_remove = np.where(tdm.sum(axis=1).T.A1 < max_length)
+        return self.remove_document_ids(doc_ids_to_remove)
+
     def get_unigram_corpus(self):
         '''
         Returns
@@ -312,7 +349,7 @@ class TermDocMatrixWithoutCategories(object):
         return [term for term
                 in self._term_idx_store._i2val
                 if ' ' in term or (self._strict_unigram_definition and "'" in term)
-        ]
+                ]
 
     def get_stoplisted_unigram_corpus(self, stoplist=None):
         '''
@@ -423,7 +460,7 @@ class TermDocMatrixWithoutCategories(object):
         )
         return df.sort_values(by='Scaled f-score', ascending=False)
 
-    def get_term_doc_mat(self):
+    def     get_term_doc_mat(self):
         '''
         Returns sparse matrix representation of term-doc-matrix
 
@@ -442,7 +479,6 @@ class TermDocMatrixWithoutCategories(object):
         scipy.sparse.coo_matrix
         '''
         return self._X.astype(np.double).tocoo()
-
 
     def get_metadata_doc_mat(self):
         '''

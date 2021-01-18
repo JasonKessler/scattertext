@@ -42,10 +42,10 @@ class DenseRankCharacteristicness(CharacteristicScorer):
 
 		Returns
 		-------
-		float, pd.Series
+		(float, pd.Series)
 		float: point on x-axis at even characteristicness
 		pd.Series: term -> value between 0 and 1, sorted by score in a descending manner
-		Background scores from corpus
+			Background scores from corpus
 		'''
 		term_ranks = self.term_ranker(corpus).get_ranks()
 

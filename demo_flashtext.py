@@ -9,7 +9,7 @@ class FlashTextExtact(st.FeatsFromSpacyDoc):
     '''
     def set_keyword_processor(self, keyword_processor):
         '''
-
+    
         :param keyword_processor: set, phrases to look for
         :return: self
         '''

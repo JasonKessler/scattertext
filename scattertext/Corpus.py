@@ -96,9 +96,10 @@ class Corpus(TermDocMatrix):
 	                              new_category_idx_store=None,
 	                              new_metadata_idx_store=None,
 	                              new_y_mask=None):
-		return Corpus(X=new_X if new_X is not None else self._X,
-		              mX=new_mX if new_mX is not None else self._mX,
-		              y=new_y if new_y is not None else self._y,
+		X, mX, y = self._update_X_mX_y(new_X, new_mX, new_y, new_y_mask)
+		return Corpus(X=X,
+		              mX=mX,
+		              y=y,
 		              term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
 		              category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
 		              metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,

@@ -13,8 +13,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns, CSRMatrixFactory
-from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO, DEFAULT_BACKGROUND_SCALER_ALGO, \
-    DEFAULT_BACKGROUND_BETA
+from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO
 from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
 from scattertext.indexstore import IndexStore, IndexStoreFromList
 from scattertext.termscoring.CornerScore import CornerScore
@@ -60,10 +59,6 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         unigram_frequency_path : str or None
             Path to term frequency file.
         '''
-        if all(y == y[0]):
-            raise CannotCreateATermDocMatrixWithASignleCategoryException(
-                'Documents must be labeled with more than one category. All documents were labeled '
-                'with category: "' + str(category_idx_store.getval(y[0])) + '"')
         TermDocMatrixWithoutCategories.__init__(self, X=X, mX=mX, term_idx_store=term_idx_store,
                                                 metadata_idx_store=metadata_idx_store,
                                                 unigram_frequency_path=unigram_frequency_path)
@@ -303,10 +298,12 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
         new_X = delete_columns(new_X, term_idx_to_delete)
 
-        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X, new_mX,
+        term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X,
+                                                             new_mX,
                                                              new_y.astype(int),
                                                              new_term_idx_store,
-                                                             new_category_idx_store, new_metadata_idx_store,
+                                                             new_category_idx_store,
+                                                             new_metadata_idx_store,
                                                              ~np.isin(self._y, idx_to_delete_list))
         return term_doc_mat_to_ret
 
@@ -349,13 +346,29 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
                                   new_category_idx_store=None,
                                   new_metadata_idx_store=None,
                                   new_y_mask=None):
-        return TermDocMatrix(X=new_X if new_X is not None else self._X,
-                             mX=new_mX if new_mX is not None else self._mX,
-                             y=new_y if new_y is not None else self._y,
-                             term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
-                             category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
-                             metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
-                             unigram_frequency_path=self._unigram_frequency_path)
+        X, mX, y = self._update_X_mX_y(new_X, new_mX, new_y, new_y_mask)
+        return TermDocMatrix(
+            X=X,
+            mX=mX,
+            y=y,
+            term_idx_store=new_term_idx_store if new_term_idx_store is not None else self._term_idx_store,
+            category_idx_store=new_category_idx_store if new_category_idx_store is not None else self._category_idx_store,
+            metadata_idx_store=new_metadata_idx_store if new_metadata_idx_store is not None else self._metadata_idx_store,
+            unigram_frequency_path=self._unigram_frequency_path
+        )
+
+    def _update_X_mX_y(self, new_X, new_mX, new_y, new_y_mask):
+        X = new_X if new_X is not None else self._X
+        mX = new_mX if new_mX is not None else self._mX
+        y = new_y if new_y is not None else self._y
+        if new_y_mask is not None:
+            if len(y) == len(new_y_mask):  # sometimes y is reduced by a calling function
+                y = y[new_y_mask]
+            if X.shape[0] == len(new_y_mask):
+                X = X[new_y_mask, :]
+            if mX.shape[0] == len(new_y_mask):
+                mX = mX[new_y_mask, :]
+        return X, mX, y
 
     def get_posterior_mean_ratio_scores(self, category):
         ''' Computes posterior mean score.
@@ -756,10 +769,10 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             print("L", metadata_list)
             for metadatum in metadata_list:
                 print("METADATUM", metadatum)
-                #raise Exception(str(metadatum)
+                # raise Exception(str(metadatum)
                 #                + " " + str(type(metadatum)) + " " + str(len(metadatum)) + str(metadata_list)
                 #                + " " + str(type(metadata_list)) + " " + str(len(metadata_list)) + str(metadata_lists))
-                #raise Exception(f"METADATUM {metadatum} " + metadatum + ":::" + metadata_list)
+                # raise Exception(f"METADATUM {metadatum} " + metadatum + ":::" + metadata_list)
                 metadata_csr_factory[doc_i, metadata_index_store.getidx(metadatum)] = 1
 
         return self._make_new_term_doc_matrix(

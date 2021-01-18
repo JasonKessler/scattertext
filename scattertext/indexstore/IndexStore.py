@@ -7,6 +7,9 @@ class IndexStore(object):
 	def getval(self, idx):
 		return self._i2val[idx]
 
+	def getvalbatch(self, y):
+		return [self._i2val[x] for x in y]
+
 	def __len__(self):
 		return len(self._i2val)
 
@@ -79,3 +82,4 @@ class IndexStore(object):
 			A list containing all values registered.
 		'''
 		return self._i2val
+
