@@ -5,8 +5,8 @@
 
 # Scattertext 0.1.0.0
 
-A tool for finding distinguishing terms in corpora, and presenting them in an 
-interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
+A tool for finding distinguishing terms in corpora and displaying them in an 
+interactive HTML scatter plot. Points corresponding to terms are selectively labeled
 so that they don't overlap with other labels or points. 
 
 Below is an example of using Scattertext to create visualize terms used in 2012 American
