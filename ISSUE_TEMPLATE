@@ -26,11 +26,14 @@ If it involves something about the UI, please upload an illustrated what went wr
 
  - Scattertext version (e.g., 0.0.2.75):
  - OS (e.g., Linux):
- - How you installed PyTorch (`conda`, `pip`, source):
+ - How you installed Scattertext (`conda`, `pip`, source):
  - Build command you used (if compiling from source):
  - Python version:
+ - Version of dependencies:
  - Any other relevant information:
 
 ## Additional context
 
 <!-- Add any other context about the problem here. -->
+
+<!-- Note: this was adapated from the PyTorch issue template -->
