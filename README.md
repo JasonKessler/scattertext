@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.0.0
+# Scattertext 0.1.1
 
 A tool for finding distinguishing terms in corpora, and presenting them in an 
 interactive, HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -493,7 +493,7 @@ import scattertext as st
 
 nlp = spacy.load('en')
 convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
-    parse=lambda df: df.text.apply(nlp)
+    parse=lambda df: df.text.apply(nlp),
     party=lambda df: df.party.apply({'democrat': 'Democratic', 'republican': 'Republican'}.get)
 )
 corpus = st.CorpusFromParsedDocuments(

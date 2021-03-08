@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pandas as pd
 
 from scattertext import ScatterChart, TermCategoryFrequencies, ParsedCorpus, CorpusDF
 from scattertext.Scalers import percentile_alphabetical
@@ -16,7 +17,7 @@ class ScatterChartExplorer(ScatterChart):
         '''See ScatterChart.  This lets you click on terms to see what contexts they tend to appear in.
         Running the `to_dict` function outputs
         '''
-        #if not (isinstance(corpus, (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies))
+        # if not (isinstance(corpus, (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies))
         #        or (issubclass(type(corpus), (Corpus, ParsedCorpus, CorpusDF, TermCategoryFrequencies)))):
         #    raise AssertionError(corpus, 'of type', type(corpus),
         #                         'must be a subclass of Corpus or TermCategoryFrequencies.')
@@ -40,6 +41,7 @@ class ScatterChartExplorer(ScatterChart):
                 extra_category_name=None,
                 background_scorer=None,
                 include_term_category_counts=False,
+                use_offsets=False,
                 **kwargs):
         '''
 
@@ -120,7 +122,8 @@ class ScatterChartExplorer(ScatterChart):
                                          not_categories=not_categories,
                                          neutral_categories=neutral_categories,
                                          extra_categories=extra_categories,
-                                         background_scorer=background_scorer)
+                                         background_scorer=background_scorer,
+                                         use_offsets=use_offsets)
         docs_getter = self._make_docs_getter(max_docs_per_category, alternative_text_field)
         if neutral_category_name is None:
             neutral_category_name = 'Neutral'
@@ -142,14 +145,17 @@ class ScatterChartExplorer(ScatterChart):
         else:
             term_doc_counts = self.term_doc_matrix.get_term_doc_count_df('').loc[terms]
             term_doc_freq = self.term_doc_matrix.get_term_freq_df('').loc[terms]
-        # this can possibly be vectorized
-        for category_i, category in enumerate(term_doc_freq.columns):
-            category_counts = {}
-            for term_i, val in enumerate(term_doc_freq[category].values):
-                if val > 0:
-                    category_counts[term_i] = [val, term_doc_counts.iloc[term_i, category_i]]
-            term_counts.append(category_counts)
 
+        # This should be sped up
+        term2idx = pd.Series(np.arange(len(terms)), index=terms)
+        for category_i, category in enumerate(self.term_doc_matrix.get_categories()):
+            term_ser = term_doc_freq[category]
+            doc_ser = term_doc_counts[category]
+            term_ser = term_ser[term_ser.values > 0]
+            doc_ser = doc_ser[doc_ser.values > 0]
+            category_counts = pd.Series(np.array([term_ser.values, doc_ser.values]).T.tolist(),
+                                        index=term2idx[term_ser.index].values).to_dict()
+            term_counts.append(category_counts)
         return term_counts
 
     def _make_docs_getter(self, max_docs_per_category, alternative_text_field):
@@ -185,7 +191,6 @@ class ScatterChartExplorer(ScatterChart):
         '''
         self._term_metadata = metadata
         return self
-
 
     def inject_term_metadata_df(self, metadata_df):
         '''

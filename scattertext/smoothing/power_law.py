@@ -13,8 +13,12 @@ def errfunc(p, x, y):
 
 class PowerLaw(object):
     def __init__(self):
-        pass
+        self.partial_func = None
 
     def fit(self, xdata, ydata):
         params, _ = leastsq(errfunc, [max(ydata), -1, -0.5], args=(xdata, ydata), maxfev=500)
-        return partial(fitfunc, params)
+        self.partial_func = partial(fitfunc, params)
+        return self
+
+    def predict(self, x):
+        self.partial_func(x)

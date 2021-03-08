@@ -217,6 +217,7 @@ class ScatterChart:
                 neutral_categories=None,
                 extra_categories=None,
                 background_scorer=None,
+                use_offsets=False,
                 **kwargs):
         '''
 
@@ -392,6 +393,10 @@ class ScatterChart:
             for term_obj in j['data']:
                 if term_obj['term'] in self.hidden_terms:
                     term_obj['display'] = False
+
+        if use_offsets:
+            j['offsets'] = self.term_doc_matrix.get_offsets()
+
         return j
 
     def _add_x_and_y_coords_to_term_df_if_injected(self, df):

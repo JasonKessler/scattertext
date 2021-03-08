@@ -61,7 +61,15 @@ buildViz = function (d3) {
                      suppressTextColumn = undefined,
                      backgroundColor = undefined,
                      censorPointColumn = undefined,
+                     rightOrderColumn = undefined,
+                     subwordEncoding = null
     ) {
+        function formatTermForDisplay(term) {
+            if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
+                term = '_' + term.substr(1, term.length - 1);
+            return term;
+        }
+
         //var divName = 'd3-div-1';
         // Set the dimensions of the canvas / graph
         var padding = {top: 30, right: 20, bottom: 30, left: 50};
@@ -251,9 +259,8 @@ buildViz = function (d3) {
         // setup fill color
         if (color == null) {
             color = d3.interpolateRdYlBu;
-            //color = d3.interpolateWarm;
         }
-        if((headerNames !== undefined && headerNames !== null)
+        if ((headerNames !== undefined && headerNames !== null)
             && (headerSortingAlgos !== undefined && headerSortingAlgos !== null)) {
             showTopTerms = true;
         }
@@ -378,10 +385,13 @@ buildViz = function (d3) {
 
 
         function getDenseRanks(fullData, categoryNum) {
+            console.log("GETTING DENSE RANKS")
+            console.log("CAT NUM " + categoryNum)
+            console.log(fullData)
+
             var fgFreqs = Array(fullData.data.length).fill(0);
             var bgFreqs = Array(fullData.data.length).fill(0);
             var categoryTermCounts = fullData.termCounts[categoryNum];
-
 
             Object.keys(categoryTermCounts).forEach(
                 key => fgFreqs[key] = categoryTermCounts[key][0]
@@ -410,7 +420,11 @@ buildViz = function (d3) {
                 x => (x - minbgDenseRanks) / (maxbgDenseRanks - minbgDenseRanks)
             )
 
-            return {'fg': scalefgDenseRanks, 'bg': scalebgDenseRanks, 'bgFreqs': bgFreqs, 'fgFreqs': fgFreqs}
+            return {'fg': scalefgDenseRanks,
+                'bg': scalebgDenseRanks,
+                'bgFreqs': bgFreqs,
+                'fgFreqs': fgFreqs,
+                'term': fullData.data.map((x)=>x.term)}
         }
 
         function getCategoryDenseRankScores(fullData, categoryNum) {
@@ -700,20 +714,50 @@ buildViz = function (d3) {
                         continue;
                     }
                     var text = fullData.docs.texts[i];
-                    if (!useFullDoc)
-                        text = text.slice(0, 300);
-                    if (pattern !== null) {
-                        text = text.replace(pattern, '<b>$&</b>');
-                    }
-                    var curMatch = {
-                        'id': i,
-                        'snippets': [text],
-                        'strength': strength,
-                        'docLabel': docLabel,
-                        'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
-                    }
 
-                    matches[numericLabel].push(curMatch);
+                    if (fullData.offsets !== undefined) {
+
+                        if (fullData.offsets[term] !== undefined && fullData.offsets[term][i] !== undefined) {
+                            var curMatch = {
+                                'id': i,
+                                'snippets': [],
+                                'strength': strength,
+                                'docLabel': docLabel,
+                                'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
+                            }
+                            for (const offset_i in fullData.offsets[term][i]) {
+                                var offset = fullData.offsets[term][i][offset_i];
+                                var spanStart = Math.max(offset[0] - 50, 0);
+                                var spanEnd = Math.min(50, text.length-offset[1]);
+                                var leftContext = text.substr(spanStart, offset[0] - spanStart);
+                                var matchStr = text.substr(offset[0], offset[1] - offset[0]);
+                                var rightContext = text.substr(offset[1], spanEnd);
+                                var snippet = leftContext + '<b style="background-color: lightgoldenrodyellow">' + matchStr + '</b>' + rightContext;
+                                if(spanStart > 0)
+                                    snippet = '...' + snippet;
+                                if(text.length - offset[1] > 50)
+                                    snippet = snippet + '...'
+                                curMatch.snippets.push(snippet)
+                            }
+                            matches[numericLabel].push(curMatch);
+                        }
+                    } else {
+
+                        if (!useFullDoc)
+                            text = text.slice(0, 300);
+                        if (pattern !== null) {
+                            text = text.replace(pattern, '<b>$&</b>');
+                        }
+                        var curMatch = {
+                            'id': i,
+                            'snippets': [text],
+                            'strength': strength,
+                            'docLabel': docLabel,
+                            'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
+                        }
+
+                        matches[numericLabel].push(curMatch);
+                    }
                 }
             }
             for (var i in [0, 1]) {
@@ -991,8 +1035,6 @@ buildViz = function (d3) {
                         if (max_snippets != null) {
                             var contextsToDisplay = contexts[catIndex].slice(0, max_snippets);
                         }
-                        console.log("CATCAT")
-                        console.log(catName, catIndex)
                         //var divId = catName == catInternalName ? '#cat' : '#notcat';
                         var divId = null
                         if (fullData.info.category_internal_name == catName) {
@@ -1006,8 +1048,6 @@ buildViz = function (d3) {
                         } else {
                             return;
                         }
-                        console.log('divid');
-                        console.log(divId)
 
                         var temp = d3.select(divId).selectAll("div").remove();
                         contexts[catIndex].forEach(function (context) {
@@ -1028,14 +1068,11 @@ buildViz = function (d3) {
             d3.select('#' + divName + '-' + 'termstats')
                 .selectAll("div")
                 .remove();
-            var termHtml = 'Term: <b>' + info.term + '</b>';
+            var termHtml = 'Term: <b>' + formatTermForDisplay(info.term) + '</b>';
             if ('metalists' in fullData && info.term in fullData.metalists) {
-                termHtml = 'Topic: <b>' + info.term + '</b>';
+                termHtml = 'Topic: <b>' + formatTermForDisplay(info.term) + '</b>';
             }
-            console.log("HERE")
-            console.log(getCustomTermHtml)
             if (getCustomTermHtml !== null) {
-                console.log("Making custom html")
                 termHtml = getCustomTermHtml(info);
             }
             d3.select('#' + divName + '-' + 'termstats')
@@ -1144,12 +1181,7 @@ buildViz = function (d3) {
                             info.ncat,
                             termInfo.contexts[1].length * 1000 / numNCatDocs)
                     );
-                console.log("TermINfo")
-                console.log(termInfo);
-                console.log(info)
                 if (showNeutral) {
-                    console.log("NEUTRAL")
-
                     var numList = fullData.docs.categories.map(function (x, i) {
                         if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
                             return i;
@@ -1178,7 +1210,6 @@ buildViz = function (d3) {
                         );
 
                     if (showExtra) {
-                        console.log("EXTRA")
                         var numList = fullData.docs.categories.map(function (x, i) {
                             if (fullData.info.extra_category_internal_names.indexOf(x) > -1) {
                                 return i;
@@ -1252,6 +1283,7 @@ buildViz = function (d3) {
 
             function buildMatcher(term) {
 
+
                 var boundary = '(?:\\W|^|$)';
                 var wordSep = "[^\\w]+";
                 if (asianMode) {
@@ -1266,6 +1298,7 @@ buildViz = function (d3) {
                     boundary = '($|^)';
                 }
                 var termToRegex = term;
+
 
                 // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
                 function escapeRegExp(string) {
@@ -1289,6 +1322,20 @@ buildViz = function (d3) {
                         termToRegex.replace(' ', wordSep, 'gim')
                     ) + ')' + boundary, 'gim');
                 console.log(regexp);
+
+                if (subwordEncoding === 'RoBERTa') {
+                    if (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289) {
+                        // Starts with character Ġ indicating it's a word start
+                        console.log("START")
+                        regexp = new RegExp(boundary + escapeRegExp(term.substr(1, term.length)), 'gim');
+                    } else {
+                        regexp = new RegExp("\w" + escapeRegExp(term), 'gim');
+                    }
+                    console.log("SP")
+                    console.log(regexp)
+                }
+
+
                 try {
                     regexp.exec('X');
                 } catch (err) {
@@ -1410,13 +1457,17 @@ buildViz = function (d3) {
         }
 
         function getDefaultTooltipContent(d) {
-            var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
+            var term = formatTermForDisplay(d.term);
+
+            var message = term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
             message += '<br/>score: ' + d.os.toFixed(5);
             return message;
         }
 
         function getDefaultTooltipContentWithoutScore(d) {
-            var message = d.term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
+            var term = formatTermForDisplay(d.term);
+
+            var message = term + "<br/>" + d.cat25k + ":" + d.ncat25k + " per 25k words";
             return message;
         }
 
@@ -1425,7 +1476,7 @@ buildViz = function (d3) {
             var matches = (data.filter(function (term) {
                     return term.x === d.x && term.y === d.y && (term.display === undefined || term.display === true);
                 }).map(function (term) {
-                    return term.term
+                    return formatTermForDisplay(term.term)
                 }).sort()
             );
             return matches;
@@ -1574,9 +1625,6 @@ buildViz = function (d3) {
         function makeWordInteractive(data, svg, domObj, term, termInfo, showObscured = true) {
             return domObj
                 .on("mouseover", function (d) {
-                    console.log("mouseover")
-                    console.log(term)
-                    console.log(termInfo)
                     showToolTipForTerm(data, svg, term, termInfo, showObscured);
                     d3.select(this).style("stroke", "black");
                 })
@@ -1601,6 +1649,8 @@ buildViz = function (d3) {
                     }
                 });
         }
+
+
 
         function processData(fullData) {
 
@@ -1671,15 +1721,13 @@ buildViz = function (d3) {
             data.forEach(function (d, i) {
                 d.ci = i
             });
-            //console.log('XXXXX'); console.log(data)
 
+            //console.log('XXXXX'); console.log(data)
 
 
             function getFilter(data) {
                 return data.filter(d => d.display === undefined || d.display === true);
             }
-
-
 
 
             var mysvg = svg
@@ -1855,6 +1903,8 @@ buildViz = function (d3) {
                 if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
                     termColor = datum.etc[textColorColumn];
                 }
+                term = formatTermForDisplay(term);
+
                 for (var configI in configs) {
                     var config = configs[configI];
                     var curLabel = svg.append("text")
@@ -1980,20 +2030,22 @@ buildViz = function (d3) {
             }
 
             var sortedData = data.map(x => x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
-            console.log("CENSOR COL"); console.log(censorPointColumn);
             if (doCensorPoints) {
                 for (var i in data) {
                     var d = sortedData[i];
 
-                    if(!(censorPointColumn !== undefined
+                    if (!(censorPointColumn !== undefined
                         && d.etc !== undefined
                         && d.etc[censorPointColumn] === false)) {
-                        console.log("CENSOR COL"); console.log(censorPointColumn);
 
                         censorPoints(
                             d,
-                            function (d) { return d.x },
-                            function (d) { return d.y }
+                            function (d) {
+                                return d.x
+                            },
+                            function (d) {
+                                return d.y
+                            }
                         );
                     }
 
@@ -2064,6 +2116,20 @@ buildViz = function (d3) {
                 }
             }
 
+            if (fullData['line'] !== undefined) {
+                var valueline = d3.line()
+                    .x(function (d) {
+                        return x(d.x);
+                    })
+                    .y(function (d) {
+                        return y(d.y);
+                    });
+                fullData.line = fullData.line.sort((a, b) => b.x - a.x);
+                svg.append("path")
+                    .attr("class", "line")
+                    .style("stroke-width", "1px")
+                    .attr("d", valueline(fullData['line'])).moveToBack();
+            }
             if (showAxes || showAxesAndCrossHairs) {
 
                 var myXAxis = svg.append("g")
@@ -2216,7 +2282,7 @@ buildViz = function (d3) {
                             .attr("x", word.node().getBBox().x)
                             .attr("y", word.node().getBBox().y
                                 + 2 * word.node().getBBox().height)
-                            .text(curTerm);
+                            .text(formatTermForDisplay(curTerm));
                         wordObjList.push(curWordPrinted)
                         return makeWordInteractive(
                             termDataList, //data,
@@ -2415,10 +2481,15 @@ buildViz = function (d3) {
                     .attr("dy", "6px")
                     .text(title);
 
+                var rightSortMethod = sortMethod;
+                if (rightOrderColumn !== undefined && rightOrderColumn !== null) {
+                    rightSortMethod = ((a, b) => b.etc[rightOrderColumn] - a.etc[rightOrderColumn]);
+                }
+
                 var wordListData = showWordList(
                     word,
                     data.filter(term => (term.display === undefined || term.display === true))
-                        .sort(sortMethod).slice(0, 30)
+                        .sort(rightSortMethod).slice(0, 30)
                 );
 
                 word = wordListData.word;
@@ -2449,11 +2520,6 @@ buildViz = function (d3) {
                     //console.log(datum.i, datum.ci, i)
                     //var label = labelPointsIfPossible(i, getX(filteredData[i]), getY(filteredData[i]));
                     if (datum.display === undefined || datum.display === true) {
-                        if (i === 1) {
-                            console.log("trying to label datum # " + i + ": " + datum.term)
-                            console.log(datum)
-                            console.log([getX(datum), getY(datum)])
-                        }
                         var label = labelPointsIfPossible(datum, getX(datum), getY(datum));
                         if (label !== false) {
                             //console.log("labeled")
@@ -2469,10 +2535,11 @@ buildViz = function (d3) {
             var labeledPoints = [];
             var labelPriorityFunction = ((a, b) => Math.min(a.x, 1 - a.x, a.y, 1 - a.y) - Math.min(b.x, 1 - b.x, b.y, 1 - b.y))
             if (labelPriorityColumn !== undefined && labelPriorityColumn !== null) {
-                labelPriorityFunction = (a, b) => a.etc[labelPriorityColumn] - b.etc[labelPriorityColumn];
+                labelPriorityFunction = (a, b) => b.etc[labelPriorityColumn] - a.etc[labelPriorityColumn];
             }
 
-            labeledPoints = performPartialLabeling(data,
+            labeledPoints = performPartialLabeling(
+                data,
                 labeledPoints,
                 function (d) {
                     return d.x
@@ -2857,13 +2924,28 @@ buildViz = function (d3) {
             )
         };
 
-        plotInterface.drawCategoryAssociation = function (categoryNum, otherCategoryNum = null) {
+        plotInterface.drawCategoryAssociation = function (category, otherCategory = null) {
+            console.log("+++++++ Entering drawCategoryAssociation")
+            console.log("Category: " + category)
+            console.log("Other Category: " + otherCategory)
+            var categoryNum = this.fullData.info.categories.indexOf(category);
+
+            var otherCategoryNum = null;
+            if(otherCategory !== null)
+                otherCategoryNum = this.fullData.info.categories.indexOf(otherCategory);
+
+            console.log("cat/other: " + category + "/" + otherCategory + " ::: " + categoryNum + "/" + otherCategoryNum)
+
+            console.log("Full Data")
+            console.log(this.fullData)
+            /*
             var rawLogTermCounts = getTermCounts(this.fullData).map(Math.log);
             var maxRawLogTermCounts = Math.max(...rawLogTermCounts);
             var minRawLogTermCounts = Math.min(...rawLogTermCounts);
             var logTermCounts = rawLogTermCounts.map(
                 x => (x - minRawLogTermCounts) / maxRawLogTermCounts
             )
+            */
 
             //var rawScores = getCategoryDenseRankScores(this.fullData, categoryNum);
             //console.log("RAW SCORES")
@@ -2891,15 +2973,10 @@ buildViz = function (d3) {
 
 
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
-            console.log("denseRanks")
-            console.log(denseRanks);
             if (otherCategoryNum !== null) {
                 var otherDenseRanks = getDenseRanks(this.fullData, otherCategoryNum);
-                console.log("otherDenseRanks");
-                console.log(otherDenseRanks);
                 denseRanks.bg = otherDenseRanks.fg;
                 denseRanks.bgFreqs = otherDenseRanks.fgFreqs;
-
             }
 
             var rawScores = denseRanks.fg.map((x, i) => x - denseRanks.bg[i]);
@@ -2937,16 +3014,16 @@ buildViz = function (d3) {
 
             this.fullData.data = this.fullData.data.map(function (term, i) {
                 //term.ci = i;
-                term.s = scores[i];
-                term.os = rawScores[i];
-                term.cat = denseRanks.fgFreqs[i];
-                term.ncat = denseRanks.bgFreqs[i];
-                term.cat25k = parseInt(denseRanks.fgFreqs[i] * 25000 / fgFreqSum);
-                term.ncat25k = parseInt(denseRanks.bgFreqs[i] * 25000 / bgFreqSum);
-                term.x = xf(ox[i]) // logTermCounts[term.i];
-                term.y = yf(oy[i]) // scores[term.i];
-                term.ox = ox[i];
-                term.oy = oy[i];
+                term.s = scores[term.i];
+                term.os = rawScores[term.i];
+                term.cat = denseRanks.fgFreqs[term.i];
+                term.ncat = denseRanks.bgFreqs[term.i];
+                term.cat25k = parseInt(denseRanks.fgFreqs[term.i] * 25000 / fgFreqSum);
+                term.ncat25k = parseInt(denseRanks.bgFreqs[term.i] * 25000 / bgFreqSum);
+                term.x = xf(ox[term.i]) // logTermCounts[term.i];
+                term.y = yf(oy[term.i]) // scores[term.i];
+                term.ox = ox[term.i];
+                term.oy = oy[term.i];
                 term.display = false;
                 return term;
             })

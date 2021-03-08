@@ -34,5 +34,8 @@ class CorpusWithoutCategoriesFromParsedDocuments(object):
         while category_col in self.df:
             category_col = 'Category_' + ''.join(np.random.choice(string.ascii_letters) for _ in range(5))
         return CorpusFromParsedDocuments(
-            self.df.assign(**{category_col: '_'}), category_col, self.parsed_col
+            self.df.assign(**{category_col: '_'}),
+            category_col,
+            self.parsed_col,
+            feats_from_spacy_doc=self.feats_from_spacy_doc,
         ).build()

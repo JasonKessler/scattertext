@@ -132,9 +132,9 @@ class CategoryProjector(CategoryProjectorBase):
         return weighted_category_counts
 
     def select(self, corpus):
-        if self.selector_ is not None:
-            corpus = corpus.select(self.selector_)
-        return corpus
+        if self.selector_ is None:
+            return corpus
+        return corpus.select(self.selector_)
 
     def _project_category_corpus(self, category_corpus, x_dim=0, y_dim=1):
         normalized_counts = self.get_category_embeddings(category_corpus)

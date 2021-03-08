@@ -781,7 +781,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             new_y_mask=self._y == self._y
         )
 
-    def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_'):
+    def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_', replace_metadata = True):
         '''
         Makes the metadata of a new TermDocMatrix a copy of the term-document matrix, except each term is prefixed
         by its document's label followed by the separator.
@@ -800,10 +800,14 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         new_meta_X = None
 
         ordered_doc_labels = list(sorted(set(doc_labels)))
+        X = self._X
+        if replace_metadata:
+            X = self._mX
+
         for doc_label in ordered_doc_labels:
             label_doc_mask = doc_labels == doc_label
-            label_X = self._X[label_doc_mask, :]
-            label_term_mask = (label_X.sum(axis=0) > 0).A1
+            label_X = X[label_doc_mask, :]
+            label_term_mask = (X.sum(axis=0) > 0).A1
             label_X = label_X[:, label_term_mask]
             cols_to_pad = len(new_metadata_list)
 

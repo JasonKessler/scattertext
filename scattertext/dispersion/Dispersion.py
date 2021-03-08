@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 class Dispersion(object):
-    def __init__(self, corpus=None, term_doc_mat=None):
+    def __init__(self, corpus=None, term_doc_mat=None, use_metadata=False):
         """
         From https://www.researchgate.net/publication/332120488_Analyzing_dispersion
         Stefan Th. Gries. Analyzing dispersion. April 2019. Practical handbook of corpus linguistics. Springer.
@@ -30,11 +30,13 @@ class Dispersion(object):
         (6) p = (1/9, 2/10, 3/10, 4/10, 5 /11) (the percentages a makes up of each corpus part 1-n)
         '''
         self.corpus = None
+        X = term_doc_mat
         if corpus is not None:
             self.corpus = corpus
-            X = corpus.get_term_doc_mat()
-        else:
-            X = term_doc_mat
+            if use_metadata:
+                X = corpus.get_metadata_doc_mat()()
+            else:
+                X = corpus.get_term_doc_mat()
         part_sizes = X.sum(axis=1)
         self.l = X.sum().sum()
         self.n = X.shape[0]
@@ -64,6 +66,8 @@ class Dispersion(object):
 
     def jullands_d(self):
         """
+        Direct quote from Gries (2019)
+
         The version of Juilland's D that can handle differently large corpus parts is then computed
         as shown in (10). In order to accommodate the different sizes of the corpus parts, however, the
         variation coefficient is not computed using the observed frequencies v1-n (i.e. 1, 2, 3, 4, 5 in files
@@ -76,6 +80,8 @@ class Dispersion(object):
 
     def rosengrens(self):
         '''
+        Direct quote from Gries (2019)
+
         The version of Rosengren’s S that can handle differently large corpus parts is
         shown in (12). Each corpus part size’s in percent (in s) is multiplied with the
         frequencies of the element in question in each corpus part (in v1-n); of each product,
@@ -88,6 +94,8 @@ class Dispersion(object):
 
     def dp(self):
         '''
+        Direct quote from Gries (2019)
+
         Finally, Gries (2008, 2010) and the follow-up by Lijffijt and Gries (2012)
         proposed a measure called DP (for deviation of proportions), which falls between
         1-min s (for an extremely even distribution) and 1 (for an extremely clumpy
@@ -106,7 +114,9 @@ class Dispersion(object):
         return self.dp() / (1 - self.s.min())
 
     def kl_divergence(self):
-        '''The final measure to be discussed here is one that, as far as I can tell, has never
+        '''
+        Direct quote from Gries (2019)
+        he final measure to be discussed here is one that, as far as I can tell, has never
         been proposed as a measure of dispersion, but seems to me to be ideally suited to be
         one, namely the Kullback-Leibler (or KL-) divergence, a non-symmetric measure
         that quantifies how different one probability distribution (e.g., the distribution of
@@ -137,8 +147,9 @@ class Dispersion(object):
         for word_i in range(self.v.shape[1]):
             y = self.v.T[word_i].todense().A1
             yt = np.tile(y, (n, 1))
-            s = np.sum(np.abs(yt - yt.T)) / 2
-            da.append(1 - constant * s * 0.5 * y.mean())
+            pairs_sum = np.sum(np.abs(yt - yt.T)) / 2
+            da_score = 1 - pairs_sum * constant/(2 * y.mean())
+            da.append(da_score)
 
         return np.array(da)
 
@@ -154,7 +165,8 @@ class Dispersion(object):
             "Rosengren's S": self.rosengrens(),
             'DP': self.dp(),
             'DP norm': self.dp_norm(),
-            'KL-divergence': self.kl_divergence()
+            'KL-divergence': self.kl_divergence(),
+            'DA': self.da()
         }
         if terms is None:
             return pd.DataFrame(df_content)

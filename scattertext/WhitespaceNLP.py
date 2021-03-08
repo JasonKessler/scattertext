@@ -171,3 +171,5 @@ def whitespace_nlp_with_sentences(doc,
         sents.append(toks)
         sent_start_idx += len(sentence)
     return Doc(sents, doc)
+
+

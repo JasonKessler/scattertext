@@ -32,10 +32,12 @@ def produce_category_focused_pairplot(corpus,
     '''
 
     category_num = corpus.get_categories().index(category)
-
-    uncorrelated_components_projection = (category_projector.project(corpus)
-                                          if category_projection is None
-                                          else category_projection)
+    uncorrelated_components_projection = category_projection
+    if category_projection is None:
+        if 'use_metadata' in kwargs and kwargs['use_metadata']:
+            uncorrelated_components_projection = category_projector.project_with_metadata(corpus)
+        else:
+            uncorrelated_components_projection = category_projector.project(corpus)
 
     distances = cosine_distances(uncorrelated_components_projection.get_category_embeddings().T)
 
@@ -112,8 +114,8 @@ def produce_pairplot(corpus,
 
     category_tooltip_func = '(function(d) {return d.term})'
 
-    initial_category_idx = corpus.get_categories().index(initial_category)
-    term_plot_change_func = _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category_idx)
+    #initial_category_idx = corpus.get_categories().index(initial_category)
+    term_plot_change_func = _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category)
 
     category_scatterplot_structure = ScatterplotStructure(
         VizDataAdapter(category_scatter_chart_data),
@@ -274,11 +276,11 @@ def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranke
     return category_scatter_chart_explorer
 
 
-def _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category_idx):
+def _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category):
     if wordfish_style:
         return '(function (termInfo) {termPlotInterface.yAxisLogCounts(termInfo.term); return false;})'
     if category_focused:
-        return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(%s, termInfo.i); return false;})' % (
-            initial_category_idx
-        )
-    return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'
+        return '(function (termInfo) {termPlotInterface.drawCategoryAssociation("%s", termInfo.term); return false;})' \
+               % (initial_category.replace('"', '\\"'))
+    #return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'
+    return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.term); return false;})'

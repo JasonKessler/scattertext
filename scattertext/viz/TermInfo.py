@@ -2,7 +2,6 @@ import html
 
 import pandas as pd
 
-
 def get_tooltip_js_function(plot_df, tooltip_column_names, tooltip_columns):
     if len(tooltip_columns) > 2:
         raise Exception("You can have at most two columns in a tooltip.")
@@ -10,7 +9,9 @@ def get_tooltip_js_function(plot_df, tooltip_column_names, tooltip_columns):
     tooltip_column_names = {} if tooltip_column_names is None else tooltip_column_names
     for col in tooltip_columns:
         assert col in plot_df
-        formatting = '.toFixed(6)' if pd.api.types.is_float(plot_df[col].iloc[0]) else ''
+        formatting = ''
+        if pd.api.types.is_float(plot_df[col].iloc[0]):
+            formatting = '.toFixed(6)'
         tooltip_content += '+ "<br />%s: " + d.etc["%s"]%s' % (
             html.escape(tooltip_column_names.get(col, col)),
             col.replace('"', '\\"').replace("'", "\\'"), formatting)

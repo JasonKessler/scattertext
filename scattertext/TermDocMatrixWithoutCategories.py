@@ -205,14 +205,18 @@ class TermDocMatrixWithoutCategories(object):
     def _get_relevant_idx_store(self, non_text):
         return self._metadata_idx_store if non_text else self._term_idx_store
 
-    def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker):
+    def remove_infrequent_words(self, minimum_term_count, term_ranker=AbsoluteFrequencyRanker, non_text=False):
         '''
         Returns
         -------
         A new TermDocumentMatrix consisting of only terms which occur at least minimum_term_count.
         '''
-        tdf = term_ranker(self).get_ranks().sum(axis=1)
-        return self.remove_terms(list(tdf[tdf <= minimum_term_count].index))
+        ranker = term_ranker(self)
+        if non_text:
+            ranker = ranker.use_non_text_features()
+        tdf = ranker.get_ranks().sum(axis=1)
+
+        return self.remove_terms(list(tdf[tdf <= minimum_term_count].index), non_text=non_text)
 
     def remove_entity_tags(self):
         '''

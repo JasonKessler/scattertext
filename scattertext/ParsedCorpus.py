@@ -6,39 +6,10 @@ from scattertext.DataFrameCorpus import DataFrameCorpus
 from scattertext.indexstore.IndexStore import IndexStore
 
 
-class ParsedCorpus(DataFrameCorpus):
-    def __init__(self,
-                 df,
-                 X,
-                 mX,
-                 y,
-                 term_idx_store,
-                 category_idx_store,
-                 metadata_idx_store,
-                 parsed_col,
-                 category_col,
-                 unigram_frequency_path=None):
-        '''
-
-        Parameters
-        ----------
-        convention_df pd.DataFrame, contains parsed_col and metadata
-        X, csr_matrix
-        mX csr_matrix
-        y, np.array
-        term_idx_store, IndexStore
-        category_idx_store, IndexStore
-        parsed_col str, column in convention_df containing parsed documents
-        category_col str, columns in convention_df containing category
-        unigram_frequency_path str, None by default, path of unigram counts file
-        '''
+class ParsedDataFrameCorpus(DataFrameCorpus):
+    def __init__(self, parsed_col, category_col):
         self._parsed_col = parsed_col
         self._category_col = category_col
-        DataFrameCorpus.__init__(self, X, mX, y, term_idx_store, category_idx_store,
-                                 metadata_idx_store,
-                                 df[self._parsed_col],
-                                 df,
-                                 unigram_frequency_path)
 
     def get_texts(self):
         '''
@@ -88,6 +59,49 @@ class ParsedCorpus(DataFrameCorpus):
         catX = self._change_document_type_in_matrix(newX, category_row)
         return self._term_freq_df_from_matrix(catX)
 
+
+    def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):
+        row_group_cat = X.tocoo().row
+        group_idx_to_cat_idx = {}
+        for doc_idx, row in self._df.iterrows():
+            group_idx = group_idx_store.getidx(row[group_col] + '-' + row[self._category_col])
+            row_group_cat[row_group_cat == doc_idx] = group_idx
+            group_idx_to_cat_idx[group_idx] = self._y[doc_idx]
+        return group_idx_to_cat_idx, row_group_cat
+
+class ParsedCorpus(ParsedDataFrameCorpus):
+    def __init__(self,
+                 df,
+                 X,
+                 mX,
+                 y,
+                 term_idx_store,
+                 category_idx_store,
+                 metadata_idx_store,
+                 parsed_col,
+                 category_col,
+                 unigram_frequency_path=None):
+        '''
+
+        Parameters
+        ----------
+        convention_df pd.DataFrame, contains parsed_col and metadata
+        X, csr_matrix
+        mX csr_matrix
+        y, np.array
+        term_idx_store, IndexStore
+        category_idx_store, IndexStore
+        parsed_col str, column in convention_df containing parsed documents
+        category_col str, columns in convention_df containing category
+        unigram_frequency_path str, None by default, path of unigram counts file
+        '''
+        ParsedDataFrameCorpus.__init__(self, parsed_col, category_col)
+        DataFrameCorpus.__init__(self, X, mX, y, term_idx_store, category_idx_store,
+                                 metadata_idx_store,
+                                 df[self._parsed_col],
+                                 df,
+                                 unigram_frequency_path)
+
     def _make_new_term_doc_matrix(self,
                                   new_X=None,
                                   new_mX=None,
@@ -111,12 +125,3 @@ class ParsedCorpus(DataFrameCorpus):
             df=self._apply_mask_to_df(new_y_mask, new_df),
             unigram_frequency_path=self._unigram_frequency_path
         )
-
-    def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):
-        row_group_cat = X.tocoo().row
-        group_idx_to_cat_idx = {}
-        for doc_idx, row in self._df.iterrows():
-            group_idx = group_idx_store.getidx(row[group_col] + '-' + row[self._category_col])
-            row_group_cat[row_group_cat == doc_idx] = group_idx
-            group_idx_to_cat_idx[group_idx] = self._y[doc_idx]
-        return group_idx_to_cat_idx, row_group_cat

@@ -18,17 +18,16 @@ term_metadata_df = corpus.get_term_freq_df('').assign(
     MatchesQuery=lambda df: np.array([query.match(word) is not None for word in df.index]),
     Frequency=lambda df: df.sum(axis=1),
     TextColor=lambda df: [
-        'blue' if dem_query.match(term) is not None
-        else 'red' if rep_query.match(term) is not None
-        else 'rgb(200, 200, 200)'
+        '#1b4b5a' if dem_query.match(term) is not None
+        else '#d35c37' if rep_query.match(term) is not None
+        else '#d6c6b9'
         for term in df.index
     ],
     SuppressText=lambda df: df.apply(
         lambda row: not (row.MatchesQuery or row.Frequency < 30),
         axis=1
     ),
-    PointColor=lambda df: df.TextColor,
-    LabelPriority=lambda df: -(df.MatchesQuery).astype(int),
+    PointColor=lambda df: df.TextColor
 )
 
 html = st.produce_scattertext_explorer(
@@ -43,10 +42,12 @@ html = st.produce_scattertext_explorer(
     transform=st.Scalers.dense_rank,
     max_overlapping=3,
     term_metadata_df=term_metadata_df,
+    header_names={'right': 'Most Frequent'},
     text_color_column='TextColor',
     suppress_text_column='SuppressText',
     color_column='PointColor',
-    label_priority_column='LabelPriority'
+    label_priority_column='MatchesQuery',
+    right_order_column='Frequency'
 )
 fn = 'demo_label_coloring.html'
 open(fn, 'w').write(html)

@@ -1,8 +1,6 @@
 from __future__ import print_function
 
-from scattertext.dispersion.Dispersion import Dispersion
-
-version = [0, 1, 0, 0]
+version = [0, 1, 1]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -40,7 +38,7 @@ from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.features.FeatsFromTopicModel import FeatsFromTopicModel
 from scattertext.termscoring.BM25Difference import BM25Difference
-from scattertext import SampleCorpora, SampleLexicons
+from scattertext import SampleCorpora, SampleLexicons, smoothing
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
@@ -125,6 +123,13 @@ from scattertext.CorpusFromTermFrequencies import CorpusFromTermFrequencies
 from scattertext.helpers.MakeUnique import make_unique
 from scattertext.viz.TermInfo import get_tooltip_js_function, get_custom_term_info_js_function
 from scattertext.CorpusWithoutCategoriesFromParsedDocuments import CorpusWithoutCategoriesFromParsedDocuments
+from scattertext.OffsetCorpus import OffsetCorpus
+from scattertext.OffsetCorpusFactory import OffsetCorpusFactory
+from scattertext.dispersion.Dispersion import Dispersion
+from scattertext.features import featoffsets
+from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
+from scattertext.features.featoffsets.token_and_feat_offset_getter import TokenFeatAndOffsetGetter
+from scattertext.tokenizers.roberta import RobertaTokenizerWrapper
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -242,6 +247,10 @@ def produce_scattertext_explorer(corpus,
                                  background_color=None,
                                  left_list_column=None,
                                  censor_point_column=None,
+                                 right_order_column=None,
+                                 line_coordinates=None,
+                                 subword_encoding=None,
+                                 use_offsets=False,
                                  return_data=False,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
@@ -455,7 +464,7 @@ def produce_scattertext_explorer(corpus,
         Dict mapping terms to dictionaries containing additional information which can be used in the color_func
         or the get_tooltip_content function. These will appear in termDict.etc
     term_metadata_df : pd.DataFrame, None by default
-        Datframe version of term_metadata
+        Dataframe version of term_metadata
     include_all_contexts: bool, default False
         Include all contexts, even non-matching ones, in interface
     max_overlapping: int, default -1
@@ -493,11 +502,19 @@ def produce_scattertext_explorer(corpus,
     color_score_column: str, default None
         column in term_metadata df; contains value between 0 and 1 which will be used to assign a color
     label_priority_column : str, default None
-        Column in term_metadata_df; smaller values in the column indicate a term should be labeled first
+        Column in term_metadata_df; larger values in the column indicate a term should be labeled first
     censor_point_column : str, default None
         Should we allow labels to be drawn over point?
+    right_order_column : str, default None
+        Order for right column ("characteristic" by default); largest first
     background_color : str, default None
         Changes document.body's background color to background_color
+    line_coordinates : list, default None
+        Coordinates for drawing a line under the plot
+    subword_encoding : str, default None
+        Type of subword encoding to use, None if none, currently supports "RoBERTa"
+    use_offsets : bool, default False
+        Enable the use of metadata offsets
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -590,7 +607,11 @@ def produce_scattertext_explorer(corpus,
         extra_categories=extra_categories,
         background_scorer=characteristic_scorer,
         include_term_category_counts=include_term_category_counts,
+        use_offsets=use_offsets
     )
+
+    if line_coordinates is not None:
+        scatter_chart_data['line'] = line_coordinates
 
     if return_data:
         return scatter_chart_data
@@ -618,7 +639,7 @@ def produce_scattertext_explorer(corpus,
 
     if color_score_column:
         assert color_func is None
-        color_func = '(function(d) {return d3.interpolateWarm(d.etc["%s"])})' % color_score_column
+        color_func = '(function(d) {return d3.interpolateRdYlBu(d.etc["%s"])})' % color_score_column
 
     if header_sorting_algos is not None:
         assert 'upper' not in header_sorting_algos
@@ -627,8 +648,8 @@ def produce_scattertext_explorer(corpus,
         assert term_metadata_df is not None
         assert left_list_column in term_metadata_df
         header_sorting_algos = {
-            "upper": '((a,b) => b.etc["'+left_list_column+'"] - a.etc["'+left_list_column+'"])',
-            "lower": '((a,b) => a.etc["'+left_list_column+'"] - b.etc["'+left_list_column+'"])'
+            "upper": '((a,b) => b.etc["' + left_list_column + '"] - a.etc["' + left_list_column + '"])',
+            "lower": '((a,b) => a.etc["' + left_list_column + '"] - b.etc["' + left_list_column + '"])'
         }
 
     scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
@@ -692,7 +713,9 @@ def produce_scattertext_explorer(corpus,
                                                  text_color_column=text_color_column,
                                                  suppress_text_column=suppress_text_column,
                                                  background_color=background_color,
-                                                 censor_point_column=censor_point_column)
+                                                 censor_point_column=censor_point_column,
+                                                 right_order_column=right_order_column,
+                                                 subword_encoding=subword_encoding)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -1903,25 +1926,22 @@ def dataframe_scattertext(
         kwargs['tooltip_columns'] = ['Xpos', 'Ypos']
         kwargs['tooltip_column_names'] = {'Xpos': kwargs.get('x_label', 'X'), 'Ypos': kwargs.get('y_label', 'Y')}
 
-    #kwargs.setdefault('color_func',
-    #                  "(function(d) {return d.etc['Color']})" if 'Color' in plot_df else None)
     kwargs.setdefault('metadata', None),
     kwargs.setdefault('scores', plot_df['Score'] if 'Score' in plot_df else 0),
     kwargs.setdefault('minimum_term_frequency', 0)
     kwargs.setdefault('pmi_threshold_coefficient', 0)
     kwargs.setdefault('category', corpus.get_categories()[0])
-    kwargs.setdefault('original_x', plot_df['X'])
-    kwargs.setdefault('original_y', plot_df['Y'])
-    kwargs.setdefault('x_coords', plot_df['Xpos'])
-    kwargs.setdefault('y_coords', plot_df['Ypos'])
+    kwargs.setdefault('original_x', plot_df['X'].values)
+    kwargs.setdefault('original_y', plot_df['Y'].values)
+    kwargs.setdefault('x_coords', plot_df['Xpos'].values)
+    kwargs.setdefault('y_coords', plot_df['Ypos'].values)
     kwargs.setdefault('use_global_scale', True)
     kwargs.setdefault('ignore_categories', True)
-    kwargs.setdefault('show_axes_and_cross_hairs', 1)
+    kwargs.setdefault('show_axes_and_cross_hairs', 0)
     kwargs.setdefault('unified_context', 1)
     kwargs.setdefault('show_top_terms', False)
     kwargs.setdefault('x_label', 'X')
     kwargs.setdefault('y_label', 'Y')
-
     return produce_scattertext_explorer(
         corpus,
         term_metadata_df=plot_df,

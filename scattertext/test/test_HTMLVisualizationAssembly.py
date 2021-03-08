@@ -20,7 +20,8 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
-                  'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined']
+                  'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
+                  'undefined']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -527,3 +528,15 @@ class TestHTMLVisualizationAssembly(TestCase):
         params = (ScatterplotStructure(visualization_data, censor_point_column='CensorPoint')
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({61: '"CensorPoint"'}))
+
+    def test_right_order_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, right_order_column='Priority')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({62: '"Priority"'}))
+
+    def test_sentence_piece(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, subword_encoding='RoBERTa')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({63: '"RoBERTa"'}))

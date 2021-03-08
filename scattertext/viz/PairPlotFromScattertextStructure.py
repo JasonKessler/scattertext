@@ -4,7 +4,6 @@ from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJS
 from scattertext.viz.HTMLSemioticSquareViz import ClickableTerms
 
 
-
 class PairPlotFromScatterplotStructure(object):
     def __init__(self,
                  category_scatterplot_structure,
@@ -74,8 +73,8 @@ class PairPlotFromScatterplotStructure(object):
                 self.term_plot_interface
             ),
             self.term_scatterplot_structure.get_js_reset_function(
-                values_to_set = [self.category_plot_interface, self.term_plot_interface],
-                functions_to_reset = ['build'+self.category_plot_interface, 'build'+self.term_plot_interface]
+                values_to_set=[self.category_plot_interface, self.term_plot_interface],
+                functions_to_reset=['build' + self.category_plot_interface, 'build' + self.term_plot_interface]
             ),
             PackedDataUtils.javascript_post_build_viz('categorySearch', self.category_plot_interface),
             PackedDataUtils.javascript_post_build_viz('termSearch', self.term_plot_interface),
@@ -103,8 +102,6 @@ class PairPlotFromScatterplotStructure(object):
         if self.show_halo:
             return PackedDataUtils.get_packaged_html_template_content(PAIR_PLOT_HTML_VIZ_FILE_NAME)
         return PackedDataUtils.get_packaged_html_template_content(PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME)
-
-
 
     def _get_lexicon_html(self, terms):
         lexicon_html = ''

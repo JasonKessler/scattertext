@@ -3,8 +3,10 @@ import pandas as pd
 from scipy.stats import rankdata
 
 
-def scale(vec, terms=None, other_vec=None):
-    return (vec - vec.min()) / (vec.max() - vec.min())
+def scale(vec, other_vec=None):
+    if other_vec is None:
+        other_vec = vec
+    return (other_vec - vec.min()) / (vec.max() - vec.min())
 
 
 class Coordinates:
@@ -36,14 +38,18 @@ def rotate_radians(y, x, radians):
         x * np.sin(radians) + y * np.cos(radians)
     )
 
-def scale_center_zero(vec):
-    return ((((vec > 0).astype(float) * (vec / vec.max())) * 0.5 + 0.5)
-            + ((vec < 0).astype(float) * (vec / (-vec.min())) * 0.5))
+def scale_center_zero(vec, other_vec=None):
+    if other_vec is None:
+        other_vec = vec
+    return ((((other_vec > 0).astype(float) * (other_vec / vec.max())) * 0.5 + 0.5)
+            + ((other_vec < 0).astype(float) * (other_vec / (-vec.min())) * 0.5))
 
-def scale_center_zero_abs(vec):
+def scale_center_zero_abs(vec, other_vec=None):
+    if other_vec is None:
+        other_vec = vec
     max_abs = max(vec.max(), -vec.min())
-    return ((((vec > 0).astype(float) * (vec / max_abs)) * 0.5 + 0.5)
-            + ((vec < 0).astype(float) * (vec / max_abs) * 0.5))
+    return ((((other_vec > 0).astype(float) * (other_vec / max_abs)) * 0.5 + 0.5)
+            + ((other_vec < 0).astype(float) * (other_vec / max_abs) * 0.5))
 
 
 def scale_neg_1_to_1_with_zero_mean_abs_max(vec):

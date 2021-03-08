@@ -72,7 +72,9 @@ class ScatterplotStructure(object):
             text_color_column=None,
             suppress_text_column=None,
             censor_point_column=None,
-            background_color=None
+            background_color=None,
+            right_order_column=None,
+            subword_encoding=None
     ):
         '''
 
@@ -209,15 +211,21 @@ class ScatterplotStructure(object):
         background_labels: List[Dict]: default None
             List of [{"Text": "Label", "X": xpos, "Y": ypos}, ...] to be background labels on plot
         label_priority_column : str, default None
-            Column in term_metadata_df; smaler values in the column indicate a term should be labeled first
+            Column in term_metadata_df; larger values in the column indicate a term should be labeled first
         text_color_column: str, default None
             Column in term_metadata_df which supplies term colors
         suppress_text_column: str, default None
             Column in term_metadata_df which is of boolean value. Indicates if a term should be labeled.
         censor_point_column : str, default None
             Should we prevent labels from being drawn over a point?
+        right_order_column : str, default None
+            Order for right column ("characteristic" by default); largest first
+        subword_encoding : str, default None
+            Type of subword encoding to use, None if none, currently supports "RoBERTa"
         background_color: str, default None
             Color to set document.body's background
+        sentence_piece: bool, default False
+            Use sentence piece conventions from to search for terms in JS
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -281,7 +289,9 @@ class ScatterplotStructure(object):
         self._text_color_column = text_color_column
         self._suppress_label_column = suppress_text_column
         self._censor_point_column = censor_point_column
+        self._right_order_column = right_order_column
         self._background_color = background_color
+        self._subword_encoding = subword_encoding
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x):
@@ -387,6 +397,8 @@ class ScatterplotStructure(object):
             js_default_string(self._suppress_label_column),
             js_default_string(self._background_color),
             js_default_string(self._censor_point_column),
+            js_default_string(self._right_order_column),
+            js_default_string(self._subword_encoding)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 
