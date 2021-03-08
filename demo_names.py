@@ -1,7 +1,7 @@
 import scattertext as st
 import spacy
 
-nlp = spacy.load('en')
+nlp = spacy.load('en_core_web_sm')
 
 df = st.SampleCorpora.ConventionData2012.get_data().assign(
     parse=lambda df: list(nlp.pipe(df.text))

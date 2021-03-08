@@ -4,7 +4,7 @@ from scattertext import SampleCorpora, produce_scattertext_explorer
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.termscoring.LogOddsUniformativePriorScore import LogOddsUninformativePriorScore
 
-nlp = spacy.load('en')
+nlp = spacy.load('en_core_web_sm')
 convention_df = SampleCorpora.ConventionData2012.get_data()
 corpus = CorpusFromPandas(convention_df,
                           category_col='party',

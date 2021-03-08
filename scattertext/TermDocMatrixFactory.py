@@ -38,7 +38,7 @@ class TermDocMatrixFactory(object):
            the new string.
        post_nlp_clean_function : function (default lambda x: x)
            A function that takes a spaCy Doc
-       nlp : spacy.load('en') (default None)
+       nlp : spacy.load('en_core_web_sm') (default None)
            The spaCy parser used to parse documents.  If it's None,
            the class will go through the expensive operation of
            creating one to parse the text
@@ -143,7 +143,7 @@ class TermDocMatrixFactory(object):
         nlp = self._nlp
         if nlp is None:
             import spacy
-            nlp = spacy.load('en')
+            nlp = spacy.load('en_core_web_sm')
         return nlp
 
     def censor_entity_types(self, entity_types):

@@ -8,7 +8,7 @@ corpus = (CorpusFromPandas(convention_df,
                            category_col='party',
                            text_col='text',
                            feats_from_spacy_doc=PhraseMachinePhrases(),
-                           nlp=spacy.load('en', parser=False))
+                           nlp=spacy.load('en_core_web_sm', parser=False))
           .build().compact(AssociationCompactor(4000)))
 
 html = produce_scattertext_explorer(corpus,

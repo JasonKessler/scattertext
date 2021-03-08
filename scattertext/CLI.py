@@ -51,8 +51,8 @@ def main():
 	                    help="If present, don't use spaCy for preprocessing.  Instead, "
 	                         "use a simple, dumb, regex.")
 	parser.add_argument('--spacy_language_model', action='store',
-	                    dest='spacy_language_model', default='en',
-	                    help="If present, pick the spaCy language model to use. Default is 'en'. "
+	                    dest='spacy_language_model', default='en_core_web_sm',
+	                    help="If present, pick the spaCy language model to use. Default is 'en_core_web_sm'. "
 	                         "Other valid values include 'de' and 'fr'. --regex_parser will override."
 	                         "Please see https://spacy.io/docs/api/language-models for moredetails")
 	parser.add_argument('--one_use_per_doc', action='store_true',

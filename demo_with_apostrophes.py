@@ -1,7 +1,7 @@
 import scattertext as st
 import spacy
 
-nlp = spacy.blank('en')
+nlp = spacy.blank('en_core_web_sm')
 nlp.tokenizer.rules = {key: value for key, value in nlp.tokenizer.rules.items()
                        if "'" not in key and "’" not in key and "‘" not in key}
 nlp.add_pipe(nlp.create_pipe('sentencizer'))

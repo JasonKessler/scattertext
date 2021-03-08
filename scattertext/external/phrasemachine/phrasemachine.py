@@ -254,14 +254,14 @@ def get_stdeng_spacy_tagger(suppress_errors=False):
 	try:
 		import spacy
 		SPACY_WRAPPER = SpacyTagger()
-		SPACY_WRAPPER.spacy_object = spacy.load('en', parser=False, entity=False)
+		SPACY_WRAPPER.spacy_object = spacy.load('en_core_web_sm', parser=False, entity=False)
 		return SPACY_WRAPPER
 	except ImportError:
 		if not suppress_errors: raise
 	except RuntimeError:
-		## this seems to happen if the 'en' model is not installed. it might
+		## this seems to happen if the 'en_core_web_sm' model is not installed. it might
 		## look like this:
-		# RuntimeError: Model 'en' not installed. Please run 'python -m spacy.en.download' to install latest compatible model.
+		# RuntimeError: Model 'en_core_web_sm' not installed. Please run 'python -m spacy.en.download' to install latest compatible model.
 		if not suppress_errors: raise
 	return None
 

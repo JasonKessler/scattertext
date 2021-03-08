@@ -7,7 +7,7 @@ from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSi
 
 
 def main():
-	nlp = spacy.load('en')
+	nlp = spacy.load('en_core_web_sm')
 	#nlp = whitespace_nlp_with_sentences
 	convention_df = SampleCorpora.ConventionData2012.get_data()
 	convention_df['parsed'] = convention_df.text.apply(nlp)

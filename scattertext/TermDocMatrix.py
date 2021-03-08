@@ -764,11 +764,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         metadata_index_store = IndexStore()
         metadata_csr_factory = CSRMatrixFactory()
         assert len(metadata_lists) == self.get_num_docs()
-        print("STARTING")
         for doc_i, metadata_list in enumerate(metadata_lists):
-            print("L", metadata_list)
             for metadatum in metadata_list:
-                print("METADATUM", metadatum)
                 # raise Exception(str(metadatum)
                 #                + " " + str(type(metadatum)) + " " + str(len(metadatum)) + str(metadata_list)
                 #                + " " + str(type(metadata_list)) + " " + str(len(metadata_list)) + str(metadata_lists))
@@ -802,7 +799,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         ordered_doc_labels = list(sorted(set(doc_labels)))
         X = self._X
         if replace_metadata:
-            X = self._mX
+            #X = self._mX
+            X = self._X
 
         for doc_label in ordered_doc_labels:
             label_doc_mask = doc_labels == doc_label

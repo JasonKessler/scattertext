@@ -29,17 +29,26 @@ class PyTextRankPhrases(FeatsFromSpacyDoc):
         return self
 
     def get_doc_metadata(self, doc):
-        import pytextrank
         phrase_counter = Counter()
-        tr = pytextrank.TextRank()
-        tr.doc = doc
-        phrases = tr.calc_textrank()
-        for phrase in phrases:
-            if self._include_chunks:
-                for chunk in phrase.chunks:
-                    phrase_counter[str(chunk)] += (phrase.rank + self._rank_smoothing_constant)
-            else:
-                phrase_counter[phrase.text] += phrase.count * (phrase.rank + self._rank_smoothing_constant)
+        try:
+            for phrase in doc._.phrases:
+                if self._include_chunks:
+                    for chunk in phrase.chunks:
+                        phrase_counter[str(chunk)] += (phrase.rank + self._rank_smoothing_constant)
+                else:
+                    phrase_counter[phrase.text] += phrase.count * (phrase.rank + self._rank_smoothing_constant)
+        except: # Support for pytextrank<3
+            import pytextrank
+            tr = pytextrank.TextRank()
+            tr.doc = doc
+            phrases = tr.calc_textrank()
+            for phrase in phrases:
+                if self._include_chunks:
+                    for chunk in phrase.chunks:
+                        phrase_counter[str(chunk)] += (phrase.rank + self._rank_smoothing_constant)
+                else:
+                    phrase_counter[phrase.text] += phrase.count * (phrase.rank + self._rank_smoothing_constant)
+
         return phrase_counter
 
     def get_feats(self, doc):

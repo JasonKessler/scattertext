@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 1, 1]
+version = [0, 1, 2]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -928,7 +928,7 @@ def word_similarity_explorer(corpus,
     target_term : str
         Word or phrase for semantic similarity comparison
     nlp : spaCy-like parsing function
-        E.g., spacy.load('en'), whitespace_nlp, etc...
+        E.g., spacy.load('en_core_web_sm'), whitespace_nlp, etc...
     alpha : float, default = 0.01
         Uniform dirichlet prior for p-value calculation
     max_p_val : float, default = 0.1
@@ -941,7 +941,7 @@ def word_similarity_explorer(corpus,
 
     if nlp is None:
         import spacy
-        nlp = spacy.load('en')
+        nlp = spacy.load('en_core_web_sm')
 
     base_term = nlp(target_term)
     scores = np.array([base_term.similarity(nlp(tok))

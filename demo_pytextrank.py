@@ -5,7 +5,8 @@ import spacy
 import numpy as np
 import pytextrank
 
-nlp = spacy.load('en')
+nlp = spacy.load('en_core_web_sm')
+nlp.add_pipe("textrank", last=True)
 
 convention_df = SampleCorpora.ConventionData2012.get_data().assign(
     parse=lambda df: df.text.apply(nlp),
@@ -62,7 +63,6 @@ html = produce_scattertext_explorer(
 file_name = 'demo_pytextrank_prominence.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
 print('Open %s in Chrome or Firefox.' % file_name)
-
 
 html = produce_scattertext_explorer(
     corpus,
