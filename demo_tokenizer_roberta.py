@@ -1,6 +1,3 @@
-import pandas as pd
-import numpy as np
-from transformers import RobertaTokenizer
 from transformers import RobertaTokenizerFast
 import scattertext as st
 
