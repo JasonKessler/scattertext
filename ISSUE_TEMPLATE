@@ -8,23 +8,20 @@ Note that bug reports which to not follow this template are liable to be closed.
 
 ## Steps to Reproduce
 
-<!--
-Include a program which can be run using a publicly available dataset. Ideally, the data should be loaded
-from a web-accessible CSV or JSON file, but a link to a structured CSV file is mandatory.
+This is a runnable program which uses a publicliy available data set. Anyone can copy this piece of code, run it, and reproduce the issue:
 
-A user should be able to copy and paste this code out of the bug report and run it, reproducing the unwanted
-behavior.
--->
+```
+# Here is the code snippet
+```
 
 ## Expected behavior
 
-<!-- A clear and concise description of what you expected to happen.
-If it involves something about the UI, please upload an illustrated what went wrong and what you expect to happend.
--->
+This is is a clear description of what I expected to happen.
 
 ## Environment
 
  - Scattertext version (e.g., 0.0.2.75):
+ - Have I tried running this on the latest version of Scattertext?:
  - OS (e.g., Linux):
  - How you installed Scattertext (`conda`, `pip`, source):
  - Build command you used (if compiling from source):
