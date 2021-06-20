@@ -1,5 +1,4 @@
-from functools import partial
-
+import numpy as np
 from scipy.optimize import leastsq
 
 
@@ -8,7 +7,7 @@ def fitfunc(p, x):
 
 
 def errfunc(p, x, y):
-    return y - fitfunc(p, x)
+    return np.power(y - fitfunc(p, x), 2)
 
 
 class PowerLaw(object):
@@ -16,9 +15,8 @@ class PowerLaw(object):
         self.partial_func = None
 
     def fit(self, xdata, ydata):
-        params, _ = leastsq(errfunc, [max(ydata), -1, -0.5], args=(xdata, ydata), maxfev=500)
-        self.partial_func = partial(fitfunc, params)
+        self.params, _ = leastsq(errfunc, [max(ydata), -1, -0.5], args=(xdata, ydata), maxfev=500)
         return self
 
     def predict(self, x):
-        self.partial_func(x)
+        return fitfunc(self.params, x)

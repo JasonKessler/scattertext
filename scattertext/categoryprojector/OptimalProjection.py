@@ -45,7 +45,7 @@ def get_optimal_category_projection(
         projector=lambda n_terms, n_dims: CategoryProjector(
             selector=AssociationCompactor(n_terms, scorer=RankDifference),
             projector=PCA(n_dims)),
-        optimizer = morista_index,
+        optimizer = ripley_poisson_difference,
         verbose=False
 ):
     min_dev = None

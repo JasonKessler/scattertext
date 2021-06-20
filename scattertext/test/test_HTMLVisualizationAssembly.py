@@ -21,7 +21,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
-                  'undefined']
+                  'undefined', '14']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -540,3 +540,10 @@ class TestHTMLVisualizationAssembly(TestCase):
         params = (ScatterplotStructure(visualization_data, subword_encoding='RoBERTa')
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({63: '"RoBERTa"'}))
+
+
+    def test_top_terms_length(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data, top_terms_length=5)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({64: '5'}))

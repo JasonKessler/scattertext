@@ -17,5 +17,8 @@ class DeltaJSDivergence(object):
 
         return m * lg(1 / m) - (pi1 * p2 * lg(1 / p1) + pi2 * p2 * lg(1 / p2))
 
+    def get_default_score(self):
+        return 0
+
     def get_name(self):
         return 'JS Divergence Shift'

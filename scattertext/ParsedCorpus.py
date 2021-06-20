@@ -34,40 +34,6 @@ class ParsedDataFrameCorpus(DataFrameCorpus):
         mask = (self._X[:, idx] > 0).todense().A1
         return mask
 
-    def term_group_freq_df(self, group_col):
-        # type: (str) -> pd.DataFrame
-        '''
-        Returns a dataframe indexed on the number of groups a term occured in.
-
-        Parameters
-        ----------
-        group_col
-
-        Returns
-        -------
-        pd.DataFrame
-        '''
-        group_idx_store = IndexStore()
-        X = self._X
-        group_idx_to_cat_idx, row_group_cat \
-            = self._get_group_docids_and_index_store(X, group_col, group_idx_store)
-        newX = self._change_document_type_in_matrix(X, row_group_cat)
-        newX = self._make_all_positive_data_ones(newX)
-        category_row = newX.tocoo().row
-        for group_idx, cat_idx in group_idx_to_cat_idx.items():
-            category_row[category_row == group_idx] = cat_idx
-        catX = self._change_document_type_in_matrix(newX, category_row)
-        return self._term_freq_df_from_matrix(catX)
-
-
-    def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):
-        row_group_cat = X.tocoo().row
-        group_idx_to_cat_idx = {}
-        for doc_idx, row in self._df.iterrows():
-            group_idx = group_idx_store.getidx(row[group_col] + '-' + row[self._category_col])
-            row_group_cat[row_group_cat == doc_idx] = group_idx
-            group_idx_to_cat_idx[group_idx] = self._y[doc_idx]
-        return group_idx_to_cat_idx, row_group_cat
 
 class ParsedCorpus(ParsedDataFrameCorpus):
     def __init__(self,
@@ -125,3 +91,37 @@ class ParsedCorpus(ParsedDataFrameCorpus):
             df=self._apply_mask_to_df(new_y_mask, new_df),
             unigram_frequency_path=self._unigram_frequency_path
         )
+
+    def term_group_freq_df(self, group_col):
+        # type: (str) -> pd.DataFrame
+        '''
+        Returns a dataframe indexed on the number of groups a term occured in.
+
+        Parameters
+        ----------
+        group_col
+
+        Returns
+        -------
+        pd.DataFrame
+        '''
+        group_idx_store = IndexStore()
+        X = self._X
+        group_idx_to_cat_idx, row_group_cat \
+            = self._get_group_docids_and_index_store(X, group_col, group_idx_store)
+        newX = self._change_document_type_in_matrix(X, row_group_cat)
+        newX = self._make_all_positive_data_ones(newX)
+        category_row = newX.tocoo().row
+        for group_idx, cat_idx in group_idx_to_cat_idx.items():
+            category_row[category_row == group_idx] = cat_idx
+        catX = self._change_document_type_in_matrix(newX, category_row)
+        return self._term_freq_df_from_matrix(catX)
+
+    def _get_group_docids_and_index_store(self, X, group_col, group_idx_store):
+        row_group_cat = X.tocoo().row
+        group_idx_to_cat_idx = {}
+        for doc_idx, row in self._df.iterrows():
+            group_idx = group_idx_store.getidx(row[group_col] + '-' + row[self._category_col])
+            row_group_cat[row_group_cat == doc_idx] = group_idx
+            group_idx_to_cat_idx[group_idx] = self._y[doc_idx]
+        return group_idx_to_cat_idx, row_group_cat

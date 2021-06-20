@@ -19,10 +19,11 @@ dispersion_df = dispersion.get_df().assign(
     X=lambda df: df.Frequency,
     Xpos=lambda df: st.Scalers.log_scale(df.X),
     Y=lambda df: dispersion.da(),
+    DA = lambda df: df.Y,
     Ypos=lambda df: st.Scalers.scale(df.Y),
     Expected=lambda df: Lowess().fit_predict(df.Xpos.values, df.Ypos.values),
-    Residual=lambda df: df.Ypos - df.Expected,
-    ColorScore=lambda df: st.Scalers.scale_center_zero_abs(df.Residual)
+    AdjustedDA=lambda df: df.Ypos - df.Expected,
+    ColorScore=lambda df: st.Scalers.scale_center_zero_abs(df.AdjustedDA)
 )
 
 line_df = pd.DataFrame({
@@ -41,7 +42,7 @@ html = st.dataframe_scattertext(
     color_score_column='ColorScore',
     tooltip_columns=['Frequency', 'DA'],
     header_names={'upper': 'Lower than Expected', 'lower': 'More than Expected'},
-    left_list_column='Residual',
+    left_list_column='AdjustedDA',
     background_color='#e5e5e3',
     line_coordinates = line_df.to_dict('records')
 )
@@ -49,9 +50,6 @@ html = st.dataframe_scattertext(
 fn = 'demo_dispersion.html'
 open(fn, 'w').write(html)
 print('open ./%s in Chrome' % fn)
-
-
-
 
 residual_dispersion_df = dispersion_df.assign(
     Expected=lambda df: Lowess().fit_predict(df.X.values, df.Y.values),
@@ -61,8 +59,8 @@ residual_dispersion_df = dispersion_df.assign(
 )
 
 line_df = pd.DataFrame({
-    'x': dispersion_df.Xpos.values,
-    'y': st.Scalers.scale(dispersion_df.Expected),
+    'x': residual_dispersion_df.Xpos.values,
+    'y': 0.5,
 }).sort_values(by='x')
 
 html = st.dataframe_scattertext(
@@ -71,14 +69,16 @@ html = st.dataframe_scattertext(
     unified_context=False,
     metadata=corpus.get_df()['speaker'] + ' (' + corpus.get_df()['party'].str.upper() + ')',
     x_label='Log Frequency',
-    y_label='DA - E[DA] via Lowess',
-    y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+    y_label='Frequency-adjusted DA',
+    y_axis_labels=['More Concentrated', 'Medium', 'More Dispersion'],
     color_score_column='ColorScore',
-    tooltip_columns=['Frequency', 'DA - E[DA]'],
-    header_names={'upper': 'Lower than Expected', 'lower': 'More than Expected'},
-    left_list_column='Residual',
+    tooltip_columns=['Frequency', 'AdjustedDA'],
+    header_names={'upper': 'More Dispersed', 'lower': 'More Concentrated'},
+    left_list_column='AdjustedDA',
     background_color='#e5e5e3',
-    line_coordinates = line_df.to_dict('records')
+    line_coordinates = line_df.to_dict('records'),
+    #d3_url='../scattertext/data/viz/scripts/d3.min.js',
+    #d3_scale_chromatic_url='../scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js'
 )
 
 

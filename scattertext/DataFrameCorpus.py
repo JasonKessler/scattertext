@@ -1,3 +1,5 @@
+from scattertext.indexstore import IndexStore
+
 from scattertext.Corpus import Corpus
 
 

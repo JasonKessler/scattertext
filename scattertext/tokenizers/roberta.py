@@ -16,8 +16,8 @@ class RobertaTokenizerWrapper:
                 from text_unidecode import unidecode
             except:
                 raise Exception("Please install the text_unicode package to preprocess documents. "
-                                "If you'd like to bypass this step, pass a text preprocessing function into "
-                                "the decode parameter of this class.")
+                                "If you'd like to bypass this step, pass a text preprocessing "
+                                "(e.g., lambda x: x) function into the decode parameter of this class.")
             self.decoder = unidecode
         else:
             self.decoder = decoder

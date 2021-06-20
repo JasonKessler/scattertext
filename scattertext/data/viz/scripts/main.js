@@ -62,7 +62,8 @@ buildViz = function (d3) {
                      backgroundColor = undefined,
                      censorPointColumn = undefined,
                      rightOrderColumn = undefined,
-                     subwordEncoding = null
+                     subwordEncoding = null,
+                     topTermsLength = 14
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -2327,7 +2328,7 @@ buildViz = function (d3) {
                 return pickScoreSortAlgo(isUpperPane);
             }
 
-            function showAssociatedWordList(data, word, header, isUpperPane, length = 14) {
+            function showAssociatedWordList(data, word, header, isUpperPane, length = topTermsLength) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isUpperPane);
                 console.log("showAssociatedWordList");
@@ -2410,7 +2411,12 @@ buildViz = function (d3) {
 
                 var notCatHeader = showNotCatHeader(startingOffset, word, lowerHeaderName);
                 word = notCatHeader;
-                characteristicXOffset = catHeader.node().getBBox().x + maxWidth + 10;
+                characteristicXOffset = Math.max(
+                    catHeader.node().getBBox().x + maxWidth + 10,
+                    notCatHeader.node().getBBox().x + maxWidth + 10
+                )
+                console.log("characteristicXOffset", characteristicXOffset)
+
 
                 var notWordListData = showAssociatedWordList(data, word, notCatHeader, false);
                 word = wordListData.word;
@@ -2489,7 +2495,7 @@ buildViz = function (d3) {
                 var wordListData = showWordList(
                     word,
                     data.filter(term => (term.display === undefined || term.display === true))
-                        .sort(rightSortMethod).slice(0, 30)
+                        .sort(rightSortMethod).slice(0, topTermsLength * 2 + 2)
                 );
 
                 word = wordListData.word;
@@ -3024,7 +3030,7 @@ buildViz = function (d3) {
                 term.y = yf(oy[term.i]) // scores[term.i];
                 term.ox = ox[term.i];
                 term.oy = oy[term.i];
-                term.display = false;
+                term.display = true;
                 return term;
             })
 

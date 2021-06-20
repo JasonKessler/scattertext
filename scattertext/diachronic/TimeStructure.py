@@ -16,7 +16,8 @@ class TimeStructure(GraphStructure):
                                 scatterplot_width,
                                 scatterplot_height,
                                 d3_url_struct,
-                                protocol, template_file_name)
+                                protocol,
+                                template_file_name)
 
     def _replace_html_template(self, autocomplete_css, html_template, javascript_to_insert):
         html_template = html_template.replace(

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 1, 2]
+version = [0, 1, 3]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -130,6 +130,11 @@ from scattertext.features import featoffsets
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
 from scattertext.features.featoffsets.token_and_feat_offset_getter import TokenFeatAndOffsetGetter
 from scattertext.tokenizers.roberta import RobertaTokenizerWrapper
+from scattertext.continuous.sklearnpipeline import RidgeCoefficients
+from scattertext.continuous.ungar import UngarCoefficients
+from scattertext.features.RegexFeatAndOffsetGetter import RegexFeatAndOffsetGetter
+from scattertext.representations.LatentSemanticScaling import latent_semantic_scale_from_word2vec, lss_terms
+from scattertext.categorytable import CategoryTableMaker
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -250,6 +255,7 @@ def produce_scattertext_explorer(corpus,
                                  right_order_column=None,
                                  line_coordinates=None,
                                  subword_encoding=None,
+                                 top_terms_length=14,
                                  use_offsets=False,
                                  return_data=False,
                                  return_scatterplot_structure=False):
@@ -513,6 +519,8 @@ def produce_scattertext_explorer(corpus,
         Coordinates for drawing a line under the plot
     subword_encoding : str, default None
         Type of subword encoding to use, None if none, currently supports "RoBERTa"
+    top_terms_length : int, default 14
+        Number of words to list in most/least associated lists on left-hand side
     use_offsets : bool, default False
         Enable the use of metadata offsets
     return_data : bool default False
@@ -639,7 +647,10 @@ def produce_scattertext_explorer(corpus,
 
     if color_score_column:
         assert color_func is None
-        color_func = '(function(d) {return d3.interpolateRdYlBu(d.etc["%s"])})' % color_score_column
+        color_func = '(function(d) {return %s(d.etc["%s"])})' % (
+            d3_color_scale if d3_color_scale is not None else 'd3.interpolateRdYlBu',
+            color_score_column
+        )
 
     if header_sorting_algos is not None:
         assert 'upper' not in header_sorting_algos
@@ -651,6 +662,8 @@ def produce_scattertext_explorer(corpus,
             "upper": '((a,b) => b.etc["' + left_list_column + '"] - a.etc["' + left_list_column + '"])',
             "lower": '((a,b) => a.etc["' + left_list_column + '"] - b.etc["' + left_list_column + '"])'
         }
+    if right_order_column is not None:
+        assert right_order_column in term_metadata_df
 
     scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
                                                  width_in_pixels=width_in_pixels,
@@ -715,7 +728,8 @@ def produce_scattertext_explorer(corpus,
                                                  background_color=background_color,
                                                  censor_point_column=censor_point_column,
                                                  right_order_column=right_order_column,
-                                                 subword_encoding=subword_encoding)
+                                                 subword_encoding=subword_encoding,
+                                                 top_terms_length=top_terms_length)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -1937,8 +1951,8 @@ def dataframe_scattertext(
     kwargs.setdefault('y_coords', plot_df['Ypos'].values)
     kwargs.setdefault('use_global_scale', True)
     kwargs.setdefault('ignore_categories', True)
+    kwargs.setdefault('unified_context', kwargs['ignore_categories'])
     kwargs.setdefault('show_axes_and_cross_hairs', 0)
-    kwargs.setdefault('unified_context', 1)
     kwargs.setdefault('show_top_terms', False)
     kwargs.setdefault('x_label', 'X')
     kwargs.setdefault('y_label', 'Y')
@@ -1947,3 +1961,117 @@ def dataframe_scattertext(
         term_metadata_df=plot_df,
         **kwargs
     )
+
+
+class TableStructure(GraphStructure):
+    def __init__(self,
+                 scatterplot_structure,
+                 graph_renderer,
+                 **kwargs):
+        kwargs.setdefault('template_file_name', 'table_plot.html')
+        GraphStructure.__init__(self, scatterplot_structure, graph_renderer, **kwargs)
+
+    def get_font_import(self):
+        return ''
+
+    def get_zoom_script_import(self):
+        return ''
+
+
+def produce_scattertext_table(
+        corpus,
+        num_rows=10,
+        use_non_text_features=False,
+        plot_width=500,
+        plot_height=700,
+        **kwargs
+):
+    '''
+
+    :param df: pd.DataFrame
+    :param text_col: str
+    :param source_col: str
+    :param dest_col: str
+    :param source_name: str
+    :param dest_name: str
+    :param plot_width: int
+    :param plot_height: int
+    :param enable_pan_and_zoom: bool
+    :param engine: str, The graphviz engine (e.g., dot or neat)
+    :param graph_params dict or None, graph parameters in graph viz
+    :param node_params dict or None, node parameters in graph viz
+    :param kwargs: dict
+    :return: str
+    '''
+
+    graph_renderer = CategoryTableMaker(
+        corpus=corpus,
+        num_rows=num_rows,
+        use_metadata=use_non_text_features
+    )
+
+    """
+    alternative_term_func = '''(function(termDict) {
+        document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
+        showTermGraph(termDict['term']);
+        return true;
+    })
+    """
+
+    dispersion = Dispersion(
+        corpus, use_categories=True, use_metadata=use_non_text_features
+    )
+
+    adjusted_dispersion = dispersion.get_adjusted_metric(
+        dispersion.da(),
+        dispersion.get_frequency()
+    )
+
+    plot_df = pd.DataFrame().assign(
+        X=dispersion.get_frequency(),
+        Frequency=lambda df: df.X,
+        Xpos=lambda df: Scalers.dense_rank(df.X),
+        Y=lambda df: adjusted_dispersion,
+        AdjustedDA=lambda df: df.Y,
+        Ypos=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
+        ColorScore=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
+        term=dispersion.get_names()
+    ).set_index('term')
+
+    line_df = pd.DataFrame({
+        'x': plot_df.Xpos.values,
+        'y': 0.5,
+    }).sort_values(by='x')
+
+    alternative_term_func = '''(function(termDict) {
+       document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
+       showTermGraph(termDict['term']);
+       return true;
+    })'''
+
+    scatterplot_structure = dataframe_scattertext(
+        corpus,
+        plot_df=plot_df,
+        ignore_categories=False,
+        unified_context=kwargs.get('unified_context', True),
+        x_label='Frequency Rank',
+        y_label='Frequency-adjusted DA',
+        y_axis_labels=['More Concentrated', 'Medium', 'More Dispersion'],
+        color_score_column='ColorScore',
+        tooltip_columns=['Frequency', 'AdjustedDA'],
+        header_names={'upper': 'Dispersed', 'lower': 'Concentrated'},
+        left_list_column='AdjustedDA',
+        line_coordinates=line_df.to_dict('records'),
+        use_non_text_features=use_non_text_features,
+        return_scatterplot_structure=True,
+        width_in_pixels=plot_width,
+        height_in_pixels=plot_height,
+        **kwargs
+    )
+
+    html = TableStructure(
+        scatterplot_structure,
+        graph_renderer=graph_renderer
+    ).to_html()
+
+    return html

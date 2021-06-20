@@ -94,7 +94,7 @@ class CorpusAdapterForGensim(object):
 		-------
 		iter: [sentence1word1, ...], [sentence2word1, ...]
 		'''
-		assert isinstance(corpus, ParsedCorpus)
+		#assert isinstance(corpus, ParsedCorpus)
 		return itertools.chain(*[[[cls.get_token_format(t)
 								   for t in sent
 								   if not t.is_punct]
@@ -105,7 +105,7 @@ class CorpusAdapterForGensim(object):
 class Word2VecDefault(object):
 	def _default_word2vec_model(self):
 		from gensim.models import word2vec
-		return word2vec.Word2Vec(size=100,
+		return word2vec.Word2Vec(vector_size=100,
 		                         alpha=0.025,
 		                         window=5,
 		                         min_count=5,
@@ -118,7 +118,7 @@ class Word2VecDefault(object):
 		                         hs=1,
 		                         negative=0,
 		                         cbow_mean=0,
-		                         iter=1,
+		                         #iter=1,
 		                         null_word=0,
 		                         trim_rule=None,
 		                         sorted_vocab=1)
@@ -139,17 +139,17 @@ class Word2VecFromParsedCorpus(Word2VecDefault):
 			assert word2vec_model is None or isinstance(word2vec_model, word2vec.Word2Vec)
 		except:
 			warnings.warn("You should really install gensim, but we're going to duck-type your model and pray it works")
-		assert isinstance(corpus, ParsedCorpus)
+		#assert isinstance(corpus, ParsedCorpus)
 		self.corpus = corpus
 		self.model = self._get_word2vec_model(word2vec_model)
 
-	def train(self, epochs=2000, training_iterations=5):
+	def train(self, epochs=2000, super_epochs=5, tqdm=None):
 		'''
 		Parameters
 		----------
 		epochs : int
 		  Number of epochs to train for.  Default is 2000.
-		training_iterations : int
+		super_epochs : int
 			Number of times to repeat training process. Default is training_iterations.
 
 		Returns
@@ -158,7 +158,10 @@ class Word2VecFromParsedCorpus(Word2VecDefault):
 		'''
 
 		self._scan_and_build_vocab()
-		for _ in range(training_iterations):
+		myiter = range(super_epochs)
+		if tqdm:
+			myiter = tqdm(myiter, total=super_epochs)
+		for _ in myiter:
 				self.model.train(CorpusAdapterForGensim.get_sentences(self.corpus),
 			                 total_examples=self.model.corpus_count,
 			                 epochs=epochs)

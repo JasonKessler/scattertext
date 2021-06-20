@@ -27,7 +27,7 @@ class MockWord2Vec:
         pass
 
     def __getitem__(self, item):
-        assert item in self.wv.vocab
+        assert item in self.wv.key_to_index.keys()
         return np.zeros(30)
 
 

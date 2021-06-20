@@ -220,37 +220,11 @@ ul.top_terms li {
     display: none;
 }
 
-timelinecontainer { overflow-x: scroll; }
-thead {
-    border-bottom: 1px solid black;
-    vertical-align: bottom;
-}
-table {
-    margin-left: auto;
-    margin-right: auto;
-    border: none;
-    border-collapse: collapse;
-    border-spacing: 1;
-    color: black;
-    font-size: 8px;
-    table-layout: fixed;
-    border-bottom: 1px solid black;
-}
-tr, th, td {
-    text-align: right;
-    vertical-align: middle;
-    padding: 0.2em 0.2em;
-    line-height: normal;
-    white-space: normal;
-    max-width: none;
-    border: 1;
-    border-right: 1px solid black;
-    border-left: 1px solid black;
-}
-th {
-    font-size: 18px;
-    border-bottom: 1px solid black;
-    background-color: rgb(200, 200, 200);
+.timelinetable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 98%;
 }
 
 /***AUTOCOMPLETE CSS***/
@@ -259,21 +233,21 @@ th {
 <script src="<!--D3SCALECHROMATIC-->" charset="utf-8"></script>
 <!--<script src='https://unpkg.com/panzoom@8.7.3/dist/panzoom.min.js' name='pz'></script>-->
 <!--<script src="https://code.easypz.io/easypz.latest.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.0/dist/svg-pan-zoom.min.js"></script>-->
 <!--USEZOOM-->
+
 
 <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap" rel="stylesheet">
 <!-- EXTRA LIBS -->
 <!-- INSERT SEMIOTIC SQUARE -->
 <!--<a onclick="maxFreq = Math.log(data.map(d => d.cat + d.ncat).reduce((a,b) => Math.max(a,b))); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, false); plotInterface.redrawPoints(0.1, d => (Math.log(d.ncat + d.cat)/maxFreq), d => d.s, true)">View Score Plot</a>-->
-
-<div class="tablediv" style="width: {width}">
-    <p>
-        <!-- INSERT GRAPH -->
-    </p>
-</div>
-
 <div>
     <span id="d3-div-1-title-div"></span>
+    <div style="display: block">
+        <p>
+            <!-- INSERT GRAPH -->
+        </p>
+    </div>
 
     <table style="float: left">
         <tr>
@@ -285,7 +259,7 @@ th {
             <td>
                 <div autocomplete="off" style="text-align: center">
                     <div class="autocomplete">
-                        <input id="termSearch" type="text" placeholder="Search categories">
+                        <input id="termSearch" type="text" placeholder="Search terms">
                     </div>
                 </div>
             </td>

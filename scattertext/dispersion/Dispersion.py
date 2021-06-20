@@ -1,10 +1,13 @@
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, csr_matrix
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import pandas as pd
 
+from scattertext.smoothing.lowess import Lowess
+
+
 class Dispersion(object):
-    def __init__(self, corpus=None, term_doc_mat=None, use_metadata=False):
+    def __init__(self, corpus=None, term_doc_mat=None, use_metadata=False, use_categories=False, tqdm=None):
         """
         From https://www.researchgate.net/publication/332120488_Analyzing_dispersion
         Stefan Th. Gries. Analyzing dispersion. April 2019. Practical handbook of corpus linguistics. Springer.
@@ -30,13 +33,20 @@ class Dispersion(object):
         (6) p = (1/9, 2/10, 3/10, 4/10, 5 /11) (the percentages a makes up of each corpus part 1-n)
         '''
         self.corpus = None
+        self.use_metadata = use_metadata
         X = term_doc_mat
         if corpus is not None:
             self.corpus = corpus
             if use_metadata:
-                X = corpus.get_metadata_doc_mat()()
+                if use_categories is False:
+                    X = corpus.get_metadata_doc_mat()
+                else:
+                    X = csr_matrix(corpus.get_metadata_freq_df().values.T)
             else:
-                X = corpus.get_term_doc_mat()
+                if use_categories is False:
+                    X = corpus.get_term_doc_mat()
+                else:
+                    X = csr_matrix(corpus.get_term_freq_df().values.T)
         part_sizes = X.sum(axis=1)
         self.l = X.sum().sum()
         self.n = X.shape[0]
@@ -44,6 +54,7 @@ class Dispersion(object):
         self.v = X
         self.p = X.multiply(csc_matrix(1. / X.sum(axis=1)))
         self.s = part_sizes / self.l
+        self.tqdm = tqdm
 
     def dispersion_range(self):
         """
@@ -87,10 +98,9 @@ class Dispersion(object):
         frequencies of the element in question in each corpus part (in v1-n); of each product,
         one takes the square root, and those are summed up, that sum is squared, and divided
         by the overall frequency of the element in question in the corpus (f)'''
-        return np.power(
-            np.sqrt(self.v.multiply(self.s)).sum(axis=0).A1,
-            2
-        ) * 1. / self.get_frequency()
+
+        vs = self.v.multiply(self.s)
+        return np.power(np.sqrt(vs).sum(axis=0).A1, 2) * 1. / self.get_frequency()
 
     def dp(self):
         '''
@@ -116,7 +126,7 @@ class Dispersion(object):
     def kl_divergence(self):
         '''
         Direct quote from Gries (2019)
-        he final measure to be discussed here is one that, as far as I can tell, has never
+        The final measure to be discussed here is one that, as far as I can tell, has never
         been proposed as a measure of dispersion, but seems to me to be ideally suited to be
         one, namely the Kullback-Leibler (or KL-) divergence, a non-symmetric measure
         that quantifies how different one probability distribution (e.g., the distribution of
@@ -141,23 +151,33 @@ class Dispersion(object):
         '''
         n = self.n
 
-        constant = 1./(n * (n - 1)/2)
+        constant = 1. / (n * (n - 1) / 2)
+
+        it = range(self.v.shape[1])
+        if self.tqdm is not None:
+            it = self.tqdm(it)
 
         da = []
-        for word_i in range(self.v.shape[1]):
-            y = self.v.T[word_i].todense().A1
+        for word_i in it:
+            v_word_id = self.v.T[word_i]
+            if type(v_word_id) != np.ndarray:
+                y = v_word_id.todense().A1
+            else:
+                y = v_word_id
             yt = np.tile(y, (n, 1))
             pairs_sum = np.sum(np.abs(yt - yt.T)) / 2
-            da_score = 1 - pairs_sum * constant/(2 * y.mean())
+            da_score = 1 - pairs_sum * constant / (2 * y.mean())
             da.append(da_score)
 
         return np.array(da)
 
-    def get_df(self, terms = None):
+    def get_df(self, terms=None):
         if terms is None and self.corpus is not None:
-            terms = self.corpus.get_terms()
+            terms = self.get_names()
+
+        freq = self.get_frequency()
         df_content = {
-            'Frequency': self.get_frequency(),
+            'Frequency': freq,
             'Range': self.dispersion_range(),
             'SD': self.sd_population(),
             'VC': self.vc(),
@@ -166,11 +186,34 @@ class Dispersion(object):
             'DP': self.dp(),
             'DP norm': self.dp_norm(),
             'KL-divergence': self.kl_divergence(),
-            'DA': self.da()
         }
         if terms is None:
-            return pd.DataFrame(df_content)
-        return pd.DataFrame(df_content, index=terms)
+            df = pd.DataFrame(df_content)
+        else:
+            df = pd.DataFrame(df_content, index=terms)
+        return df
+
+    def get_names(self):
+        return self.corpus.get_metadata() if self.use_metadata else self.corpus.get_terms()
+
+    def get_adjusted_metric(self, metric=None, freq=None):
+        '''
+        Returns the difference between DA and the Lowess estimate of DP from frequency
+
+        :param metiric: Optional[np.array], metric to analyze, defaults to DP
+
+        :param freq: Optional[np.array], Word frequencies
+        :return: np.array, frequency-adjusted metric
+        '''
+        if metric is None:
+            metric = self.dp()
+        if freq is None:
+            freq = self.get_frequency()
+        freq_est_metric = Lowess().fit_predict(freq, metric)
+        adjusted_metric = metric - freq_est_metric
+        return adjusted_metric
 
     def get_frequency(self):
+        if len(self.f.shape) == 1:
+            return self.f
         return self.f.A1

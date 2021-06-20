@@ -15,7 +15,7 @@ class ClickableTerms:
 
 
 	@staticmethod
-	def get_clickable_term(term, plot_interface='plotInterface', other_plot_interface=None):
+	def get_clickable_term(term, plot_interface='plotInterface', other_plot_interface=None, style=None):
 		onclick_js = ClickableTerms._get_onclick_js(term.replace("'", "\\'"), plot_interface, other_plot_interface)
 		onmouseover_js =  (
 				"{plot_interface}.showToolTipForTerm({plot_interface}.data, {plot_interface}.svg, '%s',"
@@ -24,7 +24,8 @@ class ClickableTerms:
 		)
 		onmouseout_js = "{plot_interface}.tooltip.transition().style('opacity', 0)"
 		template = ('<span onclick="' + onclick_js + '" onmouseover="' + onmouseover_js + '" onmouseout="' +
-					onmouseout_js + '">{term}</span>')
+					onmouseout_js + '" '
+					+ ('' if style is None else 'style="' + style + '"') + '>{term}</span>')
 		clickable_term = template.format(term=term, plot_interface=plot_interface)
 		return clickable_term
 

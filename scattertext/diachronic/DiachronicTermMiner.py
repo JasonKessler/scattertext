@@ -12,7 +12,8 @@ class DiachronicTermMiner(object):
                  num_terms=40,
                  start_category=None,
                  timesteps_to_lag=5,
-                 seasonality_column=None):
+                 seasonality_column=None,
+                 model=None):
         self.corpus_ = corpus
         self.num_terms_ = num_terms
         self.sorted_categores_ = np.array(sorted(corpus.get_categories()))
@@ -33,6 +34,7 @@ class DiachronicTermMiner(object):
             if seasonality_column not in self.corpus_.get_df().columns:
                 raise Exception("seasonality_column should be none or a column in the source dataframe")
         self.seasonality_column_ = seasonality_column
+        self.model_ = model
 
     def get_display_dataframe(self):
         '''
@@ -133,6 +135,9 @@ class DiachronicTermMiner(object):
         catX = X[neg_mask | pos_mask, :]
         catY = np.zeros(catX.shape[0]).astype(bool)
         catY[pos_mask[neg_mask | pos_mask]] = True
-        scores = (pd.Series(LogisticRegression(penalty='l2').fit(catX, catY).coef_[0], index=terms)
+        scores = (pd.Series(self._get_model().fit(catX, catY).coef_[0], index=terms)
                   .sort_values(ascending=False))
         return scores
+
+    def _get_model(self):
+        return self.model_ if self.model_ is not None else LogisticRegression(penalty='l2')

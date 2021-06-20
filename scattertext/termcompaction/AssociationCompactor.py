@@ -17,15 +17,22 @@ class TermCategoryRanker(object):
 
     def get_rank_df(self, term_doc_matrix):
         # tdf = term_doc_matrix.get_term_freq_df('')
+        tdf, tdf_sum = self.__get_term_ranks_and_frequencies(term_doc_matrix)
+        score_data = {}
+        for category in term_doc_matrix.get_categories():
+            score_data[category] = self.scorer().get_scores(tdf[category], tdf_sum - tdf[category])
+        return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
+
+    def __get_term_ranks_and_frequencies(self, term_doc_matrix):
         ranker = self.term_ranker(term_doc_matrix)
         if self.use_non_text_features:
             ranker = ranker.use_non_text_features()
         tdf = ranker.get_ranks('')
         tdf_sum = tdf.sum(axis=1)
-        score_data = {}
-        for category in term_doc_matrix.get_categories():
-            score_data[category] = self.scorer().get_scores(tdf[category], tdf_sum - tdf[category])
-        return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
+        return tdf, tdf_sum
+
+    def get_frequencies(self, term_doc_matrix):
+        return self.__get_term_ranks_and_frequencies(term_doc_matrix)[1]
 
     def get_max_rank(self, term_doc_matrix):
         '''
@@ -45,12 +52,12 @@ class BaseAssociationCompactor(object):
         self.scorer = TermCategoryRanker(scorer, term_ranker, use_non_text_features)
 
     def _prune_higher_ranked_terms(self, term_doc_matrix, rank_df, rank):
-        term_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= rank])
+        terms_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= rank])
             .apply(lambda x: all(x), axis=1)]
-        return self._remove_terms(term_doc_matrix, term_to_remove)
+        return self._remove_terms(term_doc_matrix, terms_to_remove)
 
-    def _remove_terms(self, term_doc_matrix, term_to_remove):
-        return term_doc_matrix.remove_terms(term_to_remove, non_text=self.scorer.use_non_text_features)
+    def _remove_terms(self, term_doc_matrix, terms_to_remove):
+        return term_doc_matrix.remove_terms(terms_to_remove, non_text=self.scorer.use_non_text_features)
 
 class JSDCompactor(BaseAssociationCompactor):
     def __init__(self,
@@ -71,13 +78,16 @@ class JSDCompactor(BaseAssociationCompactor):
         ).iloc[self.max_terms:].index
         return term_doc_matrix.remove_terms(terms_to_remove, self.scorer.use_non_text_features)
 
+
 class AssociationCompactor(BaseAssociationCompactor):
     def __init__(self,
                  max_terms,
                  scorer=ScaledFScorePresetsNeg1To1,
                  term_ranker=AbsoluteFrequencyRanker,
-                 use_non_text_features=False):
+                 use_non_text_features=False,
+                 include_n_most_frequent_terms=0):
         self.max_terms = max_terms
+        self.include_n_most_frequent_terms = include_n_most_frequent_terms
         BaseAssociationCompactor.__init__(self, scorer, term_ranker, use_non_text_features)
 
     def compact(self, term_doc_matrix, verbose=False):
@@ -93,9 +103,20 @@ class AssociationCompactor(BaseAssociationCompactor):
         rank_df = self.scorer.get_rank_df(term_doc_matrix)
         optimal_rank = self._find_optimal_rank(rank_df)
 
-        compacted_term_doc_matrix = self._prune_higher_ranked_terms(term_doc_matrix, rank_df, optimal_rank)
+        terms_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= optimal_rank])
+            .apply(lambda x: all(x), axis=1)]
+
+        if self.include_n_most_frequent_terms > 0:
+            most_frequent_terms = self.scorer.get_frequencies(term_doc_matrix).sort_values(
+                ascending=False
+            ).index[:self.include_n_most_frequent_terms]
+            terms_to_remove = set(terms_to_remove) - set(most_frequent_terms)
+
+        compacted_term_doc_matrix = self._remove_terms(term_doc_matrix, terms_to_remove)
+
         if verbose:
-            print('max terms', self.max_terms, 'optimal_rank', optimal_rank,
+            print('max terms', self.max_terms,
+                  'optimal_rank', optimal_rank,
                   'num_terms', compacted_term_doc_matrix.get_num_terms())
         return compacted_term_doc_matrix
 

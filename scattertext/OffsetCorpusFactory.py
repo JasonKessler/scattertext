@@ -38,7 +38,7 @@ class OffsetCorpusFactory(object):
         self._term_offsets = {}
         self._metadata_offsets = {}
 
-    def build(self):
+    def build(self, show_progress=False):
         '''Constructs the term doc matrix.
 
         Returns
@@ -48,13 +48,17 @@ class OffsetCorpusFactory(object):
         self._ensure_category_col_is_in_df()
 
         y = self._get_y_and_populate_category_idx_store(self._df[self._category_col])
-        self._df.apply(self._add_to_x_factory, axis=1)
+        if show_progress is True:
+            self._df.progress_apply(self._add_to_x_factory, axis=1)
+        else:
+            self._df.apply(self._add_to_x_factory, axis=1)
+
         self._mX = self._mX_factory.set_last_row_idx(len(y) - 1).get_csr_matrix()
         return OffsetCorpus(
             df=self._df,
             X=self._X_factory.set_last_row_idx(len(y) - 1).get_csr_matrix(),
             mX=self._mX_factory.set_last_row_idx(len(y) - 1).get_csr_matrix(),
-            y=self._get_y_and_populate_category_idx_store(self._df[self._category_col]),
+            y=y,
             term_idx_store=self._term_idx_store,
             category_idx_store=self._category_idx_store,
             metadata_idx_store=self._metadata_idx_store,

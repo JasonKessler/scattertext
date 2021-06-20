@@ -1,4 +1,6 @@
 import pkgutil
+
+from scattertext.graphs.ComponentDiGraphHTMLRenderer import GraphRenderer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils
 
 GRAPH_VIZ_FILE_NAME = 'graph_plot.html'
@@ -12,7 +14,7 @@ class GraphStructure(object):
                  scatterplot_height=700,
                  d3_url_struct=None,
                  protocol='http',
-                 template_file_name=GRAPH_VIZ_FILE_NAME):
+                 template_file_name=None):
         ''',
         Parameters
         ----------
@@ -34,7 +36,7 @@ class GraphStructure(object):
         self.scatterplot_width = scatterplot_width
         self.scatterplot_height = scatterplot_height
 
-        self.template_file_name = template_file_name
+        self.template_file_name = GRAPH_VIZ_FILE_NAME if template_file_name is None else template_file_name
 
     def to_html(self):
         '''
@@ -65,10 +67,18 @@ class GraphStructure(object):
                 .replace('<!--D3URL-->', self.d3_url_struct.get_d3_url(), 1)
                 .replace('<!-- INSERT GRAPH -->', self.graph_renderer.get_graph())
                 .replace('<!--D3SCALECHROMATIC-->', self.d3_url_struct.get_d3_scale_chromatic_url())
+                .replace('<!--USEZOOM-->', self.get_zoom_script_import())
+                .replace('<!--FONTIMPORT-->', self.get_font_import())
                 .replace('http://', self.protocol + '://')
                 .replace('{width}', str(self.scatterplot_width))
                 .replace('{height}', str(self.scatterplot_height))
                 )
+
+    def get_font_import(self):
+        return '''<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap" rel="stylesheet">'''
+
+    def get_zoom_script_import(self):
+        return '<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.0/dist/svg-pan-zoom.min.js"></script>'
 
     def _get_html_template(self):
         return PackedDataUtils.get_packaged_html_template_content(self.template_file_name)

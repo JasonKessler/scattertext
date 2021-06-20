@@ -218,6 +218,20 @@ class TermDocMatrixWithoutCategories(object):
 
         return self.remove_terms(list(tdf[tdf <= minimum_term_count].index), non_text=non_text)
 
+    def remove_word_by_document_pct(self, min_document_pct=0., max_document_pct=1., non_text=False):
+        '''
+        Returns a copy of the corpus with terms that occur in a document percentage range.
+
+        :param min_document_pct: float, minimum document percentage. 0 by default
+        :param max_document_pct: float, maximum document percentage. 1 by default
+        :param non_text: bool, use metadata?
+        :return: Corpus
+        '''
+        tdm = (self.get_metadata_doc_mat() > 0) if non_text else (self.get_term_doc_mat() > 0)
+        tdmpct = (tdm.sum(axis=0) / tdm.shape[0]).A1
+        mask = (tdmpct >= min_document_pct) & (tdmpct <= max_document_pct)
+        return self.remove_terms(np.array(self.get_terms())[mask])
+
     def remove_entity_tags(self):
         '''
         Returns
@@ -464,7 +478,7 @@ class TermDocMatrixWithoutCategories(object):
         )
         return df.sort_values(by='Scaled f-score', ascending=False)
 
-    def     get_term_doc_mat(self):
+    def get_term_doc_mat(self):
         '''
         Returns sparse matrix representation of term-doc-matrix
 

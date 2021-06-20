@@ -44,9 +44,9 @@ class EmbeddingsResolver:
             acceptable_terms = set(self.corpus_.get_terms())
         model = Word2VecFromParsedCorpus(self.corpus_, model).train()
         self.corpus_ = self.corpus_.remove_terms(set(self.corpus_.get_terms()) - acceptable_terms)
-        weight_list = [model[word] for word in model.wv.vocab]
+        weight_list = [model[word] for word in model.wv.key_to_index.keys()]
         self.embeddings_ = np.stack(weight_list)
-        self.vocab_ = model.wv.vocab
+        self.vocab_ = list(model.wv.key_to_index.keys())
         return self
 
     def project_embeddings(self, projection_model=None, x_dim=0, y_dim=1):

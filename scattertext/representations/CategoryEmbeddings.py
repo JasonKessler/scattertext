@@ -38,7 +38,7 @@ class CategoryEmbeddingsResolver:
             acceptable_terms = set(self.corpus_.get_terms())
         trained_model = CategorySpecificWord2VecFromParsedCorpus(self.corpus_, category, model).train()
         self.category_word2vec_model_[category] = trained_model
-        word2dwe = {word: trained_model[word] for word in trained_model.wv.vocab.keys()}
+        word2dwe = {word: trained_model[word] for word in trained_model.wv.key_to_index.keys()}
         self.category_embeddings_[category] = word2dwe
         return self
 
@@ -101,7 +101,7 @@ class CategorySpecificWord2VecFromParsedCorpus(Word2VecDefault):
         epochs : int
           Number of epochs to train for.  Default is 2000.
         training_iterations : int
-            Number of times to repeat training process. Default is training_iterations.
+            Number of times to repeat training process. Default is super_epochs.
 
         Returns
         -------

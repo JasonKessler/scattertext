@@ -36,19 +36,26 @@ class CohensDCalculator(object):
             'hedges_r_p': hedges_r_p,
             'm1': m1,
             'm2': m2,
-            'count1': orig_cat_X.sum(axis=0).A1,
-            'count2': orig_ncat_X.sum(axis=0).A1,
+            'count1': orig_cat_X.sum(axis=0).A1.astype(int),
+            'count2': orig_ncat_X.sum(axis=0).A1.astype(int),
             'docs1': (orig_cat_X > 0).sum(axis=0).A1,
             'docs2': (orig_ncat_X > 0).sum(axis=0).A1,
         }).fillna(0)
         if correction_method is not None:
             from statsmodels.stats.multitest import multipletests
+            score_df['cohens_d_p_' + correction_method] = multipletests(
+                np.array(score_df['cohens_d_p'], score_df['cohens_d_p'] - 1),
+                method=correction_method
+            )[1]
+            '''
             score_df['hedges_r_p_corr'] = 0.5
             for method in ['cohens_d', 'hedges_r']:
                 score_df[method + '_p_corr'] = 0.5
+                import pdb; pdb.set_trace()
                 pvals = score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p']
                 pvals = np.min(np.array([pvals, 1. - pvals])) * 2.
                 score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p_corr'] = (
                     multipletests(pvals, method=correction_method)[1]
                 )
+            '''
         return score_df
