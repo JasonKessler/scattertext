@@ -69,7 +69,7 @@ class CategoryTableMaker(GraphRenderer):
         )
 
         for rank, group_df in display_df.groupby('Rank'):
-            table += '<tr><td>' + '</td><td>'.join([
+            table += '<tr><td class="clickabletd">' + '</td><td class="clickabletd">'.join([
                 ClickableTerms.get_clickable_term(
                     row.Term,
                     style="font-size: " + str(row.FontSize)
@@ -86,7 +86,48 @@ class CategoryTableMaker(GraphRenderer):
             for _, row in cat_df.iterrows():
                 cat_d[row['Term']] = {'Rank': row['Rank'], 'Freq': row['Frequency']}
             d[category] = cat_d
-        return 'categoryFrequency = ' + json.dumps(d)
+        js = 'categoryFrequency = ' + json.dumps(d)  + ';\n\n'
+
+        js += '''
+        Array.from(document.querySelectorAll('.clickabletd')).map(
+            function (node) {
+                node.addEventListener('mouseenter', mouseEnterNode);
+                node.addEventListener('mouseleave', mouseLeaveNode);
+                node.addEventListener('click', clickNode);
+            }
+        )
+        
+        function clickNode() {
+            //document.querySelectorAll(".dotgraph")
+            //    .forEach(node => node.style.display = 'none');
+
+            //var term = Array.prototype.filter
+            //    .call(this.children, (x => x.tagName === "span"))[0].textContent;
+
+            //plotInterface.handleSearchTerm(term, true);
+            
+            
+        }
+
+        function mouseEnterNode(event) {
+            console.log("THIS"); console.log(this)
+            var term = this.children[0].textContent;
+            plotInterface.showTooltipSimple(term);
+            var clickableTds = document.getElementsByClassName('clickabletd');
+            for(var i = 0; i < clickableTds.length; i++) {
+                var td = clickableTds[i];
+                if(td.children[0].textContent == term) 
+                    td.style.backgroundColor = "#FFAAAA";
+            }
+        }
+
+        function mouseLeaveNode(event) {
+            plotInterface.tooltip.transition().style('opacity', 0)
+            var clickableTds = document.getElementsByClassName('clickabletd');            
+            for(var i = 0; i < clickableTds.length; i++) 
+                clickableTds[i].style.backgroundColor = "#FFFFFF";
+        }'''
+        return js
 
     def _get_term_category_associations(self):
         tdm = self.corpus.get_metadata_count_mat() if self.use_metadata else self.corpus.get_term_doc_mat()

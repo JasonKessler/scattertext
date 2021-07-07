@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 1, 3]
+version = [0, 1, 4]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -44,7 +44,7 @@ from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.CSRMatrixTools import CSRMatrixFactory
-from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT
+from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT, MY_ENGLISH_STOP_WORDS
 from scattertext.Corpus import Corpus
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.CorpusFromParsedDocuments import CorpusFromParsedDocuments
@@ -256,6 +256,7 @@ def produce_scattertext_explorer(corpus,
                                  line_coordinates=None,
                                  subword_encoding=None,
                                  top_terms_length=14,
+                                 top_terms_left_buffer=0,
                                  use_offsets=False,
                                  return_data=False,
                                  return_scatterplot_structure=False):
@@ -521,6 +522,8 @@ def produce_scattertext_explorer(corpus,
         Type of subword encoding to use, None if none, currently supports "RoBERTa"
     top_terms_length : int, default 14
         Number of words to list in most/least associated lists on left-hand side
+    top_terms_left_buffer : int, default 0
+        Number of pixels left to shift top terms list
     use_offsets : bool, default False
         Enable the use of metadata offsets
     return_data : bool default False
@@ -729,7 +732,8 @@ def produce_scattertext_explorer(corpus,
                                                  censor_point_column=censor_point_column,
                                                  right_order_column=right_order_column,
                                                  subword_encoding=subword_encoding,
-                                                 top_terms_length=top_terms_length)
+                                                 top_terms_length=top_terms_length,
+                                                 top_terms_left_buffer=top_terms_left_buffer)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -2004,19 +2008,18 @@ def produce_scattertext_table(
     :return: str
     '''
 
+    alternative_term_func = '''(function(termDict) {
+       //document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
+       //showTermGraph(termDict['term']);
+       //alert(termDict['term'])
+       return true;
+    })'''
+
     graph_renderer = CategoryTableMaker(
         corpus=corpus,
         num_rows=num_rows,
         use_metadata=use_non_text_features
     )
-
-    """
-    alternative_term_func = '''(function(termDict) {
-        document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
-        showTermGraph(termDict['term']);
-        return true;
-    })
-    """
 
     dispersion = Dispersion(
         corpus, use_categories=True, use_metadata=use_non_text_features
@@ -2042,13 +2045,7 @@ def produce_scattertext_table(
         'x': plot_df.Xpos.values,
         'y': 0.5,
     }).sort_values(by='x')
-
-    alternative_term_func = '''(function(termDict) {
-       document.querySelectorAll(".dotgraph").forEach(svg => svg.style.display = 'none');
-       showTermGraph(termDict['term']);
-       return true;
-    })'''
-
+    kwargs.setdefault('top_terms_left_buffer', 10)
     scatterplot_structure = dataframe_scattertext(
         corpus,
         plot_df=plot_df,
@@ -2066,6 +2063,7 @@ def produce_scattertext_table(
         return_scatterplot_structure=True,
         width_in_pixels=plot_width,
         height_in_pixels=plot_height,
+        #alternative_term_func=alternative_term_func,
         **kwargs
     )
 

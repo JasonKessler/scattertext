@@ -75,7 +75,8 @@ class ScatterplotStructure(object):
             background_color=None,
             right_order_column=None,
             subword_encoding=None,
-            top_terms_length=14
+            top_terms_length=14,
+            top_terms_left_buffer=0
     ):
         '''
 
@@ -229,6 +230,8 @@ class ScatterplotStructure(object):
             Use sentence piece conventions from to search for terms in JS
         top_terms_length: int, default 14
             Number of top terms to show for left-hand side lists
+        top_terms_lefft_buffer: int, default 0
+            Number of pixels left to shift top terms list
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -296,6 +299,7 @@ class ScatterplotStructure(object):
         self._background_color = background_color
         self._subword_encoding = subword_encoding
         self._top_terms_length = top_terms_length
+        self._top_terms_left_buffer = top_terms_left_buffer
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x, default='undefined'):
@@ -403,7 +407,8 @@ class ScatterplotStructure(object):
             js_default_string(self._censor_point_column),
             js_default_string(self._right_order_column),
             js_default_string(self._subword_encoding),
-            js_default_value(self._top_terms_length, '14')
+            js_default_value(self._top_terms_length, '14'),
+            js_default_value(self._top_terms_left_buffer, '0')
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 

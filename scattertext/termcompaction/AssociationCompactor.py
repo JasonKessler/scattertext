@@ -20,7 +20,9 @@ class TermCategoryRanker(object):
         tdf, tdf_sum = self.__get_term_ranks_and_frequencies(term_doc_matrix)
         score_data = {}
         for category in term_doc_matrix.get_categories():
-            score_data[category] = self.scorer().get_scores(tdf[category], tdf_sum - tdf[category])
+            focus = tdf[category].values
+            background = tdf_sum.values - focus
+            score_data[category] = self.scorer().get_scores(focus, background)
         return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
 
     def __get_term_ranks_and_frequencies(self, term_doc_matrix):

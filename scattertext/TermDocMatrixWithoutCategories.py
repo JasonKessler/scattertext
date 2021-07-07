@@ -401,6 +401,14 @@ class TermDocMatrixWithoutCategories(object):
         return self._remove_terms_from_list(set(self.get_default_stoplist())
                                             | set(w.lower() for w in custom_stoplist))
 
+    def filter_out(self, filter_func):
+        '''
+
+        :param filter_func: function which takes a string and returns true or false
+        :return: A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
+        '''
+        return self.remove_terms([x for x in self.get_terms() if filter_func(x)])
+
     def _remove_terms_from_list(self, stoplist):
         terms_to_ignore = [term for term
                            in self._term_idx_store._i2val

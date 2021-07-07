@@ -12,7 +12,6 @@ class DeltaJSDivergence(object):
         p2 = 0.001 + b / np.sum(b)
         pi1, pi2 = self.pi1, self.pi2
         m = pi1 * p1 + pi2 * p2
-
         def lg(x): return np.log(x) / np.log(2)
 
         return m * lg(1 / m) - (pi1 * p2 * lg(1 / p1) + pi2 * p2 * lg(1 / p2))

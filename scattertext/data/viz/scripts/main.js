@@ -63,7 +63,8 @@ buildViz = function (d3) {
                      censorPointColumn = undefined,
                      rightOrderColumn = undefined,
                      subwordEncoding = null,
-                     topTermsLength = 14
+                     topTermsLength = 14,
+                     topTermsLeftBuffer = 0
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -2263,7 +2264,7 @@ buildViz = function (d3) {
                     .moveToBack();
             }
 
-            function showWordList(word, termDataList) {
+            function showWordList(word, termDataList, xOffset=null) {
                 var maxWidth = word.node().getBBox().width;
                 var wordObjList = [];
                 for (var i in termDataList) {
@@ -2274,13 +2275,13 @@ buildViz = function (d3) {
                         if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
                             termColor = datum.etc[textColorColumn];
                         }
-
+                        console.log("Show WORD "); console.log(word.node().getBBox().x)
                         var curWordPrinted = svg.append("text")
                             .attr("text-anchor", "start")
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                             .attr('font-size', '12px')
                             .attr("fill", termColor)
-                            .attr("x", word.node().getBBox().x)
+                            .attr("x", xOffset == null ? word.node().getBBox().x : xOffset)
                             .attr("y", word.node().getBBox().y
                                 + 2 * word.node().getBBox().height)
                             .text(formatTermForDisplay(curTerm));
@@ -2328,7 +2329,7 @@ buildViz = function (d3) {
                 return pickScoreSortAlgo(isUpperPane);
             }
 
-            function showAssociatedWordList(data, word, header, isUpperPane, length = topTermsLength) {
+            function showAssociatedWordList(data, word, header, isUpperPane, xOffset, length = topTermsLength) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isUpperPane);
                 console.log("showAssociatedWordList");
@@ -2345,7 +2346,7 @@ buildViz = function (d3) {
 
                     sortedData = sortedData.filter(signifTest)
                 }
-                return showWordList(word, sortedData.slice(0, length));
+                return showWordList(word, sortedData.slice(0, length), xOffset);
 
             }
 
@@ -2370,9 +2371,6 @@ buildViz = function (d3) {
 
             function showNotCatHeader(startingOffset, word, notCatName) {
                 console.log("showNotCatHeader")
-                console.log(word)
-                console.log(word.node().getBBox().y - word.node().getBBox().height)
-                console.log(word.node().getBBox().y + word.node().getBBox().height)
                 return svg.append("text")
                     .attr('font-family', 'Helvetica, Arial, Sans-Serif')
                     .attr('font-size', '12px')
@@ -2405,7 +2403,7 @@ buildViz = function (d3) {
                     );
                 registerFigureBBox(catHeader);
                 var word = catHeader;
-                var wordListData = showAssociatedWordList(data, word, catHeader, true);
+                var wordListData = showAssociatedWordList(data, word, catHeader, true, startingOffset);
                 word = wordListData.word;
                 var maxWidth = wordListData.maxWidth;
 
@@ -2416,9 +2414,10 @@ buildViz = function (d3) {
                     notCatHeader.node().getBBox().x + maxWidth + 10
                 )
                 console.log("characteristicXOffset", characteristicXOffset)
+                console.log(catHeader.node().getBBox().x + maxWidth + 10)
+                console.log(notCatHeader.node().getBBox().x + maxWidth + 10)
 
-
-                var notWordListData = showAssociatedWordList(data, word, notCatHeader, false);
+                var notWordListData = showAssociatedWordList(data, word, notCatHeader, false, startingOffset);
                 word = wordListData.word;
                 if (wordListData.maxWidth > maxWidth) {
                     maxWidth = wordListData.maxWidth;
@@ -2446,7 +2445,7 @@ buildViz = function (d3) {
                     showAssociatedWordList,
                     upperHeaderName,
                     lowerHeaderName,
-                    width
+                    width + topTermsLeftBuffer
                 );
                 payload.showTopTermsPane = showTopTermsPane;
                 payload.showAssociatedWordList = showAssociatedWordList;
@@ -2495,7 +2494,8 @@ buildViz = function (d3) {
                 var wordListData = showWordList(
                     word,
                     data.filter(term => (term.display === undefined || term.display === true))
-                        .sort(rightSortMethod).slice(0, topTermsLength * 2 + 2)
+                        .sort(rightSortMethod).slice(0, topTermsLength * 2 + 2),
+                    characteristicXOffset
                 );
 
                 word = wordListData.word;
@@ -3118,6 +3118,7 @@ buildViz = function (d3) {
                 word,
                 header,
                 isUpperPane,
+                xOffset=this.topTermsPane.startingOffset,
                 length = 14
             ) {
                 var sortedData = null;
@@ -3131,7 +3132,7 @@ buildViz = function (d3) {
                 console.log(sortedData.slice(0, length))
                 console.log(payload)
                 console.log(word)
-                return payload.showWordList(word, sortedData.slice(0, length));
+                return payload.showWordList(word, sortedData.slice(0, length), xOffset);
             }
             if (this.topTermsPane !== undefined)
                 this.topTermsPane = payload.showTopTermsPane(
@@ -3253,20 +3254,19 @@ buildViz = function (d3) {
             this.showWordList = payload.showWordList;
 
 
-            this.showAssociatedWordList = function (data, word, header, isUpperPane, length = 14) {
+            this.showAssociatedWordList = function (data, word, header, isUpperPane, xOffset=this.topTermsPane.startingOffset, length = 14) {
                 var sortedData = null;
                 if (!isUpperPane) {
                     sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])
                 } else {
                     sortedData = data.map(x => x).sort((a, b) => scores[b.i] - scores[a.i])
                 }
-                console.log("HEADERHEADER222")
                 console.log('sortedData');
                 console.log(isUpperPane);
                 console.log(sortedData.slice(0, length))
                 console.log(payload)
                 console.log(word)
-                return payload.showWordList(word, sortedData.slice(0, length));
+                return payload.showWordList(word, sortedData.slice(0, length), xOffset);
             }
             var leftName = this.fullData.info.categories[categoryNum];
             var bottomName = "Not " + this.fullData.info.categories[categoryNum];
