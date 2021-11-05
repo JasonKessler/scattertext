@@ -152,7 +152,7 @@ class ScatterChart:
                            rescale_y=None,
                            original_x=None,
                            original_y=None):
-        '''
+        r'''
         Inject custom x and y coordinates for each term into chart.
 
         Parameters
@@ -438,14 +438,14 @@ class ScatterChart:
     def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
         json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
                                / term_freq_df[category + ' freq'].sum()) * 25000).fillna(0)
-                             .apply(np.round).astype(np.int))
+                             .apply(np.round).astype(int))
         json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
                                 / term_freq_df['not cat freq'].sum()) * 25000).fillna(0)
-                              .apply(np.round).astype(np.int))
+                              .apply(np.round).astype(int))
         if 'neut cat freq' in term_freq_df:
             json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
                                     / term_freq_df['neut cat freq'].sum()) * 25000).fillna(0)
-                                  .apply(np.round).astype(np.int))
+                                  .apply(np.round).astype(int))
             json_df['neut'] = term_freq_df['neut cat freq']
         else:
             json_df['neut25k'] = 0
@@ -453,7 +453,7 @@ class ScatterChart:
         if 'extra cat freq' in term_freq_df:
             json_df['extra25k'] = (((term_freq_df['extra cat freq'] * 1.
                                      / term_freq_df['extra cat freq'].sum()) * 25000).fillna(0)
-                                   .apply(np.round).astype(np.int))
+                                   .apply(np.round).astype(int))
             json_df['extra'] = term_freq_df['extra cat freq']
         else:
             json_df['extra25k'] = 0
@@ -655,7 +655,7 @@ class ScatterChart:
                    .rename(columns={'corpus': 'cat'}))
         json_df['cat25k'] = (((json_df['cat'] * 1.
                                / json_df['cat'].sum()) * 25000)
-                             .apply(np.round).astype(np.int))
+                             .apply(np.round).astype(int))
 
         self._add_x_and_y_coords_to_term_df_if_injected(json_df)
         j = {}

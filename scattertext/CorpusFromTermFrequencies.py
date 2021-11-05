@@ -41,7 +41,7 @@ class CorpusFromTermFrequencies(object):
         assert self.X.shape[1] == len(term_vocabulary)
         self.metadata_idx_store = IndexStore()
         if y is None:
-            self.y = np.zeros(self.X.shape[0], dtype=np.int)
+            self.y = np.zeros(self.X.shape[0], dtype=int)
             self.category_idx_store = IndexStoreFromList.build(['_'])
             assert category_names is None
         else:

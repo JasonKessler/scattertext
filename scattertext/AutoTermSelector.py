@@ -49,7 +49,7 @@ class AutoTermSelector(object):
 		score_terms = AutoTermSelector._get_score_terms(num_term_to_keep, term_doc_freq)
 		background_terms = AutoTermSelector._get_background_terms(num_term_to_keep, term_doc_matrix)
 		frequent_terms = AutoTermSelector._get_frequent_terms(num_term_to_keep, term_doc_freq)
-		terms_to_show = score_terms | background_terms | frequent_terms
+		terms_to_show = score_terms.union(background_terms).union(frequent_terms)
 		return terms_to_show
 
 	@staticmethod
@@ -66,8 +66,8 @@ class AutoTermSelector(object):
 	@staticmethod
 	def _get_score_terms(num_term_to_keep, term_doc_freq):
 		sorted_tdf = term_doc_freq.sort_values(by='score', ascending=False)
-		return (sorted_tdf.iloc[:int(0.25 * num_term_to_keep)].index
-		        | sorted_tdf.iloc[-int(0.25 * num_term_to_keep):].index)
+		return sorted_tdf.iloc[:int(0.25 * num_term_to_keep)].index.union(
+		        sorted_tdf.iloc[-int(0.25 * num_term_to_keep):].index)
 
 	@staticmethod
 	def _add_default_num_terms_to_keep(num_term_to_keep):
