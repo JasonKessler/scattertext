@@ -180,8 +180,8 @@ class ScatterChartExplorer(ScatterChart):
 
     def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
         ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)
-        json_df['cat'] = term_freq_df[category + ' freq'].astype(np.int)
-        json_df['ncat'] = term_freq_df['not cat freq'].astype(np.int)
+        json_df['cat'] = term_freq_df[category + ' freq'].astype(int)
+        json_df['ncat'] = term_freq_df['not cat freq'].astype(int)
         if self._term_metadata is not None:
             json_df['etc'] = term_freq_df['term'].apply(lambda term: self._term_metadata.get(term, {}))
 
