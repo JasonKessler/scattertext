@@ -219,6 +219,14 @@ ul.top_terms li {
 #d3-div-1-neutcol {
     display: none;
 }
+#d3-reset-div {
+    color: rgb(158, 155, 201);
+    text-decoration: underline;
+}
+#d3-reset-div:hover {
+    color: darkblue;
+    text-decoration: underline;
+}
 
 /***AUTOCOMPLETE CSS***/
 </style>
@@ -238,6 +246,7 @@ ul.top_terms li {
     <tr>
         <td>
             <div autocomplete="off" style="text-align: center">
+                <span id="d3-reset-div" style="text-decoration: underline;" onclick="reset()">Reset plot</span>
                 <div class="autocomplete">
                     <input id="categorySearch" type="text" placeholder="Search categories">
                 </div>
@@ -260,6 +269,7 @@ ul.top_terms li {
     </p>
 </span>
 <br/>
+
 
 <a name="d3-div-1-snippets"></a>
 <a name="d3-div-1-snippetsalt"></a>

@@ -253,6 +253,44 @@ input:focus {
   display: none;
 }
 
+.lowercell {
+  text-align: right;
+  vertical-align: bottom;
+  height: {cellheightshort};
+}
+
+.midcell {
+  text-align: right;
+  vertical-align: middle;
+  height: {cellheight};
+}
+
+.topcell {
+  text-align: right;
+  vertical-align: top;
+  height: {cellheight};
+}
+
+
+@-moz-document url-prefix() {
+    .topcell{
+        height: unset;
+    }
+
+    .midcell{
+        height: unset;
+    }
+    .lowercell {
+      height: unset;
+    }
+}
+.right {
+  text-align: right;
+}
+
+.right {
+  text-align: left;
+}
 <!-- AUTOCOMPLETE CSS -->
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
@@ -262,16 +300,16 @@ input:focus {
 <span id="title-div"></span>
 
 
-<table>
+<table style="table-layout: auto;">
   <tr>
-    <td rowspan="2" style="text-align: right; vertical-align: top;"><b class="pos">{a_label}</b>
-      <div class="pos" style="width: 200px">{a}</div>
+    <td rowspan="2" class="topcell left"><b class="pos">{a_label}</b>
+      <div class="pos" style="width: 200px;">{a}</div>
     </td>
     <td style="text-align: center; vertical-align: bottom;">
       <span class="neut" style="text-align: center;  width: 200px"><b>{a_and_b_label}</b><br/>{a_and_b}</span>
     </td>
-    <td rowspan="2" style="text-align: left; vertical-align: top;"><b class="neg">{b_label}</b>
-      <div class="neg" style="width: 200px">{b}</div>
+    <td rowspan="2" class="topcell right"><b class="neg">{b_label}</b>
+      <div class="neg" style="width: 200px;">{b}</div>
     </td>
   </tr>
   <tr>
@@ -280,19 +318,19 @@ input:focus {
     </td>
   </tr>
   <tr>
-    <td style="text-align: right; vertical-align: middle"><b class="pos">{a_and_not_b_label}</b>
-      <div class="pos" style="width: 200px">{a_and_not_b}</div>
+    <td class="midcell left"><b class="pos">{a_and_not_b_label}</b>
+      <div class="pos" style="width: 200px;">{a_and_not_b}</div>
     </td>
-    <td style="text-align: left; vertical-align: middle"><b class="neg">{b_and_not_a_label}</b>
-      <div class="neg" style="width: 200px">{b_and_not_a}</div>
+    <td class="midcell right"><b class="neg">{b_and_not_a_label}</b>
+      <div class="neg" style="width: 200px;">{b_and_not_a}</div>
     </td>
   </tr>
   <tr>
-    <td rowspan="2" style="text-align: right; vertical-align: bottom;">
+    <td rowspan="2" class="lowercell left">
       <b class="pos">{not_b_label}</b>
       <div class="pos" style="width: 200px">{not_b}</div>
     </td>
-    <td rowspan="2" style="text-align: left; vertical-align: bottom;">
+    <td rowspan="2" class="lowercell right">
       <b class="neg">{not_a_label}</b>
       <div style="width: 200px" class="neg">{not_a}</div>
     </td>

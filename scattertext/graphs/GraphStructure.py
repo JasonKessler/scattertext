@@ -72,6 +72,7 @@ class GraphStructure(object):
                 .replace('http://', self.protocol + '://')
                 .replace('{width}', str(self.scatterplot_width))
                 .replace('{height}', str(self.scatterplot_height))
+                .replace('{cellheight}', str(int(self.scatterplot_height * (6/12))))
                 )
 
     def get_font_import(self):

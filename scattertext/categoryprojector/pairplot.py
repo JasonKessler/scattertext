@@ -90,6 +90,8 @@ def produce_pairplot(corpus,
                      default_to_term_comparison=True,
                      category_x_label='',
                      category_y_label='',
+                     category_tooltip_func = '(function(d) {return d.term})',
+                     term_tooltip_func = '(function(d) {return d.term})',
                      category_show_axes_and_cross_hairs=False,
                      highlight_selected_category=True,
                      term_x_label=None,  # used if default_to_term_comparison
@@ -134,7 +136,7 @@ def produce_pairplot(corpus,
         show_axes=False,
         horizontal_line_y_position=0,
         vertical_line_x_position=0,
-        unified_context=True,
+        unified_context=not wordfish_style,
         show_category_headings=False,
         show_cross_axes=True,
         div_name='cat-plot',
@@ -156,7 +158,8 @@ def produce_pairplot(corpus,
         term_ranker=term_ranker,
         use_non_text_features=use_metadata,
         score_transform=stretch_0_to_1,
-        verbose=verbose
+        verbose=verbose,
+        dont_filter=True
     ).hide_terms(terms_to_hide)
 
     if default_to_term_comparison:
@@ -211,6 +214,7 @@ def produce_pairplot(corpus,
             category_name=initial_category,
             include_term_category_counts=True,
             # transform=dense_rank,
+            **kwargs
         )
         color_func = '(function(x) {return "#5555FF"})'
         show_top_terms = False
@@ -219,13 +223,15 @@ def produce_pairplot(corpus,
         VizDataAdapter(term_scatter_chart_data),
         width_in_pixels=term_width_in_pixels,
         height_in_pixels=term_height_in_pixels,
-        use_full_doc=use_metadata or use_full_doc, asian_mode=asian_mode,
-        use_non_text_features=use_metadata, show_characteristic=False,
+        use_full_doc=use_metadata or use_full_doc,
+        asian_mode=asian_mode,
+        use_non_text_features=use_metadata,
+        show_characteristic=False,
         x_label=x_label,
         y_label=y_label,
         full_data='getTermDataAndInfo()',
         show_top_terms=show_top_terms,
-        get_tooltip_content=None,
+        get_tooltip_content=term_tooltip_func,
         color_func=color_func,
         # horizontal_line_y_position=0,
         # vertical_line_x_position=0,
@@ -233,8 +239,8 @@ def produce_pairplot(corpus,
         topic_model_preview_size=topic_model_preview_size,
         show_category_headings=False,
         div_name='d3-div-1',
-        unified_context=True,
-        highlight_selected_category=highlight_selected_category
+        unified_context=not wordfish_style,
+        highlight_selected_category=highlight_selected_category,
     )
     return PairPlotFromScatterplotStructure(
         category_scatterplot_structure,
@@ -264,7 +270,8 @@ def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranke
         use_non_text_features=True,
         term_significance=None,
         terms_to_include=None,
-        verbose=verbose
+        verbose=verbose,
+        dont_filter=True
     )
     proj_df = category_projection.get_pandas_projection()
     category_scatter_chart_explorer.inject_coordinates(
@@ -278,7 +285,7 @@ def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranke
 
 def _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category):
     if wordfish_style:
-        return '(function (termInfo) {termPlotInterface.yAxisLogCounts(termInfo.term); return false;})'
+        return '''(function (termInfo) {termPlotInterface.yAxisLogCounts(termInfo); return false;})'''
     if category_focused:
         return '(function (termInfo) {termPlotInterface.drawCategoryAssociation("%s", termInfo.term); return false;})' \
                % (initial_category.replace('"', '\\"'))

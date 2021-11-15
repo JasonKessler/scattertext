@@ -307,7 +307,7 @@ class ScatterChart:
             df[category_column_name]
         )
         df['color_scores'] = scores
-        if self.scatterchartdata.terms_to_include is None:
+        if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
             df = self._filter_bigrams_by_minimum_not_category_term_freq(
                 category_column_name, not_categories, df)
             df = filter_bigrams_by_pmis(
@@ -509,7 +509,7 @@ class ScatterChart:
             df[category_column_name]
         )
         df['color_scores'] = scores
-        if self.scatterchartdata.terms_to_include is None:
+        if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
             df = self._filter_bigrams_by_minimum_not_category_term_freq(
                 category_column_name, other_categories, df)
             df = filter_bigrams_by_pmis(
@@ -530,7 +530,7 @@ class ScatterChart:
         return df
 
     def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, other_categories, df):
-        if self.scatterchartdata.terms_to_include is None:
+        if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
             return df[(df[category_column_name] > 0)
                       | (df[[c + ' freq' for c in other_categories]].sum(axis=1)
                          >= self.scatterchartdata.minimum_not_category_term_frequency)]
@@ -538,11 +538,12 @@ class ScatterChart:
             return df
 
     def _filter_by_minimum_term_frequency(self, all_categories, df):
-        if self.scatterchartdata.terms_to_include is None:
-            return df[df[[c + ' freq' for c in all_categories]].sum(axis=1)
-                      > self.scatterchartdata.minimum_term_frequency]
-        else:
-            return df
+        if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
+            df = df[
+                lambda df: (df[[c + ' freq' for c in all_categories]].sum(axis=1)
+                            > self.scatterchartdata.minimum_term_frequency)
+            ]
+        return df
 
     def _limit_max_terms(self, category, df):
         df['score'] = self._term_importance_ranks(category, df)

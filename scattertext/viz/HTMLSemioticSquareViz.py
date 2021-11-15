@@ -82,6 +82,7 @@ class HTMLSemioticSquareViz(object):
 		formatters.update(self.semiotic_square_.get_labels())
 		for k, v in formatters.items():
 			template = template.replace('{' + k + '}', v)
+
 		return template
 
 	def _lexicon_to_html(self, lexicon):

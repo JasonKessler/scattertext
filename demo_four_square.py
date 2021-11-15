@@ -1,11 +1,9 @@
 import time
 
 import pandas as pd
-import spacy
 
 import scattertext as st
 
-nlp = spacy.load('en_core_web_sm', parser=False)
 t0 = time.time()
 reviews_df = pd.read_csv('https://github.com/JasonKessler/ICLR18ReviewVis/raw/master/iclr2018_reviews.csv.bz2')
 reviews_df['parse'] = reviews_df['review'].apply(st.whitespace_nlp_with_sentences)

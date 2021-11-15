@@ -44,15 +44,24 @@ class CategoryProjectionBase(ABC):
         :param y_dim: int
         :return: pd.DataFrame
         '''
-        return pd.DataFrame({'term': self.category_corpus.get_metadata(),
-                             'x': self._get_x_axis(),
-                             'y': self._get_y_axis()}).set_index('term')
+        to_ret = pd.DataFrame(
+            {'term': self.category_corpus.get_metadata(),
+             'x': self._get_x_axis(),
+             'y': self._get_y_axis()}
+        ).set_index('term')
+        return to_ret
 
     def _get_x_axis(self):
-        return self.projection.T[self.x_dim]
+        try:
+            return self.projection.T[self.x_dim]
+        except:
+            return self.projection.T.loc[self.x_dim]
 
     def _get_y_axis(self):
-        return self.projection.T[self.y_dim]
+        try:
+            return self.projection.T[self.y_dim]
+        except:
+            return self.projection.T.loc[self.y_dim]
 
     def get_axes_labels(self, num_terms=5):
         df = self.get_term_projection()
@@ -101,6 +110,7 @@ class CategoryProjectionBase(ABC):
     def get_corpus(self):
         return self.category_corpus
 
+
 class CategoryProjection(CategoryProjectionBase):
     def __init__(self, category_corpus, category_counts, projection, x_dim=0, y_dim=1, term_projection=None):
         self._pseduo_init(category_corpus, category_counts, projection, x_dim, y_dim, term_projection)
@@ -110,7 +120,6 @@ class CategoryProjection(CategoryProjectionBase):
 
     def use_alternate_projection(self, projection):
         return CategoryProjection(self.category_corpus, self.category_counts, projection, self.x_dim, self.y_dim)
-
 
 
 class CategoryProjectionWithDoc2Vec(CategoryProjectionBase):

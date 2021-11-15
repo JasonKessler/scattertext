@@ -147,5 +147,10 @@ class BasicHTMLFromScatterplotStructure(object):
         return html_content
 
     def _format_html_base(self, html_base):
+        height = self.scatterplot_structure._height_in_pixels
+        cellheight = int(height * (4.5 / 12))
+        cellheightshort = height - 2 * cellheight
         return (html_base.replace('{width}', str(self.scatterplot_structure._width_in_pixels))
-                .replace('{height}', str(self.scatterplot_structure._height_in_pixels)))
+                .replace('{height}', str(height))
+                .replace('{cellheight}', str(cellheight))
+                .replace('{cellheightshort}', str(cellheightshort)))

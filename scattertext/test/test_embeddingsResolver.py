@@ -12,7 +12,7 @@ from scattertext.test.test_corpusFromPandas import get_docs_categories
 
 class WV:
     def __init__(self, vocab):
-        self.vocab = vocab
+        self.key_to_index = {v:k for k,v in enumerate(vocab)}
 
 
 class MockWord2Vec:

@@ -156,8 +156,8 @@ class TermDocMatrixFactory(object):
         Parameters
         ----------
         entity_types : set of entity types outputted by spaCy
-          'TIME', 'WORK_OF_ART', 'PERSON', 'MONEY', 'ORG', 'ORDINAL', 'DATE',
-          'CARDINAL', 'LAW', 'QUANTITY', 'GPE', 'PERCENT'
+
+
 
         Returns
         ---------

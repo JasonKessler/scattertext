@@ -1,6 +1,9 @@
 from __future__ import print_function
 
-version = [0, 1, 4]
+from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
+    COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
+
+version = [0, 1, 5]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -13,7 +16,7 @@ from scattertext.graphs.ComponentDiGraph import ComponentDiGraph
 from scattertext.graphs.ComponentDiGraphHTMLRenderer import ComponentDiGraphHTMLRenderer
 from scattertext.graphs.GraphStructure import GraphStructure
 from scattertext.graphs.SimpleDiGraph import SimpleDiGraph
-from scattertext.features.FeastFromSentencePiece import FeatsFromSentencePiece
+from scattertext.features.FeatsFromSentencePiece import FeatsFromSentencePiece
 from scattertext.features.PyTextRankPhrases import PyTextRankPhrases
 from scattertext.termscoring.BetaPosterior import BetaPosterior
 from scattertext.semioticsquare.SemioticSquareFromAxes import SemioticSquareFromAxes
@@ -138,6 +141,9 @@ from scattertext.categorytable import CategoryTableMaker
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
+def cognitive_distortions_offset_getter_factory():
+    return LexiconFeatAndOffsetGetter(COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS)
+
 
 def produce_scattertext_explorer(corpus,
                                  category,
@@ -257,6 +263,7 @@ def produce_scattertext_explorer(corpus,
                                  subword_encoding=None,
                                  top_terms_length=14,
                                  top_terms_left_buffer=0,
+                                 dont_filter=False,
                                  use_offsets=False,
                                  return_data=False,
                                  return_scatterplot_structure=False):
@@ -296,8 +303,8 @@ def produce_scattertext_explorer(corpus,
         Maximum number of snippets to show when term is clicked.  If None, all are shown.
     max_docs_per_category: int, optional
         Maximum number of documents to store per category.  If None, by default, all are stored.
-    metadata : list, optional
-        list of meta data strings that will be included for each document
+    metadata : list or function, optional
+        list of meta data strings that will be included for each document, if a function, called on corpus
     scores : np.array, optional
         Array of term scores or None.
     x_coords : np.array, optional
@@ -524,6 +531,8 @@ def produce_scattertext_explorer(corpus,
         Number of words to list in most/least associated lists on left-hand side
     top_terms_left_buffer : int, default 0
         Number of pixels left to shift top terms list
+    dont_filter : bool, default False
+        Don't filter any terms when charting
     use_offsets : bool, default False
         Enable the use of metadata offsets
     return_data : bool default False
@@ -574,7 +583,8 @@ def produce_scattertext_explorer(corpus,
                                                   term_ranker=term_ranker,
                                                   use_non_text_features=use_non_text_features,
                                                   term_significance=term_significance,
-                                                  terms_to_include=terms_to_include, )
+                                                  terms_to_include=terms_to_include,
+                                                  dont_filter=dont_filter,)
     if ((x_coords is None and y_coords is not None)
             or (y_coords is None and x_coords is not None)):
         raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -610,7 +620,7 @@ def produce_scattertext_explorer(corpus,
         transform=transform,
         scores=scores,
         max_docs_per_category=max_docs_per_category,
-        metadata=metadata,
+        metadata=metadata if not callable(metadata) else metadata(corpus),
         alternative_text_field=alternative_text_field,
         neutral_category_name=neutral_category_name,
         extra_category_name=extra_category_name,
@@ -1988,6 +1998,7 @@ def produce_scattertext_table(
         use_non_text_features=False,
         plot_width=500,
         plot_height=700,
+        category_order=None,
         **kwargs
 ):
     '''
@@ -2004,6 +2015,7 @@ def produce_scattertext_table(
     :param engine: str, The graphviz engine (e.g., dot or neat)
     :param graph_params dict or None, graph parameters in graph viz
     :param node_params dict or None, node parameters in graph viz
+    :param category_order list or None, names of categories to show in order
     :param kwargs: dict
     :return: str
     '''
@@ -2018,7 +2030,8 @@ def produce_scattertext_table(
     graph_renderer = CategoryTableMaker(
         corpus=corpus,
         num_rows=num_rows,
-        use_metadata=use_non_text_features
+        use_metadata=use_non_text_features,
+        category_order=category_order
     )
 
     dispersion = Dispersion(

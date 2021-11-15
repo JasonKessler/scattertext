@@ -3,9 +3,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from scattertext import ScatterChart, TermCategoryFrequencies, ParsedCorpus, CorpusDF
+from scattertext import ScatterChart
 from scattertext.Scalers import percentile_alphabetical
-from scattertext.Corpus import Corpus
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
 
 
@@ -129,7 +128,10 @@ class ScatterChartExplorer(ScatterChart):
             neutral_category_name = 'Neutral'
         if extra_category_name is None:
             extra_category_name = 'Extra'
-        json_data['docs'] = self._get_docs_structure(docs_getter, metadata)
+        metadata_series = metadata
+        if callable(metadata):
+            metadata_series = metadata(self.term_doc_matrix)
+        json_data['docs'] = self._get_docs_structure(docs_getter, metadata_series)
         json_data['info']['neutral_category_name'] = neutral_category_name
         json_data['info']['extra_category_name'] = extra_category_name
         if include_term_category_counts:

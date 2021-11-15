@@ -24,8 +24,10 @@ class FeatsFromSpacyDoc(object):
 		assert type(entity_types_to_censor) == set
 		assert type(tag_types_to_censor) == set
 		self._entity_types_to_censor = entity_types_to_censor
+		self._pos_types_to_censor = {}
 		self._tag_types_to_censor = tag_types_to_censor
 		self._strip_final_period = strip_final_period
+		self._ignore_censored_types = False
 
 	def _post_process_term(self, term):
 		if self._strip_final_period and (term.strip().endswith('.') or term.strip().endswith(',')):
@@ -34,6 +36,25 @@ class FeatsFromSpacyDoc(object):
 
 	def get_doc_metadata(self, doc):
 		return Counter()
+
+	def ignore_censored_types(self):
+		self._ignore_censored_types = True
+		return self
+
+	def censor_pos_types(self, pos_types):
+		assert type(pos_types) == set
+		self._pos_types_to_censor = pos_types
+		return self
+
+	def censor_entity_types(self, entity_types):
+		assert type(entity_types) == set
+		self._entity_types_to_censor = entity_types
+		return self
+
+	def censor_tag_types(self, tag_types):
+		assert type(tag_types) == set
+		self._tag_types_to_censor = tag_types
+		return self
 
 	def get_feats(self, doc):
 		'''
@@ -64,9 +85,14 @@ class FeatsFromSpacyDoc(object):
 		for tok in sent:
 			if tok.pos_ not in ('PUNCT', 'SPACE', 'X'):
 				if tok.ent_type_ in self._entity_types_to_censor:
-					unigrams.append('_' + tok.ent_type_)
+					if not self._ignore_censored_types:
+						unigrams.append('_' + tok.ent_type_)
 				elif tok.tag_ in self._tag_types_to_censor:
-					unigrams.append(tok.tag_)
+					if not self._ignore_censored_types:
+						unigrams.append(tok.tag_)
+				elif tok.pos_ in self._pos_types_to_censor:
+					if not self._ignore_censored_types:
+						unigrams.append(tok.pos_)
 				elif self._use_lemmas and tok.lemma_.strip():
 					unigrams.append(self._post_process_term(tok.lemma_.strip().lower()))
 				elif tok.lower_.strip():

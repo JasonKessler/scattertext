@@ -46,17 +46,24 @@ class MultiCategoryAssociationScorer(MultiCategoryAssociationBase):
 
 
 class CategoryTableMaker(GraphRenderer):
-    def __init__(self, corpus, num_rows=10, use_metadata=False):
+    def __init__(
+            self,
+            corpus,
+            num_rows=10,
+            use_metadata=False,
+            category_order=None
+    ):
         self.num_rows = num_rows
         self.corpus = corpus
         self.use_metadata = use_metadata
         self.rank_df = self._get_term_category_associations()
+        self.category_order = (sorted(self.corpus.get_categories())
+                               if category_order is None else category_order)
 
     def get_graph(self):
 
-
         table = '<div class="timelinecontainer"><table class="timelinetable">'
-        table += '<tr><th>' + '</th><th>'.join(sorted(self.corpus.get_categories())) + '</th></tr>'
+        table += '<tr><th>' + '</th><th>'.join(self.category_order) + '</th></tr>'
         min_font_size = 7
         max_font_size = 20
         display_df = self.rank_df[lambda df: df.Rank < self.num_rows]
@@ -64,8 +71,14 @@ class CategoryTableMaker(GraphRenderer):
         bin_boundaries = np.histogram_bin_edges(
             np.log(display_df.Frequency), bins=max_font_size - min_font_size
         )
-        display_df['FontSize'] = display_df.Frequency.apply(np.log).apply(
-            lambda x: bisect_left(bin_boundaries, x) + min_font_size
+        display_df = pd.merge(
+            display_df.assign(
+                FontSize=lambda df: df.Frequency.apply(np.log).apply(
+                    lambda x: bisect_left(bin_boundaries, x) + min_font_size
+                )
+            ),
+            pd.DataFrame({'Category': self.category_order, 'CategoryNum': np.arange(len(self.category_order))}),
+            on='Category'
         )
 
         for rank, group_df in display_df.groupby('Rank'):
@@ -74,7 +87,7 @@ class CategoryTableMaker(GraphRenderer):
                     row.Term,
                     style="font-size: " + str(row.FontSize)
                 )
-                for _, row in group_df.sort_values(by='Category').iterrows()
+                for _, row in group_df.sort_values(by='CategoryNum').iterrows()
             ]) + '</td></tr>'
         table += '</table></div>'
         return table
@@ -86,7 +99,7 @@ class CategoryTableMaker(GraphRenderer):
             for _, row in cat_df.iterrows():
                 cat_d[row['Term']] = {'Rank': row['Rank'], 'Freq': row['Frequency']}
             d[category] = cat_d
-        js = 'categoryFrequency = ' + json.dumps(d)  + ';\n\n'
+        js = 'categoryFrequency = ' + json.dumps(d) + ';\n\n'
 
         js += '''
         Array.from(document.querySelectorAll('.clickabletd')).map(

@@ -46,7 +46,6 @@ class OffsetCorpusFactory(object):
         scattertext.ParsedCorpus.ParsedCorpus
         '''
         self._ensure_category_col_is_in_df()
-
         y = self._get_y_and_populate_category_idx_store(self._df[self._category_col])
         if show_progress is True:
             self._df.progress_apply(self._add_to_x_factory, axis=1)
@@ -73,7 +72,7 @@ class OffsetCorpusFactory(object):
             self._category_col = 'Category'
             while self._category_col in self._df:
                 self._category_col = 'Category_' + ''.join(np.random.choice(string.ascii_letters) for _ in range(5))
-
+            self._df[self._category_col] = ''
     def _get_y_and_populate_category_idx_store(self, categories):
         return np.array(categories.apply(self._category_idx_store.getidx))
 

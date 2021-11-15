@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 """
@@ -37,7 +39,12 @@ def lss_terms(embeddings,
     assert seed_values
     assert embeddings.shape[0] == len(terms)
     assert len(seed_words) == len(seed_values)
-    assert len(set(seed_words) & set(terms)) == len(seed_words)
+    missing_words = []
+    for word in seed_words:
+        if word not in terms:
+            missing_words.append(word)
+    if missing_words:
+        raise Exception(f"No embedding(s) exists for {','.join(missing_words)}.")
 
     term2i = {term:i for i, term in enumerate(terms)}
     seed_mat = embeddings[[term2i[term] for term in seed_words],:]

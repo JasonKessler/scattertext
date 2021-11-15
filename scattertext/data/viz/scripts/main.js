@@ -389,6 +389,7 @@ buildViz = function (d3) {
         function getDenseRanks(fullData, categoryNum) {
             console.log("GETTING DENSE RANKS")
             console.log("CAT NUM " + categoryNum)
+            console.log("CAT NAME " + fullData.docs.categories[categoryNum])
             console.log(fullData)
 
             var fgFreqs = Array(fullData.data.length).fill(0);
@@ -426,7 +427,7 @@ buildViz = function (d3) {
                 'bg': scalebgDenseRanks,
                 'bgFreqs': bgFreqs,
                 'fgFreqs': fgFreqs,
-                'term': fullData.data.map((x)=>x.term)}
+                'term': fullData.data.sort((a,b)=>a.i-b.i).map(x=>x.term)}
         }
 
         function getCategoryDenseRankScores(fullData, categoryNum) {
@@ -3179,8 +3180,12 @@ buildViz = function (d3) {
             console.log(fullData)
         };
 
-        plotInterface.yAxisLogCounts = function (categoryName) {
-            var categoryNum = this.fullData.docs.categories.indexOf(categoryName);
+        plotInterface.yAxisLogCounts = function (termInfo) {
+            console.log("yAxisLogCounts"); console.log(termInfo)
+            //var categoryNum = this.fullData.docs.categories.indexOf(categoryName);
+            //console.log("CatNum"); console.log(categoryNum)
+            var categoryNum = termInfo.i;
+
             var denseRanks = getDenseRanks(this.fullData, categoryNum)
             console.log("denseRanks")
             console.log(denseRanks);
