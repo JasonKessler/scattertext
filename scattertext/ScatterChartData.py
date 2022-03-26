@@ -18,7 +18,8 @@ class ScatterChartData(object):
 	             term_significance=None,
 	             terms_to_include=None,
 				 score_transform=percentile_min,
-				 dont_filter=False):
+				 dont_filter=False,
+				 add_extra_features=False):
 		'''
 
 		Parameters
@@ -52,6 +53,8 @@ class ScatterChartData(object):
 			Transforms original scores into value between 0 and 1. Default is percentile_min
 		dont_filter : bool, default is False
 			Don't do any filtering of dataframe
+		add_extra_features : bool, default is False
+			Used in pairplot to add the extra doc structure
 		'''
 		self.jitter = jitter
 		self.minimum_term_frequency = minimum_term_frequency
@@ -66,4 +69,5 @@ class ScatterChartData(object):
 		self.terms_to_include = terms_to_include
 		self.score_transform = score_transform
 		self.dont_filter = dont_filter
+		self.add_extra_features = add_extra_features
 		np.random.seed(seed)

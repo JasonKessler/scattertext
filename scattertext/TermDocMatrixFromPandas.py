@@ -38,12 +38,19 @@ class ParsePipelineFactoryWithoutCategories(object):
         return row[self._text_col]
 
     def _register_document(self, parsed_text, row):
-        self._term_doc_mat_fact._register_doc(X_factory=self.X_factory,
-                                              mX_factory=self.mX_factory,
-                                              document_index=row.name,
-                                              parsed_text=parsed_text,
-                                              term_idx_store=self.term_idx_store,
-                                              metadata_idx_store=self.metadata_idx_store)
+        self._term_doc_mat_fact._register_doc(
+            X_factory=self.X_factory,
+            mX_factory=self.mX_factory,
+            document_index=row.name,
+            parsed_text=parsed_text,
+            term_idx_store=self.term_idx_store,
+            metadata_idx_store=self.metadata_idx_store
+        )
+        for term, val in self._term_doc_mat_fact._feats_from_spacy_doc.get_row_metadata(
+                parsed_text,
+                row
+        ).items():
+            self.mX_factory[row.name, self.metadata_idx_store.getidx(term)] = val
 
 
 class ParsePipelineFactory(ParsePipelineFactoryWithoutCategories):

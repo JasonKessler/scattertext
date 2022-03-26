@@ -85,7 +85,13 @@ class OffsetCorpusFactory(object):
                 self._term_offsets.setdefault(term, {}).setdefault(row.name, []).extend(offsets)
 
         for meta, (val, offsets) in self._feat_and_offset_getter.get_metadata_offsets(parsed_text):
-            meta_idx = self._metadata_idx_store.getidx(meta)
-            self._mX_factory[row.name, meta_idx] = val
-            if offsets is not None:
-                self._metadata_offsets.setdefault(meta, {}).setdefault(row.name, []).extend(offsets)
+            self.__get_metadata_offsets(meta, offsets, row, val)
+
+        for meta, (val, offsets) in self._feat_and_offset_getter.get_metadata_row_offsets(parsed_text, row):
+            self.__get_metadata_offsets(meta, offsets, row, val)
+
+    def __get_metadata_offsets(self, meta, offsets, row, val):
+        meta_idx = self._metadata_idx_store.getidx(meta)
+        self._mX_factory[row.name, meta_idx] = val
+        if offsets is not None:
+            self._metadata_offsets.setdefault(meta, {}).setdefault(row.name, []).extend(offsets)

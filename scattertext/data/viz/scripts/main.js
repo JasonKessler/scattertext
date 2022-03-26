@@ -1,3 +1,18 @@
+function merge(ranges) { //via https://stackoverflow.com/questions/26390938/merge-arrays-with-overlapping-values
+    var result = [], last;
+
+    ranges.sort(function (a, b) {
+        return a[0] - b[0] || a[1] - b[1]
+    }).forEach(function (r) {
+        if (!last || r[0] > last[1])
+            result.push(last = r);
+        else if (r[1] > last[1])
+            last[1] = r[1];
+    });
+
+    return result;
+}
+
 buildViz = function (d3) {
     return function (widthInPixels = 1000,
                      heightInPixels = 600,
@@ -64,7 +79,9 @@ buildViz = function (d3) {
                      rightOrderColumn = undefined,
                      subwordEncoding = null,
                      topTermsLength = 14,
-                     topTermsLeftBuffer = 0
+                     topTermsLeftBuffer = 0,
+                     getColumnHeaderHTML = null,
+                     termWord = 'Term'
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -423,11 +440,13 @@ buildViz = function (d3) {
                 x => (x - minbgDenseRanks) / (maxbgDenseRanks - minbgDenseRanks)
             )
 
-            return {'fg': scalefgDenseRanks,
+            return {
+                'fg': scalefgDenseRanks,
                 'bg': scalebgDenseRanks,
                 'bgFreqs': bgFreqs,
                 'fgFreqs': fgFreqs,
-                'term': fullData.data.sort((a,b)=>a.i-b.i).map(x=>x.term)}
+                'term': fullData.data.sort((a, b) => a.i - b.i).map(x => x.term)
+            }
         }
 
         function getCategoryDenseRankScores(fullData, categoryNum) {
@@ -637,7 +656,6 @@ buildViz = function (d3) {
             var category_name = fullData['info']['category_name'];
             var not_category_name = fullData['info']['not_category_name'];
             var matches = [[], [], [], []];
-            console.log("searching")
 
             if (fullData.docs === undefined) return matches;
             if (!nonTextFeaturesMode) {
@@ -689,11 +707,10 @@ buildViz = function (d3) {
                 console.log('term');
                 console.log(term);
                 pattern = new RegExp(
-                    '\\W(' + fullData.metalists[term].map(escapeRegExp).join('|') + ')\\W',
+                    '(\\W|^)(' + fullData.metalists[term].map(escapeRegExp).join('|') + ')(\\W|$)',
                     'gim'
                 );
             }
-
             for (var i in fullData.docs.extra) {
                 if (term in fullData.docs.extra[i]) {
                     var strength = fullData.docs.extra[i][term] /
@@ -721,27 +738,77 @@ buildViz = function (d3) {
                     if (fullData.offsets !== undefined) {
 
                         if (fullData.offsets[term] !== undefined && fullData.offsets[term][i] !== undefined) {
-                            var curMatch = {
+                            let curMatch = {
                                 'id': i,
                                 'snippets': [],
                                 'strength': strength,
                                 'docLabel': docLabel,
                                 'meta': fullData.docs.meta ? fullData.docs.meta[i] : ""
                             }
-                            for (const offset_i in fullData.offsets[term][i]) {
-                                var offset = fullData.offsets[term][i][offset_i];
-                                var spanStart = Math.max(offset[0] - 50, 0);
-                                var spanEnd = Math.min(50, text.length-offset[1]);
-                                var leftContext = text.substr(spanStart, offset[0] - spanStart);
-                                var matchStr = text.substr(offset[0], offset[1] - offset[0]);
-                                var rightContext = text.substr(offset[1], spanEnd);
-                                var snippet = leftContext + '<b style="background-color: lightgoldenrodyellow">' + matchStr + '</b>' + rightContext;
-                                if(spanStart > 0)
-                                    snippet = '...' + snippet;
-                                if(text.length - offset[1] > 50)
-                                    snippet = snippet + '...'
-                                curMatch.snippets.push(snippet)
+
+                            // remove duplicate offsets
+                            // merge overlapping offsets
+                            let offsets = merge(fullData.offsets[term][i]);
+
+                            var snippetPadding = 100
+
+                            let offsetChunks = [];
+                            let curChunk = [];
+                            for (let i = 0; i < offsets.length; ++i) {
+                                if (i > 0 && (offsets[i][0] - offsets[i - 1][1] >= snippetPadding)) {
+                                    offsetChunks.push(curChunk);
+                                    curChunk = []
+                                }
+                                curChunk.push(offsets[i])
                             }
+                            offsetChunks.push(curChunk);
+
+                            let highlightOpen = '<b style="background-color: lightgoldenrodyellow">';
+                            let highlightClose = '</b>';
+                            offsetChunks.map(
+                                function (offsets) {
+                                    if (offsets.length > 0) {
+                                        let offsetStart = offsets[0][0]
+                                        let offsetEnd = offsets[offsets.length - 1][1];
+                                        let spanStart = Math.max(0,
+                                            offsetStart - snippetPadding);
+                                        let spanEnd = Math.min(offsetEnd + snippetPadding, text.length);
+                                        let snippet = text.substr(spanStart, spanEnd - spanStart);
+                                        console.log("OffsetSE");
+                                        console.log(offsetStart + '|' + offsetEnd);
+                                        console.log("SpanSE");
+                                        console.log(spanStart + '|' + spanEnd);
+                                        console.log("SnippetPre");
+                                        console.log(snippet);
+                                        offsets.reverse().forEach(
+                                            function (offset) {
+                                                offset[0] -= spanStart;
+                                                offset[1] -= spanStart
+                                                snippet = (
+                                                    snippet.substr(0, offset[0])
+                                                    + highlightOpen
+                                                    + snippet.substr(offset[0], offset[1] - offset[0])
+                                                    + highlightClose
+                                                    + snippet.substr(offset[1], snippet.length - offset[1])
+                                                )
+                                                console.log("Snippet||" + i + '||' + offset[0] + '|' + offset[1]);
+                                                console.log(snippet);
+                                            }
+                                        )
+                                        console.log("SnippetPost");
+                                        console.log(snippet);
+
+                                        if (spanStart > 0)
+                                            snippet = '...' + snippet;
+                                        if (snippetPadding < text.length - offsetEnd)
+                                            snippet = snippet + '...'
+                                        console.log("SnippetDone");
+                                        console.log(snippet);
+
+                                        curMatch.snippets.push(snippet)
+                                    }
+                                }
+                            )
                             matches[numericLabel].push(curMatch);
                         }
                     } else {
@@ -749,9 +816,11 @@ buildViz = function (d3) {
                         if (!useFullDoc)
                             text = text.slice(0, 300);
                         if (pattern !== null) {
+
+
                             text = text.replace(pattern, '<b>$&</b>');
                         }
-                        var curMatch = {
+                        let curMatch = {
                             'id': i,
                             'snippets': [text],
                             'strength': strength,
@@ -961,7 +1030,6 @@ buildViz = function (d3) {
 
 
                 docLabelCountsSorted.forEach(function (counts) {
-
                     var htmlToAdd = "";
                     if (!ignoreCategories) {
                         htmlToAdd += "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
@@ -1071,7 +1139,7 @@ buildViz = function (d3) {
             d3.select('#' + divName + '-' + 'termstats')
                 .selectAll("div")
                 .remove();
-            var termHtml = 'Term: <b>' + formatTermForDisplay(info.term) + '</b>';
+            var termHtml = termWord + ': <b>' + formatTermForDisplay(info.term) + '</b>';
             if ('metalists' in fullData && info.term in fullData.metalists) {
                 termHtml = 'Topic: <b>' + formatTermForDisplay(info.term) + '</b>';
             }
@@ -1132,6 +1200,8 @@ buildViz = function (d3) {
                     return a + b;
                 }, 0);
 
+
+
             function getFrequencyDescription(name, count25k, count, ndocs) {
                 var desc = name;
                 if (!enableTermCategoryDescription) {
@@ -1167,23 +1237,33 @@ buildViz = function (d3) {
 
             if (!unifiedContexts && !ignoreCategories) {
                 console.log("NOT UNIFIED CONTEXTS")
+                let catHeader = "";
+                let nCatHeader = "";
+                if (getColumnHeaderHTML === null) {
+                    catHeader = getFrequencyDescription(
+                        cat_name,
+                        info.cat25k,
+                        info.cat,
+                        termInfo.contexts[0].length * 1000 / numCatDocs
+                    )
+                    nCatHeader = getFrequencyDescription(
+                        ncat_name,
+                        info.ncat25k,
+                        info.ncat,
+                        termInfo.contexts[1].length * 1000 / numNCatDocs
+                    )
+
+                } else {
+                    catHeader = getColumnHeaderHTML(0, termInfo, fullData)
+                    nCatHeader = getColumnHeaderHTML(1, termInfo, fullData)
+                }
+
                 d3.select('#' + divName + '-' + 'cathead')
                     .style('fill', color(1))
-                    .html(
-                        getFrequencyDescription(cat_name,
-                            info.cat25k,
-                            info.cat,
-                            termInfo.contexts[0].length * 1000 / numCatDocs
-                        )
-                    );
+                    .html(catHeader);
                 d3.select('#' + divName + '-' + 'notcathead')
                     .style('fill', color(0))
-                    .html(
-                        getFrequencyDescription(ncat_name,
-                            info.ncat25k,
-                            info.ncat,
-                            termInfo.contexts[1].length * 1000 / numNCatDocs)
-                    );
+                    .html(nCatHeader);
                 if (showNeutral) {
                     var numList = fullData.docs.categories.map(function (x, i) {
                         if (fullData.info.neutral_category_internal_names.indexOf(x) > -1) {
@@ -1203,14 +1283,21 @@ buildViz = function (d3) {
                             return a + b;
                         }, 0);
 
+                    let neutHeader = '';
+                    if (getColumnHeaderHTML === null) {
+                        neutHeader = getFrequencyDescription(
+                            fullData.info.neutral_category_name,
+                            info.neut25k,
+                            info.neut,
+                            termInfo.contexts[2].length * 1000 / numDocs
+                        )
+                    } else {
+                        neutHeader = getColumnHeaderHTML(2, termInfo, fullData);
+                    }
+
                     d3.select("#" + divName + "-neuthead")
                         .style('fill', color(0))
-                        .html(
-                            getFrequencyDescription(fullData.info.neutral_category_name,
-                                info.neut25k,
-                                info.neut,
-                                termInfo.contexts[2].length * 1000 / numDocs)
-                        );
+                        .html(neutHeader);
 
                     if (showExtra) {
                         var numList = fullData.docs.categories.map(function (x, i) {
@@ -1231,14 +1318,21 @@ buildViz = function (d3) {
                                 return a + b;
                             }, 0);
 
+                        let extraHeader = '';
+                        if (getColumnHeaderHTML === null) {
+                            extraHeader = getFrequencyDescription(
+                                fullData.info.extra_category_name,
+                                info.extra25k,
+                                info.extra,
+                                termInfo.contexts[3].length * 1000 / numDocs
+                            )
+                        } else {
+                            extraHeader = getColumnHeaderHTML(3, termInfo, fullData);
+                        }
+
                         d3.select("#" + divName + "-extrahead")
                             .style('fill', color(0))
-                            .html(
-                                getFrequencyDescription(fullData.info.extra_category_name,
-                                    info.extra25k,
-                                    info.extra,
-                                    termInfo.contexts[3].length * 1000 / numDocs)
-                            );
+                            .html(extraHeader);
 
                     }
                 }
@@ -1329,13 +1423,10 @@ buildViz = function (d3) {
                 if (subwordEncoding === 'RoBERTa') {
                     if (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289) {
                         // Starts with character Ġ indicating it's a word start
-                        console.log("START")
                         regexp = new RegExp(boundary + escapeRegExp(term.substr(1, term.length)), 'gim');
                     } else {
                         regexp = new RegExp("\w" + escapeRegExp(term), 'gim');
                     }
-                    console.log("SP")
-                    console.log(regexp)
                 }
 
 
@@ -1652,7 +1743,6 @@ buildViz = function (d3) {
                     }
                 });
         }
-
 
 
         function processData(fullData) {
@@ -2265,7 +2355,7 @@ buildViz = function (d3) {
                     .moveToBack();
             }
 
-            function showWordList(word, termDataList, xOffset=null) {
+            function showWordList(word, termDataList, xOffset = null) {
                 var maxWidth = word.node().getBBox().width;
                 var wordObjList = [];
                 for (var i in termDataList) {
@@ -2276,7 +2366,6 @@ buildViz = function (d3) {
                         if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
                             termColor = datum.etc[textColorColumn];
                         }
-                        console.log("Show WORD "); console.log(word.node().getBBox().x)
                         var curWordPrinted = svg.append("text")
                             .attr("text-anchor", "start")
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
@@ -2462,7 +2551,8 @@ buildViz = function (d3) {
             }
 
 
-            if ((!nonTextFeaturesMode && !asianMode && showCharacteristic)
+            //if ((!nonTextFeaturesMode && !asianMode && showCharacteristic)
+            if (showCharacteristic
                 || (headerNames !== null && headerNames.right !== undefined)) {
                 var sortMethod = backgroundScoreSort;
                 var title = 'Characteristic';
@@ -2938,7 +3028,7 @@ buildViz = function (d3) {
             var categoryNum = this.fullData.info.categories.indexOf(category);
 
             var otherCategoryNum = null;
-            if(otherCategory !== null)
+            if (otherCategory !== null)
                 otherCategoryNum = this.fullData.info.categories.indexOf(otherCategory);
 
             console.log("cat/other: " + category + "/" + otherCategory + " ::: " + categoryNum + "/" + otherCategoryNum)
@@ -3119,7 +3209,7 @@ buildViz = function (d3) {
                 word,
                 header,
                 isUpperPane,
-                xOffset=this.topTermsPane.startingOffset,
+                xOffset = this.topTermsPane.startingOffset,
                 length = 14
             ) {
                 var sortedData = null;
@@ -3181,7 +3271,8 @@ buildViz = function (d3) {
         };
 
         plotInterface.yAxisLogCounts = function (termInfo) {
-            console.log("yAxisLogCounts"); console.log(termInfo)
+            console.log("yAxisLogCounts");
+            console.log(termInfo)
             //var categoryNum = this.fullData.docs.categories.indexOf(categoryName);
             //console.log("CatNum"); console.log(categoryNum)
             var categoryNum = termInfo.i;
@@ -3259,7 +3350,7 @@ buildViz = function (d3) {
             this.showWordList = payload.showWordList;
 
 
-            this.showAssociatedWordList = function (data, word, header, isUpperPane, xOffset=this.topTermsPane.startingOffset, length = 14) {
+            this.showAssociatedWordList = function (data, word, header, isUpperPane, xOffset = this.topTermsPane.startingOffset, length = 14) {
                 var sortedData = null;
                 if (!isUpperPane) {
                     sortedData = data.map(x => x).sort((a, b) => scores[a.i] - scores[b.i])

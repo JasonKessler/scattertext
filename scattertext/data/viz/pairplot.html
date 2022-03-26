@@ -274,6 +274,44 @@ input:focus {
     text-decoration: underline;
 }
 
+.lowercell {
+  text-align: right;
+  vertical-align: bottom;
+  height: {cellheightshort};
+}
+
+.midcell {
+  text-align: right;
+  vertical-align: middle;
+  height: {cellheight};
+}
+
+.topcell {
+  text-align: right;
+  vertical-align: top;
+  height: {cellheight};
+}
+
+@-moz-document url-prefix() {
+    .topcell{
+        height: unset;
+    }
+
+    .midcell{
+        height: unset;
+    }
+    .lowercell {
+      height: unset;
+    }
+}
+.right {
+  text-align: right;
+}
+
+.right {
+  text-align: left;
+}
+
 /***AUTOCOMPLETE CSS***/
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
@@ -284,15 +322,15 @@ input:focus {
 <span id="d3-div-1-title-div"></span>
 
 
-<table style="float: left">
+<table style="float: left; table-layout: auto;">
     <tr>
-        <td rowspan="2" style="text-align: right; vertical-align: top;">
+        <td rowspan="2" class="topcell left">
             <div class="halo" style="width: 100px">{top_left}</div>
         </td>
         <td style="text-align: center; vertical-align: bottom; width: 100px">
             <span class="halo" style="text-align: center;  width: 100px">{top}</span>
         </td>
-        <td rowspan="2" style="text-align: left; vertical-align: top;">
+        <td rowspan="2" class="topcell right">
             <div class="halo" style="width: 100px">{top_right}</div>
         </td>
     </tr>
@@ -302,18 +340,18 @@ input:focus {
         </td>
     </tr>
     <tr>
-        <td style="text-align: right; vertical-align: middle">
+        <td class="midcell left">
             <div class="halo" style="width: 100px; text-align: right;">{left}</div>
         </td>
-        <td style="text-align: left; vertical-align: middle">
+        <td class="midcell right">
             <div class="halo" style="width: 100px">{right}</div>
         </td>
     </tr>
     <tr>
-        <td rowspan="2" style="text-align: right; vertical-align: bottom;">
+        <td rowspan="2" class="lowercell left">
             <div class="halo" style="width: 100px">{bottom_left}</div>
         </td>
-        <td rowspan="2" style="text-align: left; vertical-align: bottom;">
+        <td rowspan="2" class="lowercell right">
             <div class="halo" style="width: 100px">{bottom_right}</div>
         </td>
     </tr>

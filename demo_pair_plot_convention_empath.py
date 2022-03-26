@@ -14,9 +14,12 @@ corpus = st.CorpusFromPandas(
 html = scattertext.categoryprojector.pairplot.produce_pairplot(
     corpus,
     use_metadata=True,
+    default_to_term_comparison=False,
     category_projector=st.CategoryProjector(selector=None),
     topic_model_term_lists=empath_feature_builder.get_top_model_term_lists(),
-    metadata=convention_df['party'] + ': ' + convention_df['speaker']
+    metadata=convention_df['party'] + ': ' + convention_df['speaker'],
+    category_metadata_df=corpus.get_df().set_index('speaker')[['party']],
+    category_color_func='(function(x) {return x.etc.party == "republican" ? "red" : "blue"})'
 )
 
 file_name = 'convention_pair_plot_empath.html'

@@ -80,6 +80,11 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
         return pd.DataFrame(d).set_index('term')
 
+    def get_freq_df(self, use_metadata=False, label_append=' freq'):
+        if use_metadata:
+            return self.get_metadata_freq_df(label_append)
+        return self.get_term_freq_df(label_append)
+
     def get_term_freq_df(self, label_append=' freq'):
         '''
         Parameters
@@ -778,7 +783,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             new_y_mask=self._y == self._y
         )
 
-    def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_', replace_metadata = True):
+    def use_doc_labeled_terms_as_metadata(self, doc_labels, separator='_', replace_metadata=True):
         '''
         Makes the metadata of a new TermDocMatrix a copy of the term-document matrix, except each term is prefixed
         by its document's label followed by the separator.
@@ -799,7 +804,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         ordered_doc_labels = list(sorted(set(doc_labels)))
         X = self._X
         if replace_metadata:
-            #X = self._mX
+            # X = self._mX
             X = self._X
 
         for doc_label in ordered_doc_labels:
@@ -853,10 +858,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
 
         :return: TermDocMatrix
         '''
-        new_metadata_factory = CSRMatrixFactory()
-        for i, category_idx in enumerate(self.get_category_ids()):
-            new_metadata_factory[i, category_idx] = 1
-        new_metadata = new_metadata_factory.get_csr_matrix()
+        new_metadata = self._categories_to_metadata_factory()
         new_tdm = self._make_new_term_doc_matrix(self._X,
                                                  new_metadata,
                                                  self._y,
@@ -873,18 +875,24 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
 
         :return: TermDocMatrix
         '''
+        new_metadata = self._categories_to_metadata_factory()
+        new_tdm = self._make_new_term_doc_matrix(
+            new_X=self._mX,
+            new_mX=new_metadata,
+            new_y=self._y,
+            new_term_idx_store=self._metadata_idx_store,
+            new_category_idx_store=self._category_idx_store,
+            new_metadata_idx_store=copy(self._category_idx_store),
+            new_y_mask=self._y == self._y,
+        )
+        return new_tdm
+
+    def _categories_to_metadata_factory(self):
         new_metadata_factory = CSRMatrixFactory()
         for i, category_idx in enumerate(self.get_category_ids()):
             new_metadata_factory[i, category_idx] = 1
         new_metadata = new_metadata_factory.get_csr_matrix()
-        new_tdm = self._make_new_term_doc_matrix(self._mX,
-                                                 new_metadata,
-                                                 self._y,
-                                                 self._metadata_idx_store,
-                                                 self._category_idx_store,
-                                                 copy(self._category_idx_store),
-                                                 self._y == self._y)
-        return new_tdm
+        return new_metadata
 
     def copy_terms_to_metadata(self):
         '''

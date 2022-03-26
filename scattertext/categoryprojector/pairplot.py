@@ -97,6 +97,7 @@ def produce_pairplot(corpus,
                      term_x_label=None,  # used if default_to_term_comparison
                      term_y_label=None,  # used if default_to_term_comparison
                      wordfish_style=False,
+                     category_metadata_df=None,
                      **kwargs):
     if category_projection is None:
         if use_metadata:
@@ -109,12 +110,13 @@ def produce_pairplot(corpus,
     category_scatter_chart_explorer = _get_category_scatter_chart_explorer(
         category_projection, scaler, term_ranker, verbose
     )
+    if category_metadata_df is not None:
+        category_scatter_chart_explorer = category_scatter_chart_explorer\
+            .inject_term_metadata_df(category_metadata_df)
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
         category=initial_category,
         max_docs_per_category=0,
     )
-
-    category_tooltip_func = '(function(d) {return d.term})'
 
     #initial_category_idx = corpus.get_categories().index(initial_category)
     term_plot_change_func = _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category)
@@ -143,20 +145,28 @@ def produce_pairplot(corpus,
         alternative_term_func=term_plot_change_func,
         highlight_selected_category=highlight_selected_category
     )
-    compacted_corpus = AssociationCompactor(terms_to_show,
-                                            use_non_text_features=use_metadata).compact(corpus)
-    terms_to_hide = set(corpus.get_terms()) - set(compacted_corpus.get_terms())
+    compacted_corpus = AssociationCompactor(
+        terms_to_show,
+        use_non_text_features=use_metadata
+    ).compact(corpus)
+    terms_to_hide = set(corpus.get_terms(
+        use_metadata=use_metadata
+    )) - set(compacted_corpus.get_terms(
+        use_metadata=use_metadata
+    ))
     if verbose:
         print('num terms to hide', len(terms_to_hide))
         print('num terms to show', compacted_corpus.get_num_terms())
+    term_corpus = category_projection.get_corpus()
 
     term_scatter_chart_explorer = ScatterChartExplorer(
-        category_projection.get_corpus(),
+        term_corpus,
         minimum_term_frequency=0,
         minimum_not_category_term_frequency=0,
         pmi_threshold_coefficient=0,
         term_ranker=term_ranker,
-        use_non_text_features=use_metadata,
+        use_non_text_features=False,
+        add_extra_features=use_metadata,
         score_transform=stretch_0_to_1,
         verbose=verbose,
         dont_filter=True

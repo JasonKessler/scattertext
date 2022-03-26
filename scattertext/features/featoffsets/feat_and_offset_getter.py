@@ -4,3 +4,6 @@ class FeatAndOffsetGetter(object):
 
     def get_metadata_offsets(self, doc):
         return None
+
+    def get_metadata_row_offsets(self, doc, row):
+        return []

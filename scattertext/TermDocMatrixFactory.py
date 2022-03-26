@@ -2,6 +2,7 @@ import string
 from collections import Counter
 
 import numpy as np
+import pandas as pd
 
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.TermDocMatrix import TermDocMatrix
@@ -242,10 +243,12 @@ class TermDocMatrixFactory(object):
                                    term_idx_store,
                                    metadata_idx_store,
                                    y):
-        self._register_doc(X_factory, mX_factory, document_index, parsed_text, term_idx_store, metadata_idx_store)
+        self._register_doc(X_factory, mX_factory, document_index,
+                           parsed_text, term_idx_store, metadata_idx_store)
         self._register_category(category, category_idx_store, y)
 
-    def _register_doc(self, X_factory, mX_factory, document_index, parsed_text, term_idx_store, metadata_idx_store):
+    def _register_doc(self, X_factory, mX_factory, document_index,
+                      parsed_text, term_idx_store, metadata_idx_store):
         for term, count in self._feats_from_spacy_doc.get_feats(parsed_text).items():
             term_idx = term_idx_store.getidx(term)
             X_factory[document_index, term_idx] = count

@@ -65,6 +65,8 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         '''
         Specify the category to score. Optionally, score against a specific set of categories.
         '''
+
+
         tdf = self.term_ranker_.get_ranks()
         d = {'cat': tdf[category_name + ' freq']}
         if not_category_names == []:
@@ -146,16 +148,16 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return self.corpus_.get_metadata() if self.use_metadata_ else self.corpus_.get_terms()
 
 
-@abstractmethod
-def get_scores(self, *args):
-    '''
-    Args are ignored
+    @abstractmethod
+    def get_scores(self, *args):
+        '''
+        Args are ignored
 
-    Returns
-    -------
-    '''
+        Returns
+        -------
+        '''
 
 
-@abstractmethod
-def get_name(self):
-    pass
+    @abstractmethod
+    def get_name(self):
+        pass

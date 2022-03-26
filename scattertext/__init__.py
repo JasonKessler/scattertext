@@ -1,9 +1,6 @@
 from __future__ import print_function
 
-from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
-    COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
-
-version = [0, 1, 5]
+version = [0, 1, 6]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -138,8 +135,13 @@ from scattertext.continuous.ungar import UngarCoefficients
 from scattertext.features.RegexFeatAndOffsetGetter import RegexFeatAndOffsetGetter
 from scattertext.representations.LatentSemanticScaling import latent_semantic_scale_from_word2vec, lss_terms
 from scattertext.categorytable import CategoryTableMaker
+from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
+    COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
+from scattertext.termscoring.LogOddsRatio import LogOddsRatio
+from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
+
 
 def cognitive_distortions_offset_getter_factory():
     return LexiconFeatAndOffsetGetter(COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS)
@@ -179,7 +181,7 @@ def produce_scattertext_explorer(corpus,
                                  match_full_line=False,
                                  use_non_text_features=False,
                                  show_top_terms=True,
-                                 show_characteristic=True,
+                                 show_characteristic=None,
                                  word_vec_use_p_vals=False,
                                  max_p_val=0.1,
                                  p_value_colors=False,
@@ -265,8 +267,9 @@ def produce_scattertext_explorer(corpus,
                                  top_terms_left_buffer=0,
                                  dont_filter=False,
                                  use_offsets=False,
+                                 get_column_header_html=None,
                                  return_data=False,
-                                 return_scatterplot_structure=False):
+                                 return_scatterplot_structure=False, ):
     '''Returns html code of visualization.
 
     Parameters
@@ -349,7 +352,7 @@ def produce_scattertext_explorer(corpus,
         Show non-bag-of-words features (e.g., Empath) instead of text.  False by default.
     show_top_terms : bool, default True
         Show top terms on the left-hand side of the visualization
-    show_characteristic: bool, default True
+    show_characteristic: bool, default None
         Show characteristic terms on the far left-hand side of the visualization
     word_vec_use_p_vals: bool, default False
         Sort by harmonic mean of score and distance.
@@ -533,6 +536,9 @@ def produce_scattertext_explorer(corpus,
         Number of pixels left to shift top terms list
     dont_filter : bool, default False
         Don't filter any terms when charting
+    get_column_header_html : str, default None
+        Javascript function to return html over each column. Matches header
+        (Column Name, occurrences per 25k, occs, # occs * 1000/num docs, term info)
     use_offsets : bool, default False
         Enable the use of metadata offsets
     return_data : bool default False
@@ -584,7 +590,7 @@ def produce_scattertext_explorer(corpus,
                                                   use_non_text_features=use_non_text_features,
                                                   term_significance=term_significance,
                                                   terms_to_include=terms_to_include,
-                                                  dont_filter=dont_filter,)
+                                                  dont_filter=dont_filter, )
     if ((x_coords is None and y_coords is not None)
             or (y_coords is None and x_coords is not None)):
         raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -628,7 +634,7 @@ def produce_scattertext_explorer(corpus,
         extra_categories=extra_categories,
         background_scorer=characteristic_scorer,
         include_term_category_counts=include_term_category_counts,
-        use_offsets=use_offsets
+        use_offsets=use_offsets,
     )
 
     if line_coordinates is not None:
@@ -677,6 +683,10 @@ def produce_scattertext_explorer(corpus,
         }
     if right_order_column is not None:
         assert right_order_column in term_metadata_df
+
+    if show_characteristic is None:
+        show_characteristic = not (asian_mode or use_non_text_features)
+
 
     scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
                                                  width_in_pixels=width_in_pixels,
@@ -743,7 +753,9 @@ def produce_scattertext_explorer(corpus,
                                                  right_order_column=right_order_column,
                                                  subword_encoding=subword_encoding,
                                                  top_terms_length=top_terms_length,
-                                                 top_terms_left_buffer=top_terms_left_buffer)
+                                                 top_terms_left_buffer=top_terms_left_buffer,
+                                                 get_column_header_html=get_column_header_html,
+                                                 term_word=term_word_in_term_description)
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -2076,7 +2088,7 @@ def produce_scattertext_table(
         return_scatterplot_structure=True,
         width_in_pixels=plot_width,
         height_in_pixels=plot_height,
-        #alternative_term_func=alternative_term_func,
+        # alternative_term_func=alternative_term_func,
         **kwargs
     )
 

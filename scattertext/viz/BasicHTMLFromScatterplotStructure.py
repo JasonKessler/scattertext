@@ -1,4 +1,5 @@
 import pkgutil
+from typing import Tuple
 
 from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, \
     DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME
@@ -34,11 +35,9 @@ class PackedDataUtils:
     def full_content_of_default_autocomplete_css():
         return PackedDataUtils.get_packaged_html_template_content(AUTOCOMPLETE_CSS_FILE_NAME)
 
-
     @staticmethod
     def full_content_of_default_search_form(input_id):
         return PackedDataUtils.get_packaged_html_template_content(SEARCH_FORM_FILE_NAME).replace('{{id}}', input_id)
-
 
     @staticmethod
     def full_content_of_javascript_files():
@@ -148,9 +147,14 @@ class BasicHTMLFromScatterplotStructure(object):
 
     def _format_html_base(self, html_base):
         height = self.scatterplot_structure._height_in_pixels
-        cellheight = int(height * (4.5 / 12))
-        cellheightshort = height - 2 * cellheight
+        cellheight, cellheightshort = cell_height_and_cell_height_short_from_height(height)
         return (html_base.replace('{width}', str(self.scatterplot_structure._width_in_pixels))
                 .replace('{height}', str(height))
                 .replace('{cellheight}', str(cellheight))
                 .replace('{cellheightshort}', str(cellheightshort)))
+
+
+def cell_height_and_cell_height_short_from_height(height: int) -> Tuple[int, int]:
+    cellheight = int(height * (4.5 / 12))
+    cellheightshort = height - 2 * cellheight
+    return cellheight, cellheightshort

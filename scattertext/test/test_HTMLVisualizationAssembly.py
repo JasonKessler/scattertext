@@ -21,7 +21,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
-                  'undefined', '14', '0']
+                  'undefined', '14', '0', 'null', '"Term"']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -553,3 +553,18 @@ class TestHTMLVisualizationAssembly(TestCase):
         params = (ScatterplotStructure(visualization_data, top_terms_left_buffer=10)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({65: '10'}))
+
+
+    def test_get_column_header_html(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       get_column_header_html='function(a,b,c,d,e) {return "X"}')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({66: 'function(a,b,c,d,e) {return "X"}'}))
+
+    def test_term_word(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       term_word='Phone')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({67: '"Phone"'}))

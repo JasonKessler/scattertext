@@ -1,6 +1,7 @@
 from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME, PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME
 from scattertext.categoryprojector.CategoryProjection import CategoryProjection, CategoryProjectionBase
-from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils
+from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils, \
+    cell_height_and_cell_height_short_from_height
 from scattertext.viz.HTMLSemioticSquareViz import ClickableTerms
 
 
@@ -96,7 +97,16 @@ class PairPlotFromScatterplotStructure(object):
             )
             for position, terms in axes_labels.items():
                 html_content = html_content.replace('{%s}' % position, self._get_lexicon_html(terms))
-        return html_content.replace('{width}', str(self.category_width)).replace('{height}', str(self.category_height))
+        cellheight, cellheightshort = cell_height_and_cell_height_short_from_height(self.category_height)
+        return (html_content.replace(
+            '{width}', str(self.category_width)
+        ).replace(
+            '{height}', str(self.category_height))
+        ).replace(
+            '{cellheight}', str(cellheight)
+        ).replace(
+            '{cellheightshort}', str(cellheightshort)
+        )
 
     def _get_html_template(self):
         if self.show_halo:

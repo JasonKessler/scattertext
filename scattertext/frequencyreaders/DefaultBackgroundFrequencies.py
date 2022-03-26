@@ -10,7 +10,7 @@ class BackgroundFrequencyDataFramePreparer(object):
     def prep_background_frequency(df):
         df['rank'] = rankdata(df.background, method='dense')
         df['background'] = df['rank'] / df['rank'].max()
-        return df[['background']]
+        return df['background']
 
 
 class BackgroundFrequenciesFromCorpus(BackgroundFrequencyDataFramePreparer):
@@ -51,5 +51,5 @@ class DefaultBackgroundFrequencies(BackgroundFrequencies):
                               names=['word', 'background'])
                   .sort_values(ascending=False, by='background')
                   .drop_duplicates(['word'])
-                  .set_index('word'))
+                  .set_index('word'))['background']
         return to_ret

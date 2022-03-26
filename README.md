@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.5
+# Scattertext 0.1.6
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -53,6 +53,7 @@ The HTML file written would look like the image below. Click on it for the actua
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
+    - [Using Custom Background Word Frequences](#using-custom-background-word-frequences)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [The position-select-plot process](#the-position-select-plot-process)
@@ -955,6 +956,180 @@ of the statistic, while `cohens_d_z` and `cohens_d_p` are the Z-scores and p-val
 Click for an interactive version. 
 [![demo_cohens_d.html](https://jasonkessler.github.io/cohen_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
  
+
+### Using Custom Background Word Frequences
+
+Scattertext relies on a set of general-domain English word frequencies when computing unigram characteristic  
+scores. When using running Scattertext on non-English data or in a specific domain, the quality of the scores
+will degrade.
+
+Ensure that you are on Scattertext 0.1.6 or higher.
+
+To remedy this, one can add a custom set of background scores to a Corpus-like object, 
+using the `Corpus.set_background_corpus` function. The function takes a `pd.Series` object, indexed on
+terms with numeric count values. 
+
+By default, [!understanding-scaled-f-score](Scaled F-Score) is used to rank how characteristic
+terms are.   
+
+The example below illustrates using Polish background word frequencies.
+
+First, we produce a Series object mapping Polish words to their frequencies using a list from
+the [https://github.com/oprogramador/most-common-words-by-language](most-common-words-by-language) repo.
+
+```python
+polish_word_frequencies = pd.read_csv(
+    'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2016/pl/pl_50k.txt',   
+    sep = ' ',
+    names = ['Word', 'Frequency']
+).set_index('Word')['Frequency']
+```
+
+Note the composition of the Series
+```python
+>>> polish_word_frequencies
+Word
+nie    5875385
+to     4388099
+się    3507076
+w      2723767
+na     2309765
+Name: Frequency, dtype: int64
+```
+
+Next, we build a DataFrame, `reviews_df`, consisting of document which appear (to a non-Polish speaker) to be 
+positive and negative hotel reviews  from the [https://klejbenchmark.com/tasks/](PolEmo2.0) corpus 
+(Kocoń, et al. 2019).  Note this data is under a CC BY-NC-SA 4.0 license. These are labeled as 
+"__label__meta_plus_m" and "__label__meta_minus_m". We will use Scattertext to compare those
+reviews and determine  
+
+
+```python
+nlp = spacy.blank('pl')
+nlp.add_pipe('sentencizer')
+
+with ZipFile(io.BytesIO(urlopen(
+    'https://klejbenchmark.com/static/data/klej_polemo2.0-in.zip'
+).read())) as zf:
+    review_df = pd.read_csv(zf.open('train.tsv'), sep='\t')[
+        lambda df: df.target.isin(['__label__meta_plus_m', '__label__meta_minus_m'])
+    ].assign(
+        Parse = lambda df: df.sentence.apply(nlp)
+    )
+```
+
+Next, we wish to create a `ParsedCorpus` object from `review_df`. In preparation, we first assemble a 
+list of Polish stopwords from the [stopwords](https://github.com/bieli/stopwords/) repository. We also 
+create the `not_a_word` regular expression to filter out terms which do not contain a letter.
+
+```python
+polish_stopwords = {
+    stopword for stopword in
+    urlopen(
+        'https://raw.githubusercontent.com/bieli/stopwords/master/polish.stopwords.txt'
+    ).read().decode('utf-8').split('\n')
+    if stopword.strip()
+}
+
+not_a_word = re.compile(r'^\W+$')
+```
+
+With these present, we can build a corpus from `review_df` with the category being the binary
+"target" column. We reduce the term space to unigrams and then run the `filter_out` which
+takes a function to determine if a term should be removed from the corpus. The function identifies
+terms which are in the Polish stoplist or do not contain a letter. Finally, terms occurring
+less than 20 times in the corpus are removed.
+
+We set the background frequency Series we created early as the background corpus. 
+
+```python
+corpus = st.CorpusFromParsedDocuments(
+    review_df,
+    category_col='target',
+    parsed_col='Parse'
+).build(
+).get_unigram_corpus(
+).filter_out(
+    lambda term: term in polish_stopwords or not_a_word.match(term) is not None
+).remove_infrequent_words(
+    minimum_term_count=20
+).set_background_corpus(
+    polish_word_frequencies
+)
+```
+
+Note that a minimum word count of 20 was chosen to ensure that only around 2,000 terms would be displayed
+
+```python
+>>> corpus.get_num_terms()
+2023
+```
+
+Running `get_term_and_background_counts` shows us total term counts in the corpus compare to background 
+frequency counts. We limit this to terms which only occur in the corpus.
+
+```python
+>>> corpus.get_term_and_background_counts()[
+...     lambda df: df.corpus > 0
+... ].sort_values(by='corpus', ascending=False)
+
+           background  corpus
+m         341583838.0  4819.0
+hotelu        33108.0  1812.0
+hotel     297974790.0  1651.0
+doktor       154840.0  1534.0
+polecam           0.0  1438.0
+...               ...     ...
+szoku             0.0    21.0
+badaniem          0.0    21.0
+balkonu           0.0    21.0
+stopnia           0.0    21.0
+wobec             0.0    21.0
+```
+
+Interesting, the term "polecam" appears very frequently in the corpus, but does not appear at all 
+in the background corpus, making it highly characteristic. Judging from Google Translate, it appears to 
+mean something related to "recommend".
+
+We are now ready to display the plot.
+
+```python
+html = st.produce_scattertext_explorer(
+    corpus,
+    category='__label__meta_plus_m',
+    category_name='Plus-M',
+    not_category_name='Minus-M',
+    minimum_term_frequency=1,
+    width_in_pixels=1000,
+    transform=st.Scalers.dense_rank
+)
+```
+[![Polish Scattertext](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/polish_pos_neg_scattertext.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/polish_pos_neg_scattertext.html)
+
+We can change the formula which is used to produce the Characteristic scores 
+using the `characteristic_scorer` parameter to `produce_scattertext_explorer`.
+
+It takes a instance of a descendant of the `CharacteristicScorer` class. See 
+[DenseRankCharacteristicness.py](https://github.com/JasonKessler/scattertext/blob/8ddff82f670aa2ed40312b2cdd077e7f0a98a873/scattertext/characteristic/DenseRankCharacteristicness.py#L36) 
+for an example of how to make your own.
+
+Example of plotting with a modified characteristic scorer, 
+
+```python
+html = st.produce_scattertext_explorer(
+    corpus,
+    category='__label__meta_plus_m',
+    category_name='Plus-M',
+    not_category_name='Minus-M',
+    minimum_term_frequency=1,    
+    transform=st.Scalers.dense_rank,
+    characteristic_scorer=st.DenseRankCharacteristicness(),
+
+```
+[![Polish Scattertext DenseRank](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/polish_dense_rank_characteristic.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/polish_dense_rank_characteristic.png)
+
+Note that numbers show up as more characteristic using the Dense Rank Difference. It may be they occur
+unusually frequently in this corpus, or perhaps the background word frequencies under counted mumbers.
 
 ### Understanding Scaled F-Score
 
@@ -2700,3 +2875,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Frimer, J. A., Boghrati, R., Haidt, J., Graham, J., & Dehgani, M. Moral Foundations Dictionary for Linguistic Analyses 2.0. Unpublished manuscript. 2019.
 * Jesse Graham, Jonathan Haidt, Sena Koleva, Matt Motyl, Ravi Iyer, Sean P Wojcik, and Peter H Ditto. 2013. Moral foundations theory: The pragmatic validity of moral pluralism. Advances in Experimental Social Psychology, 47, 55-130
 * Ryan J. Gallagher, Morgan R. Frank, Lewis Mitchell, Aaron J. Schwartz, Andrew J. Reagan, Christopher M. Danforth, and Peter Sheridan Dodds. Generalized Word Shift Graphs: A Method for Visualizing and Explaining Pairwise Comparisons Between Texts. 2020. Arxiv. https://arxiv.org/pdf/2008.02250.pdf
+* Kocoń, Jan; Zaśko-Zielińska, Monika and Miłkowski, Piotr, 2019, PolEmo 2.0 Sentiment Analysis Dataset for CoNLL, CLARIN-PL digital repository, http://hdl.handle.net/11321/710.

@@ -51,7 +51,7 @@ class CategoryTableMaker(GraphRenderer):
             corpus,
             num_rows=10,
             use_metadata=False,
-            category_order=None
+            category_order=None,
     ):
         self.num_rows = num_rows
         self.corpus = corpus
@@ -143,20 +143,23 @@ class CategoryTableMaker(GraphRenderer):
         return js
 
     def _get_term_category_associations(self):
-        tdm = self.corpus.get_metadata_count_mat() if self.use_metadata else self.corpus.get_term_doc_mat()
+        tdm = self.corpus.get_metadata_doc_mat() if self.use_metadata else self.corpus.get_term_doc_mat()
         tdmtfidf = TfidfTransformer().fit_transform(tdm)
         coefs = np.zeros(shape=(self.corpus.get_num_categories(), tdm.shape[1]), dtype=float)
         for i, cat in enumerate(self.corpus.get_categories()):
             y = self.corpus.get_category_ids() == i
-            clf = LogisticRegression(penalty='l2', C=5., max_iter=4000, tol=1e-6, solver='liblinear').fit(tdmtfidf, y)
+            clf = LogisticRegression(
+                penalty='l2', C=5., max_iter=4000, tol=1e-6, solver='liblinear'
+            ).fit(tdmtfidf, y)
+
             coefs[i, :] = clf.coef_
         coef_df = pd.DataFrame(
             coefs.T,
-            index=self.corpus.get_terms(),
+            index=self.corpus.get_terms(use_metadata=self.use_metadata),
             columns=[x + ' coef' for x in self.corpus.get_categories()]
         )
         coef_freq_df = pd.merge(
-            self.corpus.get_term_freq_df(),
+            self.corpus.get_freq_df(self.use_metadata),
             coef_df,
             left_index=True,
             right_index=True

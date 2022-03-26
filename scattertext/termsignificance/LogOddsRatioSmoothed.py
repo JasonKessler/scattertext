@@ -22,6 +22,10 @@ class LogOddsRatioSmoothed(TermSignificance):
 		'''
 		self.alpha_w = alpha_w
 
+	def use_metadata(self):
+		self.use_metadata_ = True
+		return self
+
 	def get_name(self):
 		return "Log-Odds-Ratio w/ Add One Smoothing"
 

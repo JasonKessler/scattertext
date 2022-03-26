@@ -36,9 +36,6 @@ html = st.produce_semiotic_square_explorer(
     num_terms_semiotic_square=20,
     neutral_category_name='Plot Description',
     metadata=movie_df['movie_name'],
-    d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-    d3_url='scattertext/data/viz/scripts/d3.min.js',
-
 )
 
 fn = 'demo_semiotic.html'

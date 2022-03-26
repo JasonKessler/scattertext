@@ -76,7 +76,9 @@ class ScatterplotStructure(object):
             right_order_column=None,
             subword_encoding=None,
             top_terms_length=14,
-            top_terms_left_buffer=0
+            top_terms_left_buffer=0,
+            get_column_header_html=None,
+            term_word="Term"
     ):
         '''
 
@@ -232,6 +234,11 @@ class ScatterplotStructure(object):
             Number of top terms to show for left-hand side lists
         top_terms_lefft_buffer: int, default 0
             Number of pixels left to shift top terms list
+        get_column_header_html : str, default None
+            Javascript function to return html over each column. Matches header
+            (Column Name, occurrences per 25k, occs, # occs * 1000/num docs, term info)
+        term_word: str, default "Term"
+            Word for term in visualization
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -300,6 +307,8 @@ class ScatterplotStructure(object):
         self._subword_encoding = subword_encoding
         self._top_terms_length = top_terms_length
         self._top_terms_left_buffer = top_terms_left_buffer
+        self._get_column_header_html = get_column_header_html
+        self._term_word = term_word
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x, default='undefined'):
@@ -408,7 +417,9 @@ class ScatterplotStructure(object):
             js_default_string(self._right_order_column),
             js_default_string(self._subword_encoding),
             js_default_value(self._top_terms_length, '14'),
-            js_default_value(self._top_terms_left_buffer, '0')
+            js_default_value(self._top_terms_left_buffer, '0'),
+            js_default_value_to_null(self._get_column_header_html),
+            js_default_string(self._term_word)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 

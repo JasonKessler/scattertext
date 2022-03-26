@@ -85,18 +85,21 @@ class CategoryProjector(CategoryProjectorBase):
                  weighter=LengthNormalizer(),
                  normalizer=StandardScaler(),
                  selector=AssociationCompactor(1000, RankDifference),
-                 projector=PCA(2)):
+                 projector=PCA(2),
+                 fit_transform_kwargs=None):
         '''
 
         :param weighter: instance of an sklearn class with fit_transform to weight X category corpus.
         :param normalizer: instance of an sklearn class with fit_transform to normalize term X category corpus.
         :param selector: instance of a compactor class, if None, no compaction will be done.
         :param projector: instance an sklearn class with fit_transform
+        :param fit_transform_kwargs: optional, dict of kwargs to fit_transform
         '''
         self.weighter_ = weighter
         self.normalizer_ = normalizer
         self.selector_ = selector
         self.projector_ = projector
+        self.fit_transform_kwargs_ = {} if fit_transform_kwargs is None else fit_transform_kwargs
 
     def get_category_embeddings(self, category_corpus):
         raw_category_counts = self._get_raw_category_counts(category_corpus)
@@ -138,7 +141,7 @@ class CategoryProjector(CategoryProjectorBase):
 
     def _project_category_corpus(self, category_corpus, x_dim=0, y_dim=1):
         normalized_counts = self.get_category_embeddings(category_corpus)
-        proj = self.projector_.fit_transform(normalized_counts.T)
+        proj = self.projector_.fit_transform(normalized_counts.T, **self.fit_transform_kwargs_)
         return CategoryProjection(category_corpus, normalized_counts, proj, x_dim=x_dim, y_dim=y_dim)
 
     def _get_category_metadata_corpus(self, corpus):

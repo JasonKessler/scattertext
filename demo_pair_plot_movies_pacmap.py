@@ -1,4 +1,5 @@
-import umap
+import pacmap
+
 import scattertext as st
 
 movie_df = st.SampleCorpora.RottenTomatoes.get_data()
@@ -12,24 +13,21 @@ corpus = st.CorpusFromPandas(
     nlp=st.whitespace_nlp_with_sentences
 ).build().get_stoplisted_unigram_corpus()
 
+
 category_projection = st.CategoryProjector(
-    projector=umap.UMAP(metric='cosine')
+    projector=pacmap.PaCMAP(n_dims=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0),
+    fit_transform_kwargs={'init':'pca'}
 ).project(corpus)
 
 html = st.produce_pairplot(
     corpus,
-    # category_projection=st.get_optimal_category_projection(corpus, verbose=True),
     category_projection=category_projection,
     metadata=movie_df['category'] + ': ' + movie_df['movie_name'],
     scaler=st.Scalers.scale_0_to_1,
     show_halo=True,
-    d3_url_struct=st.D3URLs(
-        d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-        d3_url='scattertext/data/viz/scripts/d3.min.js'
-    ),
     default_to_term_comparison=False
 )
 
-file_name = 'movie_pair_plot_umap.html'
+file_name = 'movie_pair_plot_pacmap.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
 print('./' + file_name)

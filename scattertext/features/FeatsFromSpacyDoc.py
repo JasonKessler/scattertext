@@ -1,5 +1,6 @@
 from collections import Counter
 from itertools import chain
+import pandas as pd
 
 
 class FeatsFromSpacyDoc(object):
@@ -35,6 +36,9 @@ class FeatsFromSpacyDoc(object):
 		return term
 
 	def get_doc_metadata(self, doc):
+		return Counter()
+
+	def get_row_metadata(self, doc, row: pd.Series):
 		return Counter()
 
 	def ignore_censored_types(self):

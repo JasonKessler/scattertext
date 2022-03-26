@@ -27,10 +27,15 @@ class DocsAndLabelsFromCorpus:
 					'Corpus type needs to be ParsedCorpus to use the alternative text field.')
 			self._texts_to_display = corpus.get_field(alternative_text_field)
 		self._use_non_text_features = False
+		self._use_terms_for_extra_features = False
 		self._corpus = corpus
 
 	def use_non_text_features(self):
 		self._use_non_text_features = True
+		return self
+
+	def use_terms_for_extra_features(self):
+		self._use_terms_for_extra_features = True
 		return self
 
 	def get_labels_and_texts(self):
@@ -40,7 +45,7 @@ class DocsAndLabelsFromCorpus:
 		          'labels': self._corpus.get_doc_indices(),
 		          'texts': self._get_list_from_texts(texts)}
 		if self._use_non_text_features:
-			to_ret['extra'] = self._corpus.list_extra_features()
+			to_ret['extra'] = self._corpus.list_extra_features(not self._use_terms_for_extra_features)
 		return to_ret
 
 	def _get_list_from_texts(self, texts):

@@ -113,13 +113,21 @@ class TermDocMatrixWithoutCategories(object):
         elif (type(background) == pd.DataFrame
               and set(background.columns) == set(['word', 'background'])):
             self._background_corpus = background
+        elif type(background) == pd.Series:
+            self._background_corpus = background
         else:
             raise Exception('The argument named background must be a subclass of TermDocMatrix or a ' \
                             + 'DataFrame with columns "word" and "background", where "word" ' \
                             + 'is the term text, and "background" is its frequency.')
 
+        return self
+
     def get_background_corpus(self):
         if self._background_corpus is not None:
+            if type(self._background_corpus) == pd.DataFrame:
+                return self._background_corpus['background']
+            elif type(self._background_corpus) == pd.Series:
+                return self._background_corpus
             return self._background_corpus
         return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
 
@@ -139,10 +147,15 @@ class TermDocMatrixWithoutCategories(object):
         ...
         '''
         background_df = self._get_background_unigram_frequencies()
+        if type(background_df) == pd.DataFrame:
+            background_df = background_df['background']
         corpus_freq_df = self.get_term_count_df()
         corpus_unigram_freq = self._get_corpus_unigram_freq(corpus_freq_df)
-        df = corpus_unigram_freq.join(background_df, how='outer').fillna(0)
-        return df
+
+        return pd.DataFrame({
+            'background': background_df,
+            'corpus': corpus_unigram_freq['corpus'],
+        }).fillna(0)
 
     def get_term_count_df(self):
         return pd.DataFrame({'corpus': self._X.sum(axis=0).A1, 'term': self.get_terms()}).set_index('term')
@@ -159,22 +172,24 @@ class TermDocMatrixWithoutCategories(object):
             return self.get_background_corpus()
         return DefaultBackgroundFrequencies.get_background_frequency_df(self._unigram_frequency_path)
 
-    def list_extra_features(self):
+    def list_extra_features(self, use_metadata=True):
         '''
         Returns
         -------
         List of dicts.  One dict for each document, keys are metadata, values are counts
         '''
-        return FeatureLister(self._mX,
-                             self._metadata_idx_store,
+        return FeatureLister(self._get_relevant_X(use_metadata),
+                             self._get_relevant_idx_store(use_metadata),
                              self.get_num_docs()).output()
 
-    def get_terms(self):
+    def get_terms(self, use_metadata=False):
         '''
         Returns
         -------
         np.array of unique terms
         '''
+        if use_metadata:
+            return self.get_metadata()
         return self._term_idx_store._i2val
 
     def get_metadata(self):
@@ -366,8 +381,7 @@ class TermDocMatrixWithoutCategories(object):
     def _get_non_unigrams(self):
         return [term for term
                 in self._term_idx_store._i2val
-                if ' ' in term or (self._strict_unigram_definition and "'" in term)
-                ]
+                if ' ' in term or (self._strict_unigram_definition and "'" in term)]
 
     def get_stoplisted_unigram_corpus(self, stoplist=None):
         '''

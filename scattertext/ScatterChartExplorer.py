@@ -168,8 +168,10 @@ class ScatterChartExplorer(ScatterChart):
             docs_getter = DocsAndLabelsFromCorpusSample(self.term_doc_matrix,
                                                         max_docs_per_category,
                                                         alternative_text_field=alternative_text_field)
-        if self.scatterchartdata.use_non_text_features:
+        if self.scatterchartdata.use_non_text_features or self.scatterchartdata.add_extra_features:
             docs_getter = docs_getter.use_non_text_features()
+            if self.scatterchartdata.add_extra_features:
+                docs_getter = docs_getter.use_terms_for_extra_features()
         return docs_getter
 
     def _get_docs_structure(self, docs_getter, metadata):

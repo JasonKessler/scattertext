@@ -140,7 +140,7 @@ class TermCategoryFrequencies(object):
 		 in the TermDocumentMatrix and their corresponding background corpus
 		 counts.  The dataframe has two columns, corpus and background.
 
-		>>> corpus.get_unigram_corpus.get_term_and_background_counts()
+		>>> corpus.get_unigram_corpus().get_term_and_background_counts()
 		                  corpus  background
 		obama              702.0    565739.0
 		romney             570.0    695398.0
