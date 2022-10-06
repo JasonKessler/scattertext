@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
@@ -31,7 +30,7 @@ class BM25Difference(CorpusBasedTermScorer):
 		self.k1 = kwargs.get('k1', 1.2)
 		self.b = kwargs.get('b', 0.95)
 
-	def get_scores(self, *args):
+	def get_scores(self, *args) -> np.array:
 		'''
 		In this case, args aren't used, since this information is taken
 		directly from the corpus categories.

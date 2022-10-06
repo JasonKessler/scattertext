@@ -81,7 +81,8 @@ buildViz = function (d3) {
                      topTermsLength = 14,
                      topTermsLeftBuffer = 0,
                      getColumnHeaderHTML = null,
-                     termWord = 'Term'
+                     termWord = 'Term',
+                     showTermEtc = true
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -2364,7 +2365,10 @@ buildViz = function (d3) {
                     word = (function (word, curTerm) {
                         var termColor = 'rgb(0,0,0)';
                         if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
+                            console.log("tcc" + 'datum.etc[textColorColumn]')
                             termColor = datum.etc[textColorColumn];
+                            if(termColor[0] !== '#')
+                                termColor = '#' + termColor;
                         }
                         var curWordPrinted = svg.append("text")
                             .attr("text-anchor", "start")

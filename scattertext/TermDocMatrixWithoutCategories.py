@@ -397,10 +397,23 @@ class TermDocMatrixWithoutCategories(object):
             stoplist = self.get_default_stoplist()
         else:
             stoplist = [w.lower() for w in stoplist]
-        return self._remove_terms_from_list(stoplist)
+        return self._remove_terms_from_list_and_all_non_unigrams(stoplist)
 
-    def get_stoplisted_unigram_corpus_and_custom(self,
-                                                 custom_stoplist):
+    def get_stoplisted_corpus(self, stoplist=None):
+        '''
+        Parameters
+        -------
+        stoplist : list, optional
+
+        Returns
+        -------
+        A new TermDocumentMatrix consisting of only unigrams in the current TermDocumentMatrix.
+        '''
+        if stoplist is None:
+            stoplist = self.get_default_stoplist()
+        return self.remove_terms([w.lower() for w in stoplist], ignore_absences=True)
+
+    def get_stoplisted_unigram_corpus_and_custom(self, custom_stoplist):
         '''
         Parameters
         -------
@@ -412,8 +425,8 @@ class TermDocMatrixWithoutCategories(object):
         '''
         if type(custom_stoplist) == str:
             custom_stoplist = [custom_stoplist]
-        return self._remove_terms_from_list(set(self.get_default_stoplist())
-                                            | set(w.lower() for w in custom_stoplist))
+        return self._remove_terms_from_list_and_all_non_unigrams(set(self.get_default_stoplist())
+                                                                 | set(w.lower() for w in custom_stoplist))
 
     def filter_out(self, filter_func):
         '''
@@ -423,7 +436,7 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return self.remove_terms([x for x in self.get_terms() if filter_func(x)])
 
-    def _remove_terms_from_list(self, stoplist):
+    def _remove_terms_from_list_and_all_non_unigrams(self, stoplist):
         terms_to_ignore = [term for term
                            in self._term_idx_store._i2val
                            if ' ' in term or (self._strict_unigram_definition
@@ -510,6 +523,9 @@ class TermDocMatrixWithoutCategories(object):
         '''
         return self._X
 
+    def get_term_freqs(self):
+        return self.get_term_doc_mat().sum(axis=0).A1
+
     def get_term_doc_mat_coo(self):
         '''
         Returns sparse matrix representation of term-doc-matrix
@@ -577,6 +593,13 @@ class TermDocMatrixWithoutCategories(object):
                 doc_name_idx = metaidxstore.getidx(doc_id)
             metafact[i, i] = doc_name_idx
         return self.add_metadata(metafact.get_csr_matrix(), metaidxstore)
+
+    def get_term_index(self, term: str) -> int:
+        return self._term_idx_store.getidxstrict(term)
+
+    def get_term_from_index(self, index: int) -> str:
+        return self._term_idx_store.getval(index)
+
 
     def add_metadata(self, metadata_matrix, meta_index_store):
         '''

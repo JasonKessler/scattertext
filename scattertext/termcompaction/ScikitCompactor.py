@@ -24,4 +24,5 @@ class ScikitSupervisedCompactor(object):
 		-------
 		New term doc matrix
 		'''
-		return term_doc_matrix.remove_terms_by_indices(self._indices_to_compact(term_doc_matrix, non_text), non_text)
+		return term_doc_matrix.remove_terms_by_indices(
+			self._indices_to_compact(term_doc_matrix, non_text), non_text)

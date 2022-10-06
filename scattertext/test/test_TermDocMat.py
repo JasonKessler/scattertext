@@ -322,12 +322,13 @@ class TestTermDocMat(TestCase):
         x = get_hamlet_term_doc_matrix().compact(CompactTerms(minimum_term_count=3))
         self.assertEqual(type(x), TermDocMatrix)
 
-    def test_get_background_corpus(self):
+    def _test_get_background_corpus(self):
         tdm = get_hamlet_term_doc_matrix()
         # background = tdm.get_background_corpus()
         # self.assertEqual(background, None)
         back_df = pd.DataFrame({'word': ['a', 'bee'], 'background': [3, 1]})
         tdm.set_background_corpus(back_df)
+        print(tdm.get_background_corpus().to_dict())
         self.assertEqual(tdm.get_background_corpus().to_dict(),
                          back_df.to_dict())
         tdm.set_background_corpus(tdm)

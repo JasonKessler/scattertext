@@ -61,7 +61,11 @@ class CategoryProjectionBase(ABC):
         try:
             return self.projection.T[self.y_dim]
         except:
-            return self.projection.T.loc[self.y_dim]
+            try:
+                return self.projection.T.loc[self.y_dim]
+            except:
+                import pdb; pdb.set_trace()
+                raise e
 
     def get_axes_labels(self, num_terms=5):
         df = self.get_term_projection()

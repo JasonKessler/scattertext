@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.6
+# Scattertext 0.1.7
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -37,9 +37,21 @@ open('./demo_compact.html', 'w').write(html)
 The HTML file written would look like the image below. Click on it for the actual interactive visualization.
 [![demo_compact.html](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_compact.png)](https://jasonkessler.github.io/demo_compact.html)
 
+## Citation
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
+Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
+```
+@article{kessler2017scattertext,
+  author    = {Kessler, Jason S.},
+  title     = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
+  booktitle = {Proceedings of ACL-2017 System Demonstrations},
+  year      = {2017},
+  address   = {Vancouver, Canada},
+  publisher = {Association for Computational Linguistics},
+}
+```
 **Table of Contents**
 
-- [Citation](#citation)
 - [Installation](#installation)
 - [Overview](#overview)
 - [Customizing the Visualization and Plotting Dispersion](#customizing-the-visualization-and-plotting-dispersion)
@@ -54,6 +66,7 @@ The HTML file written would look like the image below. Click on it for the actua
     - [Document-Based Scatterplots](#document-based-scatterplots) 
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
     - [Using Custom Background Word Frequences](#using-custom-background-word-frequences)
+    - [Plotting word productivity](#plotting-word-productivity)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
 - [The position-select-plot process](#the-position-select-plot-process)
@@ -76,19 +89,6 @@ The HTML file written would look like the image below. Click on it for the actua
 - [What's new](#whats-new)
 - [Sources](#sources)
 
-## Citation
-Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. 2017.
-Link to preprint: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
-```
-@article{kessler2017scattertext,
-  author    = {Kessler, Jason S.},
-  title     = {Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ},
-  booktitle = {Proceedings of ACL-2017 System Demonstrations},
-  year      = {2017},
-  address   = {Vancouver, Canada},
-  publisher = {Association for Computational Linguistics},
-}
-```
 ## Installation 
 Install Python 3.4 or higher and run:
 
@@ -247,7 +247,7 @@ html = st.dataframe_scattertext(
     ignore_categories=True,
     x_label='Log Frequency',
     y_label="Rosengren's S",
-    y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+    y_axis_labels=['Less Dispersion', 'Medium', 'More Dispersion'],
 )
 ```
 
@@ -303,7 +303,7 @@ html = st.dataframe_scattertext(
     ignore_categories=True,
     x_label='Log Frequency',
     y_label="Rosengren's S",
-    y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+    y_axis_labels=['Less Dispersion', 'Medium', 'More Dispersion'],
     color_score_column='ColorScore',
     header_names={'upper': 'Lower than Expected', 'lower': 'More than Expected'},
     left_list_column='Residual',
@@ -1130,6 +1130,10 @@ html = st.produce_scattertext_explorer(
 
 Note that numbers show up as more characteristic using the Dense Rank Difference. It may be they occur
 unusually frequently in this corpus, or perhaps the background word frequencies under counted mumbers.
+
+### Plotting word productivity
+
+Word productivity 
 
 ### Understanding Scaled F-Score
 

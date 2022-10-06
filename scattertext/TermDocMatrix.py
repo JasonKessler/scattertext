@@ -4,7 +4,6 @@ from copy import copy
 import numpy as np
 import pandas as pd
 import scipy
-from pandas.core.common import SettingWithCopyWarning
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -17,8 +16,6 @@ from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO
 from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
 from scattertext.indexstore import IndexStore, IndexStoreFromList
 from scattertext.termscoring.CornerScore import CornerScore
-
-warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScore
 
@@ -913,3 +910,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         :return: int
         '''
         return len(self.get_categories())
+
+    def remove_terms_used_in_less_than_num_categories(self, threshold, use_metadata=False):
+        term_mask = (self.get_freq_df(use_metadata=use_metadata).values > 0).sum(axis=1) < threshold
+        term_indices_to_remove = np.where(term_mask)[0]
+        return self.remove_terms_by_indices(term_indices_to_remove, use_metadata)

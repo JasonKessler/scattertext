@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-version = [0, 1, 6]
+version = [0, 1, 7]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -18,7 +18,7 @@ from scattertext.features.PyTextRankPhrases import PyTextRankPhrases
 from scattertext.termscoring.BetaPosterior import BetaPosterior
 from scattertext.semioticsquare.SemioticSquareFromAxes import SemioticSquareFromAxes
 from scattertext.categoryprojector.OptimalProjection import get_optimal_category_projection, \
-    get_optimal_category_projection_by_rank
+    get_optimal_category_projection_by_rank, ProjectionQuality
 from scattertext.categoryprojector.CategoryProjector import CategoryProjector, Doc2VecCategoryProjector, \
     LengthNormalizer
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
@@ -44,6 +44,7 @@ from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
 from scattertext.AutoTermSelector import AutoTermSelector
 from scattertext.CSRMatrixTools import CSRMatrixFactory
+from scattertext import Common
 from scattertext.Common import DEFAULT_MINIMUM_TERM_FREQUENCY, DEFAULT_PMI_THRESHOLD_COEFFICIENT, MY_ENGLISH_STOP_WORDS
 from scattertext.Corpus import Corpus
 from scattertext.CorpusFromPandas import CorpusFromPandas
@@ -139,6 +140,8 @@ from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAnd
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
 from scattertext.termscoring.LogOddsRatio import LogOddsRatio
 from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
+from scattertext.categorygrouping.CharacteristicGrouper import CharacteristicGrouper
+from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -268,6 +271,7 @@ def produce_scattertext_explorer(corpus,
                                  dont_filter=False,
                                  use_offsets=False,
                                  get_column_header_html=None,
+                                 show_term_etc=True,
                                  return_data=False,
                                  return_scatterplot_structure=False, ):
     '''Returns html code of visualization.
@@ -539,6 +543,8 @@ def produce_scattertext_explorer(corpus,
     get_column_header_html : str, default None
         Javascript function to return html over each column. Matches header
         (Column Name, occurrences per 25k, occs, # occs * 1000/num docs, term info)
+    show_term_etc: bool, default True
+        Shows list of etc values after clicking term
     use_offsets : bool, default False
         Enable the use of metadata offsets
     return_data : bool default False
@@ -672,8 +678,8 @@ def produce_scattertext_explorer(corpus,
         )
 
     if header_sorting_algos is not None:
-        assert 'upper' not in header_sorting_algos
-        assert 'lower' not in header_sorting_algos
+        assert 'upper' in header_sorting_algos
+        assert 'lower' in header_sorting_algos
     if left_list_column is not None:
         assert term_metadata_df is not None
         assert left_list_column in term_metadata_df
@@ -687,75 +693,77 @@ def produce_scattertext_explorer(corpus,
     if show_characteristic is None:
         show_characteristic = not (asian_mode or use_non_text_features)
 
-
-    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data),
-                                                 width_in_pixels=width_in_pixels,
-                                                 height_in_pixels=height_in_pixels,
-                                                 max_snippets=max_snippets,
-                                                 color=d3_color_scale,
-                                                 grey_zero_scores=gray_zero_scores,
-                                                 sort_by_dist=sort_by_dist,
-                                                 reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
-                                                 use_full_doc=use_full_doc,
-                                                 asian_mode=asian_mode,
-                                                 match_full_line=match_full_line,
-                                                 use_non_text_features=use_non_text_features,
-                                                 show_characteristic=show_characteristic,
-                                                 word_vec_use_p_vals=word_vec_use_p_vals,
-                                                 max_p_val=max_p_val,
-                                                 save_svg_button=save_svg_button,
-                                                 p_value_colors=p_value_colors,
-                                                 x_label=x_label,
-                                                 y_label=y_label,
-                                                 show_top_terms=show_top_terms,
-                                                 show_neutral=show_neutral,
-                                                 get_tooltip_content=get_tooltip_content,
-                                                 x_axis_values=x_axis_values,
-                                                 y_axis_values=y_axis_values,
-                                                 color_func=color_func,
-                                                 show_axes=show_axes,
-                                                 horizontal_line_y_position=horizontal_line_y_position,
-                                                 vertical_line_x_position=vertical_line_x_position,
-                                                 show_extra=show_extra,
-                                                 do_censor_points=censor_points,
-                                                 center_label_over_points=center_label_over_points,
-                                                 x_axis_labels=x_axis_labels,
-                                                 y_axis_labels=y_axis_labels,
-                                                 topic_model_preview_size=topic_model_preview_size,
-                                                 vertical_lines=vertical_lines,
-                                                 unified_context=unified_context,
-                                                 show_category_headings=show_category_headings,
-                                                 highlight_selected_category=highlight_selected_category,
-                                                 show_cross_axes=show_cross_axes,
-                                                 div_name=div_name,
-                                                 alternative_term_func=alternative_term_func,
-                                                 include_all_contexts=include_all_contexts,
-                                                 show_axes_and_cross_hairs=show_axes_and_cross_hairs,
-                                                 show_diagonal=show_diagonal,
-                                                 use_global_scale=use_global_scale,
-                                                 x_axis_values_format=x_axis_values_format,
-                                                 y_axis_values_format=y_axis_values_format,
-                                                 max_overlapping=max_overlapping,
-                                                 show_corpus_stats=show_corpus_stats,
-                                                 sort_doc_labels_by_name=sort_doc_labels_by_name,
-                                                 enable_term_category_description=enable_term_category_description,
-                                                 always_jump=always_jump,
-                                                 get_custom_term_html=get_custom_term_html,
-                                                 header_names=header_names,
-                                                 header_sorting_algos=header_sorting_algos,
-                                                 ignore_categories=ignore_categories,
-                                                 background_labels=background_labels,
-                                                 label_priority_column=label_priority_column,
-                                                 text_color_column=text_color_column,
-                                                 suppress_text_column=suppress_text_column,
-                                                 background_color=background_color,
-                                                 censor_point_column=censor_point_column,
-                                                 right_order_column=right_order_column,
-                                                 subword_encoding=subword_encoding,
-                                                 top_terms_length=top_terms_length,
-                                                 top_terms_left_buffer=top_terms_left_buffer,
-                                                 get_column_header_html=get_column_header_html,
-                                                 term_word=term_word_in_term_description)
+    scatterplot_structure = ScatterplotStructure(
+        VizDataAdapter(scatter_chart_data),
+        width_in_pixels=width_in_pixels,
+        height_in_pixels=height_in_pixels,
+        max_snippets=max_snippets,
+        color=d3_color_scale,
+        grey_zero_scores=gray_zero_scores,
+        sort_by_dist=sort_by_dist,
+        reverse_sort_scores_for_not_category=reverse_sort_scores_for_not_category,
+        use_full_doc=use_full_doc,
+        asian_mode=asian_mode,
+        match_full_line=match_full_line,
+        use_non_text_features=use_non_text_features,
+        show_characteristic=show_characteristic,
+        word_vec_use_p_vals=word_vec_use_p_vals,
+        max_p_val=max_p_val,
+        save_svg_button=save_svg_button,
+        p_value_colors=p_value_colors,
+        x_label=x_label,
+        y_label=y_label,
+        show_top_terms=show_top_terms,
+        show_neutral=show_neutral,
+        get_tooltip_content=get_tooltip_content,
+        x_axis_values=x_axis_values,
+        y_axis_values=y_axis_values,
+        color_func=color_func,
+        show_axes=show_axes,
+        horizontal_line_y_position=horizontal_line_y_position,
+        vertical_line_x_position=vertical_line_x_position,
+        show_extra=show_extra,
+        do_censor_points=censor_points,
+        center_label_over_points=center_label_over_points,
+        x_axis_labels=x_axis_labels,
+        y_axis_labels=y_axis_labels,
+        topic_model_preview_size=topic_model_preview_size,
+        vertical_lines=vertical_lines,
+        unified_context=unified_context,
+        show_category_headings=show_category_headings,
+        highlight_selected_category=highlight_selected_category,
+        show_cross_axes=show_cross_axes,
+        div_name=div_name,
+        alternative_term_func=alternative_term_func,
+        include_all_contexts=include_all_contexts,
+        show_axes_and_cross_hairs=show_axes_and_cross_hairs,
+        show_diagonal=show_diagonal,
+        use_global_scale=use_global_scale,
+        x_axis_values_format=x_axis_values_format,
+        y_axis_values_format=y_axis_values_format,
+        max_overlapping=max_overlapping,
+        show_corpus_stats=show_corpus_stats,
+        sort_doc_labels_by_name=sort_doc_labels_by_name,
+        enable_term_category_description=enable_term_category_description,
+        always_jump=always_jump,
+        get_custom_term_html=get_custom_term_html,
+        header_names=header_names,
+        header_sorting_algos=header_sorting_algos,
+        ignore_categories=ignore_categories,
+        background_labels=background_labels,
+        label_priority_column=label_priority_column,
+        text_color_column=text_color_column,
+        suppress_text_column=suppress_text_column,
+        background_color=background_color,
+        censor_point_column=censor_point_column,
+        right_order_column=right_order_column,
+        subword_encoding=subword_encoding,
+        top_terms_length=top_terms_length,
+        top_terms_left_buffer=top_terms_left_buffer,
+        get_column_header_html=get_column_header_html,
+        term_word=term_word_in_term_description,
+        show_term_etc=show_term_etc
+    )
 
     if return_scatterplot_structure:
         return scatterplot_structure
@@ -2011,6 +2019,7 @@ def produce_scattertext_table(
         plot_width=500,
         plot_height=700,
         category_order=None,
+        d3_url_struct=D3URLs(),
         **kwargs
 ):
     '''
@@ -2088,13 +2097,16 @@ def produce_scattertext_table(
         return_scatterplot_structure=True,
         width_in_pixels=plot_width,
         height_in_pixels=plot_height,
+        d3_url=d3_url_struct.get_d3_url(),
+        d3_scale_chromatic_url=d3_url_struct.get_d3_scale_chromatic_url(),
         # alternative_term_func=alternative_term_func,
         **kwargs
     )
 
     html = TableStructure(
         scatterplot_structure,
-        graph_renderer=graph_renderer
+        graph_renderer=graph_renderer,
+        d3_url_struct=d3_url_struct
     ).to_html()
 
     return html

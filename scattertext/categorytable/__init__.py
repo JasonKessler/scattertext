@@ -3,6 +3,7 @@ from bisect import bisect_left
 
 import pandas as pd
 import numpy as np
+
 from scattertext.termranking import AbsoluteFrequencyRanker
 
 from scattertext.termscoring.RankDifference import RankDifference

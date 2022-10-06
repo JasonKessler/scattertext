@@ -92,6 +92,9 @@ class ParsedCorpus(ParsedDataFrameCorpus):
             unigram_frequency_path=self._unigram_frequency_path
         )
 
+    def get_category_column(self) -> str:
+        return self._category_col
+
     def term_group_freq_df(self, group_col):
         # type: (str) -> pd.DataFrame
         '''

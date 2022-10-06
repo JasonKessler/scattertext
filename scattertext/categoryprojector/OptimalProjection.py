@@ -1,3 +1,5 @@
+from typing import Optional, Callable
+
 import numpy as np
 from sklearn.decomposition import PCA
 
@@ -27,16 +29,21 @@ def morista_index(points):
 
     return np.array(ims).T[1].max()
 
-def ripley_poisson_difference(points):
-    try:
-        from astropy.stats import RipleysKEstimator
-    except:
-        raise Exception("Please install astropy")
+class ProjectionQuality:
+    def __init__(self, min_radius=0, max_radius=np.sqrt(2)):
+        self.min_radius = min_radius
+        self.max_radius = max_radius
 
-    r = np.linspace(0, np.sqrt(2), 100)
-    ripley = RipleysKEstimator(area=1., x_max=1., y_max=1., x_min=0., y_min=0.)
+    def ripley_poisson_difference(self, points):
+        try:
+            from astropy.stats import RipleysKEstimator
+        except:
+            raise Exception("Please install astropy")
 
-    return np.sum(np.abs(ripley(points, r, mode='ripley') - ripley.poisson(r)))
+        r = np.linspace(self.min_radius, self.max_radius, 100)
+        ripley = RipleysKEstimator(area=1., x_max=1., y_max=1., x_min=0., y_min=0.)
+
+        return np.sum(np.abs(ripley(points, r, mode='ripley') - ripley.poisson(r)))
 
 def get_optimal_category_projection(
         corpus,
@@ -44,8 +51,10 @@ def get_optimal_category_projection(
         n_steps=10,
         projector=lambda n_terms, n_dims: CategoryProjector(
             selector=AssociationCompactor(n_terms, scorer=RankDifference),
-            projector=PCA(n_dims)),
-        optimizer = ripley_poisson_difference,
+            projector=PCA(n_dims)
+        ),
+        optimizer: Optional[Callable] = None,
+        term_counts: Optional[np.array] = None,
         verbose=False
 ):
     min_dev = None
@@ -53,8 +62,14 @@ def get_optimal_category_projection(
     best_x = None
     best_y = None
     best_projector = None
-    for k in np.power(2, np.linspace(np.log(corpus.get_num_categories()) / np.log(2),
-                                     np.log(corpus.get_num_terms()) / np.log(2), n_steps)).astype(int):
+    optimizer = ProjectionQuality().ripley_poisson_difference if optimizer is None else optimizer
+    term_counts = np.power(
+        2,
+        np.linspace(np.log(corpus.get_num_categories()) / np.log(2),
+                                     np.log(corpus.get_num_terms()) / np.log(2), n_steps)
+    ).astype(int) if term_counts is None else term_counts
+
+    for k in term_counts:
         category_projector = projector(k, n_dims)
         category_projection = category_projector.project(corpus)
         for dim_1 in range(0, n_dims):
@@ -62,14 +77,24 @@ def get_optimal_category_projection(
                 proj = category_projection.projection[:, [dim_1, dim_2]]
                 scaled_proj = np.array([stretch_0_to_1(proj.T[0]), stretch_0_to_1(proj.T[1])]).T
                 dev = optimizer(scaled_proj)
-                #dev = np.sum(np.abs(ripley(scaled_proj, r, mode='ripley') - ripley.poisson(r)))
+                category_projection.x_dim = dim_1
+                category_projection.y_dim = dim_2
+                tproj = category_projection.get_term_projection().values
+                print(proj.shape)
+                print(tproj.shape)
+                scaled_tproj = np.array([stretch_0_to_1(tproj.T[0]), stretch_0_to_1(tproj.T[1])]).T
+                tdev = optimizer(scaled_tproj)
+                print(dev, tdev)
+                #dev = np.sum(np.abs(ripley(scaled_proj, r, mode='ripley') - ripley.poisson(r)))]
+                best = False
                 if min_dev is None or dev < min_dev:
                     min_dev = dev
                     best_k = k
                     best_projector = category_projector
                     best_x, best_y = (dim_1, dim_2)
+                    best = True
                 if verbose:
-                    print(k, dim_1, dim_2, dev, best_k, best_x, best_y, min_dev)
+                    print(k, dim_1, dim_2, dev, best_k, best_x, best_y, min_dev, f'best={best}')
     if verbose:
         print(best_k, best_x, best_y)
     return best_projector.project(corpus, best_x, best_y)

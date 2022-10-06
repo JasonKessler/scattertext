@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import rankdata, pearsonr
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.metrics.pairwise import cosine_distances
@@ -111,6 +112,8 @@ def produce_pairplot(corpus,
         category_projection, scaler, term_ranker, verbose
     )
     if category_metadata_df is not None:
+        if type(category_metadata_df) != pd.DataFrame:
+            category_metadata_df = category_metadata_df(corpus)
         category_scatter_chart_explorer = category_scatter_chart_explorer\
             .inject_term_metadata_df(category_metadata_df)
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
