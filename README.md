@@ -82,6 +82,7 @@ Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
     - [Visualizing topic models](#visualizing-topic-models)
     - [Creating T-SNE-style word embedding projection plots](#creating-T-SNE-style-word-embedding-projection-plots)
     - [Using SVD to visualize any kind of word embeddings](#using-svd-to-visualize-any-kind-of-word-embeddings)
+    - [Exporting plot to matplotlib](#exporting-plot-to-matplotlib)
     - [Using the same scale for both axes](#using-the-same-scale-for-both-axes)
 
 - [Examples](#examples)
@@ -2414,6 +2415,32 @@ html = st.produce_pca_explorer(corpus,
 
 Click for an interactive visualization.  
 [![pca](https://jasonkessler.github.io/svd2.png)](https://jasonkessler.github.io/demo_embeddings_svd_0_1_scale_neg_1_to_1_with_zero_mean.html)
+
+### Exporting plot to matplotlib
+
+To export the content of a scattertext explorer object (ScattertextStructure) to matplotlib you can use `produce_scattertext_pyplot`. The function returns a `matplotlib.figure.Figure` object which can be visualized using `plt.show` or `plt.savefig` as in the example below.
+
+```pydocstring
+convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
+	parse = lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
+)
+corpus = st.CorpusFromParsedDocuments(convention_df, category_col='party', parsed_col='parse').build()
+scattertext_structure = st.produce_scattertext_explorer(
+	corpus,
+	category='democrat',
+	category_name='Democratic',
+	not_category_name='Republican',
+	minimum_term_frequency=5,
+	pmi_threshold_coefficient=8,
+	width_in_pixels=1000,
+	metadata=convention_df['speaker'],
+	d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
+	d3_url='scattertext/data/viz/scripts/d3.min.js',
+    return_scatterplot_structure=True,
+)
+st.produce_scattertext_pyplot(scattertext_structure)
+plt.show()
+```
 
 ## Examples 
 

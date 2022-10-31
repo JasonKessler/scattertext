@@ -12,5 +12,5 @@ class FeatureLister(object):
 		toret = [{} for i in range(self.num_docs)]
 		X = self.X.tocoo()
 		for row, col, val in zip(X.row, X.col, X.data):
-			toret[row][self.idx_store.getval(col)] = np.asscalar(val)
+			toret[row][self.idx_store.getval(col)] = val.item()
 		return toret
