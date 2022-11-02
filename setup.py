@@ -25,9 +25,10 @@ setup(name='scattertext',
 	      #'empath',
 	      #'umap',
 	      #'gensim'
-	      # 'matplotlib',
+	      'matplotlib',
 	      # 'seaborn',
 	      # 'jupyter',
+            "textalloc",
       ],
       package_data={
 	      'scattertext': ['data/*', 'data/viz/*', 'data/viz/*/*']
