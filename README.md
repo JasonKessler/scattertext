@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.7
+# Scattertext 0.1.8
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -65,6 +65,7 @@ Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
+    - [Using Bi-Normal Separation (BNS) to score terms](#using-bi-normal-separation-bns-to-score-words)
     - [Using Custom Background Word Frequences](#using-custom-background-word-frequences)
     - [Plotting word productivity](#plotting-word-productivity)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
@@ -957,6 +958,39 @@ of the statistic, while `cohens_d_z` and `cohens_d_p` are the Z-scores and p-val
 Click for an interactive version. 
 [![demo_cohens_d.html](https://jasonkessler.github.io/cohen_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
  
+
+### Using Bi-Normal Separation (BNS) to score terms
+
+New in 0.1.8 is Bi-Normal Separation (BNS) (Forman, 2008). A variation of (BNS) is used 
+where $F^{-1}(tpr) - F^{-1}(fpr)$ is not used as an absolute value, but kept as a difference. 
+Note that tpr and fpr are scaled to between $[\alpha, 1-\alpha]$ where 
+alpha is $\in [0, 1]$ and defaults to 0.005. While Forman (2008) suggests using $\alpha=0.0005$,
+I've found that value tends to over-emphasize very low and very high frequency terms.  Using the 
+Convention corpus, the `BNSScorer` can be just like any other term scorer.
+
+```python
+term_scorer = (st.BNSScorer(corpus, alpha=0.005).set_categories('democrat'))
+
+html = st.produce_frequency_explorer(
+    corpus,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    term_scorer=term_scorer,
+    metadata=lambda c: c.get_df()['speaker'],
+    grey_threshold=0
+)
+```
+
+BNS Scored terms at $\alpha=0.005$:
+[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.html)
+
+Note that when using $\alpha=0.0005$, as recommended by Forman, low frequency terms such 
+as "achievement" and as well as the high frequency stopwords such as "is", "that" and "a" 
+top the Republican list.
+[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation_0.0005.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation_0.0005.html)
+
+
 
 ### Using Custom Background Word Frequences
 
@@ -2420,6 +2454,8 @@ Click for an interactive visualization.
 
 To export the content of a scattertext explorer object (ScattertextStructure) to matplotlib you can use `produce_scattertext_pyplot`. The function returns a `matplotlib.figure.Figure` object which can be visualized using `plt.show` or `plt.savefig` as in the example below.
 
+Note that installation of textalloc>=0.0.3 and matplotlib>=3.6.0 is required before running this.   
+
 ```pydocstring
 convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
 	parse = lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
@@ -2433,14 +2469,12 @@ scattertext_structure = st.produce_scattertext_explorer(
 	minimum_term_frequency=5,
 	pmi_threshold_coefficient=8,
 	width_in_pixels=1000,
-	metadata=convention_df['speaker'],
-	d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-	d3_url='scattertext/data/viz/scripts/d3.min.js',
-    return_scatterplot_structure=True,
+	return_scatterplot_structure=True,
 )
-st.produce_scattertext_pyplot(scattertext_structure)
-plt.show()
+fig = st.produce_scattertext_pyplot(scattertext_structure)
+fig.savefig('pyplot_export.png', format='png')
 ```
+[![pyplot](https://jasonkessler.github.io/pyplot_export.png)]
 
 ## Examples 
 
@@ -2907,3 +2941,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Jesse Graham, Jonathan Haidt, Sena Koleva, Matt Motyl, Ravi Iyer, Sean P Wojcik, and Peter H Ditto. 2013. Moral foundations theory: The pragmatic validity of moral pluralism. Advances in Experimental Social Psychology, 47, 55-130
 * Ryan J. Gallagher, Morgan R. Frank, Lewis Mitchell, Aaron J. Schwartz, Andrew J. Reagan, Christopher M. Danforth, and Peter Sheridan Dodds. Generalized Word Shift Graphs: A Method for Visualizing and Explaining Pairwise Comparisons Between Texts. 2020. Arxiv. https://arxiv.org/pdf/2008.02250.pdf
 * Kocoń, Jan; Zaśko-Zielińska, Monika and Miłkowski, Piotr, 2019, PolEmo 2.0 Sentiment Analysis Dataset for CoNLL, CLARIN-PL digital repository, http://hdl.handle.net/11321/710.
+* George Forman. 2008. BNS feature scaling: an improved representation over tf-idf for svm text classification. In Proceedings of the 17th ACM conference on Information and knowledge management (CIKM '08). Association for Computing Machinery, New York, NY, USA, 263–270. https://doi.org/10.1145/1458082.1458119

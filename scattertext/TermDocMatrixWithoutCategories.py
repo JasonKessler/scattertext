@@ -1,5 +1,6 @@
 import collections
 import re
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -214,7 +215,7 @@ class TermDocMatrixWithoutCategories(object):
         new_X = delete_columns(self._get_relevant_X(non_text), idx_to_delete_list)
         return new_X, new_term_idx_store
 
-    def _get_relevant_X(self, non_text):
+    def _get_relevant_X(self, non_text: bool):
         return self._mX if non_text else self._X
 
     def _get_relevant_idx_store(self, non_text):
@@ -600,6 +601,13 @@ class TermDocMatrixWithoutCategories(object):
     def get_term_from_index(self, index: int) -> str:
         return self._term_idx_store.getval(index)
 
+    def get_document_ids_with_terms(self, terms: List[str], use_non_text_features: bool = False) -> np.array:
+        return np.where(
+            self._get_relevant_X(use_non_text_features)[
+            :,
+            [self._term_idx_store.getidx(x) for x in terms if x in self._term_idx_store]
+            ].sum(axis=1).A1 > 0
+        )[0]
 
     def add_metadata(self, metadata_matrix, meta_index_store):
         '''

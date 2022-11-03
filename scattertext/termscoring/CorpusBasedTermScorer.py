@@ -139,7 +139,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         ncat_X = X[np.isin(self.corpus_.get_category_names_by_row(),
                            self.not_category_names + self.neutral_category_names), :]
         if len(self.neutral_category_names) > 0:
-            neut_X = [np.isin(self.corpus_.get_category_names_by_row(), self.neutral_category_names)]
+            neut_X = X[np.isin(self.corpus_.get_category_names_by_row(), self.neutral_category_names)]
             cat_X = vstack([cat_X, neut_X])
             ncat_X = vstack([ncat_X, neut_X])
         return cat_X, ncat_X

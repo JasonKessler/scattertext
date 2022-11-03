@@ -100,9 +100,10 @@ def produce_pairplot(corpus,
                      wordfish_style=False,
                      category_metadata_df=None,
                      **kwargs):
+
     if category_projection is None:
         if use_metadata:
-            category_projection = category_projector.project_with_metadata(corpus, x_dim=x_dim, y_dim=y_dim)
+            category_projection = category_projector.use_metadata().project_with_metadata(corpus, x_dim=x_dim, y_dim=y_dim)
         else:
             category_projection = category_projector.project(corpus, x_dim=x_dim, y_dim=y_dim)
 

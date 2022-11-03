@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-version = [0, 1, 7]
+
+version = [0, 1, 8]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -143,9 +144,10 @@ from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
 from scattertext.categorygrouping.CharacteristicGrouper import CharacteristicGrouper
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
 from scattertext.viz.PyPlotFromScattertextStructure import pyplot_from_scattertext_structure
+from scattertext.termscoring.BNSScorer import BNSScorer
+from scattertext.features.featoffsets.flexible_ngram_features import PosStopgramFeatures, FlexibleNGramFeatures
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
-
 
 def cognitive_distortions_offset_getter_factory():
     return LexiconFeatAndOffsetGetter(COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS)
@@ -2114,20 +2116,20 @@ def produce_scattertext_table(
 
 
 def produce_scattertext_pyplot(
-    scatterplot_structure,
-    figsize=(15, 7),
-    textsize=7,
-    distance_margin_fraction=0.009,
-    scatter_size=5,
-    cmap="RdYlBu",
-    sample=0,
-    xlabel=None,
-    ylabel=None,
-    dpi=300,
-    draw_lines=False,
-    linecolor="k",
-    draw_all=False,
-    nbr_candidates=0,
+        scatterplot_structure,
+        figsize=(15, 7),
+        textsize=7,
+        distance_margin_fraction=0.009,
+        scatter_size=5,
+        cmap="RdYlBu",
+        sample=0,
+        xlabel=None,
+        ylabel=None,
+        dpi=300,
+        draw_lines=False,
+        linecolor="k",
+        draw_all=False,
+        nbr_candidates=0,
 ):
     '''
     Parameters

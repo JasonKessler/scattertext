@@ -22,6 +22,7 @@ class LengthNormalizeScaleStandardize(object):
         return compact_category_counts_catscale_std_scale
 '''
 
+
 class LengthNormalizer(BaseEstimator, TransformerMixin):
     def fit_transform(self, X, y=None, **fit_params):
         return X - X.sum(axis=0)
@@ -81,12 +82,15 @@ class CategoryProjectorBase(object):
 
 
 class CategoryProjector(CategoryProjectorBase):
-    def __init__(self,
-                 weighter=LengthNormalizer(),
-                 normalizer=StandardScaler(),
-                 selector=AssociationCompactor(1000, RankDifference),
-                 projector=PCA(2),
-                 fit_transform_kwargs=None):
+    def __init__(
+            self,
+            weighter=LengthNormalizer(),
+            normalizer=StandardScaler(),
+            selector=AssociationCompactor(1000, RankDifference),
+            projector=PCA(2),
+            fit_transform_kwargs=None,
+            use_metadata=False
+    ):
         '''
 
         :param weighter: instance of an sklearn class with fit_transform to weight X category corpus.
@@ -94,12 +98,18 @@ class CategoryProjector(CategoryProjectorBase):
         :param selector: instance of a compactor class, if None, no compaction will be done.
         :param projector: instance an sklearn class with fit_transform
         :param fit_transform_kwargs: optional, dict of kwargs to fit_transform
+        :param use_metadata: bool, use metadata features
         '''
         self.weighter_ = weighter
         self.normalizer_ = normalizer
         self.selector_ = selector
         self.projector_ = projector
         self.fit_transform_kwargs_ = {} if fit_transform_kwargs is None else fit_transform_kwargs
+        self.use_metadata_ = use_metadata
+
+    def use_metadata(self) -> 'CategoryProjector':
+        self.use_metadata_ = True
+        return self
 
     def get_category_embeddings(self, category_corpus):
         raw_category_counts = self._get_raw_category_counts(category_corpus)
@@ -114,7 +124,7 @@ class CategoryProjector(CategoryProjectorBase):
         return normalized_counts
 
     def _get_raw_category_counts(self, category_corpus):
-        return category_corpus.get_term_freq_df('')
+        return category_corpus.get_freq_df(label_append='')
 
     def weight(self, category_counts):
         if self.weighter_ is None:
@@ -137,7 +147,9 @@ class CategoryProjector(CategoryProjectorBase):
     def select(self, corpus):
         if self.selector_ is None:
             return corpus
-        return corpus.select(self.selector_)
+        if self.use_metadata_:
+            self.selector_ = self.selector_.set_use_non_text_features(self.use_metadata_)
+        return corpus.select(self.selector_, non_text=self.use_metadata_)
 
     def _project_category_corpus(self, category_corpus, x_dim=0, y_dim=1):
         normalized_counts = self.get_category_embeddings(category_corpus)
@@ -149,8 +161,6 @@ class CategoryProjector(CategoryProjectorBase):
 
     def _get_category_metadata_corpus_and_replace_terms(self, corpus):
         return self.select(corpus).use_categories_as_metadata_and_replace_terms()
-
-
 
 
 class Doc2VecCategoryProjector(CategoryProjectorBase):
@@ -202,5 +212,3 @@ class Doc2VecCategoryProjector(CategoryProjectorBase):
 
     def get_category_embeddings(self, corpus):
         return self.doc2vec_builder.project()
-
-

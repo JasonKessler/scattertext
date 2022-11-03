@@ -1,7 +1,5 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import random
-import textalloc as ta
 
 
 def pyplot_from_scattertext_structure(
@@ -49,6 +47,12 @@ def pyplot_from_scattertext_structure(
     matplotlib figure that can be used with plt.show() or plt.savefig()
 
     """
+    try:
+        import matplotlib.pyplot as plt
+        import textalloc as ta
+    except:
+        raise Exception("Ensure that the packages textalloc>=0.0.3 and matplotlib>=3.6.0 have been installed.")
+
     # Extract the data
     if sample > 0:
         subset = random.sample(

@@ -288,9 +288,7 @@ class ScatterChart:
                                 if c not in [category] + not_categories + neutral_categories]
         all_categories = [category] + not_categories + neutral_categories + extra_categories
 
-        df = self._get_term_category_frequencies()
-
-        self._add_x_and_y_coords_to_term_df_if_injected(df)
+        df = self._add_x_and_y_coords_to_term_df_if_injected(self._get_term_category_frequencies())
         if scores is None:
             scores = self._get_default_scores(category, not_categories, df)
 
@@ -338,19 +336,22 @@ class ScatterChart:
         if extra_categories != []:
             df['extra cat freq'] = df[[x + ' freq' for x in extra_categories]].sum(axis=1).fillna(0)
 
-        json_df = df[['x', 'y', 'ox', 'oy', 'term']]
+        json_df = df[['x', 'y', 'ox', 'oy', 'term']
+                     + (['p'] if self.scatterchartdata.term_significance else [])]
 
-        if self.scatterchartdata.term_significance:
-            json_df['p'] = df['p']
-        self._add_term_freq_to_json_df(json_df, df, category)
-
-        json_df['s'] = self.scatterchartdata.score_transform(df['color_scores'])
-        json_df['os'] = df['color_scores']
+        json_df = self._add_term_freq_to_json_df(json_df, df, category).assign(
+            s=self.scatterchartdata.score_transform(df['color_scores']),
+            os=df['color_scores']
+        )
         if background_scorer:
             bg_scores = background_scorer.get_scores(self.term_doc_matrix)
-            json_df['bg'] = bg_scores[1].loc[json_df.term].values
+            json_df = json_df.assign(
+                bg=lambda json_df: bg_scores[1].loc[json_df.term].values
+            )
         elif not self.scatterchartdata.use_non_text_features:
-            json_df['bg'] = self._get_corpus_characteristic_scores(json_df)
+            json_df = json_df.assign(
+                bg=lambda json_df: self._get_corpus_characteristic_scores(json_df)
+            )
 
         self._preform_axis_rescale(json_df, self._rescale_x, 'x')
         self._preform_axis_rescale(json_df, self._rescale_y, 'y')
@@ -358,8 +359,8 @@ class ScatterChart:
         if self.scatterchartdata.terms_to_include is not None:
             json_df = self._use_only_selected_terms(json_df)
 
-        category_terms = list(json_df.sort_values('s', ascending=False)['term'][:10])
-        not_category_terms = list(json_df.sort_values('s', ascending=True)['term'][:10])
+        category_terms = list(json_df.sort_values('s', ascending=False)['term'].iloc[:10])
+        not_category_terms = list(json_df.sort_values('s', ascending=True)['term'].iloc[:10])
         if category_name is None:
             category_name = category
         if not_category_name is None:
@@ -399,20 +400,31 @@ class ScatterChart:
 
         return j
 
-    def _add_x_and_y_coords_to_term_df_if_injected(self, df):
+    def _add_x_and_y_coords_to_term_df_if_injected(self, df: pd.DataFrame) -> pd.DataFrame:
         if self.x_coords is not None:
-            df['x'] = self.x_coords
-            df['y'] = self.y_coords
+            df = df.assign(
+                x=self.x_coords,
+                y=self.y_coords
+            )
         if not self.original_x is None:
             try:
-                df['ox'] = self.original_x.values
+                df = df.assign(
+                    ox=self.original_x.values
+                )
             except AttributeError:
-                df['ox'] = self.original_x
+                df = df.assign(
+                    ox=self.original_x
+                )
         if not self.original_y is None:
             try:
-                df['oy'] = self.original_y.values
+                df = df.assign(
+                    oy=self.original_y.values
+                )
             except AttributeError:
-                df['oy'] = self.original_y
+                df = df.assign(
+                    oy=self.original_y
+                )
+        return df
 
     def _get_term_category_frequencies(self):
         return self.term_doc_matrix.get_term_category_frequencies(self.scatterchartdata)
@@ -423,7 +435,7 @@ class ScatterChart:
 
     def _preform_axis_rescale(self, json_df, rescaler, variable_to_rescale):
         if rescaler is not None:
-            json_df[variable_to_rescale] = rescaler(json_df[variable_to_rescale])
+            json_df.loc[:, variable_to_rescale] = rescaler(json_df[variable_to_rescale])
             assert json_df[variable_to_rescale].min() >= 0 and json_df[variable_to_rescale].max() <= 1
 
     def _get_corpus_characteristic_scores(self, json_df):
@@ -433,31 +445,46 @@ class ScatterChart:
         bg_terms = bg_terms.reset_index()
         bg_terms.columns = ['term' if x in ['index', 'word'] else x for x in bg_terms.columns]
         json_df = pd.merge(json_df, bg_terms, on='term', how='left')
-        return json_df['bg'].fillna(0)
+        return json_df.loc[:, 'bg'].fillna(0)
 
-    def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
+    def _add_term_freq_to_json_df(self, json_df, term_freq_df, category) -> pd.DataFrame:
+        '''
         json_df['cat25k'] = (((term_freq_df[category + ' freq'] * 1.
                                / term_freq_df[category + ' freq'].sum()) * 25000).fillna(0)
                              .apply(np.round).astype(int))
         json_df['ncat25k'] = (((term_freq_df['not cat freq'] * 1.
                                 / term_freq_df['not cat freq'].sum()) * 25000).fillna(0)
                               .apply(np.round).astype(int))
+        '''
+        json_df = json_df.assign(
+            cat25k=(((term_freq_df[category + ' freq'] * 1.
+                      / term_freq_df[category + ' freq'].sum()) * 25000).fillna(0)
+                    .apply(np.round).astype(int)),
+            ncat25k=(((term_freq_df['not cat freq'] * 1.
+                       / term_freq_df['not cat freq'].sum()) * 25000).fillna(0)
+                     .apply(np.round).astype(int)),
+            neut25k=0,
+            neut=0,
+            extra25k=0,
+            extra=0
+        )
+
         if 'neut cat freq' in term_freq_df:
-            json_df['neut25k'] = (((term_freq_df['neut cat freq'] * 1.
-                                    / term_freq_df['neut cat freq'].sum()) * 25000).fillna(0)
-                                  .apply(np.round).astype(int))
-            json_df['neut'] = term_freq_df['neut cat freq']
-        else:
-            json_df['neut25k'] = 0
-            json_df['neut'] = 0
+            json_df = json_df.assign(
+                neut25k=(((term_freq_df['neut cat freq'] * 1.
+                           / term_freq_df['neut cat freq'].sum()) * 25000).fillna(0)
+                         .apply(np.round).astype(int)),
+                neut=term_freq_df['neut cat freq']
+            )
+
         if 'extra cat freq' in term_freq_df:
-            json_df['extra25k'] = (((term_freq_df['extra cat freq'] * 1.
-                                     / term_freq_df['extra cat freq'].sum()) * 25000).fillna(0)
-                                   .apply(np.round).astype(int))
-            json_df['extra'] = term_freq_df['extra cat freq']
-        else:
-            json_df['extra25k'] = 0
-            json_df['extra'] = 0
+            json_df = json_df.assign(
+                extra25k=(((term_freq_df['extra cat freq'] * 1.
+                            / term_freq_df['extra cat freq'].sum()) * 25000).fillna(0)
+                          .apply(np.round).astype(int)),
+                extra=term_freq_df['extra cat freq']
+            )
+        return json_df
 
     def _get_category_names(self, category):
         other_categories = [val + ' freq' for val \
@@ -489,26 +516,27 @@ class ScatterChart:
         return vec + np.random.rand(1, len(vec))[0] * self.scatterchartdata.jitter
 
     def _term_rank_score_and_frequency_df(self, all_categories, category, other_categories, scores):
-        df = self._get_term_category_frequencies()
-        self._add_x_and_y_coords_to_term_df_if_injected(df)
+        df = self._add_x_and_y_coords_to_term_df_if_injected(self._get_term_category_frequencies())
 
         if scores is None:
             scores = self._get_default_scores(category, other_categories, df)
         # np.array(self.term_doc_matrix.get_rudder_scores(category))
         # convention_df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
         category_column_name = category + ' freq'
-        df['category score'] = CornerScore.get_scores_for_category(
+        df = df['category score'] = CornerScore.get_scores_for_category(
             df[category_column_name],
             df[[c + ' freq' for c in other_categories]].sum(axis=1)
         )
         if self.scatterchartdata.term_significance is not None:
-            df['p'] = get_p_vals(df, category_column_name,
-                                 self.scatterchartdata.term_significance)
+            df = df.assign(
+                p=get_p_vals(df, category_column_name, self.scatterchartdata.term_significance)
+            )
+
         df['not category score'] = CornerScore.get_scores_for_category(
             df[[c + ' freq' for c in other_categories]].sum(axis=1),
             df[category_column_name]
         )
-        df['color_scores'] = scores
+        df['color_scores', :] = scores
         if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
             df = self._filter_bigrams_by_minimum_not_category_term_freq(
                 category_column_name, other_categories, df)
@@ -651,14 +679,14 @@ class ScatterChart:
             raise NeedToInjectCoordinatesException(
                 "This function requires you run inject_coordinates."
             )
-        json_df = (self.term_doc_matrix
-                   .get_term_count_df()
-                   .rename(columns={'corpus': 'cat'}))
-        json_df['cat25k'] = (((json_df['cat'] * 1.
-                               / json_df['cat'].sum()) * 25000)
-                             .apply(np.round).astype(int))
-
-        self._add_x_and_y_coords_to_term_df_if_injected(json_df)
-        j = {}
-        j['data'] = json_df.reset_index().sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
-        return j
+        return {
+            'data': self._add_x_and_y_coords_to_term_df_if_injected(
+                self.term_doc_matrix.get_term_count_df().rename(
+                    columns={'corpus': 'cat'}
+                ).assign(
+                    cat25k=lambda df: (((df['cat'] * 1.
+                                         / df['cat'].sum()) * 25000)
+                                       .apply(np.round).astype(int))
+                )
+            ).reset_index().sort_values(by=['x', 'y', 'term']).to_dict(orient='records')
+        }

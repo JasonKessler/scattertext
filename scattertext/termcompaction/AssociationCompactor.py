@@ -15,6 +15,10 @@ class TermCategoryRanker(object):
         self.term_ranker = term_ranker
         self.use_non_text_features = use_non_text_features
 
+    def set_use_non_text_features(self, use_non_text_features: bool) -> 'TermCategoryRanker':
+        self.use_non_text_features = use_non_text_features
+        return self
+
     def get_rank_df(self, term_doc_matrix):
         # tdf = term_doc_matrix.get_term_freq_df('')
         tdf, tdf_sum = self.__get_term_ranks_and_frequencies(term_doc_matrix)
@@ -52,6 +56,10 @@ class BaseAssociationCompactor(object):
                  term_ranker=AbsoluteFrequencyRanker,
                  use_non_text_features=False):
         self.scorer = TermCategoryRanker(scorer, term_ranker, use_non_text_features)
+
+    def set_use_non_text_features(self, use_non_text_features: bool) -> 'BaseAssociationCompactor':
+        self.scorer = self.scorer.set_use_non_text_features(use_non_text_features)
+        return self
 
     def _prune_higher_ranked_terms(self, term_doc_matrix, rank_df, rank):
         terms_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= rank])

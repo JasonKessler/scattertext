@@ -181,11 +181,18 @@ class ScatterChartExplorer(ScatterChart):
             return docs_getter.get_labels_and_texts()
 
     def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
-        ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category)
-        json_df['cat'] = term_freq_df[category + ' freq'].astype(int)
-        json_df['ncat'] = term_freq_df['not cat freq'].astype(int)
+        json_df = ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category).assign(
+            cat=term_freq_df[category + ' freq'].astype(int),
+            ncat=term_freq_df['not cat freq'].astype(int)
+        )
+        # json_df.loc[:,'cat'] = term_freq_df[category + ' freq'].astype(int)
+        # json_df.loc[:,'ncat'] = term_freq_df['not cat freq'].astype(int)
         if self._term_metadata is not None:
-            json_df['etc'] = term_freq_df['term'].apply(lambda term: self._term_metadata.get(term, {}))
+            json_df = json_df.assign(
+                etc=term_freq_df['term'].apply(lambda term: self._term_metadata.get(term, {}))
+            )
+
+        return json_df
 
     def inject_term_metadata(self, metadata):
         '''
