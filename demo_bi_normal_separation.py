@@ -6,39 +6,22 @@ corpus = (st.CorpusFromPandas(convention_df,
                               text_col='text',
                               nlp=st.whitespace_nlp_with_sentences)
           .build()
-          .get_unigram_corpus())
+          .get_unigram_corpus()
+          .remove_infrequent_words(3, term_ranker=st.OncePerDocFrequencyRanker))
 
-term_scorer = (st.BNSScorer(corpus, alpha=0.005).set_categories('democrat'))
-print(term_scorer.get_score_df().sort_values(by='democrat'))
-
-html = st.produce_frequency_explorer(
-    corpus,
-    category='democrat',
-    category_name='Democratic',
-    not_category_name='Republican',
-    term_scorer=term_scorer,
-    metadata=lambda c: c.get_df()['speaker'],
-    grey_threshold=0
-)
-
-file_name = 'demo_bi_normal_separation.html'
-open(file_name, 'wb').write(html.encode('utf-8'))
-print('./' + file_name)
-
-
-
-term_scorer = (st.BNSScorer(corpus, alpha=0.0005).set_categories('democrat'))
+term_scorer = (st.BNSScorer(corpus).set_categories('democrat'))
+print(term_scorer.get_score_df().sort_values(by='democrat BNS'))
 
 html = st.produce_frequency_explorer(
     corpus,
     category='democrat',
     category_name='Democratic',
     not_category_name='Republican',
-    term_scorer=term_scorer,
+    scores=term_scorer.get_score_df()['democrat BNS'].reindex(corpus.get_terms()).values,
     metadata=lambda c: c.get_df()['speaker'],
-    grey_threshold=0
+    minimum_term_frequency=0,
+    grey_threshold=0,
+    y_label=f'BNS (alpha={term_scorer.alpha})'
 )
-
-file_name = 'demo_bi_normal_separation_0.0005.html'
-open(file_name, 'wb').write(html.encode('utf-8'))
-print('./' + file_name)
+open('bi_normal_separation.html', 'w').write(html)
+print('./open bi_normal_separation.html')

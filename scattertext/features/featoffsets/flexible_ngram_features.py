@@ -1,10 +1,8 @@
 from typing import List, Tuple, Union, Optional, Callable
 from collections import deque
 
-import spacy.tokens
-
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
-from scattertext.Common import ENGLISH_STOP_WORDS, MY_ENGLISH_STOP_WORDS
+from scattertext.Common import MY_ENGLISH_STOP_WORDS
 
 
 def window(seq, n=2):
