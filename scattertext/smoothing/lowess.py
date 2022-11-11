@@ -1,12 +1,14 @@
 import numpy as np
 import pandas as pd
+
+
 class Lowess(object):
     def __init__(self):
         self.points = None
 
     def fit(self, xdata, ydata):
         import statsmodels.api as sm
-        self.model = sm.nonparametric.lowess(ydata, xdata)#, frac=1./3)
+        self.model = sm.nonparametric.lowess(ydata, xdata)  # , frac=1./3)
         return self
 
     def predict(self, x):

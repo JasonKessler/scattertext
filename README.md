@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.8
+# Scattertext 0.1.9
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -65,8 +65,9 @@ Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots) 
     - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
-    - [Using Bi-Normal Separation (BNS) to score terms](#using-bi-normal-separation-bns-to-score-words)
-    - [Using Custom Background Word Frequences](#using-custom-background-word-frequences)
+    - [Using Bi-Normal Separation (BNS) to score terms](#using-bi-normal-separation-bns-to-score-terms)
+    - [Using correlations to explain classifiers](#using-correlations-to-explain-classifiers)
+    - [Using Custom Background Word Frequencies](#using-custom-background-word-frequencies)
     - [Plotting word productivity](#plotting-word-productivity)
 - [Understanding Scaled F-Score](#understanding-scaled-f-score)
 - [Alternative term scoring methods](#alternative-term-scoring-methods)
@@ -961,38 +962,113 @@ Click for an interactive version.
 
 ### Using Bi-Normal Separation (BNS) to score terms
 
-New in 0.1.8 is Bi-Normal Separation (BNS) (Forman, 2008). A variation of (BNS) is used 
-where $F^{-1}(tpr) - F^{-1}(fpr)$ is not used as an absolute value, but kept as a difference. 
+Bi-Normal Separation (BNS) (Forman, 2008) was added in version 0.1.8. A variation of (BNS) is used 
+where $F^{-1}(tpr) - F^{-1}(fpr)$ is not used as an absolute value, but kept as a difference. This allows for 
+terms strongly indicative of true positives and false positives to have a high or low score.
 Note that tpr and fpr are scaled to between $[\alpha, 1-\alpha]$ where 
-alpha is $\in [0, 1]$ and defaults to 0.005. While Forman (2008) suggests using $\alpha=0.0005$,
-I've found that value tends to over-emphasize very low and very high frequency terms.  Using the 
-Convention corpus, the `BNSScorer` can be just like any other term scorer.
+alpha is $\in [0, 1]$. In Forman (2008) and earlier literature $\alpha=0.0005$. In personal correspondence with Forman, 
+he kindly suggested using $\frac{1.}{\mbox{minimum(# positives, # negatives)}}$. I have implemented this as
+$\alpha=\frac{1.}{\mbox{minimum(# documents in least frequent category)}}$
 
 ```python
-term_scorer = (st.BNSScorer(corpus, alpha=0.005).set_categories('democrat'))
+corpus = (st.CorpusFromPandas(convention_df,
+                              category_col='party',
+                              text_col='text',
+                              nlp=st.whitespace_nlp_with_sentences)
+          .build()
+          .get_unigram_corpus()
+          .remove_infrequent_words(3, term_ranker=st.OncePerDocFrequencyRanker))
+
+term_scorer = (st.BNSScorer(corpus).set_categories('democrat'))
+print(term_scorer.get_score_df().sort_values(by='democrat BNS'))
 
 html = st.produce_frequency_explorer(
     corpus,
     category='democrat',
     category_name='Democratic',
     not_category_name='Republican',
-    term_scorer=term_scorer,
+    scores=term_scorer.get_score_df()['democrat BNS'].reindex(corpus.get_terms()).values,
     metadata=lambda c: c.get_df()['speaker'],
-    grey_threshold=0
+    minimum_term_frequency=0,
+    grey_threshold=0,
+    y_label=f'Bi-normal Separation (alpha={term_scorer.alpha})'
 )
 ```
 
-BNS Scored terms at $\alpha=0.005$:
+BNS Scored terms using an algorithmically found alpha.
 [![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.html)
 
-Note that when using $\alpha=0.0005$, as recommended by Forman, low frequency terms such 
-as "achievement" and as well as the high frequency stopwords such as "is", "that" and "a" 
-top the Republican list.
-[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation_0.0005.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation_0.0005.html)
+### Using correlations to explain classifiers
+
+We can train a classifier to produce a prediction score for each document. Often classifiers or regressors
+use features which take into account features beyond the ones represented by Scatterext, be they n-gram, topic, 
+extra-linguistic, neural, etc.  
+
+We can use Scattertext to visualize the correlations between unigrams (or really any feature representation) and
+the document scores produced by a model.
+
+In the following example, we train a linear SVM using unigram and bi-gram features on the entire convention data set,
+and use the model to make a prediction on each document, and finally using Pearson's $r$ to correlate unigram features
+to the distance from the SVM decision boundary.
+
+```python
+from sklearn.svm import LinearSVC
+
+import scattertext as st
+
+df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
+)
+
+corpus = st.CorpusFromParsedDocuments(
+    df, category_col='party', parsed_col='parse'
+).build()
+
+X = corpus.get_term_doc_mat()
+y = corpus.get_category_ids()
+
+clf = LinearSVC()
+clf.fit(X=X, y=y==corpus.get_categories().index('democrat'))
+doc_scores = clf.decision_function(X=X)
+
+compactcorpus = corpus.get_unigram_corpus().compact(st.AssociationCompactor(2000))
+
+plot_df = st.Correlations().set_correlation_type(
+    'pearsonr'
+).get_correlation_df(
+    corpus=compactcorpus,
+    document_scores=doc_scores
+).reindex(compactcorpus.get_terms()).assign(
+    X=lambda df: df.Frequency,
+    Y=lambda df: df['r'],
+    Xpos=lambda df: st.Scalers.dense_rank(df.X),
+    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
+    SuppressDisplay=False,
+    ColorScore=lambda df: df.Ypos,
+)
+
+html = st.dataframe_scattertext(
+    compactcorpus,
+    plot_df=plot_df,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    width_in_pixels=1000,
+    metadata=lambda c: c.get_df()['speaker'],
+    unified_context=False,
+    ignore_categories=False,
+    color_score_column='ColorScore',
+    left_list_column='ColorScore',
+    y_label="Pearson r (correlation to SVM document score)",
+    x_label='Frequency Ranks',
+    header_names={'upper': 'Top Democratic',
+                  'lower': 'Top Republican'},
+)
+```
+[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/pearsons.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/pearsons.html)
 
 
-
-### Using Custom Background Word Frequences
+### Using Custom Background Word Frequencies
 
 Scattertext relies on a set of general-domain English word frequencies when computing unigram characteristic  
 scores. When using running Scattertext on non-English data or in a specific domain, the quality of the scores
@@ -2454,7 +2530,7 @@ Click for an interactive visualization.
 
 To export the content of a scattertext explorer object (ScattertextStructure) to matplotlib you can use `produce_scattertext_pyplot`. The function returns a `matplotlib.figure.Figure` object which can be visualized using `plt.show` or `plt.savefig` as in the example below.
 
-Note that installation of textalloc>=0.0.3 and matplotlib>=3.6.0 is required before running this.   
+Note that installation of textalloc==0.0.3 and matplotlib>=3.6.0 is required before running this.   
 
 ```pydocstring
 convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(

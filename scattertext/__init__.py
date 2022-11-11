@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-
-version = [0, 1, 8]
+version = [0, 1, 9]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -146,6 +145,8 @@ from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpu
 from scattertext.viz.PyPlotFromScattertextStructure import pyplot_from_scattertext_structure
 from scattertext.termscoring.BNSScorer import BNSScorer
 from scattertext.features.featoffsets.flexible_ngram_features import PosStopgramFeatures, FlexibleNGramFeatures
+from scattertext.continuous.correlations import Correlations
+
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -792,7 +793,8 @@ def get_term_scorer_scores(category, corpus, neutral_categories, not_categories,
             term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
         else:
             term_scorer = term_scorer.set_categories(category, not_categories)
-    return term_scorer.get_scores(cat_freqs, not_cat_freqs)
+    scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
+    return scores
 
 
 def produce_scattertext_html(term_doc_matrix,
@@ -1080,14 +1082,16 @@ def produce_frequency_explorer(corpus,
     frequencies_log_scaled = frequency_transform(freqs)  # scale(np.log(freqs) - np.log(1))
 
     if 'scores' not in kwargs:
-        kwargs['scores'] = get_term_scorer_scores(category,
-                                                  corpus,
-                                                  kwargs.get('neutral_categories', False),
-                                                  not_categories,
-                                                  kwargs.get('show_neutral', False),
-                                                  term_ranker,
-                                                  term_scorer,
-                                                  kwargs.get('use_non_text_features', False))
+        kwargs['scores'] = get_term_scorer_scores(
+            category,
+            corpus,
+            kwargs.get('neutral_categories', False),
+            not_categories,
+            kwargs.get('show_neutral', False),
+            term_ranker,
+            term_scorer,
+            kwargs.get('use_non_text_features', False)
+        )
 
     def y_axis_rescale(coords):
         return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2

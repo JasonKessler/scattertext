@@ -51,7 +51,7 @@ def pyplot_from_scattertext_structure(
         import matplotlib.pyplot as plt
         import textalloc as ta
     except:
-        raise Exception("Ensure that the packages textalloc>=0.0.3 and matplotlib>=3.6.0 have been installed.")
+        raise Exception("Ensure that the packages textalloc==0.0.3 and matplotlib>=3.6.0 have been installed.")
 
     # Extract the data
     if sample > 0:

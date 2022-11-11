@@ -51,6 +51,11 @@ def scale_center_zero_abs(vec, other_vec=None):
     return ((((other_vec > 0).astype(float) * (other_vec / max_abs)) * 0.5 + 0.5)
             + ((other_vec < 0).astype(float) * (other_vec / max_abs) * 0.5))
 
+def scale_center_zero_separate_ranks(scores: np.array) -> np.array:
+    scaled = np.zeros(len(scores), dtype=np.float)
+    scaled[scores > 0] = rankdata(scores[scores > 0]) / len(scores[scores > 0]) / 2 + 0.5
+    scaled[scores < 0] = rankdata(scores[scores < 0]) / len(scores[scores < 0]) / 2
+    return scaled
 
 def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
     max_abs = max(vec.max(), -vec.min())
@@ -211,3 +216,4 @@ def stretch_neg1_to_1(vec):
 def scale_0_to_1(vec_ss):
     vec_ss = (vec_ss - vec_ss.min()) * 1. / (vec_ss.max() - vec_ss.min())
     return vec_ss
+
