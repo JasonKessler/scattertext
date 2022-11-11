@@ -967,8 +967,8 @@ where $F^{-1}(tpr) - F^{-1}(fpr)$ is not used as an absolute value, but kept as 
 terms strongly indicative of true positives and false positives to have a high or low score.
 Note that tpr and fpr are scaled to between $[\alpha, 1-\alpha]$ where 
 alpha is $\in [0, 1]$. In Forman (2008) and earlier literature $\alpha=0.0005$. In personal correspondence with Forman, 
-he kindly suggested using $\frac{1.}{\mbox{minimum(# positives, # negatives)}}$. I have implemented this as
-$\alpha=\frac{1.}{\mbox{minimum(# documents in least frequent category)}}$
+he kindly suggested using $\frac{1.}{\mbox{minimum(positives, negatives)}}$. I have implemented this as
+$\alpha=\frac{1.}{\mbox{minimum documents in least frequent category}}$
 
 ```python
 corpus = (st.CorpusFromPandas(convention_df,
