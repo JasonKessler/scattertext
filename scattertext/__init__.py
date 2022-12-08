@@ -1,12 +1,11 @@
-from __future__ import print_function
-
-version = [0, 1, 9]
+version = [0, 1, 10]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
 import numpy as np
 import pandas as pd
 import warnings
+from typing import Optional
 from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
 from scattertext.features.UseFullDocAsMetadata import UseFullDocAsMetadata
 from scattertext.graphs.ComponentDiGraph import ComponentDiGraph
@@ -135,7 +134,7 @@ from scattertext.continuous.sklearnpipeline import RidgeCoefficients
 from scattertext.continuous.ungar import UngarCoefficients
 from scattertext.features.RegexFeatAndOffsetGetter import RegexFeatAndOffsetGetter
 from scattertext.representations.LatentSemanticScaling import latent_semantic_scale_from_word2vec, lss_terms
-from scattertext.categorytable import CategoryTableMaker
+from scattertext.categorytable.category_table_maker import CategoryTableMaker
 from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
 from scattertext.termscoring.LogOddsRatio import LogOddsRatio
@@ -144,11 +143,20 @@ from scattertext.categorygrouping.CharacteristicGrouper import CharacteristicGro
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
 from scattertext.viz.PyPlotFromScattertextStructure import pyplot_from_scattertext_structure
 from scattertext.termscoring.BNSScorer import BNSScorer
-from scattertext.features.featoffsets.flexible_ngram_features import PosStopgramFeatures, FlexibleNGramFeatures
+from scattertext.features.featoffsets.flexible_ngram_features \
+    import PosStopgramFeatures, FlexibleNGramFeatures, FlexibleNGrams
 from scattertext.continuous.correlations import Correlations
-
+from scattertext.segmenters.token_sequence_segmenter import TokenSequenceSegmenter
+from scattertext.termscoring.craigs_zeta import CraigsZeta
+from scattertext.termscoring.loglikelihoodratio import LogLikelihoodRatio
+from scattertext.termscoring.rank_sum import RankSum
+from scattertext.termcompaction.npmi_compactor import NPMICompactor
+from scattertext.all_category_scorers.all_category_term_scorer import AllCategoryTermScorer
+from scattertext.all_category_scorers.gmean_l2_freq_associator import AllCategoryScorerGMeanL2
+from scattertext.all_category_scorers.all_category_scorer import AllCategoryScorer
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
+
 
 def cognitive_distortions_offset_getter_factory():
     return LexiconFeatAndOffsetGetter(COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS)
@@ -2027,6 +2035,7 @@ def produce_scattertext_table(
         plot_height=700,
         category_order=None,
         d3_url_struct=D3URLs(),
+        all_category_scorer: Optional[AllCategoryScorer] = None,
         **kwargs
 ):
     '''
@@ -2044,6 +2053,7 @@ def produce_scattertext_table(
     :param graph_params dict or None, graph parameters in graph viz
     :param node_params dict or None, node parameters in graph viz
     :param category_order list or None, names of categories to show in order
+    :param all_category_scorer AllCategoryScorer (for computing table ranks)
     :param kwargs: dict
     :return: str
     '''
@@ -2055,13 +2065,13 @@ def produce_scattertext_table(
        return true;
     })'''
 
-    graph_renderer = CategoryTableMaker(
+    table_maker = CategoryTableMaker(
         corpus=corpus,
         num_rows=num_rows,
         use_metadata=use_non_text_features,
-        category_order=category_order
+        category_order=category_order,
+        all_category_scorer=all_category_scorer
     )
-
     dispersion = Dispersion(
         corpus, use_categories=True, use_metadata=use_non_text_features
     )
@@ -2112,7 +2122,7 @@ def produce_scattertext_table(
 
     html = TableStructure(
         scatterplot_structure,
-        graph_renderer=graph_renderer,
+        graph_renderer=table_maker,
         d3_url_struct=d3_url_struct
     ).to_html()
 

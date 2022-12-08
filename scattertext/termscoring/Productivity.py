@@ -44,8 +44,9 @@ def whole_corpus_productivity_scores(tdm: TermDocMatrixWithoutCategories) -> pd.
 class ProductivityScorer(CorpusBasedTermScorer):
     '''
     Citation: Anne-Kathrin Schumann. 2016. Brave new world: Uncovering topical dynamics in the ACL Anthology
-    reference corpus using term life cycle information. In Proceedings of the 10th SIGHUM Workshop on Language Technology for Cultural Heritage, Social Sciences, and Humanities, pages 1–11, Berlin, Germany. Association for Computational Linguistics.
-
+    reference corpus using term life cycle information. In Proceedings of the 10th SIGHUM Workshop on Language
+    Technology for Cultural Heritage, Social Sciences, and Humanities, pages 1–11, Berlin, Germany. Association
+    for Computational Linguistics.
 
     term_scorer = (MannWhitneyU(corpus).set_categories('Positive', ['Negative'], ['Plot']))
 
@@ -61,7 +62,6 @@ class ProductivityScorer(CorpusBasedTermScorer):
     )
     file_name = 'rotten_fresh_mwu.html'
     open(file_name, 'wb').write(html.encode('utf-8'))
-    IFrame(src=file_name, width=1300, height=700)
     '''
 
     def _set_scorer_args(self, **kwargs):

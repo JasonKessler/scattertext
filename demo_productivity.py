@@ -40,9 +40,10 @@ html = st.dataframe_scattertext(
     left_list_column='Ypos',
     color_score_column='Ypos',
     y_axis_labels=['Least Productive', 'Average Productivity', 'Most Productive'],
-    header_names={'upper': 'Most Productive', 'lower': 'Least Productive', 'right': 'Charachteristic'},
+    header_names={'upper': 'Most Productive', 'lower': 'Least Productive', 'right': 'Characteristic'},
     d3_scale_chromatic_url='../scattertext/scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-    d3_url='../scattertext/scattertext/data/viz/scripts/d3.min.js'
+    d3_url='../scattertext/scattertext/data/viz/scripts/d3.min.js',
+    horizontal_line_y_position=0
 )
 
 fn = 'convention_single_category_productivity.html'

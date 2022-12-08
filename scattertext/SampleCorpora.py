@@ -81,6 +81,30 @@ class ConventionData2012(object):
 		return pd.DataFrame(data)
 
 
+class GuardianHeadlines(object):
+	'''
+	Guardian financial headlines from year 2020. Data derived from
+	https://www.kaggle.com/datasets/notlucasp/financial-news-headlines?resource=download
+	'''
+
+	@staticmethod
+	def get_data():
+		'''
+		Returns
+		-------
+		pd.DataFrame
+
+		I.e.,
+		>>> headline_df.iloc[0]
+		Unnamed: 0                                                   0
+		Text          Johnson is asking Santa for a Christmas recovery
+		Date                                                2020-07-18
+		'''
+		data_stream = pkgutil.get_data('scattertext', 'data/guardian_headlines.csv.bz2')
+		return pd.read_csv(io.BytesIO(bz2.decompress(data_stream))).assign(
+			Date=lambda df: pd.to_datetime(df.Date)
+		)
+
 class RottenTomatoes(object):
 	'''
 	Derived from the sentiment polarity/subjectivity datasets from

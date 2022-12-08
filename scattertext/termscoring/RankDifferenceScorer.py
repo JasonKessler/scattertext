@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scipy.stats import rankdata
-
-from scattertext import CorpusBasedTermScorer
 
 
 class RankDifferenceScorer(CorpusBasedTermScorer):

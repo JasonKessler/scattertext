@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.9
+# Scattertext 0.1.10
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -1244,7 +1244,69 @@ unusually frequently in this corpus, or perhaps the background word frequencies 
 
 ### Plotting word productivity
 
-Word productivity 
+Word productivity is one strategy for plotting word-based charts describing an uncategorized corpus.
+
+Productivity is defined in Schumann (2016) (Jason: check this) as the entropy of ngrams
+which contain a term.  For the entropy computation, the probability of an n-gram wrt the term whose productivity is 
+being calculated is the frequency of the n-gram divided by the term's frequency.
+
+Since productivity highly correlates with frequency, the recommended metric to plot is the dense rank difference between
+frequency and productivity. 
+
+The snippet below plots words in the convention corpus based on their log frequency and their productivity.
+
+The function `st.whole_corpus_productivity_scores` returns a DataFrame giving each word's productivity. For example, 
+in the convention corpus,  
+
+Productivity scores should be calculated on a `Corpus`-like object which contains a complete set of unigrams and at 
+least bigrams. This corpus should not be compacted before the productivity score calculation.
+
+The terms with lower productivity have more limited usage (e.g., "thank" for "thank you", "united" 
+for "united steates") while the terms with higher productivity occurr in a wider varity of contexts ("getting", 
+"actually", "political", etc.).
+
+```python
+import spacy
+import scattertext as st
+
+corpus_no_cat = st.CorpusWithoutCategoriesFromParsedDocuments(
+    st.SampleCorpora.ConventionData2012.get_data().assign(
+        Parse=lambda df: [x for x in spacy.load('en_core_web_sm').pipe(df.text)]),
+    parsed_col='Parse'
+).build()
+
+compact_corpus_no_cat = corpus_no_cat.get_stoplisted_unigram_corpus().remove_infrequent_words(9)
+
+plot_df = st.whole_corpus_productivity_scores(corpus_no_cat).assign(
+    RankDelta = lambda df: st.RankDifference().get_scores(
+        a=df.Productivity,
+        b=df.Frequency
+    )
+).reindex(
+    compact_corpus_no_cat.get_terms()
+).dropna().assign(
+    X=lambda df: df.Frequency,
+    Xpos=lambda df: st.Scalers.log_scale(df.Frequency),
+    Y=lambda df: df.RankDelta,
+    Ypos=lambda df: st.Scalers.scale(df.RankDelta),
+)
+
+html = st.dataframe_scattertext(
+    compact_corpus_no_cat.whitelist_terms(plot_df.index),
+    plot_df=plot_df,
+    metadata=lambda df: df.get_df()['speaker'],
+    ignore_categories=True,
+    x_label='Rank Frequency',
+    y_label="Productivity",
+    left_list_column='Ypos',
+    color_score_column='Ypos',
+    y_axis_labels=['Least Productive', 'Average Productivity', 'Most Productive'],
+    header_names={'upper': 'Most Productive', 'lower': 'Least Productive', 'right': 'Characteristic'},
+    horizontal_line_y_position=0
+)
+
+```
+[![Productivity](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/convention_single_category_productivity.html)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/convention_single_category_productivity.png)
 
 ### Understanding Scaled F-Score
 
@@ -3018,3 +3080,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Ryan J. Gallagher, Morgan R. Frank, Lewis Mitchell, Aaron J. Schwartz, Andrew J. Reagan, Christopher M. Danforth, and Peter Sheridan Dodds. Generalized Word Shift Graphs: A Method for Visualizing and Explaining Pairwise Comparisons Between Texts. 2020. Arxiv. https://arxiv.org/pdf/2008.02250.pdf
 * Kocoń, Jan; Zaśko-Zielińska, Monika and Miłkowski, Piotr, 2019, PolEmo 2.0 Sentiment Analysis Dataset for CoNLL, CLARIN-PL digital repository, http://hdl.handle.net/11321/710.
 * George Forman. 2008. BNS feature scaling: an improved representation over tf-idf for svm text classification. In Proceedings of the 17th ACM conference on Information and knowledge management (CIKM '08). Association for Computing Machinery, New York, NY, USA, 263–270. https://doi.org/10.1145/1458082.1458119
+* Anne-Kathrin Schumann. 2016. Brave new world: Uncovering topical dynamics in the ACL Anthology reference corpus using term life cycle information. In Proceedings of the 10th SIGHUM Workshop on Language Technology for Cultural Heritage, Social Sciences, and Humanities, pages 1–11, Berlin, Germany. Association for Computational Linguistics.

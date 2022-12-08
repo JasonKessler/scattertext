@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 
 from scattertext.CSRMatrixTools import delete_columns, CSRMatrixFactory
 from scattertext.FeatureOuput import FeatureLister
@@ -243,7 +244,7 @@ class TermDocMatrixWithoutCategories(object):
         :param non_text: bool, use metadata?
         :return: Corpus
         '''
-        tdm = (self.get_metadata_doc_mat() > 0) if non_text else (self.get_term_doc_mat() > 0)
+        tdm = self.get_term_doc_mat(non_text=non_text) > 0
         tdmpct = (tdm.sum(axis=0) / tdm.shape[0]).A1
         mask = (tdmpct >= min_document_pct) & (tdmpct <= max_document_pct)
         return self.remove_terms(np.array(self.get_terms())[mask])
@@ -262,7 +263,7 @@ class TermDocMatrixWithoutCategories(object):
         return self.remove_terms(terms_to_remove)
 
     def remove_terms(self, terms, ignore_absences=False, non_text=False):
-        '''Non destructive term removal.
+        '''Non-destructive term removal.
 
         Parameters
         ----------
@@ -514,7 +515,7 @@ class TermDocMatrixWithoutCategories(object):
         )
         return df.sort_values(by='Scaled f-score', ascending=False)
 
-    def get_term_doc_mat(self):
+    def get_term_doc_mat(self, non_text: bool=False) -> csr_matrix:
         '''
         Returns sparse matrix representation of term-doc-matrix
 
@@ -522,12 +523,14 @@ class TermDocMatrixWithoutCategories(object):
         -------
         scipy.sparse.csr_matrix
         '''
+        if non_text:
+            return self.get_metadata_doc_mat()
         return self._X
 
-    def get_term_freqs(self):
-        return self.get_term_doc_mat().sum(axis=0).A1
+    def get_term_freqs(self, non_text: bool=False) -> np.array:
+        return self.get_term_doc_mat(non_text=non_text).sum(axis=0).A1
 
-    def get_term_doc_mat_coo(self):
+    def get_term_doc_mat_coo(self, non_text: bool=False):
         '''
         Returns sparse matrix representation of term-doc-matrix
 
@@ -535,7 +538,7 @@ class TermDocMatrixWithoutCategories(object):
         -------
         scipy.sparse.coo_matrix
         '''
-        return self._X.astype(np.double).tocoo()
+        return self.get_term_doc_mat(non_text=non_text).astype(np.double).tocoo()
 
     def get_metadata_doc_mat(self):
         '''

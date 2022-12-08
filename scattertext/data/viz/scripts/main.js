@@ -2356,6 +2356,20 @@ buildViz = function (d3) {
                     .moveToBack();
             }
 
+            if (horizontal_line_y_position !== null) {
+                console.log("Height"); console.log(height); console.log(margin)
+                var horizontal = svg.append("g")
+                    .append("line")
+                    .attr("x1", 0)
+                    .attr("y1", (height)/2 + 3)
+                    .attr("x2", width)
+                    .attr("y2", (height)/2 + 3)
+                    .style("stroke-dasharray", "5,5")
+                    .style("stroke", "#cccccc")
+                    .style("stroke-width", "1px")
+                    .moveToBack();
+            }
+
             function showWordList(word, termDataList, xOffset = null) {
                 var maxWidth = word.node().getBBox().width;
                 var wordObjList = [];
@@ -2496,17 +2510,15 @@ buildViz = function (d3) {
                         //"Top " + fullData['info']['category_name']
                     );
                 registerFigureBBox(catHeader);
+                var maxWidth = catHeader.node().getBBox().width
                 var word = catHeader;
                 var wordListData = showAssociatedWordList(data, word, catHeader, true, startingOffset);
                 word = wordListData.word;
-                var maxWidth = wordListData.maxWidth;
+                maxWidth = Math.max(wordListData.maxWidth, maxWidth)
 
                 var notCatHeader = showNotCatHeader(startingOffset, word, lowerHeaderName);
                 word = notCatHeader;
-                characteristicXOffset = Math.max(
-                    catHeader.node().getBBox().x + maxWidth + 10,
-                    notCatHeader.node().getBBox().x + maxWidth + 10
-                )
+                maxWidth = Math.max(notCatHeader.node().getBBox().width, maxWidth)
                 console.log("characteristicXOffset", characteristicXOffset)
                 console.log(catHeader.node().getBBox().x + maxWidth + 10)
                 console.log(notCatHeader.node().getBBox().x + maxWidth + 10)
@@ -2516,6 +2528,13 @@ buildViz = function (d3) {
                 if (wordListData.maxWidth > maxWidth) {
                     maxWidth = wordListData.maxWidth;
                 }
+                /*
+                characteristicXOffset = Math.max(
+                    catHeader.node().getBBox().x + maxWidth + 10,
+                    notCatHeader.node().getBBox().x + maxWidth + 10
+                )*/
+                characteristicXOffset = catHeader.node().getBBox().x + Math.max(notWordListData.maxWidth, maxWidth) + 10
+
                 return {
                     wordListData, notWordListData,
                     word, maxWidth, characteristicXOffset, startingOffset,

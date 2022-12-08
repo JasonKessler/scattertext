@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 import pandas as pd
 from scipy.stats import norm, rankdata
@@ -44,14 +46,19 @@ class ScoreBalancer(object):
         return (ar - ar.min()) / (ar.max() - ar.min())
 
 
-class ScaledFScorePresets(object):
+class TermScorer(ABC):
+    @abstractmethod
+    def get_scores(self, cat_word_counts: np.array, not_cat_word_counts: np.array) -> np.array:
+        raise NotImplementedError()
+
+
+class ScaledFScorePresets(TermScorer):
     def __init__(self,
                  scaler_algo=DEFAULT_SCALER_ALGO,
                  beta=DEFAULT_BETA,
                  one_to_neg_one=False,
                  priors=None,
-                 use_score_difference=False,
-                 ):
+                 use_score_difference=False):
         self.scaler_algo_ = scaler_algo
         self.beta_ = beta
         self.one_to_neg_one_ = one_to_neg_one

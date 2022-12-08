@@ -30,4 +30,3 @@ class LogOddsRatio(CorpusBasedTermScorer):
 
     def get_name(self):
         return 'Smoothed Log Odds Ratio'
-

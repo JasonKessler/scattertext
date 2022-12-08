@@ -43,12 +43,12 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     def _set_scorer_args(self, **kwargs):
         pass
 
-    def use_metadata(self):
+    def use_metadata(self) -> 'CorpusBasedTermScorer':
         self.use_metadata_ = True
         self.term_ranker_.use_non_text_features()
         return self
 
-    def set_term_ranker(self, term_ranker):
+    def set_term_ranker(self, term_ranker) -> 'CorpusBasedTermScorer':
         assert issubclass(term_ranker, TermRanker)
         self.term_ranker_ = term_ranker(self.corpus_)
         if self.use_metadata_:

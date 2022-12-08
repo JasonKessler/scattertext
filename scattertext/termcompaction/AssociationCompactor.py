@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+
 import pandas as pd
 import numpy as np
 from scipy.stats import rankdata
@@ -7,29 +9,40 @@ from scattertext.termscoring.ScaledFScore import ScaledFScorePresetsNeg1To1
 
 
 class TermCategoryRanker(object):
-    def __init__(self,
-                 scorer=ScaledFScorePresetsNeg1To1,
-                 term_ranker=AbsoluteFrequencyRanker,
-                 use_non_text_features=False):
+    def __init__(
+            self,
+            scorer: type = ScaledFScorePresetsNeg1To1,
+            term_ranker: type = AbsoluteFrequencyRanker,
+            use_non_text_features: bool = False,
+            target_category: Optional[str] = None
+    ):
         self.scorer = scorer
         self.term_ranker = term_ranker
         self.use_non_text_features = use_non_text_features
+        self.target_category = target_category
 
     def set_use_non_text_features(self, use_non_text_features: bool) -> 'TermCategoryRanker':
         self.use_non_text_features = use_non_text_features
         return self
 
-    def get_rank_df(self, term_doc_matrix):
-        # tdf = term_doc_matrix.get_term_freq_df('')
+    def get_rank_df(self, term_doc_matrix) -> pd.DataFrame:
         tdf, tdf_sum = self.__get_term_ranks_and_frequencies(term_doc_matrix)
         score_data = {}
-        for category in term_doc_matrix.get_categories():
-            focus = tdf[category].values
+        categories = term_doc_matrix.get_categories()
+        if self.target_category is not None:
+            assert self.target_category in categories
+            focus = tdf[self.target_category].values
             background = tdf_sum.values - focus
-            score_data[category] = self.scorer().get_scores(focus, background)
+            score_data[self.target_category] = self.scorer().get_scores(focus, background)
+            score_data['Not ' + self.target_category] = self.scorer().get_scores(background, focus)
+        else:
+            for category in categories:
+                focus = tdf[category].values
+                background = tdf_sum.values - focus
+                score_data[category] = self.scorer().get_scores(focus, background)
         return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
 
-    def __get_term_ranks_and_frequencies(self, term_doc_matrix):
+    def __get_term_ranks_and_frequencies(self, term_doc_matrix) -> Tuple[pd.DataFrame, pd.Series]:
         ranker = self.term_ranker(term_doc_matrix)
         if self.use_non_text_features:
             ranker = ranker.use_non_text_features()
@@ -37,10 +50,10 @@ class TermCategoryRanker(object):
         tdf_sum = tdf.sum(axis=1)
         return tdf, tdf_sum
 
-    def get_frequencies(self, term_doc_matrix):
+    def get_frequencies(self, term_doc_matrix) -> pd.Series:
         return self.__get_term_ranks_and_frequencies(term_doc_matrix)[1]
 
-    def get_max_rank(self, term_doc_matrix):
+    def get_max_rank(self, term_doc_matrix) -> float:
         '''
 
         :param term_doc_matrix: TermDocMatrix
@@ -54,8 +67,9 @@ class BaseAssociationCompactor(object):
     def __init__(self,
                  scorer=ScaledFScorePresetsNeg1To1,
                  term_ranker=AbsoluteFrequencyRanker,
-                 use_non_text_features=False):
-        self.scorer = TermCategoryRanker(scorer, term_ranker, use_non_text_features)
+                 use_non_text_features=False,
+                 target_category: Optional[str] = None):
+        self.scorer = TermCategoryRanker(scorer, term_ranker, use_non_text_features, target_category)
 
     def set_use_non_text_features(self, use_non_text_features: bool) -> 'BaseAssociationCompactor':
         self.scorer = self.scorer.set_use_non_text_features(use_non_text_features)
@@ -63,26 +77,35 @@ class BaseAssociationCompactor(object):
 
     def _prune_higher_ranked_terms(self, term_doc_matrix, rank_df, rank):
         terms_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= rank])
-            .apply(lambda x: all(x), axis=1)]
+        .apply(lambda x: all(x), axis=1)]
         return self._remove_terms(term_doc_matrix, terms_to_remove)
 
     def _remove_terms(self, term_doc_matrix, terms_to_remove):
         return term_doc_matrix.remove_terms(terms_to_remove, non_text=self.scorer.use_non_text_features)
 
+
 class JSDCompactor(BaseAssociationCompactor):
     def __init__(self,
                  max_terms,
                  term_ranker=AbsoluteFrequencyRanker,
-                 use_non_text_features=False):
+                 use_non_text_features=False,
+                 target_category: Optional[str] = None):
         self.max_terms = max_terms
-        BaseAssociationCompactor.__init__(self, term_ranker=term_ranker, use_non_text_features=use_non_text_features)
+        BaseAssociationCompactor.__init__(
+            self,
+            term_ranker=term_ranker,
+            use_non_text_features=use_non_text_features,
+            target_category=target_category
+        )
 
     def compact(self, term_doc_matrix, verbose=False):
         rank_df = self.scorer.get_rank_df(term_doc_matrix)
-        p_df = rank_df/rank_df.sum(axis=0) + 0.001
+        p_df = rank_df / rank_df.sum(axis=0) + 0.001
         m = p_df.sum(axis=1)
+
         def lg(x): return np.log(x) / np.log(2)
-        rank_df['Score'] = m * lg(1/m) - (p_df * lg(1/p_df)).sum(axis=1)
+
+        rank_df['Score'] = m * lg(1 / m) - (p_df * lg(1 / p_df)).sum(axis=1)
         terms_to_remove = rank_df.sort_values(
             by='Score', ascending=False
         ).iloc[self.max_terms:].index
@@ -95,10 +118,11 @@ class AssociationCompactor(BaseAssociationCompactor):
                  scorer=ScaledFScorePresetsNeg1To1,
                  term_ranker=AbsoluteFrequencyRanker,
                  use_non_text_features=False,
-                 include_n_most_frequent_terms=0):
+                 include_n_most_frequent_terms=0,
+                 target_category: Optional[str] = None):
         self.max_terms = max_terms
         self.include_n_most_frequent_terms = include_n_most_frequent_terms
-        BaseAssociationCompactor.__init__(self, scorer, term_ranker, use_non_text_features)
+        BaseAssociationCompactor.__init__(self, scorer, term_ranker, use_non_text_features, target_category)
 
     def compact(self, term_doc_matrix, verbose=False):
         '''
@@ -114,7 +138,7 @@ class AssociationCompactor(BaseAssociationCompactor):
         optimal_rank = self._find_optimal_rank(rank_df)
 
         terms_to_remove = rank_df.index[np.isnan(rank_df[rank_df <= optimal_rank])
-            .apply(lambda x: all(x), axis=1)]
+        .apply(lambda x: all(x), axis=1)]
 
         if self.include_n_most_frequent_terms > 0:
             most_frequent_terms = self.scorer.get_frequencies(term_doc_matrix).sort_values(
@@ -176,14 +200,16 @@ def find_optimal_rank(rank_df, num_terms):
             return cur_rank
     return min_rank
 
+
 class AssociationCompactorByRank(BaseAssociationCompactor):
     def __init__(self,
                  rank,
                  scorer=ScaledFScorePresetsNeg1To1,
                  term_ranker=AbsoluteFrequencyRanker,
-                 use_non_text_features=False):
+                 use_non_text_features=False,
+                 target_category: Optional[str] = None):
         self.rank = rank
-        BaseAssociationCompactor.__init__(self, scorer, term_ranker, use_non_text_features)
+        BaseAssociationCompactor.__init__(self, scorer, term_ranker, use_non_text_features, target_category)
 
     def compact(self, term_doc_matrix):
         '''
