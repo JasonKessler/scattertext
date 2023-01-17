@@ -164,8 +164,7 @@ Note that it is possible to disable the use of document categories in Scattertex
 This example covers plotting term dispersion against word frequency and identifying the terms which are most and least
 dispersed given their frequencies. Using the Rosengren's S dispersion measure (Gries 2021), terms tend to increase in their 
 dispersion scores as they get more frequent. We'll see how we can both plot this effect and factor out the effect
-of frequency.  
-
+of frequency.
 
 This, along with a number of other dispersion metrics presented in Gries (2021), are available and documented
  in the `Dispersion` class, which we'll use later in the section.  

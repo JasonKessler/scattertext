@@ -46,7 +46,9 @@ class AllCategoryTermScorer(AllCategoryScorer):
     def get_score_df(self, score_append=' Score', freq_append=' Freq') -> pd.DataFrame:
         rank_df = self.term_ranker_.get_ranks(label_append=freq_append)
         for category in self.corpus_.get_categories():
-            rank_df[category + score_append] = self.term_scorer_.set_categories(
-                category_name=category
-            ).get_scores()
+            scores = self.term_scorer_.set_categories(category_name=category).get_scores()
+            print(category)
+
+            print(scores)
+            rank_df[category + score_append] = scores
         return rank_df[sorted(rank_df.columns)]

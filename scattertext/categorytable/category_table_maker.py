@@ -57,7 +57,9 @@ class CategoryTableMaker(GraphRenderer):
         return table
 
     def __get_display_df(self):
-        display_df = self.rank_df[lambda df: df.Rank < self.num_rows]
+        display_df = self.rank_df[lambda df: df.Rank < self.num_rows].assign(
+            Frequency = lambda df: df.Frequency + 0.001
+        )
         bin_boundaries = np.histogram_bin_edges(
             np.log(display_df.Frequency), bins=self.max_font_size - self.min_font_size
         )

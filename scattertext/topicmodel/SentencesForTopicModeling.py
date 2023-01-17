@@ -49,9 +49,7 @@ class SentencesForTopicModeling(object):
 
 	def get_topics_from_model(
 			self,
-			pipe=Pipeline([
-				('tfidf', TfidfTransformer(sublinear_tf=True)),
-				('nmf', (NMF(n_components=30, alpha=.1, l1_ratio=.5, random_state=0)))]),
+			pipe=None,
 			num_terms_per_topic=10):
 		'''
 
@@ -60,7 +58,7 @@ class SentencesForTopicModeling(object):
 		pipe : Pipeline
 			For example, `Pipeline([
 				('tfidf', TfidfTransformer(sublinear_tf=True)),
-				('nmf', (NMF(n_components=30, alpha=.1, l1_ratio=.5, random_state=0)))])`
+				('nmf', (NMF(n_components=30, l1_ratio=.5, random_state=0)))])`
 			The last transformer must populate a `components_` attribute when finished.
 		num_terms_per_topic : int
 
@@ -68,8 +66,10 @@ class SentencesForTopicModeling(object):
 		-------
 		dict: {term: [term1, ...], ...}
 		'''
+		if pipe is None:
+			pipe = Pipeline([('tfidf', TfidfTransformer(sublinear_tf=True)),
+						   ('nmf', (NMF(n_components=30, l1_ratio=.5, random_state=0)))])
 		pipe.fit_transform(self.sentX)
-
 		topic_model = {}
 		for topic_idx, topic in enumerate(pipe._final_estimator.components_):
 			term_list = [self.termidxstore.getval(i)
