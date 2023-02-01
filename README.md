@@ -10,7 +10,7 @@ interactive HTML scatter plot. Points corresponding to terms are selectively lab
 so that they don't overlap with other labels or points. 
 
 Below is an example of using Scattertext to create visualize terms used in 2012 American
-political conventions.  The 2,000 most party-associated unigrams are displayed as 
+political conventions.  The 2,000 most party-associated uni grams are displayed as 
 points in the scatter plot. Their x- and y- axes are the dense ranks of their usage by 
 Republican and Democratic speakers respectively.
 

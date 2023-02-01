@@ -182,7 +182,7 @@ class ScatterChartExplorer(ScatterChart):
 
     def _add_term_freq_to_json_df(self, json_df, term_freq_df, category):
         json_df = ScatterChart._add_term_freq_to_json_df(self, json_df, term_freq_df, category).assign(
-            cat=term_freq_df[category + ' freq'].astype(int),
+            cat=term_freq_df[str(category) + ' freq'].astype(int),
             ncat=term_freq_df['not cat freq'].astype(int)
         )
         # json_df.loc[:,'cat'] = term_freq_df[category + ' freq'].astype(int)

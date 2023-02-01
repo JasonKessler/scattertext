@@ -61,7 +61,7 @@ class TermDocMatrixFromFrequencies(object):
 			'y': np.array(range(len(self.term_freq_df.columns))),
 			'term_idx_store': IndexStoreFromList.build(self.term_freq_df.index.values),
 			'metadata_idx_store': IndexStore(),
-			'category_idx_store': IndexStoreFromList.build(self.term_freq_df.columns),
+			'category_idx_store': IndexStoreFromList.build([str(x) for x in self.term_freq_df.columns]),
 			'unigram_frequency_path': self.unigram_frequency_path
 		}
 		return constructor_kwargs

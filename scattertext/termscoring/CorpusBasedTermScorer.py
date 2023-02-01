@@ -68,19 +68,19 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
 
 
         tdf = self.term_ranker_.get_ranks()
-        d = {'cat': tdf[category_name + ' freq']}
+        d = {'cat': tdf[str(category_name) + ' freq']}
         if not_category_names == []:
-            not_category_names = [c + ' freq' for c in self.corpus_.get_categories()
+            not_category_names = [str(c) + ' freq' for c in self.corpus_.get_categories()
                                   if c != category_name]
         else:
-            not_category_names = [c + ' freq' for c in not_category_names]
+            not_category_names = [str(c) + ' freq' for c in not_category_names]
         d['ncat'] = tdf[not_category_names].sum(axis=1)
         if neutral_category_names == []:
             # neutral_category_names = [c + ' freq' for c in self.corpus.get_categories()
             #                          if c != category_name and c not in not_category_names]
             pass
         else:
-            neutral_category_names = [c + ' freq' for c in neutral_category_names]
+            neutral_category_names = [str(c) + ' freq' for c in neutral_category_names]
         for i, c in enumerate(neutral_category_names):
             d['neut%s' % (i)] = tdf[c]
         self.tdf_ = pd.DataFrame(d)

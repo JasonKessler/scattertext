@@ -75,7 +75,7 @@ class ParsePipelineFactory(ParsePipelineFactoryWithoutCategories):
     def _register_document(self, parsed_text, row):
         self._register_doc_and_category(X_factory=self.X_factory,
                                         mX_factory=self.mX_factory,
-                                        category=row[self._category_col],
+                                        category=str(row[self._category_col]),
                                         category_idx_store=self.category_idx_store,
                                         document_index=row.name,
                                         parsed_text=parsed_text,
@@ -185,9 +185,11 @@ class TermDocMatrixFromPandas(TermDocMatrixFactory):
         return CorpusFactoryHelper.init_term_doc_matrix_variables()
 
     def _clean_and_filter_nulls_and_empties_from_dataframe(self):
-        df = self.data_frame.loc[self.data_frame[[self._category_col, self._text_col]].dropna().index]
-        df = df[df[self._text_col] != ''].reset_index()
-        return df
+        return self.data_frame.loc[
+            lambda df: df[[self._category_col, self._text_col]].dropna().index
+        ][
+            lambda df: df[self._text_col] != ''
+        ].reset_index()
 
 
 class TermDocMatrixWithoutCategoriesFromPandas(TermDocMatrixFactory):

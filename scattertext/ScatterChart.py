@@ -292,16 +292,16 @@ class ScatterChart:
         if scores is None:
             scores = self._get_default_scores(category, not_categories, df)
 
-        category_column_name = category + ' freq'
+        category_column_name = str(category) + ' freq'
         df['category score'] = CornerScore.get_scores_for_category(
             df[category_column_name],
-            df[[c + ' freq' for c in not_categories]].sum(axis=1)
+            df[[str(c) + ' freq' for c in not_categories]].sum(axis=1)
         )
         if self.scatterchartdata.term_significance is not None:
             df['p'] = get_p_vals(df, category_column_name,
                                  self.scatterchartdata.term_significance)
         df['not category score'] = CornerScore.get_scores_for_category(
-            df[[c + ' freq' for c in not_categories]].sum(axis=1),
+            df[[str(c) + ' freq' for c in not_categories]].sum(axis=1),
             df[category_column_name]
         )
         df['color_scores'] = scores
@@ -330,11 +330,11 @@ class ScatterChart:
             df['x'], df['y'] = self.x_coords, self.y_coords
             df['ox'], df['oy'] = self.x_coords, self.y_coords
 
-        df['not cat freq'] = df[[x + ' freq' for x in not_categories]].sum(axis=1)
+        df['not cat freq'] = df[[str(x) + ' freq' for x in not_categories]].sum(axis=1)
         if neutral_categories != []:
-            df['neut cat freq'] = df[[x + ' freq' for x in neutral_categories]].sum(axis=1).fillna(0)
+            df['neut cat freq'] = df[[str(x) + ' freq' for x in neutral_categories]].sum(axis=1).fillna(0)
         if extra_categories != []:
-            df['extra cat freq'] = df[[x + ' freq' for x in extra_categories]].sum(axis=1).fillna(0)
+            df['extra cat freq'] = df[[str(x) + ' freq' for x in extra_categories]].sum(axis=1).fillna(0)
 
         json_df = df[['x', 'y', 'ox', 'oy', 'term']
                      + (['p'] if self.scatterchartdata.term_significance else [])]
@@ -364,7 +364,7 @@ class ScatterChart:
         if category_name is None:
             category_name = category
         if not_category_name is None:
-            not_category_name = 'Not ' + category_name
+            not_category_name = 'Not ' + str(category_name)
 
         def better_title(x):
             if title_case_names:
@@ -457,8 +457,8 @@ class ScatterChart:
                               .apply(np.round).astype(int))
         '''
         json_df = json_df.assign(
-            cat25k=(((term_freq_df[category + ' freq'] * 1.
-                      / term_freq_df[category + ' freq'].sum()) * 25000).fillna(0)
+            cat25k=(((term_freq_df[str(category) + ' freq'] * 1.
+                      / term_freq_df[str(category) + ' freq'].sum()) * 25000).fillna(0)
                     .apply(np.round).astype(int)),
             ncat25k=(((term_freq_df['not cat freq'] * 1.
                        / term_freq_df['not cat freq'].sum()) * 25000).fillna(0)
@@ -490,7 +490,7 @@ class ScatterChart:
         other_categories = [val + ' freq' for val \
                             in self.term_doc_matrix.get_categories() \
                             if val != category]
-        all_categories = other_categories + [category + ' freq']
+        all_categories = other_categories + [str(category) + ' freq']
         return all_categories, other_categories
 
     def _get_coordinates_from_transform_and_jitter_frequencies(self,
@@ -498,8 +498,8 @@ class ScatterChart:
                                                                df,
                                                                other_categories,
                                                                transform):
-        not_counts = df[[c + ' freq' for c in other_categories]].sum(axis=1)
-        counts = df[category + ' freq']
+        not_counts = df[[str(c) + ' freq' for c in other_categories]].sum(axis=1)
+        counts = df[str(category) + ' freq']
         x_data_raw = transform(not_counts, df.index, counts)
         y_data_raw = transform(counts, df.index, not_counts)
         x_data = self._add_jitter(x_data_raw)
@@ -522,10 +522,10 @@ class ScatterChart:
             scores = self._get_default_scores(category, other_categories, df)
         # np.array(self.term_doc_matrix.get_rudder_scores(category))
         # convention_df['category score'] = np.array(self.term_doc_matrix.get_rudder_scores(category))
-        category_column_name = category + ' freq'
+        category_column_name = str(category) + ' freq'
         df = df['category score'] = CornerScore.get_scores_for_category(
-            df[category_column_name],
-            df[[c + ' freq' for c in other_categories]].sum(axis=1)
+            df[str(category_column_name)],
+            df[[str(c) + ' freq' for c in other_categories]].sum(axis=1)
         )
         if self.scatterchartdata.term_significance is not None:
             df = df.assign(
@@ -533,8 +533,8 @@ class ScatterChart:
             )
 
         df['not category score'] = CornerScore.get_scores_for_category(
-            df[[c + ' freq' for c in other_categories]].sum(axis=1),
-            df[category_column_name]
+            df[[str(c) + ' freq' for c in other_categories]].sum(axis=1),
+            df[str(category_column_name)]
         )
         df['color_scores', :] = scores
         if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
@@ -559,8 +559,8 @@ class ScatterChart:
 
     def _filter_bigrams_by_minimum_not_category_term_freq(self, category_column_name, other_categories, df):
         if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
-            return df[(df[category_column_name] > 0)
-                      | (df[[c + ' freq' for c in other_categories]].sum(axis=1)
+            return df[(df[str(category_column_name)] > 0)
+                      | (df[[str(c) + ' freq' for c in other_categories]].sum(axis=1)
                          >= self.scatterchartdata.minimum_not_category_term_frequency)]
         else:
             return df
@@ -568,7 +568,7 @@ class ScatterChart:
     def _filter_by_minimum_term_frequency(self, all_categories, df):
         if self.scatterchartdata.terms_to_include is None and self.scatterchartdata.dont_filter is False:
             df = df[
-                lambda df: (df[[c + ' freq' for c in all_categories]].sum(axis=1)
+                lambda df: (df[[str(c) + ' freq' for c in all_categories]].sum(axis=1)
                             > self.scatterchartdata.minimum_term_frequency)
             ]
         return df
@@ -579,9 +579,9 @@ class ScatterChart:
         return df[[c for c in df.columns if c != 'score']]
 
     def _get_default_scores(self, category, other_categories, df):
-        category_column_name = category + ' freq'
+        category_column_name = str(category) + ' freq'
         cat_word_counts = df[category_column_name]
-        not_cat_word_counts = df[[c + ' freq' for c in other_categories]].sum(axis=1)
+        not_cat_word_counts = df[[str(c) + ' freq' for c in other_categories]].sum(axis=1)
         # scores = ScaledFScore.get_scores(cat_word_counts, not_cat_word_counts)
         scores = RankDifference().get_scores(cat_word_counts, not_cat_word_counts)
         return scores

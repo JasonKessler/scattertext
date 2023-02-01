@@ -1,4 +1,4 @@
-version = [0, 1, 10]
+version = [0, 1, 11]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -791,11 +791,11 @@ def get_term_scorer_scores(category, corpus, neutral_categories, not_categories,
                            term_ranker, term_scorer, use_non_text_features):
     tdf = corpus.apply_ranker(term_ranker, use_non_text_features)
 
-    cat_freqs = tdf[category + ' freq']
+    cat_freqs = tdf[str(category) + ' freq']
     if not_categories:
-        not_cat_freqs = tdf[[c + ' freq' for c in not_categories]].sum(axis=1)
+        not_cat_freqs = tdf[[str(c) + ' freq' for c in not_categories]].sum(axis=1)
     else:
-        not_cat_freqs = tdf.sum(axis=1) - tdf[category + ' freq']
+        not_cat_freqs = tdf.sum(axis=1) - tdf[str(category) + ' freq']
     if isinstance(term_scorer, CorpusBasedTermScorer) and not term_scorer.is_category_name_set():
         if show_neutral:
             term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
@@ -866,6 +866,7 @@ def produce_scattertext_html(term_doc_matrix,
 
 
 def get_category_names(category, category_name, not_categories, not_category_name):
+    category_name = str(category_name)
     if category_name is None:
         category_name = category
     if not_category_name is None:
@@ -1082,7 +1083,7 @@ def produce_frequency_explorer(corpus,
     if kwargs.get('use_non_text_features', False):
         my_term_ranker.use_non_text_features()
     term_freq_df = my_term_ranker.get_ranks() + 1
-    freqs = term_freq_df[[c + ' freq' for c in [category] + not_categories]].sum(axis=1).values
+    freqs = term_freq_df[[str(c) + ' freq' for c in [category] + not_categories]].sum(axis=1).values
     x_axis_values = [round_downer(10 ** x) for x
                      in np.linspace(0, np.log(freqs.max()) / np.log(10), 5)]
     x_axis_values = [x for x in x_axis_values if x > 1 and x <= freqs.max()]
@@ -1667,8 +1668,8 @@ def produce_characteristic_explorer(corpus,
     characteristic_scores = characteristic_scores.loc[corpus.get_terms()]
     term_freq_df = term_ranker(corpus).get_ranks()
     scores = term_scorer.get_scores(
-        term_freq_df[category + ' freq'],
-        term_freq_df[[c + ' freq' for c in not_categories]].sum(axis=1)
+        term_freq_df[str(category) + ' freq'],
+        term_freq_df[[str(c) + ' freq' for c in not_categories]].sum(axis=1)
     ) if scores is None else scores
     scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(scores)
     html = produce_scattertext_explorer(

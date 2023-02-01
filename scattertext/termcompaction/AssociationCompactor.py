@@ -37,9 +37,9 @@ class TermCategoryRanker(object):
             score_data['Not ' + self.target_category] = self.scorer().get_scores(background, focus)
         else:
             for category in categories:
-                focus = tdf[category].values
+                focus = tdf[str(category)].values
                 background = tdf_sum.values - focus
-                score_data[category] = self.scorer().get_scores(focus, background)
+                score_data[str(category)] = self.scorer().get_scores(focus, background)
         return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
 
     def __get_term_ranks_and_frequencies(self, term_doc_matrix) -> Tuple[pd.DataFrame, pd.Series]:

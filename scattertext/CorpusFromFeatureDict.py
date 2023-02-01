@@ -75,7 +75,7 @@ class CorpusFromFeatureDict(object):
 			                self._metadata_idx_store)
 
 	def _get_y_and_populate_category_idx_store(self):
-		return np.array(self._df[self._category_col].apply(self._category_idx_store.getidx))
+		return np.array(self._df[self._category_col].apply(str).apply(self._category_idx_store.getidx))
 
 	def _add_to_x_factory(self, row):
 		for feat, count in row[self._feature_col].items():

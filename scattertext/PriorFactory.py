@@ -67,7 +67,7 @@ class PriorFactory(object):
 	def _get_relevant_term_freq(self):
 		return pd.DataFrame({
 			'corpus': self.term_ranker.get_ranks()
-			[[c + ' freq' for c in self.relevant_categories]]
+			[[str(c) + ' freq' for c in self.relevant_categories]]
 				.sum(axis=1)
 		})
 
@@ -89,7 +89,7 @@ class PriorFactory(object):
 
 	def use_categories(self, categories):
 		self.priors += self.term_ranker.get_ranks()[
-			[c + ' freq' for c in categories]].sum(axis=1)
+			[str(c) + ' freq' for c in categories]].sum(axis=1)
 		return self
 
 	def use_all_categories(self):
@@ -109,7 +109,7 @@ class PriorFactory(object):
 		PriorFactory
 		'''
 		term_df = self.term_ranker.get_ranks()
-		self.priors += term_df[[c + ' freq' for c in self._get_neutral_categories()]].sum(axis=1)
+		self.priors += term_df[[str(c) + ' freq' for c in self._get_neutral_categories()]].sum(axis=1)
 		return self
 
 	def drop_neutral_categories_from_corpus(self):

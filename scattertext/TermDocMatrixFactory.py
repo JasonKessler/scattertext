@@ -19,8 +19,7 @@ class TermDocMatrixFactory(object):
                  category_text_iter=None,
                  clean_function=lambda x: x,
                  nlp=None,
-                 feats_from_spacy_doc=None
-                 ):
+                 feats_from_spacy_doc=None):
         """
         Class for easy construction of a term document matrix.
        This class let's you define an iterator for each document (text_iter),
@@ -126,7 +125,7 @@ class TermDocMatrixFactory(object):
         nlp = self.get_nlp()
 
         category_document_iter = (
-            (category, self._clean_function(raw_text))
+            (str(category), self._clean_function(raw_text))
             for category, raw_text
             in self._category_text_iter
         )

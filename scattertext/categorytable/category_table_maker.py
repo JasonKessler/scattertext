@@ -30,8 +30,8 @@ class CategoryTableMaker(GraphRenderer):
             non_text=use_metadata
         ) if all_category_scorer is None else all_category_scorer
         self.rank_df = self._get_term_category_associations()
-        self.category_order_ = (sorted(self.corpus.get_categories())
-                                if category_order is None else category_order)
+        self.category_order_ = [str(x) for x in (sorted(self.corpus.get_categories())
+                                                 if category_order is None else category_order)]
         self.min_font_size = min_font_size
         self.max_font_size = max_font_size
 
@@ -58,7 +58,7 @@ class CategoryTableMaker(GraphRenderer):
 
     def __get_display_df(self):
         display_df = self.rank_df[lambda df: df.Rank < self.num_rows].assign(
-            Frequency = lambda df: df.Frequency + 0.001
+            Frequency=lambda df: df.Frequency + 0.001,
         )
         bin_boundaries = np.histogram_bin_edges(
             np.log(display_df.Frequency), bins=self.max_font_size - self.min_font_size

@@ -206,7 +206,7 @@ class TermCategoryFrequencies(object):
 		'''
 
 		df = self.term_category_freq_df.rename(
-			columns={c: c + ' freq' for c in self.term_category_freq_df}
+			columns={c: str(c) + ' freq' for c in self.term_category_freq_df}
 		)
 		df.index.name = 'term'
 		return df

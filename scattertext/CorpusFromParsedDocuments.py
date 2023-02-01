@@ -41,7 +41,7 @@ class CorpusFromParsedDocuments(object):
         -------
         scattertext.ParsedCorpus.ParsedCorpus
         '''
-        y = self._get_y_and_populate_category_idx_store(self._df[self._category_col])
+        y = self._get_y_and_populate_category_idx_store(self._df[self._category_col].apply(str))
         if show_progress is True:
             self._df.progress_apply(self._add_to_x_factory, axis=1)
         else:

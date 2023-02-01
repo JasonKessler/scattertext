@@ -32,6 +32,7 @@ class AllCategoryScorerGMeanL2(AllCategoryScorer):
         coef_freq_df = self.__add_gmeans_to_coef_freq_df(coef_freq_df)
         data = []
         for cat in self.corpus_.get_categories():
+            cat = str(cat)
             for term_rank, (term, row) in enumerate(
                     coef_freq_df[[cat + ' gmean', cat + ' freq']].sort_values(
                         by=cat + ' gmean',
@@ -47,9 +48,9 @@ class AllCategoryScorerGMeanL2(AllCategoryScorer):
 
     def __add_gmeans_to_coef_freq_df(self, coef_freq_df: pd.DataFrame) -> pd.DataFrame:
         for cat in self.corpus_.get_categories():
-            freq = Scalers.dense_rank(coef_freq_df[cat + ' freq'])
-            coef = Scalers.scale_neg_1_to_1_with_zero_mean(coef_freq_df[cat + ' coef'])
-            coef_freq_df[cat + ' gmean'] = gmean(([freq] * self.freq_weight_) + ([coef] * self.coef_weight_))
+            freq = Scalers.dense_rank(coef_freq_df[str(cat) + ' freq'])
+            coef = Scalers.scale_neg_1_to_1_with_zero_mean(coef_freq_df[str(cat) + ' coef'])
+            coef_freq_df[str(cat) + ' gmean'] = gmean(([freq] * self.freq_weight_) + ([coef] * self.coef_weight_))
         return coef_freq_df
 
     def __coefs_to_coef_freq_df(self, coef_df: pd.DataFrame) -> pd.DataFrame:
@@ -76,5 +77,5 @@ class AllCategoryScorerGMeanL2(AllCategoryScorer):
         return pd.DataFrame(
             coefs.T,
             index=self.corpus_.get_terms(use_metadata=self.non_text_),
-            columns=[x + ' coef' for x in self.corpus_.get_categories()]
+            columns=[str(x) + ' coef' for x in self.corpus_.get_categories()]
         )
