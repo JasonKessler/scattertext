@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+from scattertext.termranking.TermRanker import TermRanker
+
 tqdm.pandas()
 
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
@@ -10,10 +12,11 @@ from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRan
 class NPMICompactor(object):
     def __init__(
             self,
-            term_ranker=AbsoluteFrequencyRanker,
+            term_ranker: type = AbsoluteFrequencyRanker,
             minimum_term_count: int = 2,
             number_terms_per_length: int = 2000,
-            show_progress=True
+            non_text: bool = False,
+            show_progress: bool = True,
     ):
         '''
 
@@ -26,8 +29,9 @@ class NPMICompactor(object):
         number_terms_per_length : int
             Select X top PMI terms per ngram length
             Default 2000
-        show_progress: bool
+        show_progress : bool
             Shows TQDM for PMI filtering
+
         '''
         self.term_ranker = term_ranker
         self.minimum_term_count = minimum_term_count
@@ -47,8 +51,7 @@ class NPMICompactor(object):
         -------
         New term doc matrix
         '''
-        freqs = self._get_term_frequencies(non_text, term_doc_matrix)
-        pmi_df = self._get_pmi_df(freqs)[lambda df: df.Count >= self.minimum_term_count]
+        pmi_df = self.get_pmi_df(term_doc_matrix, non_text)
 
         threshold_df = self._get_ngram_length_pmi_thresholds(pmi_df)
 
@@ -67,6 +70,13 @@ class NPMICompactor(object):
             self.minimum_term_count, term_ranker=self.term_ranker, non_text=non_text
         )
 
+    def get_pmi_df(self, term_doc_matrix, non_text: bool = False):
+        freqs = self._get_term_frequencies(non_text, term_doc_matrix)
+        pmi_df = self._get_pmi_df(freqs)[
+            lambda df: df.Count >= self.minimum_term_count
+        ]
+        return pmi_df
+
     def _get_term_frequencies(self, non_text, term_doc_matrix):
         ranker = self.term_ranker(term_doc_matrix)
         if non_text:
@@ -74,7 +84,7 @@ class NPMICompactor(object):
         freqs = ranker.get_ranks().sum(axis=1)
         return freqs
 
-    def _get_ngram_length_pmi_thresholds(self, pmi_df):
+    def _get_ngram_length_pmi_thresholds(self, pmi_df: pd.DataFrame) -> pd.DataFrame:
         return pmi_df[lambda df: (df.Len > 1) & (df.Count >= self.minimum_term_count)].groupby(
             'Len'
         ).apply(
@@ -83,13 +93,14 @@ class NPMICompactor(object):
             ).iloc[self.number_terms_per_length][['NPMI']]
         ).rename(columns={'NPMI': 'NPMIThreshold'})
 
-    def _get_pmi_df(self, freqs):
+    def _get_pmi_df(self, freqs: pd.Series) -> pd.DataFrame:
         # ngram_lens = np.array([len(x.split()) for x in freqs.index])
         wc = dict(pd.DataFrame({
             'Len': [len(x.split()) for x in freqs.index],
             'Freq': freqs
         }).groupby('Len').sum()['Freq'])
 
+        backoff = freqs.mean()
         def prob(ngram):
             if len(ngram) == 0:
                 return 1
@@ -98,7 +109,10 @@ class NPMICompactor(object):
             if joined_ngram in freqs:
                 return freqs.loc[joined_ngram] / (wc[len(ngram)] - len(ngram) + 1)
 
-            return freqs.loc[ngram[0]] / wc[1] * prob(ngram[1:])
+            if ngram[0] in freqs.index:
+                return freqs.loc[ngram[0]] / wc[1] * prob(ngram[1:])
+
+            return backoff / wc[1] * prob(ngram[1:])
 
         apply = lambda df: df.apply
         if self.show_progress:

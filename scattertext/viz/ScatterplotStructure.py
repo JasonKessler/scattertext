@@ -79,7 +79,9 @@ class ScatterplotStructure(object):
             top_terms_left_buffer=0,
             get_column_header_html=None,
             term_word="Term",
-            show_term_etc=True
+            show_term_etc=True,
+            sort_contexts_by_meta=False,
+            show_chart=False
     ):
         '''
 
@@ -242,6 +244,10 @@ class ScatterplotStructure(object):
             Word for term in visualization
         show_term_etc: bool, default True
             Shows contents of etc structure after clicking on term
+        sort_contexts_by_meta : bool, default False
+            Sort contexts by meta instead of match strength
+        show_chart : bool, default False
+            Show line graph
         '''
         self._visualization_data = visualization_data
         self._width_in_pixels = width_in_pixels if width_in_pixels is not None else 1000
@@ -313,6 +319,8 @@ class ScatterplotStructure(object):
         self._get_column_header_html = get_column_header_html
         self._term_word = term_word
         self._show_term_etc = show_term_etc
+        self._sort_contexts_by_meta = sort_contexts_by_meta
+        self._show_chart = show_chart
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x, default='undefined'):
@@ -424,7 +432,9 @@ class ScatterplotStructure(object):
             js_default_value(self._top_terms_left_buffer, '0'),
             js_default_value_to_null(self._get_column_header_html),
             js_default_string(self._term_word),
-            js_bool(self._show_term_etc)
+            js_bool(self._show_term_etc),
+            js_bool(self._sort_contexts_by_meta),
+            js_bool(self._show_chart)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'
 

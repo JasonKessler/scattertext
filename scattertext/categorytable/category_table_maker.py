@@ -1,9 +1,11 @@
 import json
+import types
 from _bisect import bisect_left
-from typing import Optional
+from typing import Optional, Union, Callable
 
 import numpy as np
 import pandas as pd
+from scattertext.TermDocMatrix import TermDocMatrix
 
 from scattertext.all_category_scorers.gmean_l2_freq_associator import AllCategoryScorerGMeanL2
 from scattertext.all_category_scorers.all_category_scorer import AllCategoryScorer
@@ -16,24 +18,29 @@ class CategoryTableMaker(GraphRenderer):
             self,
             corpus,
             num_rows=10,
-            use_metadata=False,
+            non_text=False,
             category_order=None,
-            all_category_scorer: Optional[AllCategoryScorer] = None,
+            all_category_scorer_factory: Optional[Callable[[TermDocMatrix], AllCategoryScorer]] = None,
             min_font_size=7,
             max_font_size=20
     ):
         self.num_rows = num_rows
         self.corpus = corpus
-        self.use_metadata = use_metadata
-        self.all_category_scorer_ = AllCategoryScorerGMeanL2(
-            corpus=corpus,
-            non_text=use_metadata
-        ) if all_category_scorer is None else all_category_scorer
+        self.use_metadata = non_text
+        self.all_category_scorer_ = self._get_all_category_scorer(all_category_scorer_factory, corpus, non_text)
         self.rank_df = self._get_term_category_associations()
         self.category_order_ = [str(x) for x in (sorted(self.corpus.get_categories())
                                                  if category_order is None else category_order)]
         self.min_font_size = min_font_size
         self.max_font_size = max_font_size
+
+    def _get_all_category_scorer(self, all_category_scorer_factory, corpus, use_metadata) -> AllCategoryScorer:
+        if all_category_scorer_factory is None:
+            all_category_scorer_factory = lambda corpus: AllCategoryScorerGMeanL2(
+                corpus=corpus,
+                non_text=use_metadata
+            )
+        return all_category_scorer_factory(corpus).set_non_text(non_text=use_metadata)
 
     def get_graph(self):
         table = '<div class="timelinecontainer"><table class="timelinetable">'
@@ -51,7 +58,8 @@ class CategoryTableMaker(GraphRenderer):
                 for _, row in group_df.sort_values(by='CategoryNum').iterrows()
             ]) + '</td></tr>'
         table += '<tr>' + ''.join([
-            f'<td class="clickabletd" id="clickabletd-{row.CategoryNum}">&nbsp;</td>'
+            # f'<td class="clickabletd" id="clickabletd-{row.CategoryNum}">{"&nbsp;" * 27}</td>'
+            f'<td class="clickabletd" id="clickabletd-{row.CategoryNum}"></td>'
             for _, row in cat_df.iterrows()
         ]) + '</tr>' + '</table></div>'
         return table
@@ -68,9 +76,9 @@ class CategoryTableMaker(GraphRenderer):
                 FontSize=lambda df: df.Frequency.apply(np.log).apply(
                     lambda x: bisect_left(bin_boundaries, x) + self.min_font_size
                 )
-            ),
+            ).assign(Category=lambda df: df.Category.apply(str)),
             pd.DataFrame({
-                'Category': self.category_order_,
+                'Category': [str(c) for c in self.category_order_],
                 'CategoryNum': np.arange(len(self.category_order_))
             }),
             on='Category'
@@ -100,7 +108,7 @@ class CategoryTableMaker(GraphRenderer):
         Array.from(document.querySelectorAll('.clickabletd')).map(
             function (node) {
                 node.addEventListener('mouseenter', mouseEnterNode);
-                node.addEventListener('mouseleave', mouseLeaveNode);
+                node.addEventListener('mouseleave', mouseLeaveNode);    
                 node.addEventListener('click', clickNode);
             }
         )
@@ -118,7 +126,7 @@ class CategoryTableMaker(GraphRenderer):
         }
 
         function mouseEnterNode(event) {
-            console.log("THIS"); console.log(this)
+            //console.log("THIS"); console.log(this)
             var term = this.children[0].textContent;
             plotInterface.showTooltipSimple(term);
             var clickableTds = document.getElementsByClassName('clickabletd');
@@ -131,29 +139,36 @@ class CategoryTableMaker(GraphRenderer):
             }
             
             var termStats = []; 
-            Object.keys(categoryFrequency).map(function(x) {
-                termStats[x] = [
-                    categoryFrequency[x][term]['Rank'], 
-                    Object.values(categoryFrequency[x]).map(y=>y.Rank).reduce((a,b)=>Math.max(a,b), 0)
+            Object.keys(categoryFrequency).map(function(cat) {
+                termStats[cat] = [
+                    categoryFrequency[cat][term]['Rank'], 
+                    Object.values(categoryFrequency[cat]).map(y=>y.Rank).reduce((a,b)=>Math.max(a,b), 0),
+                    categoryFrequency[cat][term]['Freq'],
+                    Object.keys(categoryFrequency[cat]).length
                 ]
             });
             
             Object.entries(getCatNumToCat()).flatMap(
                 function(kv) {
-                    var td = document.getElementById('clickabletd-' + kv[1]);
-                    var termStat = termStats[kv[0]];
-                    if(termStat[0] >= ''' + str(self.num_rows) + ''') { 
-                        td.style.tableLayout = 'fixed';
-                        td.style.wordWrap = 'break-word';
-                        td.style.backgroundColor = "#FFAAAA";
-                        td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
-                        td.textContent = term + " (" + (termStat[0] + 1) + ")";
-                    } else {
-                        td.style.tableLayout = 'fixed';
-                        td.style.wordWrap = 'break-word';
-                        td.style.backgroundColor = "#FFFFFF";
-                        td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
-                        td.textContent = "";
+                    if(false) {
+                        var td = document.getElementById('clickabletd-' + kv[1]);
+                        var termStat = termStats[kv[0]];
+                        console.log(termStat)
+                        if(termStat[0] >= ''' + str(self.num_rows) + ''') { 
+                            td.style.tableLayout = 'fixed';
+                            //td.style.wordWrap = 'break-word';
+                            td.style.flexWrap =  'wrap';
+                            //td.style.backgroundColor = "#FFAAAA";
+                            td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
+                            td.textContent = (termStat[2]) + " occs; rank: " + (termStat[0] + 1);
+                        } else {
+                            td.style.tableLayout = 'fixed';
+                            //td.style.wordWrap = 'break-word';
+                            td.style.flexWrap =  'wrap';
+                            td.style.backgroundColor = "#FFFFFF";
+                            td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
+                            td.textContent = (termStat[2]) + " occs; rank: " + (termStat[0] + 1);
+                        }
                     }
                 }
             );
@@ -168,14 +183,17 @@ class CategoryTableMaker(GraphRenderer):
                 
             Object.entries(getCatNumToCat()).flatMap(
                 function(kv) {
-                    var td = document.getElementById('clickabletd-' + kv[1]);
+                    if(false) {
+                        var td = document.getElementById('clickabletd-' + kv[1]);
                 
-                    td.style.tableLayout = 'fixed';
-                    td.style.wordWrap = 'break-word';
-                    td.style.backgroundColor = "#FFFFFF";
-                    td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
-                    td.textContent = "";
-                    
+                        td.style.tableLayout = 'fixed';
+                        //td.style.wordWrap = 'break-word';
+                        td.style.flexWrap =  'wrap';
+                        td.style.backgroundColor = "#FFFFFF";
+                        td.style.fontSize = "''' + str(self.min_font_size) + '''px";  
+                        //td.innerHtml = '&nbsp;'.repeat(27);
+                        td.textContent = '';
+                    }
                 }
             )                
         }

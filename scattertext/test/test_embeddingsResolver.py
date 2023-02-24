@@ -14,6 +14,9 @@ class WV:
     def __init__(self, vocab):
         self.key_to_index = {v:k for k,v in enumerate(vocab)}
 
+    def __getitem__(self, item):
+        assert item in self.key_to_index.keys()
+        return np.zeros(30)
 
 class MockWord2Vec:
     def __init__(self, vocab):

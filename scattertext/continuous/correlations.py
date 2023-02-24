@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+from scattertext.TermDocMatrix import TermDocMatrix
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
 from scattertext.continuous.coefficientbase import CoefficientBase
@@ -11,13 +13,17 @@ class Correlations(CoefficientBase):
     def set_correlation_type(self, correlation_type: str = 'pearsonr') -> 'Correlations':
         assert correlation_type in ['pearsonr', 'spearmanr', 'kendalltau']
         self.correlation_type_ = correlation_type
-        if correlation_type == 'pearsonr':
-            self.cols_ = ['r', 'p']
-        if correlation_type == 'spearmanr':
-            self.cols_ = ['r', 'p']
-        if correlation_type == 'kendalltau':
-            self.cols_ = ['tau', 'p']
+        self.cols_ = [Correlations.get_notation_name(correlation_type=correlation_type), 'p']
         return self
+
+    @classmethod
+    def get_notation_name(cls, correlation_type):
+        if correlation_type == 'pearsonr':
+            return 'r'
+        if correlation_type == 'spearmanr':
+            return 'r'
+        if correlation_type == 'kendalltau':
+            return 'p'
 
     def __get_correlation_funct(self):
         if self.correlation_type_ == 'pearsonr':
@@ -28,7 +34,7 @@ class Correlations(CoefficientBase):
             return kendalltau
 
 
-    def get_correlation_df(self, corpus, document_scores):
+    def get_correlation_df(self, corpus: TermDocMatrix, document_scores: np.array) -> pd.DataFrame:
         '''
 
         :param corpus: TermDocMatrix, should just have unigrams
@@ -39,7 +45,8 @@ class Correlations(CoefficientBase):
         tdm = self._get_tdm(corpus)
 
         return pd.DataFrame(
-            [self.__get_correlation_funct()(tdm.T[i].todense().A1, document_scores) for i in range(tdm.shape[1])],
+            [self.__get_correlation_funct()(tdm.T[i].todense().A1, document_scores)
+             for i in range(tdm.shape[1])],
             columns=self.cols_
         ).assign(
             Term=self._get_terms(corpus),

@@ -21,7 +21,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
-                  'undefined', '14', '0', 'null', '"Term"', 'true']
+                  'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -541,7 +541,6 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({63: '"RoBERTa"'}))
 
-
     def test_top_terms_length(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data, top_terms_length=5)
@@ -553,7 +552,6 @@ class TestHTMLVisualizationAssembly(TestCase):
         params = (ScatterplotStructure(visualization_data, top_terms_left_buffer=10)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({65: '10'}))
-
 
     def test_get_column_header_html(self):
         visualization_data = self.make_adapter()
@@ -575,3 +573,17 @@ class TestHTMLVisualizationAssembly(TestCase):
                                        show_term_etc=False)
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({68: 'false'}))
+
+    def test_sort_contexts_by_meta(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       sort_contexts_by_meta=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({69: 'true'}))
+
+    def test_show_chart(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       show_chart=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({70: 'true'}))

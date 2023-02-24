@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
@@ -13,6 +15,7 @@ class Coordinates:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
 
 def scale_jointly(x, y):
     x, y = np.array(x), np.array(y)
@@ -38,11 +41,13 @@ def rotate_radians(y, x, radians):
         x * np.sin(radians) + y * np.cos(radians)
     )
 
+
 def scale_center_zero(vec, other_vec=None):
     if other_vec is None:
         other_vec = vec
     return ((((other_vec > 0).astype(float) * (other_vec / vec.max())) * 0.5 + 0.5)
             + ((other_vec < 0).astype(float) * (other_vec / (-vec.min())) * 0.5))
+
 
 def scale_center_zero_abs(vec, other_vec=None):
     if other_vec is None:
@@ -51,11 +56,13 @@ def scale_center_zero_abs(vec, other_vec=None):
     return ((((other_vec > 0).astype(float) * (other_vec / max_abs)) * 0.5 + 0.5)
             + ((other_vec < 0).astype(float) * (other_vec / max_abs) * 0.5))
 
+
 def scale_center_zero_separate_ranks(scores: np.array) -> np.array:
     scaled = np.zeros(len(scores), dtype=np.float)
     scaled[scores > 0] = rankdata(scores[scores > 0]) / len(scores[scores > 0]) / 2 + 0.5
     scaled[scores < 0] = rankdata(scores[scores < 0]) / len(scores[scores < 0]) / 2
     return scaled
+
 
 def scale_neg_1_to_1_with_zero_mean_abs_max(vec):
     max_abs = max(vec.max(), -vec.min())
@@ -122,6 +129,18 @@ def log_scale_standardize(vec, terms=None, other_vec=None):
     return scale_0_to_1(vec_ss)
 
 
+def log_scale_with_negatives(in_vec: np.array) -> np.array:
+    vec = in_vec.copy()
+    pos_log = np.log(vec[vec > 0])
+    neg_log = np.log(-vec[vec < 0])
+    posnegmax = max(neg_log.max(), pos_log.max())
+    posnegmin = min(neg_log.min(), pos_log.min())
+    vec[in_vec < 0] = 0.499 * ((posnegmax - neg_log) / (posnegmax - posnegmin))
+    vec[in_vec == 0] = 0.5
+    vec[in_vec > 0] = 0.501 + 0.499 * (1 - (posnegmax - pos_log) / (posnegmax - posnegmin))
+    return vec
+
+
 def sqrt_scale_standardize(vec, terms=None, other_vec=None):
     vec_ss = np.sqrt(vec)
     vec_ss = (vec_ss - vec_ss.mean()) / vec_ss.std()
@@ -170,6 +189,17 @@ def dense_rank(vec, terms=None, other_vec=None):
     vec_ss = rankdata(vec, method='dense') * (1. / len(vec))
     return scale_0_to_1(vec_ss)
 
+def get_scaler_name(scaler: Callable) -> str:
+    if scaler == dense_rank:
+        return 'Dense Rank'
+    if scaler == log_scale:
+        return 'Log'
+    if scaler == scale:
+        return ''
+    if scaler == sqrt_scale:
+        return 'Sqrt'
+    return ''
+
 
 percentile_dense = dense_rank
 
@@ -217,3 +247,8 @@ def scale_0_to_1(vec_ss):
     vec_ss = (vec_ss - vec_ss.min()) * 1. / (vec_ss.max() - vec_ss.min())
     return vec_ss
 
+
+def min_zero(vec):
+    a = np.copy(vec)
+    a[a < 0] = 0
+    return a

@@ -1,5 +1,6 @@
 import warnings
 from copy import copy
+from typing import Union, List, Callable
 
 import numpy as np
 import pandas as pd
@@ -115,16 +116,21 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             freq_mat[:, cat_i] = self._X[self._y == cat_i, :].sum(axis=0)
         return freq_mat
 
-    def get_term_count_mat(self):
+    def get_term_count_mat(self, non_text: bool = False):
         '''
+        Parameters
+        -------
+        non_text : bool = False
+
         Returns
         -------
         np.array with columns as categories and rows as terms
         '''
-        freq_mat = np.zeros(shape=(self.get_num_terms(), self.get_num_categories()),
-                            dtype=self.get_term_doc_mat().dtype)
+        freq_mat = np.zeros(shape=(self.get_num_terms(non_text=non_text), self.get_num_categories()),
+                            dtype=self.get_term_doc_mat(non_text=non_text).dtype)
+        Xall = self.get_term_doc_mat(non_text=non_text)
         for cat_i in range(self.get_num_categories()):
-            X = (self._X[self._y == cat_i, :] > 0).astype(int)
+            X = (Xall[self._y == cat_i, :] > 0).astype(int)
             freq_mat[:, cat_i] = X.sum(axis=0)
         return freq_mat
 
@@ -258,7 +264,7 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
 
     def remove_categories(self, categories, ignore_absences=False):
         '''
-        Non destructive category removal.
+        Non-destructive category removal.
 
         Parameters
         ----------
@@ -737,17 +743,20 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         '''
         return self._category_idx_store
 
-    def recategorize(self, new_categories):
+    def recategorize(self, new_categories: Union[List, Callable[['TermDocMatrix'], List]]):
         '''
         Parameters
         ----------
-        new_categories : array like
+        new_categories : array like or function which takes TermDocMatric and returns something list like
         String names of new categories. Length should be equal to number of documents
 
         Returns
         -------
         TermDocMatrix
         '''
+        if callable(new_categories):
+            new_categories = new_categories(self)
+
         assert len(new_categories) == self.get_num_docs()
 
         new_category_idx_store = IndexStoreFromList.build(set(new_categories))

@@ -121,7 +121,7 @@ class DiachronicTermMiner(object):
              .melt(id_vars=['index'])
              .rename(columns={'index': 'term', 'value': 'trending'})),
             on=['term', 'variable']
-		)
+        )
         display_df[display_df['frequency'] == 0] = np.nan
         display_df = display_df.dropna()
         return display_df[display_df.term.isin(rank_df.index)]

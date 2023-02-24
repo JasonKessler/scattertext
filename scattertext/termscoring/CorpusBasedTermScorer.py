@@ -34,10 +34,13 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         self.corpus_ = corpus
         self.category_ids_ = corpus._y
         self.tdf_ = None
-        self._set_scorer_args(**kwargs)
-        self.term_ranker_ = AbsoluteFrequencyRanker(corpus)
+        self.term_ranker_ = self._get_default_ranker(corpus)
         self.use_metadata_ = False
         self.category_name_is_set_ = False
+        self._set_scorer_args(**kwargs)
+
+    def _get_default_ranker(self, corpus):
+        return AbsoluteFrequencyRanker(corpus)
 
     @abstractmethod
     def _set_scorer_args(self, **kwargs):
@@ -66,8 +69,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         Specify the category to score. Optionally, score against a specific set of categories.
         '''
 
-
-        tdf = self.term_ranker_.get_ranks()
+        tdf = self.term_ranker_.set_non_text(non_text=self.use_metadata_).get_ranks()
         d = {'cat': tdf[str(category_name) + ' freq']}
         if not_category_names == []:
             not_category_names = [str(c) + ' freq' for c in self.corpus_.get_categories()

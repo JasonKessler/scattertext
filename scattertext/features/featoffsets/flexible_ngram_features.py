@@ -27,7 +27,7 @@ class FlexibleNGramFeaturesBase:
     def _doc_to_feature_representation(self, doc) -> Dict:
         offset_tokens = {}
         for sent in doc.sents:
-            sent_features = self._sent_to_token_features(sent)
+            sent_features = sent  # self._sent_to_token_features(sent)
             for ngram_size in self.ngram_sizes:
                 if len(sent_features) >= ngram_size:
                     for ngram in sequence_window(sent_features, ngram_size):
@@ -36,10 +36,11 @@ class FlexibleNGramFeaturesBase:
         return offset_tokens
 
     def _add_ngram_to_token_stats(self, ngram, offset_tokens):
-        toktext = ' '.join(x[2] for x in ngram)
+        toktext = ' '.join(self.text_from_token(tok) for tok in ngram)
         token_stats = offset_tokens.setdefault(toktext, [0, []])
         token_stats[0] += 1
-        start, end = ngram[0][0], ngram[-1][1]
+        start = ngram[0].idx
+        end = ngram[-1].idx + len(ngram[-1].orth_)
         token_stats[1].append((start, end))
 
     def _sent_to_token_features(self, sent):
@@ -55,15 +56,6 @@ class FlexibleNGramFeaturesBase:
 
 
 class FlexibleNGramFeatures(FeatAndOffsetGetter, FlexibleNGramFeaturesBase):
-    def __init__(
-            self,
-            ngram_sizes: Optional[List[int]] = None,
-            exclude_ngram_filter: Optional[Callable] = None,
-            text_from_token: Optional[Callable] = None,
-            validate_token: Optional[Callable] = None
-    ):
-        FlexibleNGramFeaturesBase.__init__(self, exclude_ngram_filter, ngram_sizes, text_from_token, validate_token)
-
     def get_term_offsets(self, doc):
         return []
 
@@ -90,7 +82,8 @@ class FlexibleNGrams(FeatsFromSpacyDoc, FlexibleNGramFeaturesBase):
         return self._doc_to_feature_representation(doc)
 
     def _add_ngram_to_token_stats(self, ngram, offset_tokens):
-        toktext = ' '.join(x[2] for x in ngram)
+        #toktext = ' '.join(x[2] for x in ngram)
+        toktext = ' '.join(self.text_from_token(tok) for tok in ngram)
         offset_tokens.setdefault(toktext, 0)
         offset_tokens[toktext] += 1
 

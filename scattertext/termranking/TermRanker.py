@@ -1,10 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
+from scattertext.TermDocMatrix import TermDocMatrix
+
 
 class TermRanker:
 	__metaclass__ = ABCMeta
 
-	def __init__(self, term_doc_matrix):
+	def __init__(self, term_doc_matrix: TermDocMatrix):
 		'''Initialize TermRanker
 
 		Parameters
@@ -14,6 +16,10 @@ class TermRanker:
 		'''
 		self._term_doc_matrix = term_doc_matrix
 		self._use_non_text_features = False
+
+	def set_non_text(self, non_text: bool = False):
+		self._use_non_text_features = non_text
+		return self
 
 	def use_non_text_features(self):
 		'''

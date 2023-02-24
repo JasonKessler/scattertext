@@ -73,7 +73,6 @@ class AllCategoryScorerGMeanL2(AllCategoryScorer):
                 penalty='l2', C=5., max_iter=4000, tol=1e-6, solver='liblinear'
             ).fit(tdmtfidf, y)
             coefs[i, :] = clf.coef_
-
         return pd.DataFrame(
             coefs.T,
             index=self.corpus_.get_terms(use_metadata=self.non_text_),

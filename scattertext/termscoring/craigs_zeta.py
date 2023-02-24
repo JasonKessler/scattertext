@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from scattertext.termranking import OncePerDocFrequencyRanker
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
@@ -20,6 +22,9 @@ class CraigsZeta(CorpusBasedTermScorer):
 
     def _set_scorer_args(self, **kwargs):
         self.constant = kwargs.get('constant', 0.01)
+
+    def _get_default_ranker(self, corpus):
+        return OncePerDocFrequencyRanker(corpus)
 
     def get_scores(self, *args):
         '''
@@ -54,17 +59,21 @@ class CraigsZeta(CorpusBasedTermScorer):
         }).set_index('Term')
 
     def _get_zeta_score(self, cat_X, ncat_X):
-        return (
-                (cat_X.sum(axis=0) + self.constant) / (cat_X.shape[0] + self.constant)
-                - (ncat_X.sum(axis=0) + self.constant) / (ncat_X.shape[0] + self.constant)
-        ).A1
+        return (self._smoothed_proportion(cat_X) - self._smoothed_proportion(ncat_X)).A1
+
+    def _smoothed_proportion(self, counts):
+        return (counts.sum(axis=0) + self.constant) / (counts.shape[0] + self.constant)
 
     def get_name(self):
         return 'Craigs Zeta'
 
-class ChiSquareZeta(CraigsZeta):
+
+class LogZeta(CraigsZeta):
+    def _set_scorer_args(self, **kwargs):
+        CraigsZeta._set_scorer_args(self, **kwargs)
+        self.log_base_ = kwargs.get('log_base', 2)
+
     def _get_zeta_score(self, cat_X, ncat_X):
-        return (
-                (cat_X.sum(axis=0) + self.constant) / (cat_X.shape[0] + self.constant)
-                - (ncat_X.sum(axis=0) + self.constant) / (ncat_X.shape[0] + self.constant)
-        ).A1
+        log_base = np.log(self.log_base_)
+        return (np.log(self._smoothed_proportion(cat_X)) / log_base
+                - np.log(self._smoothed_proportion(ncat_X)) / log_base).A1

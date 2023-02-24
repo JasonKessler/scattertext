@@ -38,7 +38,7 @@ class CategoryEmbeddingsResolver:
             acceptable_terms = set(self.corpus_.get_terms())
         trained_model = CategorySpecificWord2VecFromParsedCorpus(self.corpus_, category, model).train()
         self.category_word2vec_model_[category] = trained_model
-        word2dwe = {word: trained_model[word] for word in trained_model.wv.key_to_index.keys()}
+        word2dwe = {word: trained_model.wv[word] for word in trained_model.wv.key_to_index.keys()}
         self.category_embeddings_[category] = word2dwe
         return self
 

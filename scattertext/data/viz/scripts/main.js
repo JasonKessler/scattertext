@@ -12,7 +12,6 @@ function merge(ranges) { //via https://stackoverflow.com/questions/26390938/merg
 
     return result;
 }
-
 buildViz = function (d3) {
     return function (widthInPixels = 1000,
                      heightInPixels = 600,
@@ -82,7 +81,9 @@ buildViz = function (d3) {
                      topTermsLeftBuffer = 0,
                      getColumnHeaderHTML = null,
                      termWord = 'Term',
-                     showTermEtc = true
+                     showTermEtc = true,
+                     sortContextsByMeta = false,
+                     showChart = true
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -775,12 +776,6 @@ buildViz = function (d3) {
                                             offsetStart - snippetPadding);
                                         let spanEnd = Math.min(offsetEnd + snippetPadding, text.length);
                                         let snippet = text.substr(spanStart, spanEnd - spanStart);
-                                        console.log("OffsetSE");
-                                        console.log(offsetStart + '|' + offsetEnd);
-                                        console.log("SpanSE");
-                                        console.log(spanStart + '|' + spanEnd);
-                                        console.log("SnippetPre");
-                                        console.log(snippet);
                                         offsets.reverse().forEach(
                                             function (offset) {
                                                 offset[0] -= spanStart;
@@ -792,20 +787,13 @@ buildViz = function (d3) {
                                                     + highlightClose
                                                     + snippet.substr(offset[1], snippet.length - offset[1])
                                                 )
-                                                console.log("Snippet||" + i + '||' + offset[0] + '|' + offset[1]);
-                                                console.log(snippet);
                                             }
                                         )
-                                        console.log("SnippetPost");
-                                        console.log(snippet);
 
                                         if (spanStart > 0)
                                             snippet = '...' + snippet;
                                         if (snippetPadding < text.length - offsetEnd)
                                             snippet = snippet + '...'
-                                        console.log("SnippetDone");
-                                        console.log(snippet);
-
                                         curMatch.snippets.push(snippet)
                                     }
                                 }
@@ -834,9 +822,15 @@ buildViz = function (d3) {
                 }
             }
             for (var i in [0, 1]) {
-                matches[i] = matches[i].sort(function (a, b) {
-                    return a.strength < b.strength ? 1 : -1
-                })
+                if(sortContextsByMeta) {
+                    matches[i] = matches[i].sort(function (a, b) {
+                        return a.meta < b.meta ? 1 : -1
+                    })
+                } else {
+                    matches[i] = matches[i].sort(function (a, b) {
+                        return a.strength < b.strength ? 1 : -1
+                    })
+                }
             }
             return {'contexts': matches, 'info': d};
         }
@@ -886,6 +880,132 @@ buildViz = function (d3) {
             }
         }
 
+        function displayLineChart(termInfo, contexts) {
+            var divid = "#" + divName + "-lineplot",
+                margin = {top: 10, right: 30, bottom: 30, left: 80},
+                width = parseInt(0.9*widthInPixels) - margin.left - margin.right,
+                height = 200 - margin.top - margin.bottom;
+            d3.select(divid).selectAll("*").remove();
+
+            // append the svg object to the body of the page
+            var basesvg = d3.select(divid)
+              .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+             var linesvg = basesvg.append("g")
+                .attr("transform",
+                      "translate(" + margin.left + "," + margin.top + ")")
+
+            var docLabelCounts = fullData.docs.labels.reduce(
+                function (map, label) {
+                    map[label] = (map[label] || 0) + 1;
+                    return map;
+                },
+                Object.create(null)
+            );
+            var numMatches = Object.create(null);
+            var allContexts = contexts[0].concat(contexts[1]).concat(contexts[2]).concat(contexts[3]);
+            allContexts.forEach(function (singleDoc) {
+               numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel] || 0) + 1;
+            });
+            var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => ({
+               "label": fullData.docs.categories[key],
+               "labelNum": key,
+               "matches": numMatches[key] || 0,
+               "overall": docLabelCounts[key],
+               'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
+               })
+            ).sort(function (a, b) {
+               return a['label'] < b['label'] ? -1 : a['label'] > b['label'] ? 1 : 0
+            }).map((v, idx) => ({...v, idx: idx}));
+
+            var chartData = d3.entries(docLabelCountsSorted);
+
+            var chartx = d3.scaleLinear()
+               .domain(d3.extent(docLabelCountsSorted, function(d) { return d.idx; }))
+               .range([ 0, width ]);
+
+            linesvg.append("g")
+               .attr("transform", "translate(0," + height + ")")
+               .call(d3.axisBottom(chartx)
+                     .ticks(3)
+                     .tickFormat((d,i) => docLabelCountsSorted[i].label));
+
+
+            var charty = d3.scaleLinear()
+                .domain([0, d3.max(docLabelCountsSorted, function(d) { return +d.percent; })])
+                .range([ height, 0 ]);
+
+            linesvg.append("g").call(d3.axisLeft(charty));
+
+            linesvg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("x", 0 - (height / 2))
+                .attr("y", -40)
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("% documenrts");
+
+
+            basesvg.
+                on("pointerenter pointermove", function(d) {
+                    var matrix = this.getScreenCTM()
+                        .translate(+ this.getAttribute("cx"), + this.getAttribute("cy"));
+                    var mousePosition = d3.mouse(this);
+                    var clickedIndex = Math.round(chartx.invert(d3.mouse(this)[0] - margin.left));
+                    var clickedInfo = docLabelCountsSorted[clickedIndex];
+                    var clickedLabel = clickedInfo.label;
+                    console.log(clickedInfo)
+                    chartTooltip.transition().duration(0).style('opacity', 0);
+                    chartTooltip.transition()
+                        .duration(0)
+                        .style("opacity", 1)
+                        .style("z-index", 10000000)
+                    var yChartPos = charty(clickedInfo.percent)
+                    chartTooltip.html(
+                        clickedLabel + '<br/>Matched docs: ' + clickedInfo.matches
+                        + ' of ' + clickedInfo.overall + '<br/>' + parseFloat(clickedInfo.percent).toFixed(4) + "%"
+                    ).style("left", (window.pageXOffset + matrix.e + mousePosition[0] - margin.left) + "px")
+                     .style("top", (window.pageYOffset + matrix.f + yChartPos - 60) + "px")
+                }).on('pointerleave', function () {
+                    chartTooltip.transition().duration(0).style('opacity', 0)
+                }).on("click", function(d, i) {
+                    var mousePosition = d3.mouse(this);
+                    var clickedIndex = Math.round(chartx.invert(mousePosition[0] - margin.left));
+                    var clickedInfo = docLabelCountsSorted[clickedIndex];
+                    var clickedLabel = clickedInfo.label;
+                    console.log("clicked"); console.log(mousePosition);
+                    console.log(clickedLabel);
+                    console.log(clickedInfo);
+                    window.location.hash = divId + 'egory' + clickedIndex;
+                    chartTooltip.transition().duration(0).style('opacity', 0)
+                })
+
+            console.log(chartData)
+            var valueline = d3.line()
+                .x(function (d) {
+                    return chartx(d.idx);
+                })
+                .y(function (d) {
+                    return charty(d.percent);
+                });
+
+            linesvg.append("path")
+                .attr("class", "line")
+                //.style("stroke-dasharray", "5,5")
+                //.style("stroke", "#cccccc")
+                //.style("stroke-width", "1px")
+                .attr("fill", "none")
+                .attr("stroke", function(d){ return '#0000FF' })
+                .attr("stroke-width", 1)
+                .attr("d", valueline(docLabelCountsSorted.sort((a, b) => b.x - a.x)))
+            var chartTooltip = d3.select('#' + divName)
+                .append("div")
+                .attr("class", "tooltipscore")
+                .style("opacity", 0);
+
+        }
+
         function displayTermContexts(data, termInfo, jump = alwaysJump, includeAll = false) {
             var contexts = termInfo.contexts;
             var info = termInfo.info;
@@ -918,8 +1038,10 @@ buildViz = function (d3) {
                         .append("div")
                         .attr('class', snippetClass)
                         .html(snippet);
-                })
+                });
+
             }
+
 
 
             if (ignoreCategories) {
@@ -940,7 +1062,7 @@ buildViz = function (d3) {
                     .attr('text-align', "center")
                     .html(
                         "Matched " + numMatches + " out of " + numDocs + ' documents: '
-                        + (100 * numMatches / numDocs).toFixed(2) + '%'
+                        + parseFloat(100 * parseInt(numMatches) / parseInt(numDocs)).toFixed(4) + '%'
                     );
 
                 if (allContexts.length > 0) {
@@ -955,7 +1077,8 @@ buildViz = function (d3) {
                     }
                 }
 
-            } else if (unifiedContexts) {
+            } else if (unifiedContexts)
+             {
                 divId = '#' + divName + '-' + 'cat';
                 var docLabelCounts = fullData.docs.labels.reduce(
                     function (map, label) {
@@ -973,7 +1096,7 @@ buildViz = function (d3) {
                 var allNotMatches = [];
                 if (notmatches !== undefined)
                     allNotMatches = notmatches[0].concat(notmatches[1]).concat(notmatches[2]).concat(notmatches[3]);
-
+                displayLineChart(termInfo, contexts)
                 /*contexts.forEach(function(context) {
                      context.forEach(function (singleDoc) {
                          numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel]||0) + 1;
@@ -1006,6 +1129,7 @@ buildViz = function (d3) {
                             return b.percent - a.percent;
                         }
                     });
+
                 console.log("docLabelCountsSorted")
                 console.log(docLabelCountsSorted);
                 console.log(numMatches)
@@ -1034,7 +1158,6 @@ buildViz = function (d3) {
                     var htmlToAdd = "";
                     if (!ignoreCategories) {
                         htmlToAdd += "<b>" + counts.label + "</b>: " + getCategoryStatsHTML(counts);
-                        ;
                     }
 
                     if (counts.matches > 0) {
@@ -1082,7 +1205,8 @@ buildViz = function (d3) {
                 })
 
 
-            } else {
+            } else
+             {
                 var contextColumns = [
                     fullData.info.category_internal_name,
                     fullData.info.not_category_name
@@ -1421,7 +1545,18 @@ buildViz = function (d3) {
                     ) + ')' + boundary, 'gim');
                 console.log(regexp);
 
-                if (subwordEncoding === 'RoBERTa') {
+                if (subwordEncoding === 'RoBERTa' || subwordEncoding === 'BERT') {
+                    if (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289) {
+                        // Starts with character Ġ indicating it's a word start
+                        regexp = new RegExp(boundary + escapeRegExp(term.substr(1, term.length)), 'gim');
+                    } else if (subwordEncoding == 'BERT' && term.charAt(0) === '#' && term.charAt(1) === '#') {
+                        regexp = new RegExp(boundary + escapeRegExp(term.substr(2, term.length)), 'gim');
+                    } else {
+                        regexp = new RegExp("\w" + escapeRegExp(term), 'gim');
+                    }
+                }
+
+                if (subwordEncoding === 'BERT') {
                     if (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289) {
                         // Starts with character Ġ indicating it's a word start
                         regexp = new RegExp(boundary + escapeRegExp(term.substr(1, term.length)), 'gim');
@@ -1429,7 +1564,6 @@ buildViz = function (d3) {
                         regexp = new RegExp("\w" + escapeRegExp(term), 'gim');
                     }
                 }
-
 
                 try {
                     regexp.exec('X');
@@ -1740,7 +1874,8 @@ buildViz = function (d3) {
                         runDisplayTermContexts = alternativeTermFunc(termInfo);
                     }
                     if (runDisplayTermContexts) {
-                        displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts), alwaysJump, includeAllContexts);
+                        displayTermContexts(data, gatherTermContexts(termInfo, includeAllContexts),
+                        alwaysJump, includeAllContexts);
                     }
                 });
         }
@@ -2221,7 +2356,9 @@ buildViz = function (d3) {
                 fullData.line = fullData.line.sort((a, b) => b.x - a.x);
                 svg.append("path")
                     .attr("class", "line")
-                    .style("stroke-width", "1px")
+                    .style("stroke-dasharray", "5,5")
+                    .style("stroke", "#3b719f")
+                    .style("stroke-width", "1.25px")
                     .attr("d", valueline(fullData['line'])).moveToBack();
             }
             if (showAxes || showAxesAndCrossHairs) {
@@ -2821,8 +2958,6 @@ buildViz = function (d3) {
                 var messages = [];
                 if (ignoreCategories) {
                     var wordCount = getCorpusWordCounts();
-                    console.log("wordCount")
-                    console.log(wordCount)
                     messages.push(
                         '<b>Document count: </b>' + fullData.docs.texts.length.toLocaleString('en') +
                         '; <b>word count: </b>'
@@ -2934,8 +3069,6 @@ buildViz = function (d3) {
                             d3.event.pageX,
                             d3.event.pageY
                         );*/
-                        console.log("point MOUSOEVER")
-                        console.log(d)
                         showToolTipForTerm(data, this, d.term, d, true);
                         d3.select(this).style("stroke", "black");
                     })

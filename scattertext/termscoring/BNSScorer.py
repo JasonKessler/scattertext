@@ -55,9 +55,10 @@ class BNSScorer(CorpusBasedTermScorer):
         return norm.ppf(scores)
 
     def get_scores(self, *args) -> pd.Series:
+        categories = [str(c) for c in self.corpus_.get_categories()]
         tp, fp, pos, neg, tpr, fpr, invn_tpr, invn_fpr = self._get_bns_score_for_category_index(
-            cat_i=self.corpus_.get_categories().index(self.category_name),
-            not_cat_is=[self.corpus_.get_categories().index(c) for c in self.not_category_names],
+            cat_i=categories.index(str(self.category_name)),
+            not_cat_is=[categories.index(str(c)) for c in self.not_category_names],
             X=self._get_X() > 0,
             y=self.corpus_._y
         )

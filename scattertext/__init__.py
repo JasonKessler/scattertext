@@ -1,11 +1,12 @@
-version = [0, 1, 12]
+version = [0, 1, 14]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
 import numpy as np
 import pandas as pd
 import warnings
-from typing import Optional
+
+from typing import Optional, Union, Callable, List, Dict
 from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
 from scattertext.features.UseFullDocAsMetadata import UseFullDocAsMetadata
 from scattertext.graphs.ComponentDiGraph import ComponentDiGraph
@@ -37,7 +38,6 @@ from scattertext.CorpusFromFeatureDict import CorpusFromFeatureDict
 from scattertext.TermCategoryFrequencies import TermCategoryFrequencies
 from scattertext.features.FeatsFromTopicModel import FeatsFromTopicModel
 from scattertext.termscoring.BM25Difference import BM25Difference
-from scattertext import SampleCorpora, SampleLexicons, smoothing
 from scattertext import Scalers, ScatterChart
 from scattertext import termranking
 from scattertext.AsianNLP import chinese_nlp, japanese_nlp
@@ -90,6 +90,7 @@ from scattertext.termsignificance.LogOddsRatioInformativeDirichletPiror \
     import LogOddsRatioInformativeDirichletPrior
 from scattertext.termsignificance.LogOddsRatioUninformativeDirichletPrior \
     import LogOddsRatioUninformativeDirichletPrior
+from scattertext.termscoring.frequency import FrequencyScorer
 from scattertext.termsignificance.ScaledFScoreSignificance import ScaledFScoreSignificance
 from scattertext.termsignificance.TermSignificance import TermSignificance
 from scattertext.viz import VizDataAdapter, ScatterplotStructure, PairPlotFromScatterplotStructure
@@ -118,18 +119,18 @@ from scattertext.features.FeatsFromScoredLexicon import FeatsFromScoredLexicon
 from scattertext.features.SpacyEntities import SpacyEntities
 from scattertext.diachronic.TimeStructure import TimeStructure
 from scattertext.features.PyatePhrases import PyatePhrases
-from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence
+from scattertext.termscoring.DeltaJSDivergence import DeltaJSDivergence, DeltaJSDivergenceScorer
 from scattertext.CorpusFromTermFrequencies import CorpusFromTermFrequencies
 from scattertext.helpers.MakeUnique import make_unique
 from scattertext.viz.TermInfo import get_tooltip_js_function, get_custom_term_info_js_function
 from scattertext.CorpusWithoutCategoriesFromParsedDocuments import CorpusWithoutCategoriesFromParsedDocuments
 from scattertext.OffsetCorpus import OffsetCorpus
 from scattertext.OffsetCorpusFactory import OffsetCorpusFactory
-from scattertext.dispersion.Dispersion import Dispersion
+from scattertext.dispersion.Dispersion import Dispersion, get_category_dispersion
 from scattertext.features import featoffsets
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
 from scattertext.features.featoffsets.token_and_feat_offset_getter import TokenFeatAndOffsetGetter
-from scattertext.tokenizers.roberta import RobertaTokenizerWrapper
+from scattertext.tokenizers.transformers import RobertaTokenizerWrapper, BERTTokenizerWrapper
 from scattertext.continuous.sklearnpipeline import RidgeCoefficients
 from scattertext.continuous.ungar import UngarCoefficients
 from scattertext.features.RegexFeatAndOffsetGetter import RegexFeatAndOffsetGetter
@@ -139,7 +140,7 @@ from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAnd
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
 from scattertext.termscoring.LogOddsRatio import LogOddsRatio
 from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
-from scattertext.categorygrouping.CharacteristicGrouper import CharacteristicGrouper
+from scattertext.categorygrouping.characteristic_grouper import CharacteristicGrouper
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
 from scattertext.viz.PyPlotFromScattertextStructure import pyplot_from_scattertext_structure
 from scattertext.termscoring.BNSScorer import BNSScorer
@@ -147,13 +148,21 @@ from scattertext.features.featoffsets.flexible_ngram_features \
     import PosStopgramFeatures, FlexibleNGramFeatures, FlexibleNGrams
 from scattertext.continuous.correlations import Correlations
 from scattertext.segmenters.token_sequence_segmenter import TokenSequenceSegmenter
-from scattertext.termscoring.craigs_zeta import CraigsZeta
+from scattertext.segmenters.sentence_sequence_segmenter import SentenceSequenceSegmenter
+from scattertext.termscoring.craigs_zeta import CraigsZeta, LogZeta
 from scattertext.termscoring.loglikelihoodratio import LogLikelihoodRatio
 from scattertext.termscoring.rank_sum import RankSum
 from scattertext.termcompaction.npmi_compactor import NPMICompactor
 from scattertext.all_category_scorers.all_category_term_scorer import AllCategoryTermScorer
 from scattertext.all_category_scorers.gmean_l2_freq_associator import AllCategoryScorerGMeanL2
 from scattertext.all_category_scorers.all_category_scorer import AllCategoryScorer
+from scattertext.categorygrouping.rank_embedder import RankEmbedder
+from scattertext.termcompaction.ngram_percentage_compactor import NgramPercentageCompactor
+from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
+from scattertext.termranking.TermRanker import TermRanker
+from scattertext.continuous.trend_plot import TrendPlotSettings, DispersionPlotSettings, CorrelationPlotSettings, \
+    TimePlotSettings, TimePlotPositioner
+from scattertext import SampleCorpora
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -284,8 +293,10 @@ def produce_scattertext_explorer(corpus,
                                  use_offsets=False,
                                  get_column_header_html=None,
                                  show_term_etc=True,
+                                 sort_contexts_by_meta=False,
+                                 show_chart=False,
                                  return_data=False,
-                                 return_scatterplot_structure=False, ):
+                                 return_scatterplot_structure=False):
     '''Returns html code of visualization.
 
     Parameters
@@ -559,6 +570,10 @@ def produce_scattertext_explorer(corpus,
         Shows list of etc values after clicking term
     use_offsets : bool, default False
         Enable the use of metadata offsets
+    sort_contexts_by_meta : bool, default False
+        Sort context by meta instead of match strength
+    show_chart : bool, default False
+        Show line chart if unified context is true
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
         an html.
@@ -774,7 +789,9 @@ def produce_scattertext_explorer(corpus,
         top_terms_left_buffer=top_terms_left_buffer,
         get_column_header_html=get_column_header_html,
         term_word=term_word_in_term_description,
-        show_term_etc=show_term_etc
+        show_term_etc=show_term_etc,
+        sort_contexts_by_meta=sort_contexts_by_meta,
+        show_chart=show_chart
     )
 
     if return_scatterplot_structure:
@@ -801,8 +818,8 @@ def get_term_scorer_scores(category, corpus, neutral_categories, not_categories,
             term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
         else:
             term_scorer = term_scorer.set_categories(category, not_categories)
-    scores = term_scorer.get_scores(cat_freqs, not_cat_freqs)
-    return scores
+        return term_scorer.get_scores()
+    return term_scorer.get_scores(cat_freqs, not_cat_freqs)
 
 
 def produce_scattertext_html(term_doc_matrix,
@@ -1969,8 +1986,8 @@ def produce_scattertext_digraph(
 
 
 def dataframe_scattertext(
-        corpus,
-        plot_df,
+        corpus: Corpus,
+        plot_df: pd.DataFrame,
         **kwargs
 ):
     assert 'X' in plot_df
@@ -1980,11 +1997,17 @@ def dataframe_scattertext(
     if 'Ypos' not in plot_df:
         plot_df['Ypos'] = Scalers.scale(plot_df['Y'])
 
+    plot_df = plot_df.reindex(
+        corpus.get_terms(
+            use_metadata=kwargs.get('use_non_text_features', False)
+        )
+    )
+
     assert len(plot_df) > 0
 
     if 'term_description_columns' not in kwargs:
         kwargs['term_description_columns'] = [x for x in plot_df.columns if x not in
-                                              ['X', 'Y', 'Xpos', 'Ypos']]
+                                              ['X', 'Y', 'Xpos', 'Ypos', 'ColorScore']]
 
     if 'tooltip_columns' not in kwargs:
         kwargs['tooltip_columns'] = ['Xpos', 'Ypos']
@@ -2029,34 +2052,38 @@ class TableStructure(GraphStructure):
 
 
 def produce_scattertext_table(
-        corpus,
-        num_rows=10,
-        use_non_text_features=False,
-        plot_width=500,
-        plot_height=700,
-        category_order=None,
-        d3_url_struct=D3URLs(),
-        all_category_scorer: Optional[AllCategoryScorer] = None,
+        corpus: TermDocMatrix,
+        num_rows: int = 10,
+        non_text: bool = False,
+        plot_width=800,
+        plot_height=600,
+        category_order: Optional[List] = None,
+        heading_categories: Optional[List] = None,
+        heading_category_order: Optional[List] = None,
+        d3_url_struct: Optional[D3URLs] = None,
+        all_category_scorer: Optional[Union[AllCategoryScorer, Callable]] = None,
+        trend_plot_settings: Optional[TrendPlotSettings] = None,
+        show_chart: bool = True,
+        show_category_headings: bool = False,
         **kwargs
 ):
     '''
+    Parameters
+    -----
 
-    :param df: pd.DataFrame
-    :param text_col: str
-    :param source_col: str
-    :param dest_col: str
-    :param source_name: str
-    :param dest_name: str
-    :param plot_width: int
-    :param plot_height: int
-    :param enable_pan_and_zoom: bool
-    :param engine: str, The graphviz engine (e.g., dot or neat)
-    :param graph_params dict or None, graph parameters in graph viz
-    :param node_params dict or None, node parameters in graph viz
-    :param category_order list or None, names of categories to show in order
-    :param all_category_scorer AllCategoryScorer (for computing table ranks)
-    :param kwargs: dict
-    :return: str
+    corpus: TermDocMatrix
+    num_rows: int, Num rows in table, default 10
+    non_text: bool, Use non-text features in table, default False
+    plot_width: int, Scatterplot width in pixels, default 800
+    plot_height: int, Scatterplot height in pixels, default 600
+    category_order: Optional[List], list of categories in chronological order, default to sorted list of cats
+    heading_categories: Optional[List], list of new, compacted categories per document
+    heading_category_order: Optional[List], order of new, cmpacted categories
+    d3_url_struct: Optional[D3URLs]
+    all_category_scorer: Optional[Union[AllCategoryScorer, Callable]] = None
+    trend_plot_settings: Optional[TrendPlotSettings] = None, default dispersion
+    show_chart: bool = True, default, show line chart of ordered categories
+    show_category_headings: bool = False, show list of category headings
     '''
 
     alternative_term_func = '''(function(termDict) {
@@ -2066,59 +2093,47 @@ def produce_scattertext_table(
        return true;
     })'''
 
+    if 'use_non_text_features' in kwargs:
+        non_text = kwargs['use_non_text_features']
+
+    heading_corpus = corpus
+    if heading_categories is not None:
+        assert len(heading_categories) == corpus.get_num_docs()
+        heading_corpus = heading_corpus.recategorize(heading_categories)
+    else:
+        heading_categories = corpus.get_category_names_by_row()
+
+    if heading_category_order is not None:
+        assert set(heading_categories) == set(heading_category_order)
+        assert len(heading_category_order) == len(set(heading_categories))
+    else:
+        heading_category_order = list(sorted(set(heading_categories)))
+
     table_maker = CategoryTableMaker(
-        corpus=corpus,
+        corpus=heading_corpus,
         num_rows=num_rows,
-        use_metadata=use_non_text_features,
-        category_order=category_order,
-        all_category_scorer=all_category_scorer
-    )
-    dispersion = Dispersion(
-        corpus, use_categories=True, use_metadata=use_non_text_features
+        non_text=non_text,
+        category_order=heading_category_order,
+        all_category_scorer_factory=all_category_scorer
     )
 
-    adjusted_dispersion = dispersion.get_adjusted_metric(
-        dispersion.da(),
-        dispersion.get_frequency()
-    )
+    if trend_plot_settings is None:
+        trend_plot_settings = DispersionPlotSettings(
+            metric='DA'
+        )
+        trend_plot_settings.set_category_order(category_order=category_order)
 
-    plot_df = pd.DataFrame().assign(
-        X=dispersion.get_frequency(),
-        Frequency=lambda df: df.X,
-        Xpos=lambda df: Scalers.dense_rank(df.X),
-        Y=lambda df: adjusted_dispersion,
-        AdjustedDA=lambda df: df.Y,
-        Ypos=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
-        ColorScore=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
-        term=dispersion.get_names()
-    ).set_index('term')
 
-    line_df = pd.DataFrame({
-        'x': plot_df.Xpos.values,
-        'y': 0.5,
-    }).sort_values(by='x')
-    kwargs.setdefault('top_terms_left_buffer', 10)
-    scatterplot_structure = dataframe_scattertext(
-        corpus,
-        plot_df=plot_df,
-        ignore_categories=False,
-        unified_context=kwargs.get('unified_context', True),
-        x_label='Frequency Rank',
-        y_label='Frequency-adjusted DA',
-        y_axis_labels=['More Concentrated', 'Medium', 'More Dispersion'],
-        color_score_column='ColorScore',
-        tooltip_columns=['Frequency', 'AdjustedDA'],
-        header_names={'upper': 'Dispersed', 'lower': 'Concentrated'},
-        left_list_column='AdjustedDA',
-        line_coordinates=line_df.to_dict('records'),
-        use_non_text_features=use_non_text_features,
-        return_scatterplot_structure=True,
-        width_in_pixels=plot_width,
-        height_in_pixels=plot_height,
-        d3_url=d3_url_struct.get_d3_url(),
-        d3_scale_chromatic_url=d3_url_struct.get_d3_scale_chromatic_url(),
-        # alternative_term_func=alternative_term_func,
-        **kwargs
+    scatterplot_structure = get_trend_scatterplot_structure(
+        corpus=corpus,
+        trend_plot_settings=trend_plot_settings,
+        d3_url_struct=d3_url_struct,
+        non_text=non_text,
+        plot_width=plot_width,
+        plot_height=plot_height,
+        show_chart=show_chart,
+        show_category_headings=show_category_headings,
+        kwargs=kwargs,
     )
 
     html = TableStructure(
@@ -2128,6 +2143,141 @@ def produce_scattertext_table(
     ).to_html()
 
     return html
+
+
+def get_trend_scatterplot_structure(
+        corpus: TermDocMatrix,
+        trend_plot_settings: TrendPlotSettings,
+        d3_url_struct: Optional[D3URLs] = None,
+        non_text: bool = False,
+        plot_height: int = 500,
+        plot_width: int = 600,
+        show_chart: bool = True,
+        show_category_headings: bool = False,
+        kwargs: Optional[Dict] = None,
+):
+    if kwargs is None:
+        kwargs = {}
+    add_to_plot_df = {}
+    line_df = None
+    if isinstance(trend_plot_settings, DispersionPlotSettings):
+        dispersion = Dispersion(
+            corpus,
+            use_categories=True,
+            non_text=non_text,
+            regressor=trend_plot_settings.regressor,
+            term_ranker=trend_plot_settings.term_ranker
+        )
+        dispersion_metric = trend_plot_settings.metric
+        terms = dispersion.get_names()
+        if trend_plot_settings.use_residual:
+            dispersion_df = dispersion.get_adjusted_metric_df(metric=dispersion_metric)
+            Y = dispersion_df['Residual']
+            YPos = trend_plot_settings.dispersion_scaler(Y)
+            line_y = 0.5
+        else:
+            dispersion_df = dispersion.get_adjusted_metric_df(metric=dispersion_metric)
+            Y = dispersion_df['Metric']
+            all_scale = trend_plot_settings.dispersion_scaler(
+                np.concatenate([dispersion_df['Metric'].values,
+                                dispersion_df['Estimate'].values]))
+            YPos = all_scale[:len(dispersion_df)]
+            line_y = all_scale[len(dispersion_df):]
+            #import pdb; pdb.set_trace()
+
+        x_axis = trend_plot_settings.get_x_axis(corpus=corpus, non_text=non_text)
+        XPos = x_axis.scaled
+        X = x_axis.orig
+        line_df = pd.DataFrame({
+            'x': x_axis.scaled,
+            'y': line_y,
+        }).sort_values(by='x')
+
+    elif isinstance(trend_plot_settings, CorrelationPlotSettings):
+        correlations = Correlations(
+            use_non_text=non_text
+        ).set_correlation_type(
+            correlation_type=trend_plot_settings.correlation_type
+        )
+        correlation_df = correlations.get_correlation_df(
+            corpus=corpus,
+            document_scores=trend_plot_settings.get_category_ranks(corpus=corpus)
+        )
+        x_axis = trend_plot_settings.get_x_axis(corpus=corpus, non_text=non_text)
+        XPos = x_axis.scaled
+        X = x_axis.orig
+        line_df = pd.DataFrame({
+            'x': x_axis.scaled,
+            'y': 0.5,
+        }).sort_values(by='x')
+        Y = correlation_df[Correlations.get_notation_name(
+            correlation_type=trend_plot_settings.correlation_type
+        )]
+        YPos = Scalers.scale_neg_1_to_1_with_zero_mean_abs_max(Y)
+        terms = list(correlation_df.index)
+    elif isinstance(trend_plot_settings, TimePlotSettings):
+        position_df = TimePlotPositioner(
+            corpus=corpus,
+            category_order=trend_plot_settings.category_order,
+            non_text=non_text,
+            dispersion_metric=trend_plot_settings.y_axis_metric,
+            use_residual=trend_plot_settings.use_residual
+        ).get_position_df()
+
+        X = position_df.Mean
+        XPos = X / corpus.get_num_categories()
+
+        terms = list(position_df.index)
+        add_to_plot_df = position_df
+
+        Y = position_df.Dispersion
+        YPos = trend_plot_settings.dispersion_scaler(Y)
+
+    else:
+        raise Exception("Invalid trend_plot_settings type: " + str(type(trend_plot_settings)))
+
+    plot_params = trend_plot_settings.get_plot_params()
+
+    plot_df = pd.DataFrame().assign(
+        X=X,
+        Frequency=lambda df: df.X,
+        Xpos=XPos,
+        Y=lambda df: Y,
+        Ypos=lambda df: YPos,
+        # ColorScore=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
+        term=terms
+    ).set_index('term')
+    for k, v in add_to_plot_df.items():
+        plot_df[k] = v
+    kwargs.setdefault('top_terms_left_buffer', 10)
+    kwargs.setdefault('ignore_categories', False)
+    kwargs.setdefault('unified_context', True)
+    if d3_url_struct is None:
+        d3_url_struct = D3URLs()
+    scatterplot_structure = dataframe_scattertext(
+        corpus,
+        plot_df=plot_df,
+        x_label=plot_params.x_label,
+        y_label=plot_params.y_label,
+        y_axis_labels=plot_params.y_axis_labels,
+        x_axis_labels=plot_params.x_axis_labels,
+        # color_score_column='ColorScore',
+        tooltip_columns=plot_params.tooltip_columns,
+        tooltip_column_names=plot_params.tooltip_column_names,
+        header_names=plot_params.header_names,
+        left_list_column=plot_params.left_list_column,
+        line_coordinates=line_df.to_dict('records') if line_df is not None else None,
+        use_non_text_features=non_text,
+        return_scatterplot_structure=True,
+        width_in_pixels=plot_width,
+        height_in_pixels=plot_height,
+        d3_url=d3_url_struct.get_d3_url(),
+        d3_scale_chromatic_url=d3_url_struct.get_d3_scale_chromatic_url(),
+        show_chart=show_chart,
+        show_category_headings=show_category_headings,
+        **kwargs
+    )
+    return scatterplot_structure
 
 
 def produce_scattertext_pyplot(

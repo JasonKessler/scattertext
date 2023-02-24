@@ -3,12 +3,14 @@ import pandas as pd
 
 
 class Lowess(object):
-    def __init__(self):
+    def __init__(self, frac=2.0/3.0, it=10):
         self.points = None
+        self.frac = frac
+        self.it = it
 
     def fit(self, xdata, ydata):
         import statsmodels.api as sm
-        self.model = sm.nonparametric.lowess(ydata, xdata)  # , frac=1./3)
+        self.model = sm.nonparametric.lowess(ydata, xdata.T[0], frac=self.frac, it=self.it)
         return self
 
     def predict(self, x):
@@ -16,7 +18,7 @@ class Lowess(object):
 
     def fit_predict(self, xdata, ydata):
         df = pd.DataFrame({
-            'X': np.array(xdata),
+            'X': np.array(xdata.T[0]),
             'Y': np.array(ydata)
         }).sort_values(by='X')
 

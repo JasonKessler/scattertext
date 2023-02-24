@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 
 import pandas as pd
 import numpy as np
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scipy.stats import rankdata
 
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
@@ -29,18 +30,39 @@ class TermCategoryRanker(object):
         tdf, tdf_sum = self.__get_term_ranks_and_frequencies(term_doc_matrix)
         score_data = {}
         categories = term_doc_matrix.get_categories()
+        my_scorer = self._initialize_scorer(term_doc_matrix)
+
         if self.target_category is not None:
             assert self.target_category in categories
-            focus = tdf[self.target_category].values
-            background = tdf_sum.values - focus
-            score_data[self.target_category] = self.scorer().get_scores(focus, background)
-            score_data['Not ' + self.target_category] = self.scorer().get_scores(background, focus)
+            if issubclass(self.scorer, CorpusBasedTermScorer):
+                score_data[str(self.target_category)] = my_scorer.set_categories(
+                    category_name=self.target_category
+                ).get_scores()
+                score_data['Not ' + str(self.target_category)] = -1 * score_data[str(self.target_category)]
+            else:
+                focus = tdf[str(self.target_category)].values
+                background = tdf_sum.values - focus
+                score_data[str(self.target_category)] = my_scorer.get_scores(focus, background)
+                score_data['Not ' + str(self.target_category)] = my_scorer.get_scores(background, focus)
         else:
             for category in categories:
-                focus = tdf[str(category)].values
-                background = tdf_sum.values - focus
-                score_data[str(category)] = self.scorer().get_scores(focus, background)
+                if issubclass(self.scorer, CorpusBasedTermScorer):
+                    score_data[str(category)] = my_scorer.set_categories(
+                        category_name=category
+                    ).get_scores()
+                else:
+                    focus = tdf[str(category)].values
+                    background = tdf_sum.values - focus
+                    score_data[str(category)] = my_scorer.get_scores(focus, background)
         return pd.DataFrame(score_data, index=tdf.index).apply(lambda x: rankdata(x, 'dense'))
+
+    def _initialize_scorer(self, term_doc_matrix):
+        if issubclass(self.scorer, CorpusBasedTermScorer):
+            my_scorer = self.scorer(term_doc_matrix)
+            if self.use_non_text_features:
+                return my_scorer.use_metadata()
+            return my_scorer
+        return self.scorer()
 
     def __get_term_ranks_and_frequencies(self, term_doc_matrix) -> Tuple[pd.DataFrame, pd.Series]:
         ranker = self.term_ranker(term_doc_matrix)
@@ -99,6 +121,7 @@ class JSDCompactor(BaseAssociationCompactor):
         )
 
     def compact(self, term_doc_matrix, verbose=False):
+
         rank_df = self.scorer.get_rank_df(term_doc_matrix)
         p_df = rank_df / rank_df.sum(axis=0) + 0.001
         m = p_df.sum(axis=1)
@@ -134,6 +157,7 @@ class AssociationCompactor(BaseAssociationCompactor):
         -------
         New term doc matrix
         '''
+
         rank_df = self.scorer.get_rank_df(term_doc_matrix)
         optimal_rank = self._find_optimal_rank(rank_df)
 
@@ -149,9 +173,10 @@ class AssociationCompactor(BaseAssociationCompactor):
         compacted_term_doc_matrix = self._remove_terms(term_doc_matrix, terms_to_remove)
 
         if verbose:
-            print('max terms', self.max_terms,
-                  'optimal_rank', optimal_rank,
-                  'num_terms', compacted_term_doc_matrix.get_num_terms())
+            #print('max terms', self.max_terms,
+            #      'optimal_rank', optimal_rank,
+            #      'num_terms', compacted_term_doc_matrix.get_num_terms())
+            pass
         return compacted_term_doc_matrix
 
     def _get_num_terms_at_rank(self, rank_i, rank_df):
