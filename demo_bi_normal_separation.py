@@ -21,7 +21,7 @@ html = st.produce_frequency_explorer(
     metadata=lambda c: c.get_df()['speaker'],
     minimum_term_frequency=0,
     grey_threshold=0,
-    y_label=f'BNS (alpha={term_scorer.alpha})'
+    y_label=f'BNS (alpha={term_scorer.prior_counts})'
 )
 open('bi_normal_separation.html', 'w').write(html)
 print('./open bi_normal_separation.html')

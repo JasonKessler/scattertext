@@ -208,8 +208,12 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         '''
         freq_mat = np.zeros(shape=(self.get_num_metadata(), self.get_num_categories()),
                             dtype=self.get_metadata_doc_mat().dtype)
+        mX = self._mX
+        if any(np.isnan(mX.data)):
+            mX = mX.copy()
+            mX.data = np.nan_to_num(mX.data, copy=False)
         for cat_i in range(self.get_num_categories()):
-            freq_mat[:, cat_i] = self._mX[self._y == cat_i, :].sum(axis=0)
+            freq_mat[:, cat_i] = mX[self._y == cat_i, :].sum(axis=0)
         return pd.DataFrame(freq_mat,
                             index=pd.Series(self.get_metadata(), name='term'),
                             columns=[str(c) + label_append for c in self.get_categories()])

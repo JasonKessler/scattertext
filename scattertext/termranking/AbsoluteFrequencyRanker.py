@@ -13,7 +13,7 @@ class AbsoluteFrequencyRanker(TermRanker):
 
 		'''
 		if self._use_non_text_features:
-			return self._term_doc_matrix.get_metadata_freq_df(label_append=label_append)
+			return self._corpus.get_metadata_freq_df(label_append=label_append)
 		else:
-			return self._term_doc_matrix.get_term_freq_df(label_append=label_append)
+			return self._corpus.get_term_freq_df(label_append=label_append)
 

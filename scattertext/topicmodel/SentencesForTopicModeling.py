@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
@@ -47,6 +48,10 @@ class SentencesForTopicModeling(object):
 	def get_sentence_word_mat(self):
 		return self.sentX.astype(np.double).tocoo()
 
+	def get_topic_weights_df(self, pipe=None) -> pd.DataFrame:
+		pipe = self._fit_model(pipe)
+		return pd.DataFrame(pipe._final_estimator.components_.T, index=self.corpus.get_terms())
+
 	def get_topics_from_model(
 			self,
 			pipe=None,
@@ -66,10 +71,7 @@ class SentencesForTopicModeling(object):
 		-------
 		dict: {term: [term1, ...], ...}
 		'''
-		if pipe is None:
-			pipe = Pipeline([('tfidf', TfidfTransformer(sublinear_tf=True)),
-						   ('nmf', (NMF(n_components=30, l1_ratio=.5, random_state=0)))])
-		pipe.fit_transform(self.sentX)
+		pipe = self._fit_model(pipe)
 		topic_model = {}
 		for topic_idx, topic in enumerate(pipe._final_estimator.components_):
 			term_list = [self.termidxstore.getval(i)
@@ -81,6 +83,13 @@ class SentencesForTopicModeling(object):
 			else:
 				Warning("Topic %s has no terms with scores > 0. Omitting." % (topic_idx))
 		return topic_model
+
+	def _fit_model(self, pipe):
+		if pipe is None:
+			pipe = Pipeline([('tfidf', TfidfTransformer(sublinear_tf=True)),
+							 ('nmf', (NMF(n_components=30, l1_ratio=.5, random_state=0)))])
+		pipe.fit_transform(self.sentX)
+		return pipe
 
 	def get_topics_from_terms(self,
 	                          terms=None,

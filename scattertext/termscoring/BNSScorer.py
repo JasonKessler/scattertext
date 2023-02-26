@@ -4,7 +4,8 @@ from scipy.stats import norm
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
-BNS_ALPHA_DEFAULT = None # 0.0005
+BNS_ALPHA_DEFAULT = None  # 0.0005
+
 
 # Reference: George Forman. 2008. BNS feature scaling: an improved representation over tf-idf for
 # svm text classification. In Proceedings of the 17th ACM conference on Information and
@@ -24,7 +25,8 @@ class BNSScorer(CorpusBasedTermScorer):
         y = self.corpus_.get_category_ids()
         for cat_i, cat in enumerate(self.corpus_.get_categories()):
             n_cat_is = [x for x in range(len(self.corpus_.get_categories())) if x != cat_i]
-            tp, fp, pos, neg, tpr, fpr, invn_tpr, invn_fpr = self._get_bns_score_for_category_index(cat_i, n_cat_is, X, y)
+            tp, fp, pos, neg, tpr, fpr, invn_tpr, invn_fpr = self._get_bns_score_for_category_index(
+                cat_i, n_cat_is, X, y)
             data[cat + ' BNS'] = invn_tpr - invn_fpr
             data[cat + ' TP'] = tp
             data[cat + ' FP'] = fp
@@ -43,8 +45,8 @@ class BNSScorer(CorpusBasedTermScorer):
         fp = X[not_cat_mask].sum(axis=0).A1
         pos = np.sum(cat_mask)
         neg = np.sum(not_cat_mask)
-        tpr = tp/pos
-        fpr = fp/neg
+        tpr = tp / pos
+        fpr = fp / neg
         invn_tpr = self._invnorm(tpr)
         invn_fpr = self._invnorm(fpr)
         return tp, fp, pos, neg, tpr, fpr, invn_tpr, invn_fpr

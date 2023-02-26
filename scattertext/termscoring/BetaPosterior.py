@@ -65,8 +65,10 @@ class BetaPosterior(CorpusBasedTermScorer):
         catN = cat_freq_df['cat'].sum()
         ncatN = cat_freq_df['ncat'].sum()
 
-        cat_freq_df['cat_pct'] = cat_freq_df['cat'] * 1. / catN
-        cat_freq_df['ncat_pct'] = cat_freq_df['ncat'] * 1. / ncatN
+        cat_freq_df = cat_freq_df.assign(
+            cat_pct=lambda df: df['cat'] * 1. / catN,
+            ncat_pct=lambda df: df['ncat'] * 1. / ncatN
+        )
 
         def row_beta_posterior(row):
             return pd.Series({
@@ -75,11 +77,13 @@ class BetaPosterior(CorpusBasedTermScorer):
             })
 
         p_val_df = cat_freq_df.apply(row_beta_posterior, axis=1)
+        cat_freq_df = cat_freq_df.assign(
+            cat_p=p_val_df['cat_p'],
+            ncat_p=p_val_df['ncat_p'],
+            cat_z=norm.ppf(p_val_df['cat_p']),
+            ncat_z=norm.ppf(p_val_df['ncat_p']),
 
-        cat_freq_df['cat_p'] = p_val_df['cat_p']
-        cat_freq_df['ncat_p'] = p_val_df['ncat_p']
-        cat_freq_df['cat_z'] = norm.ppf(p_val_df['cat_p'])
-        cat_freq_df['ncat_z'] = norm.ppf(p_val_df['ncat_p'])
+        )
         cat_freq_df['score'] = None
         cat_freq_df['score'][cat_freq_df['cat_pct'] == cat_freq_df['ncat_pct']] = 0
         cat_freq_df['score'][cat_freq_df['cat_pct'] < cat_freq_df['ncat_pct']] = cat_freq_df['ncat_z']

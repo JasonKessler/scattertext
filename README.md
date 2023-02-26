@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.14
+# Scattertext 0.1.15
 
 A tool for finding distinguishing terms in corpora and displaying them in an 
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -990,7 +990,7 @@ html = st.produce_frequency_explorer(
     metadata=lambda c: c.get_df()['speaker'],
     minimum_term_frequency=0,
     grey_threshold=0,
-    y_label=f'Bi-normal Separation (alpha={term_scorer.alpha})'
+    y_label=f'Bi-normal Separation (alpha={term_scorer.prior_counts})'
 )
 ```
 

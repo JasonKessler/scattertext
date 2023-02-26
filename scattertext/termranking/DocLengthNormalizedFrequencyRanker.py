@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
 
 from scattertext.termranking.TermRanker import TermRanker
@@ -9,19 +10,16 @@ class DocLengthNormalizedFrequencyRanker(TermRanker):
 	This means that each term has a document-specific weight of  #(t,d)/|d|.
 	'''
 
-	def get_ranks(self,label_append=' freq'):
-		row = self._get_row_category_ids()
-		X = self.get_X()
-		return self.get_ranks_from_mat(X, row, label_append)
-
-	def get_ranks_from_mat(self, X, row, label_append=' freq'):
+	def get_ranks(self,label_append: str=' freq') -> pd.DataFrame:
+		X = self.get_term_doc_mat()
+		y = self._corpus.get_category_ids()
 		doc_lengths = X.sum(axis=1)
-		normX = self._get_normalized_X(X, doc_lengths)
-		categoryX = csr_matrix((normX.data, (row, normX.indices)))
-		return self._get_freq_df(categoryX, label_append=label_append)
-
-	def _get_normalized_X(self, X, doc_lengths):
-		return csr_matrix(doc_lengths.mean() * X.astype(np.float32) / doc_lengths)
+		norm_x = np.nan_to_num(X / doc_lengths, 0)
+		data = {}
+		for i in set(y):
+			cat = self._corpus.get_category_index_store().getval(i)
+			data[cat + label_append] = norm_x[y == i, :].sum(axis=0).A1
+		return pd.DataFrame(data, index=self._corpus.get_terms(use_metadata=self._use_non_text_features))
 
 
 """

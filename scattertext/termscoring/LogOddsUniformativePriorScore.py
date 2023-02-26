@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
 from scattertext.termsignificance import LogOddsRatioUninformativeDirichletPrior
 

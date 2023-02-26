@@ -5,6 +5,7 @@ import pandas as pd
 from scipy import stats
 from scipy.sparse import vstack
 
+from scattertext.util import inherits_from
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termranking.TermRanker import TermRanker
 
@@ -52,11 +53,14 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return self
 
     def set_term_ranker(self, term_ranker) -> 'CorpusBasedTermScorer':
-        assert issubclass(term_ranker, TermRanker)
+        assert inherits_from(term_ranker, 'TermRanker')
         self.term_ranker_ = term_ranker(self.corpus_)
         if self.use_metadata_:
             self.term_ranker_.use_non_text_features()
         return self
+
+    def get_term_ranker(self) -> TermRanker:
+        return self.term_ranker_
 
     def is_category_name_set(self):
         return self.category_name_is_set_
@@ -93,7 +97,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return self
 
     def _get_X(self):
-        return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.term_ranker_.get_X()
+        return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.term_ranker_.get_term_doc_mat()
 
     def get_t_statistics(self):
         '''
@@ -163,3 +167,13 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_name(self):
         pass
+
+
+    def get_score_df(self, label_append=''):
+        return self.get_term_ranker().get_ranks().assign(
+            Metric=self.get_scores()
+        ).sort_values(
+            by='Metric', ascending=True
+        ).rename(columns={
+            'Metric': self.get_name()
+        })

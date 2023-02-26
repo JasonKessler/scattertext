@@ -4,8 +4,7 @@ from scattertext.termranking import OncePerDocFrequencyRanker
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
-
-class CraigsZeta(CorpusBasedTermScorer):
+class CraigsZetaScorer(CorpusBasedTermScorer):
     """
     Zeta function from:
 
@@ -15,7 +14,7 @@ class CraigsZeta(CorpusBasedTermScorer):
     The score assumes that each document ("segment" in this literature) is approximately of equal size.
     Rizvi reports segment sizes being 900-6,000 words.
 
-    Z_t = (# segments with type t labeled in the target category)/(# segments in target category) -
+    Z_t = (# segments with type t labeled in the target category)/(# segments in target category) +
      (# segments with type t labeled not in the target category)/(# segments not in target category)
 
     """
@@ -44,7 +43,7 @@ class CraigsZeta(CorpusBasedTermScorer):
         In this case, args aren't used, since this information is taken
         directly from the corpus categories.
 
-        Returns
+        Returnss
         -------
         np.array, scores
         '''
@@ -59,21 +58,10 @@ class CraigsZeta(CorpusBasedTermScorer):
         }).set_index('Term')
 
     def _get_zeta_score(self, cat_X, ncat_X):
-        return (self._smoothed_proportion(cat_X) - self._smoothed_proportion(ncat_X)).A1
-
-    def _smoothed_proportion(self, counts):
-        return (counts.sum(axis=0) + self.constant) / (counts.shape[0] + self.constant)
+        in_target_cat = cat_X.sum(axis=0)/cat_X.shape[1]
+        not_in_non_target_cat = (ncat_X.shape[1] - ncat_X.sum(axis=0))/ncat_X.shape[1]
+        return (in_target_cat + not_in_non_target_cat).A1
 
     def get_name(self):
-        return 'Craigs Zeta'
+        return "Craig's Zeta"
 
-
-class LogZeta(CraigsZeta):
-    def _set_scorer_args(self, **kwargs):
-        CraigsZeta._set_scorer_args(self, **kwargs)
-        self.log_base_ = kwargs.get('log_base', 2)
-
-    def _get_zeta_score(self, cat_X, ncat_X):
-        log_base = np.log(self.log_base_)
-        return (np.log(self._smoothed_proportion(cat_X)) / log_base
-                - np.log(self._smoothed_proportion(ncat_X)) / log_base).A1

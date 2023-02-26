@@ -1,10 +1,11 @@
-version = [0, 1, 14]
+version = [0, 1, 15]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
 import numpy as np
 import pandas as pd
 import warnings
+from abc import ABCMeta
 
 from typing import Optional, Union, Callable, List, Dict
 from scattertext.features.UseFullDocAsFeature import UseFullDocAsFeature
@@ -138,7 +139,8 @@ from scattertext.representations.LatentSemanticScaling import latent_semantic_sc
 from scattertext.categorytable.category_table_maker import CategoryTableMaker
 from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
-from scattertext.termscoring.LogOddsRatio import LogOddsRatio
+from scattertext.termscoring.LogOddsRatio import LogOddsRatio, LogOddsRatioScorer
+
 from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
 from scattertext.categorygrouping.characteristic_grouper import CharacteristicGrouper
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
@@ -149,7 +151,7 @@ from scattertext.features.featoffsets.flexible_ngram_features \
 from scattertext.continuous.correlations import Correlations
 from scattertext.segmenters.token_sequence_segmenter import TokenSequenceSegmenter
 from scattertext.segmenters.sentence_sequence_segmenter import SentenceSequenceSegmenter
-from scattertext.termscoring.craigs_zeta import CraigsZeta, LogZeta
+from scattertext.termscoring.craigs_zeta import CraigsZetaScorer
 from scattertext.termscoring.loglikelihoodratio import LogLikelihoodRatio
 from scattertext.termscoring.rank_sum import RankSum
 from scattertext.termcompaction.npmi_compactor import NPMICompactor
@@ -163,7 +165,11 @@ from scattertext.termranking.TermRanker import TermRanker
 from scattertext.continuous.trend_plot import TrendPlotSettings, DispersionPlotSettings, CorrelationPlotSettings, \
     TimePlotSettings, TimePlotPositioner
 from scattertext import SampleCorpora
-
+from scattertext import termscoring
+from scattertext import smoothing
+from scattertext.termscoring.LogOddsRatio import \
+    LogOddsRatioUninformativePriorScorer, LogOddsRatioInformativePriorScorer
+from scattertext.util import inherits_from
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
 
@@ -232,6 +238,7 @@ def produce_scattertext_explorer(corpus,
                                  y_axis_values_format=None,
                                  color_func=None,
                                  term_scorer=None,
+                                 term_scorer_kwargs=None,
                                  show_axes=True,
                                  show_axes_and_cross_hairs=False,
                                  show_diagonal=False,
@@ -320,7 +327,7 @@ def produce_scattertext_explorer(corpus,
         Minimum number of times word needs to appear to make it into visualization.
     minimum_not_category_term_frequency : int, optional
       If an n-gram does not occur in the category, minimum times it
-       must been seen to be included. Default is 0.
+       must be seen to be included. Default is 0.
     max_terms : int, optional
         Maximum number of terms to include in visualization.
     filter_unigrams : bool, optional
@@ -447,6 +454,8 @@ def produce_scattertext_explorer(corpus,
         In lieu of scores, object with a get_scores(a,b) function that returns a set of scores,
         where a and b are term counts.  Scorer optionally has a get_term_freqs function. Also could be a
         CorpusBasedTermScorer instance.
+    term_scorer_kwargs : Optional[Dict], default None
+        Arguments to be placed in the term_scorer constructor after the corpus
     show_axes : bool, default True
         Show the ticked axes on the plot.  If false, show inner axes as a crosshair.
     show_axes_and_cross_hairs : bool, default False
@@ -598,6 +607,9 @@ def produce_scattertext_explorer(corpus,
 
     if not_categories is None:
         not_categories = [c for c in corpus.get_categories() if c != category]
+
+    term_scorer = _initialize_term_scorer_if_needed(category, corpus, neutral_categories, not_categories, show_neutral,
+                                                    term_scorer, use_non_text_features, term_ranker, term_scorer_kwargs)
 
     if term_scorer:
         scores = get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral, term_ranker,
@@ -804,6 +816,27 @@ def produce_scattertext_explorer(corpus,
                      html_base=html_base))
 
 
+def _initialize_term_scorer_if_needed(category, corpus, neutral_categories, not_categories, show_neutral, term_scorer,
+                                      use_non_text_features, term_ranker, term_scorer_kwargs):
+    if inherits_from(term_scorer, 'CorpusBasedTermScorer') and type(term_scorer) == ABCMeta:
+        term_scorer_kwargs = {} if term_scorer_kwargs is None else term_scorer_kwargs
+        term_scorer = term_scorer(corpus, **term_scorer_kwargs)
+    if inherits_from(type(term_scorer), 'CorpusBasedTermScorer'):
+        if use_non_text_features:
+            term_scorer = term_scorer.use_metadata()
+        if term_ranker is not None:
+            term_scorer = term_scorer.set_term_ranker(term_ranker=term_ranker)
+
+        if not term_scorer.is_category_name_set():
+            if show_neutral:
+                term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
+            else:
+                term_scorer = term_scorer.set_categories(category, not_categories)
+    return term_scorer
+
+
+
+
 def get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral,
                            term_ranker, term_scorer, use_non_text_features):
     tdf = corpus.apply_ranker(term_ranker, use_non_text_features)
@@ -813,11 +846,8 @@ def get_term_scorer_scores(category, corpus, neutral_categories, not_categories,
         not_cat_freqs = tdf[[str(c) + ' freq' for c in not_categories]].sum(axis=1)
     else:
         not_cat_freqs = tdf.sum(axis=1) - tdf[str(category) + ' freq']
-    if isinstance(term_scorer, CorpusBasedTermScorer) and not term_scorer.is_category_name_set():
-        if show_neutral:
-            term_scorer = term_scorer.set_categories(category, not_categories, neutral_categories)
-        else:
-            term_scorer = term_scorer.set_categories(category, not_categories)
+
+    if inherits_from(type(term_scorer), 'CorpusBasedTermScorer'):
         return term_scorer.get_scores()
     return term_scorer.get_scores(cat_freqs, not_cat_freqs)
 
@@ -1097,6 +1127,24 @@ def produce_frequency_explorer(corpus,
         term_scorer = LogOddsRatioUninformativeDirichletPrior(alpha)
 
     my_term_ranker = term_ranker(corpus)
+
+    term_scorer = _initialize_term_scorer_if_needed(
+        category=category,
+        corpus=corpus,
+        neutral_categories=kwargs.get('neutral_categories', False),
+        not_categories=not_categories,
+        show_neutral=kwargs.get('show_neutral', False),
+        term_scorer=term_scorer,
+        use_non_text_features=kwargs.get('use_non_text_features', False),
+        term_ranker=term_ranker,
+        term_scorer_kwargs=kwargs.get('term_scorer_kwargs', None)
+    )
+
+    #if type(term_scorer) == ABCMeta and issubclass(term_scorer, CorpusBasedTermScorer):
+    #    term_scorer = term_scorer(corpus)
+    #    if kwargs.get('use_non_text_features', False):
+    #        term_scorer = term_scorer.use_metadata()
+
     if kwargs.get('use_non_text_features', False):
         my_term_ranker.use_non_text_features()
     term_freq_df = my_term_ranker.get_ranks() + 1
@@ -1119,9 +1167,10 @@ def produce_frequency_explorer(corpus,
             kwargs.get('use_non_text_features', False)
         )
 
-    def y_axis_rescale(coords):
-        return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
-
+    if kwargs.get("rescale_y", None) is None:
+        def y_axis_rescale(coords):
+            return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
+        kwargs["rescale_y"] = y_axis_rescale
     # from https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
     def round_to_1(x):
         if x == 0:
@@ -1160,7 +1209,7 @@ def produce_frequency_explorer(corpus,
                                         x_axis_values=x_axis_values,
                                         y_axis_values=y_axis_values,
                                         rescale_x=scale,
-                                        rescale_y=y_axis_rescale,
+                                        #rescale_y=y_axis_rescale,
                                         sort_by_dist=False,
                                         term_ranker=term_ranker,
                                         not_categories=not_categories,
@@ -2123,7 +2172,6 @@ def produce_scattertext_table(
         )
         trend_plot_settings.set_category_order(category_order=category_order)
 
-
     scatterplot_structure = get_trend_scatterplot_structure(
         corpus=corpus,
         trend_plot_settings=trend_plot_settings,
@@ -2183,7 +2231,7 @@ def get_trend_scatterplot_structure(
                                 dispersion_df['Estimate'].values]))
             YPos = all_scale[:len(dispersion_df)]
             line_y = all_scale[len(dispersion_df):]
-            #import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
 
         x_axis = trend_plot_settings.get_x_axis(corpus=corpus, non_text=non_text)
         XPos = x_axis.scaled
@@ -2242,9 +2290,10 @@ def get_trend_scatterplot_structure(
         X=X,
         Frequency=lambda df: df.X,
         Xpos=XPos,
-        Y=lambda df: Y,
-        Ypos=lambda df: YPos,
+        Y=Y,
+        Ypos=YPos,
         # ColorScore=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
+        ColorScore=1,
         term=terms
     ).set_index('term')
     for k, v in add_to_plot_df.items():
@@ -2261,7 +2310,7 @@ def get_trend_scatterplot_structure(
         y_label=plot_params.y_label,
         y_axis_labels=plot_params.y_axis_labels,
         x_axis_labels=plot_params.x_axis_labels,
-        # color_score_column='ColorScore',
+        color_score_column='ColorScore',
         tooltip_columns=plot_params.tooltip_columns,
         tooltip_column_names=plot_params.tooltip_column_names,
         header_names=plot_params.header_names,

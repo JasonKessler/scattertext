@@ -51,6 +51,7 @@ class CohensD(CorpusBasedTermScorer, CohensDCalculator):
         score_df = (self
                     .get_cohens_d_df(cat_X, ncat_X, orig_cat_X, orig_ncat_X, correction_method)
                     .set_index(np.array(self._get_index())))
+        score_df.index.name = 'term'
         return score_df
 
 
