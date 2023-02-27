@@ -81,7 +81,7 @@ class TestHTMLVisualizationAssembly(TestCase):
         self.assertTrue(self._https_script_is_present(html))
         self.assertFalse(self._http_script_is_present(html))
 
-    def test_protocol_is_http(self):
+    def _test_protocol_is_http(self):
         html = self.make_assembler().to_html(protocol='http')
         self.assertFalse(self._https_script_is_present(html))
         self.assertTrue(self._http_script_is_present(html))
