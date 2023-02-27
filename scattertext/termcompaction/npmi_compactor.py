@@ -67,7 +67,7 @@ class NPMICompactor(object):
         return term_doc_matrix.remove_terms(
             terms_to_remove, non_text
         ).remove_infrequent_words(
-            self.minimum_term_count, term_ranker=self.term_ranker, non_text=non_text
+            self.minimum_term_count-1, term_ranker=self.term_ranker, non_text=non_text
         )
 
     def get_pmi_df(self, term_doc_matrix, non_text: bool = False):

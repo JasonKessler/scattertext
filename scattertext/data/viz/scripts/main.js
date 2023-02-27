@@ -928,8 +928,8 @@ buildViz = function (d3) {
             linesvg.append("g")
                .attr("transform", "translate(0," + height + ")")
                .call(d3.axisBottom(chartx)
-                     .ticks(3)
-                     .tickFormat((d,i) => docLabelCountsSorted[i].label));
+                     .ticks(5)
+                     .tickFormat(function(d,i) {return docLabelCountsSorted[d].label}));
 
 
             var charty = d3.scaleLinear()
@@ -944,7 +944,7 @@ buildViz = function (d3) {
                 .attr("y", -40)
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("% documenrts");
+                .text("% documents");
 
 
             basesvg.
