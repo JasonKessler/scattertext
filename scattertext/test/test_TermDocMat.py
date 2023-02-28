@@ -4,10 +4,10 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+
 from scattertext.indexstore import IndexStore
 from sklearn.linear_model import LinearRegression
 
-from scattertext import TermDocMatrixFromPandas, CompactTerms, CSRMatrixFactory
 from scattertext.CorpusFromPandas import CorpusFromPandas
 from scattertext.TermDocMatrix import TermDocMatrix, CannotCreateATermDocMatrixWithASignleCategoryException
 from scattertext.Common import SPACY_ENTITY_TAGS, MY_ENGLISH_STOP_WORDS
@@ -17,6 +17,9 @@ from scattertext.termscoring.ScaledFScore import InvalidScalerException
 from scattertext.test.test_corpusFromPandas import get_docs_categories
 from scattertext.test.test_semioticSquare import get_docs_categories_semiotic
 from scattertext.test.test_termDocMatrixFactory import build_hamlet_jz_corpus_with_meta
+from scattertext.CSRMatrixTools import CSRMatrixFactory
+from scattertext.termcompaction.CompactTerms import CompactTerms
+from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas
 
 
 def make_a_test_term_doc_matrix():

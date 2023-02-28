@@ -1,4 +1,5 @@
-from scattertext import SemioticSquare
+from scattertext.semioticsquare import SemioticSquare
+
 from scattertext.termranking import AbsoluteFrequencyRanker
 
 

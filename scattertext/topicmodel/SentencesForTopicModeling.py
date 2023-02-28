@@ -4,7 +4,7 @@ from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
 
-from scattertext import CSRMatrixFactory
+from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.termscoring.RankDifference import RankDifference
 

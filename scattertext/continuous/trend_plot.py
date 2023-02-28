@@ -1,16 +1,18 @@
 import dataclasses
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Callable
+from sklearn.neighbors import KNeighborsRegressor
 
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import KNeighborsRegressor
 
-from scattertext import TermDocMatrix, TermRanker, AbsoluteFrequencyRanker, dense_rank, Correlations, \
-    IndexStoreFromList, Dispersion
-from scattertext.Scalers import log_scale, log_scale_with_negatives, get_scaler_name, scale_center_zero_abs, scale
-from scattertext.smoothing import mean_isotonic
-from scattertext.smoothing.lowess import Lowess
+from scattertext.dispersion.Dispersion import Dispersion
+from scattertext.indexstore import IndexStoreFromList
+from scattertext.continuous.correlations import Correlations
+from scattertext.termranking import AbsoluteFrequencyRanker
+from scattertext.termranking.TermRanker import TermRanker
+from scattertext.TermDocMatrix import TermDocMatrix
+from scattertext.Scalers import get_scaler_name, scale_center_zero_abs, scale, dense_rank
 from scattertext.smoothing.mean_isotonic import MeanIsotonic
 
 

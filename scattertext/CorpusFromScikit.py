@@ -1,6 +1,6 @@
 import numpy as np
+from scattertext.Corpus import Corpus
 
-from scattertext import Corpus
 from scattertext.TermDocMatrixFromScikit import TermDocMatrixFromScikit
 
 

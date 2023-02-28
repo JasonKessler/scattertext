@@ -1,4 +1,4 @@
-version = [0, 1, 16]
+version = [0, 1, 17]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -2231,7 +2231,6 @@ def get_trend_scatterplot_structure(
                                 dispersion_df['Estimate'].values]))
             YPos = all_scale[:len(dispersion_df)]
             line_y = all_scale[len(dispersion_df):]
-            # import pdb; pdb.set_trace()
 
         x_axis = trend_plot_settings.get_x_axis(corpus=corpus, non_text=non_text)
         XPos = x_axis.scaled
@@ -2293,7 +2292,7 @@ def get_trend_scatterplot_structure(
         Y=Y,
         Ypos=YPos,
         # ColorScore=lambda df: Scalers.scale_neg_1_to_1_with_zero_mean(df.Y),
-        ColorScore=1,
+        Color='#ffbf00',
         term=terms
     ).set_index('term')
     for k, v in add_to_plot_df.items():
@@ -2310,7 +2309,7 @@ def get_trend_scatterplot_structure(
         y_label=plot_params.y_label,
         y_axis_labels=plot_params.y_axis_labels,
         x_axis_labels=plot_params.x_axis_labels,
-        color_score_column='ColorScore',
+        color_column='Color',
         tooltip_columns=plot_params.tooltip_columns,
         tooltip_column_names=plot_params.tooltip_column_names,
         header_names=plot_params.header_names,

@@ -1,6 +1,6 @@
 import numpy as np
 
-from scattertext import CorpusDF
+from scattertext.CorpusDF import CorpusDF
 from scattertext.TermDocMatrixFromPandas import TermDocMatrixFromPandas, build_sparse_matrices
 
 

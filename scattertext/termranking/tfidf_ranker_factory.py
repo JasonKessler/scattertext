@@ -1,9 +1,9 @@
 from typing import Optional, Callable, Type
 import numpy as np
 import pandas as pd
+from scattertext.termranking.TermRanker import TermRanker
 from scipy.sparse import csr_matrix
 
-from scattertext import TermRanker
 
 
 def tfidf_ranker_factory(

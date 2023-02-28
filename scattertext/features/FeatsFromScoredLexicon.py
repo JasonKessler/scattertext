@@ -1,6 +1,6 @@
 import pandas as pd
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
-from scattertext import FeatsFromSpacyDoc
 
 class FeatsFromScoredLexicon(FeatsFromSpacyDoc):
     def __init__(self,

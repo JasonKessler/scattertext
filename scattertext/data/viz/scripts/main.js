@@ -12,6 +12,7 @@ function merge(ranges) { //via https://stackoverflow.com/questions/26390938/merg
 
     return result;
 }
+
 buildViz = function (d3) {
     return function (widthInPixels = 1000,
                      heightInPixels = 600,
@@ -1833,6 +1834,7 @@ buildViz = function (d3) {
                     var pageX = mySVGMatrix.e;
                     var pageY = mySVGMatrix.f;
                     circle.style["stroke"] = "black";
+                    //@@@@@ try to move to front
                     //var circlePos = circle.position();
                     //var el = circle.node()
                     //showTooltip(searchTermInfo, pageX, pageY, circle.cx.baseVal.value, circle.cx.baseVal.value);
@@ -2329,6 +2331,7 @@ buildViz = function (d3) {
                     }
                 });
             };
+
 
             if (verticalLines) {
                 if (typeof (verticalLines) === "number") {

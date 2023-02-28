@@ -2,7 +2,7 @@ import abc
 
 import numpy as np
 
-from scattertext import TermDocMatrix
+from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class CategoryEmbedderABC:

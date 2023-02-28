@@ -1,6 +1,5 @@
 from copy import copy
 
-from scattertext import CSRMatrixFactory
 from scattertext.DataFrameCorpus import DataFrameCorpus
 from scattertext.ParsedCorpus import ParsedDataFrameCorpus
 

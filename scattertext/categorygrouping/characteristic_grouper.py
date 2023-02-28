@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import spearmanr
 from tqdm.auto import tqdm
 
-from scattertext import TermDocMatrix
+from scattertext.TermDocMatrix import TermDocMatrix
 from scattertext.categorygrouping.characteristic_embedder_base import CategoryEmbedderABC
 from scattertext.categorygrouping.rank_embedder import RankEmbedder
 

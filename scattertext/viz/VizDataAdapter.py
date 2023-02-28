@@ -2,9 +2,7 @@ import json
 import sys
 
 import numpy as np
-
-from scattertext import AsianNLP
-from scattertext import WhitespaceNLP
+from scattertext import AsianNLP, WhitespaceNLP
 
 
 class MyEncoder(json.JSONEncoder):

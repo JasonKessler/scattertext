@@ -1,6 +1,6 @@
 from collections import Counter
 
-from scattertext import FeatsFromSpacyDoc
+from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 
 class UnigramsFromSpacyDoc(FeatsFromSpacyDoc):

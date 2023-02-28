@@ -1,7 +1,8 @@
 import pandas as pd
-from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
-from scattertext import RankDifference, AbsoluteFrequencyRanker
+from scattertext.termranking import AbsoluteFrequencyRanker
+from scattertext.termscoring.RankDifference import RankDifference
+from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 from scattertext.categorytable import MultiCategoryAssociationBase
 from scattertext.termranking.TermRanker import TermRanker
 

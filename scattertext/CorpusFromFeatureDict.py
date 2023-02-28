@@ -1,6 +1,6 @@
 import numpy as np
+from scattertext.CorpusDF import CorpusDF
 
-from scattertext import CorpusDF
 from scattertext.CSRMatrixTools import CSRMatrixFactory
 from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.indexstore.IndexStore import IndexStore

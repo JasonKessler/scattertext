@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from sklearn.metrics.pairwise import cosine_similarity
-from scattertext import ParsedCorpus
+from scattertext.ParsedCorpus import ParsedCorpus
 from scattertext.representations.Word2VecFromParsedCorpus import Word2VecDefault
 
 

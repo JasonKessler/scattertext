@@ -2,8 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
-
-from scattertext import ScatterChart
+from scattertext.ScatterChart import ScatterChart
 from scattertext.Scalers import percentile_alphabetical
 from scattertext.DocsAndLabelsFromCorpus import DocsAndLabelsFromCorpus, DocsAndLabelsFromCorpusSample
 
