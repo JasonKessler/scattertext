@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from scattertext.TermDocMatrix import TermDocMatrix
+from scattertext import TermDocMatrix
 
 
 class TermRanker:

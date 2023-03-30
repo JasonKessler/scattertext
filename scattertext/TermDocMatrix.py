@@ -21,7 +21,7 @@ from scattertext.termscoring.CornerScore import CornerScore
 from scattertext.termscoring.ScaledFScore import InvalidScalerException, ScaledFScore
 
 
-class CannotCreateATermDocMatrixWithASignleCategoryException(Exception):
+class CannotCreateATermDocMatrixWithASingleCategoryException(Exception):
     pass
 
 

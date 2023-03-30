@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from scattertext.ParsedCorpus import ParsedCorpus
 from scipy import stats
 from scipy.sparse import vstack
 
@@ -31,13 +33,14 @@ class NeedToSetCategoriesException(Exception):
 
 
 class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
-    def __init__(self, corpus, *args, **kwargs):
+    def __init__(self, corpus: ParsedCorpus, *args, **kwargs):
         self.corpus_ = corpus
         self.category_ids_ = corpus._y
         self.tdf_ = None
         self.term_ranker_ = self._get_default_ranker(corpus)
         self.use_metadata_ = False
         self.category_name_is_set_ = False
+        self._doc_sizes = None
         self._set_scorer_args(**kwargs)
 
     def _get_default_ranker(self, corpus):
@@ -46,6 +49,25 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def _set_scorer_args(self, **kwargs):
         pass
+
+    def set_doc_sizes(self, doc_sizes: np.array) -> 'CorpusBasedTermScorer':
+        assert len(doc_sizes) == self.corpus_.get_num_docs()
+        self._doc_sizes = doc_sizes
+        return self
+
+    def use_token_counts_as_doc_sizes(self) -> 'CorpusBasedTermScorer':
+        return self.set_doc_sizes(doc_sizes=self.corpus_.get_parsed_docs().apply(len).values)
+
+    def get_doc_sizes(self) -> np.array:
+        if self._doc_sizes is None:
+            return self._get_X().sum(axis=1)
+        return self._doc_sizes
+
+    def _get_cat_size(self) -> float:
+        return self.get_doc_sizes()[self._get_cat_x_row_mask()].sum()
+
+    def _get_ncat_size(self) -> float:
+        return self.get_doc_sizes()[self._get_ncat_x_row_mask()].sum()
 
     def use_metadata(self) -> 'CorpusBasedTermScorer':
         self.use_metadata_ = True
@@ -140,19 +162,25 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     def _get_cat_and_ncat(self, X):
         if self.category_name_is_set_ is False:
             raise NeedToSetCategoriesException()
-        cat_X = X[np.isin(self.corpus_.get_category_names_by_row(),
-                          [self.category_name] + self.neutral_category_names), :]
-        ncat_X = X[np.isin(self.corpus_.get_category_names_by_row(),
-                           self.not_category_names + self.neutral_category_names), :]
-        if len(self.neutral_category_names) > 0:
-            neut_X = X[np.isin(self.corpus_.get_category_names_by_row(), self.neutral_category_names)]
+        cat_X = X[self._get_cat_x_row_mask(), :]
+        ncat_X = X[self._get_ncat_x_row_mask(), :]
+        if self.neutral_category_names:
+            neut_X = X[self._get_neut_row_mask(), :]
             cat_X = vstack([cat_X, neut_X])
             ncat_X = vstack([ncat_X, neut_X])
         return cat_X, ncat_X
 
+    def _get_neut_row_mask(self):
+        return np.isin(self.corpus_.get_category_names_by_row(), self.neutral_category_names)
+
+    def _get_ncat_x_row_mask(self):
+        return np.isin(self.corpus_.get_category_names_by_row(), self.not_category_names)
+
+    def _get_cat_x_row_mask(self):
+        return np.isin(self.corpus_.get_category_names_by_row(), [self.category_name])
+
     def _get_index(self):
         return self.corpus_.get_metadata() if self.use_metadata_ else self.corpus_.get_terms()
-
 
     @abstractmethod
     def get_scores(self, *args):
@@ -163,11 +191,12 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         -------
         '''
 
-
     @abstractmethod
     def get_name(self):
         pass
 
+    def _get_terms(self):
+        return self.corpus_.get_terms(use_metadata=self.use_metadata_)
 
     def get_score_df(self, label_append=''):
         return self.get_term_ranker().get_ranks().assign(
@@ -177,3 +206,9 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         ).rename(columns={
             'Metric': self.get_name()
         })
+
+    def __get_f1_f2_from_args(self, args) -> Tuple[np.array, np.array]:
+        f1, f2 = args
+        assert len(f1) == len(f2)
+        assert len(f1) == len(self._get_terms())
+        return f1, f2

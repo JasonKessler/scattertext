@@ -1,4 +1,5 @@
 import sys
+from typing import Dict, Hashable
 
 import pandas as pd
 
@@ -29,10 +30,25 @@ class ParsedDataFrameCorpus(DataFrameCorpus):
         '''
         return self._df[self._parsed_col]
 
-    def _document_index_mask(self, ngram):
-        idx = self._term_idx_store.getidxstrict(ngram.lower())
-        mask = (self._X[:, idx] > 0).todense().A1
-        return mask
+    def get_category_token_counts(self) -> Dict[str, int]:
+        '''
+
+        :return: dict, maps category to count of tokens of all documents in that category
+        '''
+
+        return dict(
+            self.get_df().groupby(self.get_category_column()).apply(
+                lambda gdf: gdf[self.get_parsed_column()].apply(
+                    lambda doc: sum([t.orth_.strip() != '' for t in doc])
+                ).sum()
+            )
+        )
+
+    def get_category_column(self) -> str:
+        return self._category_col
+
+    def get_parsed_column(self) -> str:
+        return self._parsed_col
 
 
 class ParsedCorpus(ParsedDataFrameCorpus):
@@ -92,8 +108,16 @@ class ParsedCorpus(ParsedDataFrameCorpus):
             unigram_frequency_path=self._unigram_frequency_path
         )
 
-    def get_category_column(self) -> str:
-        return self._category_col
+    def get_num_tokens_by_category(self) -> Dict[Hashable, int]:
+        cat_to_num_toks = {cat: 0 for cat in self.get_categories()}
+
+        for cat, cat_df in self.get_df().groupby(self.get_category_column()):
+            cat_to_num_toks[cat] = cat_df[self.get_parsed_column()].apply(len).sum()
+
+        return cat_to_num_toks
+
+    def get_document_lengths_in_tokens(self):
+        return self.get_parsed_docs().apply(len).values
 
     def term_group_freq_df(self, group_col):
         # type: (str) -> pd.DataFrame

@@ -34,7 +34,7 @@ class CorpusFromParsedDocuments(object):
         self._metadata_idx_store = IndexStore()
         self._feats_from_spacy_doc = feats_from_spacy_doc
 
-    def build(self, show_progress=False):
+    def build(self, show_progress=False) -> ParsedCorpus:
         '''Constructs the term doc matrix.
 
         Returns

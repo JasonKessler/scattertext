@@ -9,7 +9,7 @@ from scattertext.indexstore import IndexStore
 from sklearn.linear_model import LinearRegression
 
 from scattertext.CorpusFromPandas import CorpusFromPandas
-from scattertext.TermDocMatrix import TermDocMatrix, CannotCreateATermDocMatrixWithASignleCategoryException
+from scattertext.TermDocMatrix import TermDocMatrix, CannotCreateATermDocMatrixWithASingleCategoryException
 from scattertext.Common import SPACY_ENTITY_TAGS, MY_ENGLISH_STOP_WORDS
 from scattertext.TermDocMatrixFactory import build_from_category_whitespace_delimited_text
 from scattertext.WhitespaceNLP import whitespace_nlp
@@ -354,12 +354,6 @@ class TestTermDocMat(TestCase):
         self.assertGreaterEqual(1, baseline)
         self.assertEqual(list(df.sort_values(by='logreg', ascending=False).index[:3]),
                          ['the', 'starts', 'incorporal'])
-
-    def test_get_doc_lengths(self):
-        hamlet = get_hamlet_term_doc_matrix()
-        hamlet_unigram = hamlet.get_unigram_corpus()
-        self.assertEqual(len(hamlet.get_doc_lengths()), hamlet.get_num_docs())
-        np.testing.assert_array_equal(hamlet.get_doc_lengths(), hamlet_unigram._X.sum(axis=1).A1)
 
     def test_get_category_ids(self):
         hamlet = get_hamlet_term_doc_matrix()

@@ -62,7 +62,7 @@ class FlexibleNGramFeatures(FeatAndOffsetGetter, FlexibleNGramFeaturesBase):
     def get_metadata_offsets(
             self,
             doc
-    ) -> List[Tuple[str, List[Union[int, List[Tuple[int, int]]]]]]:
+    ) -> List[Tuple[str, List[Tuple[int, List[Tuple[int, int]]]]]]:
         offset_tokens = self._doc_to_feature_representation(doc)
         return list(offset_tokens.items())
 
@@ -73,7 +73,7 @@ class FlexibleNGrams(FeatsFromSpacyDoc, FlexibleNGramFeaturesBase):
             ngram_sizes: Optional[List[int]] = None,
             exclude_ngram_filter: Optional[Callable] = None,
             text_from_token: Optional[Callable] = None,
-            validate_token: Optional[Callable] = None
+            validate_token: Optional[Callable] = lambda x: x.orth_.strip() != ''
     ):
         FeatsFromSpacyDoc.__init__(self)
         FlexibleNGramFeaturesBase.__init__(self, exclude_ngram_filter, ngram_sizes, text_from_token, validate_token)

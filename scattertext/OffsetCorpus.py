@@ -1,10 +1,8 @@
 from copy import copy
-
-from scattertext.DataFrameCorpus import DataFrameCorpus
-from scattertext.ParsedCorpus import ParsedDataFrameCorpus
+from scattertext.ParsedCorpus import ParsedCorpus
 
 
-class OffsetCorpus(ParsedDataFrameCorpus):
+class OffsetCorpus(ParsedCorpus):
     def __init__(self,
                  df,
                  X,
@@ -20,12 +18,17 @@ class OffsetCorpus(ParsedDataFrameCorpus):
                  unigram_frequency_path=None):
         self._term_offsets = term_offsets
         self._metadata_offsets = metadata_offsets
-        ParsedDataFrameCorpus.__init__(self, parsed_col, category_col)
-        DataFrameCorpus.__init__(self, X, mX, y, term_idx_store, category_idx_store,
-                                 metadata_idx_store,
-                                 df[self._parsed_col],
-                                 df,
-                                 unigram_frequency_path)
+        ParsedCorpus.__init__(self,
+                              df=df,
+                              X=X,
+                              mX=mX,
+                              y=y,
+                              term_idx_store=term_idx_store,
+                              category_idx_store=category_idx_store,
+                              metadata_idx_store=metadata_idx_store,
+                              parsed_col=parsed_col,
+                              category_col=category_col,
+                              unigram_frequency_path=unigram_frequency_path)
 
     def get_offsets(self):
         return self._metadata_offsets

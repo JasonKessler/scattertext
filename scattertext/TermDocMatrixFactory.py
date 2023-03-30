@@ -46,7 +46,7 @@ class TermDocMatrixFactory(object):
            Class for extraction of features from spacy
        Attributes
        ----------
-       _clean_function : function
+       _clean_function : Callable
            function that takes a unicode document and returns
            a cleaned version of that document
        _text_iter : iter<unicode>

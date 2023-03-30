@@ -753,7 +753,10 @@ buildViz = function (d3) {
                             // merge overlapping offsets
                             let offsets = merge(fullData.offsets[term][i]);
 
-                            var snippetPadding = 100
+                            var snippetPadding = 100;
+                            if(useFullDoc) {
+                                snippetPadding = 100000000000000;
+                            }
 
                             let offsetChunks = [];
                             let curChunk = [];
@@ -768,13 +771,13 @@ buildViz = function (d3) {
 
                             let highlightOpen = '<b style="background-color: lightgoldenrodyellow">';
                             let highlightClose = '</b>';
+
                             offsetChunks.map(
                                 function (offsets) {
                                     if (offsets.length > 0) {
                                         let offsetStart = offsets[0][0]
                                         let offsetEnd = offsets[offsets.length - 1][1];
-                                        let spanStart = Math.max(0,
-                                            offsetStart - snippetPadding);
+                                        let spanStart = Math.max(0, offsetStart - snippetPadding);
                                         let spanEnd = Math.min(offsetEnd + snippetPadding, text.length);
                                         let snippet = text.substr(spanStart, spanEnd - spanStart);
                                         offsets.reverse().forEach(
@@ -800,6 +803,7 @@ buildViz = function (d3) {
                                 }
                             )
                             matches[numericLabel].push(curMatch);
+
                         }
                     } else {
 

@@ -283,13 +283,16 @@ class TermDocMatrixWithoutCategories(object):
         idx_to_delete_list = self._build_term_index_list(ignore_absences, terms, non_text)
         return self.remove_terms_by_indices(idx_to_delete_list, non_text)
 
-    def whitelist_terms(self, whitelist_terms):
+    def whitelist_terms(self, whitelist_terms: List[str], non_text=False):
         '''
 
         :param whitelist_terms: list[str], terms to whitelist
+        :param non_text: bool, use non text featurs, default False
         :return: TermDocMatrix, new object with only terms in parameter
         '''
-        return self.remove_terms(list(set(self.get_terms()) - set(whitelist_terms)))
+        return self.remove_terms(
+            list(set(self.get_terms(use_metadata=non_text)) - set(whitelist_terms)),
+            non_text=non_text)
 
     def _build_term_index_list(self, ignore_absences, terms, non_text=False):
         idx_to_delete_list = []
@@ -467,17 +470,6 @@ class TermDocMatrixWithoutCategories(object):
         # type: (sparse_matrix) -> sparse_matrix
         return (newX > 0).astype(np.int32)
 
-    def get_doc_lengths(self):
-        '''
-        Returns a list of document lengths in words
-
-        Returns
-        -------
-        np.array
-        '''
-        idx_to_delete_list = self._build_term_index_list(True, self._get_non_unigrams())
-        unigram_X, _ = self._get_X_after_delete_terms(idx_to_delete_list)
-        return unigram_X.sum(axis=1).A1
 
     def remove_terms_by_indices(self, idx_to_delete_list, non_text=False):
         '''
@@ -607,6 +599,10 @@ class TermDocMatrixWithoutCategories(object):
 
     def get_term_index(self, term: str) -> int:
         return self._term_idx_store.getidxstrict(term)
+    def get_metadata_index(self, term: str) -> int:
+        return self._metadata_idx_store.getidxstrict(term)
+    def get_metadata_from_index(self, index: int) -> str:
+        return self._metadata_idx_store.getval(index)
 
     def get_term_from_index(self, index: int) -> str:
         return self._term_idx_store.getval(index)

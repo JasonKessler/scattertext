@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsRegressor
 import numpy as np
 import pandas as pd
 
-from scattertext.dispersion.Dispersion import Dispersion
+from scattertext.dispersion.dispersion import Dispersion
 from scattertext.indexstore import IndexStoreFromList
 from scattertext.continuous.correlations import Correlations
 from scattertext.termranking import AbsoluteFrequencyRanker

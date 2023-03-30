@@ -107,7 +107,7 @@ class LexiconFeatAndOffsetGetter(FeatAndOffsetGetter):
         '''
         :param lexicons: Dict[str, List[List[str]]], maps a topic name to its list of word sequences
         :param definitions, Optional[Dict[str, str]], maps topic name to an explanation.
-        :param case_sensitive: bool, are word sequences case sensitive?
+        :param case_sensitive: bool, are word sequences case-sensitive?
         '''
         self.definitions = definitions
         self.keyword_processor = flashtext.KeywordProcessor(case_sensitive)

@@ -1,4 +1,4 @@
-version = [0, 1, 17]
+version = [0, 1, 18]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -127,7 +127,7 @@ from scattertext.viz.TermInfo import get_tooltip_js_function, get_custom_term_in
 from scattertext.CorpusWithoutCategoriesFromParsedDocuments import CorpusWithoutCategoriesFromParsedDocuments
 from scattertext.OffsetCorpus import OffsetCorpus
 from scattertext.OffsetCorpusFactory import OffsetCorpusFactory
-from scattertext.dispersion.Dispersion import Dispersion, get_category_dispersion
+from scattertext.dispersion.dispersion import Dispersion, get_category_dispersion
 from scattertext.features import featoffsets
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
 from scattertext.features.featoffsets.token_and_feat_offset_getter import TokenFeatAndOffsetGetter
@@ -170,6 +170,11 @@ from scattertext import smoothing
 from scattertext.termscoring.LogOddsRatio import \
     LogOddsRatioUninformativePriorScorer, LogOddsRatioInformativePriorScorer
 from scattertext.util import inherits_from
+from scattertext.termscoring.simplemaths import SimpleMaths
+from scattertext.termscoring.lrc import LRC
+from scattertext.termscoring.g2 import G2
+
+
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
 
@@ -835,8 +840,6 @@ def _initialize_term_scorer_if_needed(category, corpus, neutral_categories, not_
     return term_scorer
 
 
-
-
 def get_term_scorer_scores(category, corpus, neutral_categories, not_categories, show_neutral,
                            term_ranker, term_scorer, use_non_text_features):
     tdf = corpus.apply_ranker(term_ranker, use_non_text_features)
@@ -1082,6 +1085,7 @@ def produce_frequency_explorer(corpus,
                                grey_threshold=0,
                                y_axis_values=None,
                                frequency_transform=lambda x: scale(np.log(x) - np.log(1)),
+                               score_scaler=None,
                                **kwargs):
     '''
     Produces a Monroe et al. style visualization, with the x-axis being the log frequency
@@ -1115,6 +1119,7 @@ def produce_frequency_explorer(corpus,
         Custom y-axis values. Defaults to linspace
     frequency_transfom : lambda, default lambda x: scale(np.log(x) - np.log(1))
         Takes a vector of frequencies and returns their x-axis scale.
+    score_scaler: lambda, default scale_neg_1_to_1_with_zero_mean_abs_max
     Remaining arguments are from `produce_scattertext_explorer`.'
     Returns
     -------
@@ -1140,7 +1145,7 @@ def produce_frequency_explorer(corpus,
         term_scorer_kwargs=kwargs.get('term_scorer_kwargs', None)
     )
 
-    #if type(term_scorer) == ABCMeta and issubclass(term_scorer, CorpusBasedTermScorer):
+    # if type(term_scorer) == ABCMeta and issubclass(term_scorer, CorpusBasedTermScorer):
     #    term_scorer = term_scorer(corpus)
     #    if kwargs.get('use_non_text_features', False):
     #        term_scorer = term_scorer.use_metadata()
@@ -1170,7 +1175,9 @@ def produce_frequency_explorer(corpus,
     if kwargs.get("rescale_y", None) is None:
         def y_axis_rescale(coords):
             return ((coords - 0.5) / (np.abs(coords - 0.5).max()) + 1) / 2
+
         kwargs["rescale_y"] = y_axis_rescale
+
     # from https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
     def round_to_1(x):
         if x == 0:
@@ -1186,7 +1193,11 @@ def produce_frequency_explorer(corpus,
             central = 0.5
         y_axis_values = [x for x in [min_score, central, max_score]
                          if x >= min_score and x <= max_score]
-    scores_scaled_for_charting = scale_neg_1_to_1_with_zero_mean_abs_max(kwargs['scores'])
+
+    if score_scaler is None:
+        score_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
+
+    scores_scaled_for_charting = score_scaler(kwargs['scores'])
     if use_term_significance:
         kwargs['term_significance'] = term_scorer
 
@@ -1209,7 +1220,7 @@ def produce_frequency_explorer(corpus,
                                         x_axis_values=x_axis_values,
                                         y_axis_values=y_axis_values,
                                         rescale_x=scale,
-                                        #rescale_y=y_axis_rescale,
+                                        # rescale_y=y_axis_rescale,
                                         sort_by_dist=False,
                                         term_ranker=term_ranker,
                                         not_categories=not_categories,

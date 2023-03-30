@@ -79,7 +79,7 @@ class DataFrameCorpus(Corpus):
         self._df = self._df.assign(**kwargs)
         return self
 
-    def search(self, ngram):
+    def search(self, ngram, non_text: bool = False):
         '''
         Parameters
         ----------
@@ -90,7 +90,7 @@ class DataFrameCorpus(Corpus):
         pd.DataFrame, {self._parsed_col: <matching texts>, self._category_col: <corresponding categories>, ...}
 
         '''
-        mask = self._document_index_mask(ngram)
+        mask = self._document_index_mask(ngram, non_text)
         return self._df[mask]
 
     def make_column_metadata(self, column):
