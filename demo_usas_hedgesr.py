@@ -1,3 +1,6 @@
+import sys
+
+sys.path.insert(0, '../scattertext/')
 import scattertext as st
 import spacy
 
@@ -13,117 +16,20 @@ corpus = st.OffsetCorpusFactory(
     convention_df,
     category_col='Party',
     parsed_col='Parse',
-    feat_and_offset_getter=st.USASOffsetGetter()
-).build(show_progress=True)
-
-plot_df = st.CohensD(
-    corpus
-).use_metadata().set_categories(
-    category_name='Dem'
-).get_score_df(
-).assign(
-    Frequency=lambda df: df.count1 + df.count2,
-    X=lambda df: df.Frequency,
-    Y=lambda df: df.hedges_r,
-    Xpos=lambda df: st.Scalers.dense_rank(df.X),
-    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
-    ColorScore=lambda df: df.Ypos,
-)
-
-html = st.dataframe_scattertext(
-    corpus,
-    plot_df=plot_df,
-    category='Dem',
-    category_name='Democratic',
-    not_category_name='Republican',
-    width_in_pixels=1000,
-    suppress_text_column='Display',
-    metadata=lambda c: c.get_df()['speaker'],
-    use_non_text_features=True,
-    ignore_categories=False,
-    use_offsets=True,
-    unified_context=False,
-    color_score_column='ColorScore',
-    left_list_column='ColorScore',
-    y_label='Hedges R',
-    x_label='Frequency Ranks',
-    term_word_in_term_description='Semantic Tag',
-    header_names={'upper': 'Top Democratic', 'lower': 'Top Republican'},
-)
-
-fn = 'demo_usas_hedgesr.html'
-
-with open(fn, 'w') as of:
-    of.write(html)
-
-print(f'open ./{fn}')
-
-
-corpus = st.OffsetCorpusFactory(
-    convention_df,
-    category_col='Party',
-    parsed_col='Parse',
-    feat_and_offset_getter=st.USASOffsetGetter(tier=0)
-).build(show_progress=True)
-
-plot_df = st.CohensD(
-    corpus
-).use_metadata().set_categories(
-    category_name='Dem'
-).get_score_df(
-).assign(
-    Frequency=lambda df: df.count1 + df.count2,
-    X=lambda df: df.Frequency,
-    Y=lambda df: df.hedges_r,
-    Xpos=lambda df: st.Scalers.dense_rank(df.X),
-    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
-    ColorScore=lambda df: df.Ypos,
-)
-
-html = st.dataframe_scattertext(
-    corpus,
-    plot_df=plot_df,
-    category='Dem',
-    category_name='Democratic',
-    not_category_name='Republican',
-    width_in_pixels=1000,
-    suppress_text_column='Display',
-    metadata=lambda c: c.get_df()['speaker'],
-    use_non_text_features=True,
-    ignore_categories=False,
-    use_offsets=True,
-    unified_context=False,
-    color_score_column='ColorScore',
-    left_list_column='ColorScore',
-    y_label='Hedges R',
-    x_label='Frequency Ranks',
-    term_word_in_term_description='Semantic Tag',
-    header_names={'upper': 'Top Democratic', 'lower': 'Top Republican'},
-)
-
-fn = 'demo_usas_hedgesr_level_0.html'
-
-with open(fn, 'w') as of:
-    of.write(html)
-
-print(f'open ./{fn}')
-
-corpus = st.OffsetCorpusFactory(
-    convention_df,
-    category_col='Party',
-    parsed_col='Parse',
     feat_and_offset_getter=st.USASOffsetGetter(tier=1)
 ).build(show_progress=True)
 
-plot_df = st.CohensD(
+score_df = st.CohensD(
     corpus
 ).use_metadata().set_categories(
     category_name='Dem'
 ).get_score_df(
-).assign(
+)
+
+plot_df = score_df.rename(columns={'hedges_r': 'HedgesR', 'hedges_r_p': 'HedgesRPval'}).assign(
     Frequency=lambda df: df.count1 + df.count2,
     X=lambda df: df.Frequency,
-    Y=lambda df: df.hedges_r,
+    Y=lambda df: df.HedgesR,
     Xpos=lambda df: st.Scalers.dense_rank(df.X),
     Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
     ColorScore=lambda df: df.Ypos,
@@ -156,9 +62,7 @@ html = st.dataframe_scattertext(
     horizontal_line_y_position=0
 )
 
-fn = 'demo_usas_hedgesr_level_1.html'
-
+fn = 'demo_usas_level_1.html'
 with open(fn, 'w') as of:
     of.write(html)
-
-print(f'open ./{fn}')
+print(f'run ./open {fn}')
