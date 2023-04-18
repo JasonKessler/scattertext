@@ -788,17 +788,12 @@ tiers 1 and 2 which do not contain any more specific categories.
 
 By tier, the qualifying tag counts are:
 
-+---------+---------+
-|    Tier |   Count |
-+=========+=========+
-|       0 |      21 |
-+---------+---------+
-|       1 |     199 |
-+---------+---------+
-|       2 |     419 |
-+---------+---------+
-|       3 |     474 |
-+---------+---------+
+| Tier | Count |
+|------|------:|
+| 0    |   21  |
+| 1    |   199 |
+| 2    |   419 |
+| 3    |   474 |
 
 The USAS tagger produces an `OffsetCorpus`, which stores character offsets of USAS semantic tags so that, when a 
 tag is clicked in the Scattertext interface, the surface forms of each tag's patterns will appear in contexts.
@@ -844,7 +839,9 @@ score_df = st.CohensD(
 ).get_scosre_df(
 )
     
-plot_df = score_df.rename(columns={'hedges_r': 'HedgesR', 'hedges_r_p': 'HedgesRPval'}).assign(
+plot_df = score_df.rename(
+  columns={'hedges_r': 'HedgesR', 'hedges_r_p': 'HedgesRPval'}
+).assign(
     Frequency=lambda df: df.count1 + df.count2,
     X=lambda df: df.Frequency,
     Y=lambda df: df.HedgesR,
