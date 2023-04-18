@@ -26,7 +26,7 @@ class ScoreBalancer(object):
         not_cat_mask = cat_scores < median if median != 0 else cat_scores <= median
         scores[not_cat_mask] = -not_cat_scores[not_cat_mask]
         '''
-        scores = np.zeros(len(cat_scores)).astype(np.float)
+        scores = np.zeros(len(cat_scores)).astype(np.float64)
         scores[cat_scores > not_cat_scores] = cat_scores[cat_scores > not_cat_scores]
         scores[cat_scores < not_cat_scores] = -not_cat_scores[cat_scores < not_cat_scores]
         return scores

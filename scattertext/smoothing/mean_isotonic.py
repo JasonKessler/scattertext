@@ -19,7 +19,7 @@ class MeanIsotonic:
             'y': ydata
         })
         # Average runs of isotonic regression
-        pred = np.zeros(len(df), dtype=np.float)
+        pred = np.zeros(len(df), dtype=np.float64)
         for i in range(self.n):
             sample_df = df.sample(frac=0.5)
             pred += 1 / self.n * IsotonicRegression(
@@ -41,7 +41,7 @@ class MeanIsotonic:
         })
 
         # Average runs of isotonic regression
-        pred = np.zeros(len(df), dtype=np.float)
+        pred = np.zeros(len(df), dtype=np.float64)
         for i in range(self.n):
             sample_df = df.sample(frac=0.5)
             pred += 1 / self.n * IsotonicRegression(

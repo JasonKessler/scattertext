@@ -147,8 +147,8 @@ class TestScatterChart(TestCase):
             scatter_chart.inject_coordinates(freq_df[freq_df.columns[0]], [])
         with self.assertRaises(CoordinatesNotRightException):
             scatter_chart.inject_coordinates([], freq_df[freq_df.columns[0]])
-        x = freq_df[freq_df.columns[1]].astype(np.float)
-        y = freq_df[freq_df.columns[0]].astype(np.float)
+        x = freq_df[freq_df.columns[1]].astype(np.float64)
+        y = freq_df[freq_df.columns[0]].astype(np.float64)
         with self.assertRaises(CoordinatesNotRightException):
             scatter_chart.inject_coordinates(x, y)
         with self.assertRaises(CoordinatesNotRightException):
@@ -225,8 +225,8 @@ class TestScatterChart(TestCase):
         freq_df = tdm.get_term_freq_df()
         scatter_chart = ScatterChart(term_doc_matrix=tdm,
                                      minimum_term_frequency=0)
-        x = freq_df[freq_df.columns[1]].astype(np.float)
-        y = freq_df[freq_df.columns[0]].astype(np.float)
+        x = freq_df[freq_df.columns[1]].astype(np.float64)
+        y = freq_df[freq_df.columns[0]].astype(np.float64)
         scatter_chart.inject_coordinates(x / x.max(), y / y.max(), original_x=x, original_y=y)
         j = scatter_chart.to_dict('hamlet')
         self.assertEqual(j['data'][0].keys(),

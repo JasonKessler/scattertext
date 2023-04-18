@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.18
+# Scattertext 0.1.19
 
 A tool for finding distinguishing terms in corpora and displaying them in an
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -717,8 +717,7 @@ topic model.
 
 [![Convention-Visualization-Empath.html](https://jasonkessler.github.io/Convention-Visualization-Empath.png)](https://jasonkessler.github.io/Convention-Visualization-Empath.html)
 
-### Visualizing General Inquirer Tag Categories and Document Categories
-
+c
 Scattertext also includes a feature builder to explore the relationship between General Inquirer Tag Categoires
 and Document Categories. We'll use a slightly different approach, looking at relationship of GI Tag Categories to
 political parties by using the
@@ -770,6 +769,124 @@ Here's the resulting chart.
 
 [![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer2.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
 
+### Visualizing the UCREL Semantic Analysis System
+
+The UCREL Semantic Analysis System (or USAS) [[(Piao et al., 2015)]](http://www.lrec-conf.org/proceedings/lrec2016/pdf/257_Paper.pdf) uses a set of lexico syntactic patterns to assign 
+word-part-of-speech pairs and multi-word lexico-syntactic patterns to a hierarchy of semantic tags. Note that
+the use of this feature invokes the 
+["Attribution-NonCommercial-ShareAlike 4.0 International" (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
+License. 
+
+474 semantic tags, arranged hierarchically, are tagged using the patterns. See 
+[[the USAS Guide]](https://ucrel.lancs.ac.uk/usas/usas_guide.pdf) for an overview of the tag schema.
+The categories are organized into four 
+tiers and are coded by an initial letter followed by three arabic numerals.  I refer to tier 0, referring to most
+general tags containing no arabic numeral tier numbers, 
+such as "A" ("General & Abstract Terms") or "B" ("The Body & the Individual"), to 3, the most specific tag, 
+containing three arabic numerals-- for example, "A1.5.2" ("Usefulness"). Note that tiers 2 and 3 include tags from 
+tiers 1 and 2 which do not contain any more specific categories. 
+
+By tier, the qualifying tag counts are:
+
++---------+---------+
+|    Tier |   Count |
++=========+=========+
+|       0 |      21 |
++---------+---------+
+|       1 |     199 |
++---------+---------+
+|       2 |     419 |
++---------+---------+
+|       3 |     474 |
++---------+---------+
+
+The USAS tagger produces an `OffsetCorpus`, which stores character offsets of USAS semantic tags so that, when a 
+tag is clicked in the Scattertext interface, the surface forms of each tag's patterns will appear in contexts.
+
+We plot tier 1 semantic tags on the political Convention corpus, with the x-axis representing
+the tag frequency dense rank and the y-axis the Hedge's r effect size.   
+
+Under the hood, the English USAS data is stored in 'scattertext/data/enusaspats.json.gz' as spaCy 
+EntityRuler patterns. The semantic tag ids are cross-referenced to the tag names present in 
+'scattertext/data/en_usas_subcategories.tsv.gz'. I have made some corrections to the patterns file (originally from 
+the [[Multilingual-USAS Github repo]](https://github.com/UCREL/Multilingual-USAS/blob/master/English/mwe-en.tsv)). 
+A spaCy model, which needs to include POS tagging, is passed to the `USASOffsetGetter`. Using a larger model will
+likely result in better performance and definitely take longer to execute.
+
+```python
+import scattertext as st
+import spacy
+
+nlp = spacy.blank('en')
+nlp.add_pipe('sentencizer')
+
+convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    Party=lambda df: df.party.apply(lambda x: {'democrat': 'Dem', 'republican': 'GOP'}[x]),
+    Parse=lambda df: df.text.progress_apply(nlp)
+)
+
+usas_offset_getter = st.USASOffsetGetter(
+    tier=1,
+    nlp=spacy.load('en_core_web_sm', disable=['ner'])
+)
+
+corpus = st.OffsetCorpusFactory(
+    convention_df,
+    category_col='Party',
+    parsed_col='Parse',
+    feat_and_offset_getter=usas_offset_getter
+).build(show_progress=True)
+
+score_df = st.CohensD(
+    corpus
+).use_metadata().set_categories(
+    category_name='Dem'
+).get_scosre_df(
+)
+    
+plot_df = score_df.rename(columns={'hedges_r': 'HedgesR', 'hedges_r_p': 'HedgesRPval'}).assign(
+    Frequency=lambda df: df.count1 + df.count2,
+    X=lambda df: df.Frequency,
+    Y=lambda df: df.HedgesR,
+    Xpos=lambda df: st.Scalers.dense_rank(df.X),
+    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
+    ColorScore=lambda df: df.Ypos,
+)
+
+html = st.dataframe_scattertext(
+    corpus,
+    plot_df=plot_df,
+    category='Dem',
+    category_name='Democratic',
+    not_category_name='Republican',
+    width_in_pixels=1000,
+    suppress_text_column='Display',
+    metadata=lambda c: c.get_df()['speaker'],
+    use_non_text_features=True,
+    ignore_categories=False,
+    use_offsets=True,
+    unified_context=False,
+    color_score_column='ColorScore',
+    left_list_column='ColorScore',
+    y_label='Hedges R',
+    x_label='Frequency Ranks',
+    y_axis_labels=[f'More Dem: r={plot_df.HedgesR.max():.3f}', '0', f'More Rep: r={-plot_df.HedgesR.max():.3f}'],
+    tooltip_columns=['Frequency', 'HedgesR'],
+    term_description_columns=['Frequency', 'HedgesR', 'HedgesRPval'],
+    header_names={'upper': 'Top Democratic', 'lower': 'Top Republican'},
+    term_word_in_term_description='Semantic Tag',    
+    horizontal_line_y_position=0    
+)
+```
+
+[![demo_usas_level_1.html](https://jasonkessler.github.io/usas-level-1.png)](https://jasonkessler.github.io/demo_usas_level_1.html)
+Click the image for the interactive version, generated by the code above.
+
+Clicking on a USAS tag can show us which phrases are recognized as surface forms. This also serves as a way of
+debugging and improving patterns.
+
+[![demo_usas_level_1.html](https://jasonkessler.github.io/usas-level-1-details.png)](https://jasonkessler.github.io/demo_usas_level_1.html)
+
 ### Visualizing the Moral Foundations 2.0 Dictionary
 
 The  [[Moral Foundations Theory]](https://moralfoundations.org/) proposes six psychological constructs
@@ -785,7 +902,7 @@ This dictionary can be used in the same way as the General Inquirer. In this exa
 of
 foundation-word counts relative to the frequencies words involving those foundations were invoked.
 
-We can first load the the corpus as normal, and use `st.FeatsFromMoralFoundationsDictionary()` to extract features.
+We can first load the corpus as normal, and use `st.FeatsFromMoralFoundationsDictionary()` to extract features.
 
 ```python
 import scattertext as st
@@ -1088,7 +1205,7 @@ html = st.produce_frequency_explorer(
 ```
 
 BNS Scored terms using an algorithmically found alpha.
-[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.html)
+[![BNS](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/d  emo_bi_normal_separation.png)](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_bi_normal_separation.html)
 
 ### Using correlations to explain classifiers
 
@@ -3301,3 +3418,7 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Anne-Kathrin Schumann. 2016. Brave new world: Uncovering topical dynamics in the ACL Anthology reference corpus using
   term life cycle information. In Proceedings of the 10th SIGHUM Workshop on Language Technology for Cultural Heritage,
   Social Sciences, and Humanities, pages 1–11, Berlin, Germany. Association for Computational Linguistics.
+* Piao, S. S., Bianchi, F., Dayrell, C., D’egidio, A., & Rayson, P. 2015. Development of the multilingual semantic 
+  annotation system. In Proceedings of the 2015 Conference of the North American Chapter of the Association for 
+  Computational Linguistics: Human Language Technologies (pp. 1268-1274).
+* 

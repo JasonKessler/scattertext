@@ -15,8 +15,8 @@ plot_df = st.CohensD(corpus).use_metadata().set_categories(
     'democrat', ['republican']
 ).get_score_df(
 ).assign(
-    N = lambda df: df.count1+df.count2,
-    X=lambda df: df.N,
+    Frequency = lambda df: df.count1+df.count2,
+    X=lambda df: df.Frequency,
     Y=lambda df: df.hedges_r,
     Xpos=lambda df: st.Scalers.dense_rank(df.X),
     Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),

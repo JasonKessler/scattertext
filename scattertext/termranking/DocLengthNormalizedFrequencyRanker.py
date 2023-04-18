@@ -32,7 +32,7 @@ class VarianceSensitiveFrequencyRanker(TermRanker):
 		y = self._term_doc_matrix._y
 		for idx, cat in self._term_doc_matrix._category_idx_store.items():
 			catX = X[y == idx, :]
-			catXB = (catX > 0).astype(np.float)
+			catXB = (catX > 0).astype(np.float64)
 			means = catX.mean(axis=0)
 			non_zero_sds_numerators = ((catX - catXB.multiply(csr_matrix(means)))
 			                           .power(2).sum(axis=0))

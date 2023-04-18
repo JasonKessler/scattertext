@@ -1,4 +1,4 @@
-version = [0, 1, 18]
+version = [0, 1, 19]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -140,7 +140,7 @@ from scattertext.categorytable.category_table_maker import CategoryTableMaker
 from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
 from scattertext.termscoring.LogOddsRatio import LogOddsRatio, LogOddsRatioScorer
-
+from scattertext.features.usas_offset_getter import USASOffsetGetter
 from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
 from scattertext.categorygrouping.characteristic_grouper import CharacteristicGrouper
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
@@ -173,7 +173,8 @@ from scattertext.util import inherits_from
 from scattertext.termscoring.simplemaths import SimpleMaths
 from scattertext.termscoring.lrc import LRC
 from scattertext.termscoring.g2 import G2
-
+from scattertext.contextual_embeddings.doc_splitter import SubwordSensitiveSentenceBoundedSplitter
+from scattertext.contextual_embeddings.corpus_runing_stats_factory import CorpusRunningStatsFactory
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -308,6 +309,7 @@ def produce_scattertext_explorer(corpus,
                                  sort_contexts_by_meta=False,
                                  show_chart=False,
                                  return_data=False,
+                                 suppress_circles=False,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
 
@@ -586,10 +588,12 @@ def produce_scattertext_explorer(corpus,
         Enable the use of metadata offsets
     sort_contexts_by_meta : bool, default False
         Sort context by meta instead of match strength
+    suppress_circles : bool, default False
+        Label terms over circles and hide circless
     show_chart : bool, default False
         Show line chart if unified context is true
     return_data : bool default False
-        Return a dict containing the output of `ScatterChartExplorer.to_dict` instead of
+        Return a dict containing the output of `ScatterChartExplosrer.to_dict` instead of
         an html.
     return_scatterplot_structure : bool, default False
         return ScatterplotStructure instead of html
@@ -808,6 +812,7 @@ def produce_scattertext_explorer(corpus,
         term_word=term_word_in_term_description,
         show_term_etc=show_term_etc,
         sort_contexts_by_meta=sort_contexts_by_meta,
+        suppress_circles=suppress_circles,
         show_chart=show_chart
     )
 

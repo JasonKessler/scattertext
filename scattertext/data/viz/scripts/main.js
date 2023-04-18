@@ -84,7 +84,8 @@ buildViz = function (d3) {
                      termWord = 'Term',
                      showTermEtc = true,
                      sortContextsByMeta = false,
-                     showChart = true
+                     suppressCircles = true,
+                     showChart = true,
     ) {
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -760,36 +761,43 @@ buildViz = function (d3) {
 
                             let offsetChunks = [];
                             let curChunk = [];
-                            for (let i = 0; i < offsets.length; ++i) {
-                                if (i > 0 && (offsets[i][0] - offsets[i - 1][1] >= snippetPadding)) {
+                            for (let j = 0; j < offsets.length; j++) {
+                                //if (j > 0 && (offsets[j][0] - offsets[j - 1][1] >= snippetPadding)) {
+                                if (j > 0 && (offsets[j][0] - curChunk[0][1] >= snippetPadding)) {
                                     offsetChunks.push(curChunk);
                                     curChunk = []
                                 }
-                                curChunk.push(offsets[i])
+                                curChunk.push(offsets[j])
                             }
                             offsetChunks.push(curChunk);
 
+                            console.log()
                             let highlightOpen = '<b style="background-color: lightgoldenrodyellow">';
                             let highlightClose = '</b>';
 
                             offsetChunks.map(
-                                function (offsets) {
-                                    if (offsets.length > 0) {
-                                        let offsetStart = offsets[0][0]
-                                        let offsetEnd = offsets[offsets.length - 1][1];
+                                function (curOffsets) {
+                                    if (curOffsets.length > 0) {
+                                        let offsetStart = curOffsets[0][0]
+                                        let offsetEnd = curOffsets[curOffsets.length - 1][1];
                                         let spanStart = Math.max(0, offsetStart - snippetPadding);
                                         let spanEnd = Math.min(offsetEnd + snippetPadding, text.length);
                                         let snippet = text.substr(spanStart, spanEnd - spanStart);
-                                        offsets.reverse().forEach(
+                                        console.log("Snippet")
+                                        console.log(snippet)
+                                        console.log("curOffsets")
+                                        console.log(curOffsets)
+                                        curOffsets.reverse().forEach(
                                             function (offset) {
-                                                offset[0] -= spanStart;
-                                                offset[1] -= spanStart
+                                                let curOffsetStart = offset[0] - spanStart;
+                                                let curOffsetEnd = offset[1] - spanStart;
+
                                                 snippet = (
-                                                    snippet.substr(0, offset[0])
+                                                    snippet.substr(0, curOffsetStart)
                                                     + highlightOpen
-                                                    + snippet.substr(offset[0], offset[1] - offset[0])
+                                                    + snippet.substr(curOffsetStart, curOffsetEnd - curOffsetStart)
                                                     + highlightClose
-                                                    + snippet.substr(offset[1], snippet.length - offset[1])
+                                                    + snippet.substr(curOffsetEnd, snippet.length - curOffsetEnd)
                                                 )
                                             }
                                         )
@@ -1972,6 +1980,7 @@ buildViz = function (d3) {
                 .enter()
                 .append("circle")
                 .attr("r", function (d) {
+                    if (suppressCircles) return 0;
                     if (pValueColors && d.p) {
                         return (d.p >= 1 - minPVal || d.p <= minPVal) ? 2 : 1.75;
                     }
@@ -1998,11 +2007,6 @@ buildViz = function (d3) {
                             return interpolateLightGreys(d.s);
                         }
                     } else {
-                        if (d.term === "the") {
-                            console.log("COLS " + d.s + " " + color(d.s) + " " + d.term)
-                            console.log(d)
-                            console.log(color)
-                        }
                         return color(d.s);
                     }
                 })
@@ -2048,49 +2052,54 @@ buildViz = function (d3) {
             var pointRects = [];
 
             function censorPoints(datum, getX, getY) {
-                var term = datum.term;
-                var curLabel = svg.append("text")
-                    .attr("x", x(getX(datum)))
-                    .attr("y", y(getY(datum)) + 3)
-                    .attr("text-anchor", "middle")
-                    .text("x");
-                var bbox = curLabel.node().getBBox();
-                var borderToRemove = .5;
-                var x1 = bbox.x + borderToRemove,
-                    y1 = bbox.y + borderToRemove,
-                    x2 = bbox.x + bbox.width - borderToRemove,
-                    y2 = bbox.y + bbox.height - borderToRemove;
-                //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
-                var pointRect = new Rectangle(x1, y1, x2, y2);
-                pointRects.push(pointRect);
-                rectHolder.add(pointRect);
-                pointStore.push([x1, y1]);
-                pointStore.push([x2, y1]);
-                pointStore.push([x1, y2]);
-                pointStore.push([x2, y2]);
-                curLabel.remove();
+                if (suppressCircles !== true) {
+                    var term = datum.term;
+                    var curLabel = svg.append("text")
+                        .attr("x", x(getX(datum)))
+                        .attr("y", y(getY(datum)) + 3)
+                        .attr("text-anchor", "middle")
+                        .text("x");
+                    var bbox = curLabel.node().getBBox();
+                    var borderToRemove = .5;
+                    var x1 = bbox.x + borderToRemove,
+                        y1 = bbox.y + borderToRemove,
+                        x2 = bbox.x + bbox.width - borderToRemove,
+                        y2 = bbox.y + bbox.height - borderToRemove;
+                    //rangeTree = insertRangeTree(rangeTree, x1, y1, x2, y2, '~~' + term);
+                    var pointRect = new Rectangle(x1, y1, x2, y2);
+                    pointRects.push(pointRect);
+                    rectHolder.add(pointRect);
+                    pointStore.push([x1, y1]);
+                    pointStore.push([x2, y1]);
+                    pointStore.push([x1, y2]);
+                    pointStore.push([x2, y2]);
+                    curLabel.remove();
+                }
             }
-
+            console.log("SUPPRESS CIRCLE"); console.log(suppressCircles)
             function censorCircle(xCoord, yCoord) {
-                var curLabel = svg.append("text")
-                    .attr("x", x(xCoord))
-                    .attr("y", y(yCoord) + 3)
-                    .attr("text-anchor", "middle")
-                    .text("x");
-                var bbox = curLabel.node().getBBox();
-                var borderToRemove = .5;
-                var x1 = bbox.x + borderToRemove,
-                    y1 = bbox.y + borderToRemove,
-                    x2 = bbox.x + bbox.width - borderToRemove,
-                    y2 = bbox.y + bbox.height - borderToRemove;
-                var pointRect = new Rectangle(x1, y1, x2, y2);
-                pointRects.push(pointRect);
-                rectHolder.add(pointRect);
-                pointStore.push([x1, y1]);
-                pointStore.push([x2, y1]);
-                pointStore.push([x1, y2]);
-                pointStore.push([x2, y2]);
-                curLabel.remove();
+                if (suppressCircles !== true) {
+                    console.log("DO NOT SUPRs")
+                    var curLabel = svg.append("text")
+                        .attr("x", x(xCoord))
+                        .attr("y", y(yCoord) + 3)
+                        .attr("text-anchor", "middle")
+                        .text("x");
+                    var bbox = curLabel.node().getBBox();
+                    var borderToRemove = .5;
+                    var x1 = bbox.x + borderToRemove,
+                        y1 = bbox.y + borderToRemove,
+                        x2 = bbox.x + bbox.width - borderToRemove,
+                        y2 = bbox.y + bbox.height - borderToRemove;
+                    var pointRect = new Rectangle(x1, y1, x2, y2);
+                    pointRects.push(pointRect);
+                    rectHolder.add(pointRect);
+                    pointStore.push([x1, y1]);
+                    pointStore.push([x2, y1]);
+                    pointStore.push([x1, y2]);
+                    pointStore.push([x2, y2]);
+                    curLabel.remove();
+                }
             }
 
             var configs = [
@@ -2114,8 +2123,11 @@ buildViz = function (d3) {
                 {'anchor': 'start', 'group': 3, 'xoff': -10, 'yoff': 15, 'alignment-baseline': 'ideographic'},
             ];
             if (centerLabelsOverPoints) {
+                console.log("CENTERING LABEL")
                 configs = [{'anchor': 'middle', 'xoff': 0, 'yoff': 0, 'alignment-baseline': 'middle'}];
             }
+            console.log("CONFIGS")
+            console.log(configs)
 
             function labelPointsIfPossible(datum, myX, myY) {
                 if (suppressTextColumn !== undefined
@@ -2266,13 +2278,11 @@ buildViz = function (d3) {
 
             var sortedData = data.map(x => x).sort(sortByDist ? euclideanDistanceSort : scoreSort);
             if (doCensorPoints) {
-                for (var i in data) {
+                for (var i in sortedData) {
                     var d = sortedData[i];
-
-                    if (!(censorPointColumn !== undefined
-                        && d.etc !== undefined
-                        && d.etc[censorPointColumn] === false)) {
-
+                    if(censorPointColumn === undefined || (
+                        d.etc !== undefined && (d.etc[censorPointColumn] === false
+                                                || df.etc[censorPointColumn] === undefined))) {
                         censorPoints(
                             d,
                             function (d) {

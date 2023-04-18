@@ -7,7 +7,7 @@ from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
 
 def g2_term(O, E):
-    res = O.astype(np.float) * (np.log(O) - np.log(E))
+    res = O.astype(np.float64) * (np.log(O) - np.log(E))
     res[O == 0] = 0
     return res
 

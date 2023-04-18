@@ -81,6 +81,7 @@ class ScatterplotStructure(object):
             term_word="Term",
             show_term_etc=True,
             sort_contexts_by_meta=False,
+            suppress_circles=False,
             show_chart=False
     ):
         '''
@@ -246,6 +247,8 @@ class ScatterplotStructure(object):
             Shows contents of etc structure after clicking on term
         sort_contexts_by_meta : bool, default False
             Sort contexts by meta instead of match strength
+        suppress_circles : bool, default False
+            Label terms over circles and hide circles
         show_chart : bool, default False
             Show line graph
         '''
@@ -320,6 +323,7 @@ class ScatterplotStructure(object):
         self._term_word = term_word
         self._show_term_etc = show_term_etc
         self._sort_contexts_by_meta = sort_contexts_by_meta
+        self._suppress_circles = suppress_circles
         self._show_chart = show_chart
 
     def call_build_visualization_in_javascript(self):
@@ -434,6 +438,7 @@ class ScatterplotStructure(object):
             js_default_string(self._term_word),
             js_bool(self._show_term_etc),
             js_bool(self._sort_contexts_by_meta),
+            js_bool(self._suppress_circles),
             js_bool(self._show_chart)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'

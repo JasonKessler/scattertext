@@ -58,7 +58,7 @@ def scale_center_zero_abs(vec, other_vec=None):
 
 
 def scale_center_zero_separate_ranks(scores: np.array) -> np.array:
-    scaled = np.zeros(len(scores), dtype=np.float)
+    scaled = np.zeros(len(scores), dtype=np.float64)
     scaled[scores > 0] = rankdata(scores[scores > 0]) / len(scores[scores > 0]) / 2 + 0.5
     scaled[scores < 0] = rankdata(scores[scores < 0]) / len(scores[scores < 0]) / 2
     return scaled
