@@ -771,14 +771,14 @@ Here's the resulting chart.
 
 ### Visualizing the UCREL Semantic Analysis System
 
-The UCREL Semantic Analysis System (or USAS) [[(Piao et al., 2015)]](http://www.lrec-conf.org/proceedings/lrec2016/pdf/257_Paper.pdf) uses a set of lexico syntactic patterns to assign 
+The UCREL Semantic Analysis System (or USAS) [(Piao et al., 2015)](http://www.lrec-conf.org/proceedings/lrec2016/pdf/257_Paper.pdf) uses a set of lexico syntactic patterns to assign 
 word-part-of-speech pairs and multi-word lexico-syntactic patterns to a hierarchy of semantic tags. Note that
 the use of this feature invokes the 
 ["Attribution-NonCommercial-ShareAlike 4.0 International" (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
 License. 
 
 474 semantic tags, arranged hierarchically, are tagged using the patterns. See 
-[[the USAS Guide]](https://ucrel.lancs.ac.uk/usas/usas_guide.pdf) for an overview of the tag schema.
+[the USAS Guide](https://ucrel.lancs.ac.uk/usas/usas_guide.pdf) for an overview of the tag schema.
 The categories are organized into four 
 tiers and are coded by an initial letter followed by three arabic numerals.  I refer to tier 0, referring to most
 general tags containing no arabic numeral tier numbers, 
