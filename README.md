@@ -2282,7 +2282,7 @@ html = st.produce_scattertext_explorer(
     category_name='Female',
     not_category_name='Male',
     use_full_doc=True,
-    term_ranker=OncePerDocFrequencyRanker,
+    term_ranker=st.OncePerDocFrequencyRanker,
     sort_by_dist=False,
     metadata=(df_mf['User Name']
               + ' (@' + df_mf['Nickname'] + ') '
