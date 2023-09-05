@@ -85,6 +85,8 @@ buildViz = function (d3) {
                      showTermEtc = true,
                      sortContextsByMeta = false,
                      suppressCircles = true,
+                     textSizeColumn = undefined,
+                     categoryColors = null,
                      showChart = true,
     ) {
         function formatTermForDisplay(term) {
@@ -2076,7 +2078,7 @@ buildViz = function (d3) {
                     curLabel.remove();
                 }
             }
-            console.log("SUPPRESS CIRCLE"); console.log(suppressCircles)
+
             function censorCircle(xCoord, yCoord) {
                 if (suppressCircles !== true) {
                     console.log("DO NOT SUPRs")
@@ -2146,6 +2148,10 @@ buildViz = function (d3) {
                 }
                 var matchedElement = null;
 
+                var termSize = '10px';
+                if (textSizeColumn !== undefined && datum.etc !== undefined && datum.etc[textSizeColumn] !== undefined) {
+                    termSize = datum.etc[textSizeColumn];
+                }
                 var termColor = 'rgb(0,0,0)';
                 if (textColorColumn !== undefined && datum.etc !== undefined && datum.etc[textColorColumn] !== undefined) {
                     termColor = datum.etc[textColorColumn];
@@ -2162,7 +2168,7 @@ buildViz = function (d3) {
                         .attr('class', 'label')
                         .attr('class', 'pointlabel')
                         .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                        .attr('font-size', '10px')
+                        .attr('font-size', termSize)
                         .attr("text-anchor", config['anchor'])
                         .attr("alignment-baseline", config['alignment'])
                         .attr("fill", termColor)
@@ -2538,10 +2544,14 @@ buildViz = function (d3) {
                             if(termColor[0] !== '#')
                                 termColor = '#' + termColor;
                         }
+                        var termSize = '12px';
+                        if (textSizeColumn !== undefined && datum.etc !== undefined && datum.etc[textSizeColumn] !== undefined) {
+                            termSize = datum.etc[textSizeColumn];
+                        }
                         var curWordPrinted = svg.append("text")
                             .attr("text-anchor", "start")
                             .attr('font-family', 'Helvetica, Arial, Sans-Serif')
-                            .attr('font-size', '12px')
+                            .attr('font-size', termSize)
                             .attr("fill", termColor)
                             .attr("x", xOffset == null ? word.node().getBBox().x : xOffset)
                             .attr("y", word.node().getBBox().y
@@ -2983,8 +2993,12 @@ buildViz = function (d3) {
                 } else if (unifiedContexts) {
                     fullData.docs.categories.forEach(function (x, i) {
                         if (docCounts[x] > 0) {
-                            var message = '<b>' + x + '</b>: ';
-                            message += 'document count: '
+                            var message = '';
+                            if (categoryColors !== null && categoryColors[x] !== undefined) {
+                                message += '<svg width="14" height="10">'
+                                +'<rect x="0" y="0" width="10" height="10" style="fill:'+categoryColors[x]+'" /></svg>'
+                            }
+                            message += '<b>' + x + '</b>: ' + 'document count: '
                                 + Number(docCounts[x]).toLocaleString('en')
                                 + '; word count: '
                                 + Number(wordCounts[x]).toLocaleString('en')

@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.19
+# Scattertext 0.1.20
 
 A tool for finding distinguishing terms in corpora and displaying them in an
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -562,7 +562,11 @@ interpretable, we'll display the per-category rank of each score in the `metadat
 displayed after a term is clicked.
 
 ```pydocstring
-term_ranks = np.argsort(np.argsort(-term_category_scores, axis=0), axis=0) + 1
+term_ranks = pd.DataFrame(
+    np.argsort(np.argsort(-term_category_scores, axis=0), axis=0) + 1,
+    columns=term_category_scores.columns,
+    index=term_category_scores.index)
+
 metadata_descriptions = {
     term: '<br/>' + '<br/>'.join(
         '<b>%s</b> TextRank score rank: %s/%s' % (cat, term_ranks.loc[term, cat], corpus.get_num_metadata())
@@ -1174,7 +1178,7 @@ terms strongly indicative of true positives and false positives to have a high o
 Note that tpr and fpr are scaled to between $[\alpha, 1-\alpha]$ where
 alpha is $\in [0, 1]$. In Forman (2008) and earlier literature $\alpha=0.0005$. In personal correspondence with Forman,
 he kindly suggested using $\frac{1.}{\mbox{minimum(positives, negatives)}}$. I have implemented this as
-$\alpha=\frac{1.}{\mbox{minimum documents in least frequent category}}$
+$\alpha=\frac{1.}{\mbox{minimum documents in the least frequent category}}$
 
 ```python
 corpus = (st.CorpusFromPandas(convention_df,
@@ -1469,6 +1473,10 @@ html = st.produce_scattertext_explorer(
     minimum_term_frequency=1,
     transform=st.Scalers.dense_rank,
     characteristic_scorer=st.DenseRankCharacteristicness(),
+  	term_ranker=st.termranking.AbsoluteFrequencyRanker,
+	term_scorer=st.ScaledFScorePresets(beta=1, one_to_neg_one=True)
+).encode('utf-8'))
+print('open ' + fn)
 
 ```
 
@@ -1915,6 +1923,7 @@ html_compact = st.produce_scattertext_explorer(
 ```
 
 [![demo_global_scale_log.png](https://raw.githubusercontent.com/JasonKessler/jasonkessler.github.io/master/demo_global_scale_log.png)](https://jasonkessler.github.io/demo_global_scale_log.html)
+
 
 ## Advanced uses
 

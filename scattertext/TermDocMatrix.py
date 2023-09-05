@@ -1,10 +1,12 @@
 import warnings
 from copy import copy
-from typing import Union, List, Callable
+from typing import Union, List, Callable, Optional
 
 import numpy as np
 import pandas as pd
 import scipy
+from scattertext.termranking import AbsoluteFrequencyRanker
+from scattertext.termranking.TermRanker import TermRanker
 from scipy.sparse import csr_matrix
 from scipy.stats import hmean, fisher_exact, rankdata, norm
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -77,6 +79,11 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         for i, category in self._category_idx_store.items():
             d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
         return pd.DataFrame(d).set_index('term')
+
+    def get_all_category_frequencies(self, non_text: bool = False, term_ranker: Optional[TermRanker] = None) -> pd.Series:
+        if term_ranker is None:
+            term_ranker = AbsoluteFrequencyRanker(term_doc_matrix=self).set_non_text(non_text=non_text)
+        return term_ranker.get_ranks().sum(axis=1)
 
     def get_freq_df(self, use_metadata=False, label_append=' freq'):
         if use_metadata:

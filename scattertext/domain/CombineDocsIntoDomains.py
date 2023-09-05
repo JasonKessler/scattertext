@@ -11,17 +11,19 @@ class CombineDocsIntoDomains(object):
 		'''
 		self.term_doc_matrix = term_doc_matrix
 
-	def get_new_term_doc_mat(self, doc_domains, non_text=False):
+	def get_new_term_doc_mat(self, doc_domains, non_text: bool =False):
 		'''
 		Combines documents together that are in the same domain
 
 		Parameters
 		----------
 		doc_domains : array-like
+		non_text: bool
 
 		Returns
 		-------
 		scipy.sparse.csr_matrix
+
 
 		'''
 		assert len(doc_domains) == self.term_doc_matrix.get_num_docs()

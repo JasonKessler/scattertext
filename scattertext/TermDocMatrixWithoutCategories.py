@@ -1,6 +1,6 @@
 import collections
 import re
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ from scattertext.frequencyreaders.DefaultBackgroundFrequencies import DefaultBac
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring import ScaledFScore
 from scattertext.indexstore.IndexStore import IndexStore
+from scattertext.termranking.TermRanker import TermRanker
 
 
 class TermDocMatrixWithoutCategories(object):
@@ -470,7 +471,6 @@ class TermDocMatrixWithoutCategories(object):
         # type: (sparse_matrix) -> sparse_matrix
         return (newX > 0).astype(np.int32)
 
-
     def remove_terms_by_indices(self, idx_to_delete_list, non_text=False):
         '''
         Parameters
@@ -599,8 +599,10 @@ class TermDocMatrixWithoutCategories(object):
 
     def get_term_index(self, term: str) -> int:
         return self._term_idx_store.getidxstrict(term)
+
     def get_metadata_index(self, term: str) -> int:
         return self._metadata_idx_store.getidxstrict(term)
+
     def get_metadata_from_index(self, index: int) -> str:
         return self._metadata_idx_store.getval(index)
 

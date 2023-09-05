@@ -21,7 +21,7 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
-                  'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'false']
+                  'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'undefined', 'null', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -588,9 +588,24 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({70: 'true'}))
 
+    def test_text_size_column(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       text_size_column='TextSize')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({71: '"TextSize"'}))
+
+
+    def test_category_colors(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       category_colors={'Democratic': '0000FF', 'Republican': 'FF0000'})
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({72: '{"Democratic": "0000FF", "Republican": "FF0000"}'}))
+
     def test_show_chart(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data,
                                        show_chart=True)
                   .call_build_visualization_in_javascript())
-        self.assertEqual(params, self.get_params({71: 'true'}))
+        self.assertEqual(params, self.get_params({73: 'true'}))

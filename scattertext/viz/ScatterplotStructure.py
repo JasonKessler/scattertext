@@ -82,6 +82,8 @@ class ScatterplotStructure(object):
             show_term_etc=True,
             sort_contexts_by_meta=False,
             suppress_circles=False,
+            text_size_column=None,
+            category_colors=None,
             show_chart=False
     ):
         '''
@@ -249,6 +251,10 @@ class ScatterplotStructure(object):
             Sort contexts by meta instead of match strength
         suppress_circles : bool, default False
             Label terms over circles and hide circles
+        text_size_column : str, default None
+            Font size of point column name. None of not exists
+        category_colors : optional[dict], default None
+            Dict mapping cateogry to #xxxxxx color
         show_chart : bool, default False
             Show line graph
         '''
@@ -324,6 +330,8 @@ class ScatterplotStructure(object):
         self._show_term_etc = show_term_etc
         self._sort_contexts_by_meta = sort_contexts_by_meta
         self._suppress_circles = suppress_circles
+        self._text_size_column = text_size_column
+        self._category_colors = category_colors
         self._show_chart = show_chart
 
     def call_build_visualization_in_javascript(self):
@@ -439,6 +447,8 @@ class ScatterplotStructure(object):
             js_bool(self._show_term_etc),
             js_bool(self._sort_contexts_by_meta),
             js_bool(self._suppress_circles),
+            js_default_string(self._text_size_column),
+            json_or_null(self._category_colors),
             js_bool(self._show_chart)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'

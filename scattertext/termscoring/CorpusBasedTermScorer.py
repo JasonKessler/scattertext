@@ -75,8 +75,11 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         return self
 
     def set_term_ranker(self, term_ranker) -> 'CorpusBasedTermScorer':
-        assert inherits_from(term_ranker, 'TermRanker')
-        self.term_ranker_ = term_ranker(self.corpus_)
+        if inherits_from(term_ranker, 'TermRanker'):
+            self.term_ranker_ = term_ranker(self.corpus_)
+        else:
+            self.term_ranker_ = term_ranker
+        assert isinstance(self.term_ranker_, TermRanker)
         if self.use_metadata_:
             self.term_ranker_.use_non_text_features()
         return self

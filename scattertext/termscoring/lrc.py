@@ -87,8 +87,8 @@ def lrc_score_df(f1: np.array,
         P2=f2 / n2,
         Score=lambda df: np.where(
             df.P1 > df.P2,
-            np.maximum(log2((n2 / n1) * df.lower / (1 - df.lower)), np.zeros(len(df))),
-            np.minimum(log2((n2 / n1) * df.upper / (1 - df.upper)), np.zeros(len(df)))
+            np.maximum(np.log2((n2 / n1) * df.lower / (1 - df.lower)), np.zeros(len(df))),
+            np.minimum(np.log2((n2 / n1) * df.upper / (1 - df.upper)), np.zeros(len(df)))
         )
     )
 
@@ -101,10 +101,6 @@ def pmax(a, b):
 def pmin(a, b):
     assert type(a) in [list, np.array]
     return pd.DataFrame({'A': a}).assign(B=b).min(axis=1).values
-
-
-def log2(x):
-    return np.log(x) / np.log(2)
 
 
 def safe_qbeta(p, shape1, shape2, lower_tail=True):

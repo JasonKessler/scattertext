@@ -1,4 +1,4 @@
-version = [0, 1, 19]
+version = [0, 1, 20]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -175,6 +175,7 @@ from scattertext.termscoring.lrc import LRC
 from scattertext.termscoring.g2 import G2
 from scattertext.contextual_embeddings.doc_splitter import SubwordSensitiveSentenceBoundedSplitter
 from scattertext.contextual_embeddings.corpus_runing_stats_factory import CorpusRunningStatsFactory
+from scattertext.categorytable.multi_category_association_scorer import MultiCategoryAssociationScorer
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -293,6 +294,7 @@ def produce_scattertext_explorer(corpus,
                                  color_score_column=None,
                                  label_priority_column=None,
                                  text_color_column=None,
+                                 text_size_column=None,
                                  suppress_text_column=None,
                                  background_color=None,
                                  left_list_column=None,
@@ -310,6 +312,7 @@ def produce_scattertext_explorer(corpus,
                                  show_chart=False,
                                  return_data=False,
                                  suppress_circles=False,
+                                 category_colors=None,
                                  return_scatterplot_structure=False):
     '''Returns html code of visualization.
 
@@ -597,6 +600,8 @@ def produce_scattertext_explorer(corpus,
         an html.
     return_scatterplot_structure : bool, default False
         return ScatterplotStructure instead of html
+    category_colors : dict, optional defaut None
+        Dictionary matching category names to colors
     Returns
     -------
     str
@@ -801,6 +806,7 @@ def produce_scattertext_explorer(corpus,
         background_labels=background_labels,
         label_priority_column=label_priority_column,
         text_color_column=text_color_column,
+        text_size_column=text_size_column,
         suppress_text_column=suppress_text_column,
         background_color=background_color,
         censor_point_column=censor_point_column,
@@ -813,6 +819,7 @@ def produce_scattertext_explorer(corpus,
         show_term_etc=show_term_etc,
         sort_contexts_by_meta=sort_contexts_by_meta,
         suppress_circles=suppress_circles,
+        category_colors=category_colors,
         show_chart=show_chart
     )
 

@@ -15,7 +15,6 @@ class NPMICompactor(object):
             term_ranker: type = AbsoluteFrequencyRanker,
             minimum_term_count: int = 2,
             number_terms_per_length: int = 2000,
-            non_text: bool = False,
             show_progress: bool = True,
     ):
         '''

@@ -3,6 +3,7 @@ from scattertext import SampleCorpora, RankDifference, dense_rank, PyTextRankPhr
 from scattertext import CorpusFromParsedDocuments
 import spacy
 import numpy as np
+import pandas as pd
 import pytextrank
 
 nlp = spacy.load('en_core_web_sm')
@@ -27,7 +28,10 @@ print('Aggregate PyTextRank phrase scores')
 term_category_scores = corpus.get_metadata_freq_df('')
 print(term_category_scores)
 
-term_ranks = np.argsort(np.argsort(-term_category_scores, axis=0), axis=0) + 1
+term_ranks = pd.DataFrame(
+    np.argsort(np.argsort(-term_category_scores, axis=0), axis=0) + 1,
+    columns=term_category_scores.columns,
+    index=term_category_scores.index)
 
 metadata_descriptions = {
     term: '<br/>' + '<br/>'.join(
