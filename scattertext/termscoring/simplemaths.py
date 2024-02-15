@@ -13,8 +13,6 @@ class SimpleMaths(CorpusBasedTermScorer):
 
     Adam Kilgariff. 2009. Simple Maths for Keywords. Proc. Corpus Linguistics.
     https://www.semanticscholar.org/paper/Simple-Maths-for-Keywords-Kilgarriff/69bd0a8a964e9b3b0b4394fe0d9d602d6a5a0453
-
-
     """
 
     def _set_scorer_args(self, **kwargs):
@@ -44,7 +42,6 @@ class SimpleMaths(CorpusBasedTermScorer):
         p2 = f2 / N2
         res = (self.coef_ * p1 + self.lambda_) / (self.coef_ * p2 + self.lambda_)
         if self.log_:
-            print("LOG")
             res = np.log(res) / np.log(2)
         return pd.Series(res, index=self._get_terms())
 

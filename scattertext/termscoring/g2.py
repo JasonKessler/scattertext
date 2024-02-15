@@ -71,7 +71,7 @@ class G2(CorpusBasedTermScorer):
             'P': chi2.sf(gsquare, df=1),
         })
         return df.assign(
-            CorrectedP = lambda df: fdrcorrection(pvals=df.P.values, alpha=0.05, method='indep')[1]
+            CorrectedP = lambda df: fdrcorrection(pvals=df.P.values, alpha=self.alpha_, method='indep')[1]
         )
 
 

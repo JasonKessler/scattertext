@@ -1,5 +1,6 @@
 import pkgutil
 
+from scattertext.Common import HELLO
 from scattertext.graphs.ComponentDiGraphHTMLRenderer import GraphRenderer
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils
 
@@ -61,19 +62,19 @@ class GraphStructure(object):
         ])
 
     def _replace_html_template(self, autocomplete_css, html_template, javascript_to_insert):
-        return (html_template
-                .replace('/***AUTOCOMPLETE CSS***/', autocomplete_css, 1)
-                .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
-                .replace('<!--D3URL-->', self.d3_url_struct.get_d3_url(), 1)
-                .replace('<!-- INSERT GRAPH -->', self.graph_renderer.get_graph())
-                .replace('<!--D3SCALECHROMATIC-->', self.d3_url_struct.get_d3_scale_chromatic_url())
-                .replace('<!--USEZOOM-->', self.get_zoom_script_import())
-                .replace('<!--FONTIMPORT-->', self.get_font_import())
-                .replace('http://', self.protocol + '://')
-                .replace('{width}', str(self.scatterplot_width))
-                .replace('{height}', str(self.scatterplot_height))
-                .replace('{cellheight}', str(int(self.scatterplot_height * (6/12))))
-                )
+        return HELLO + (html_template
+                        .replace('/***AUTOCOMPLETE CSS***/', autocomplete_css, 1)
+                        .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
+                        .replace('<!--D3URL-->', self.d3_url_struct.get_d3_url(), 1)
+                        .replace('<!-- INSERT GRAPH -->', self.graph_renderer.get_graph())
+                        .replace('<!--D3SCALECHROMATIC-->', self.d3_url_struct.get_d3_scale_chromatic_url())
+                        .replace('<!--USEZOOM-->', self.get_zoom_script_import())
+                        .replace('<!--FONTIMPORT-->', self.get_font_import())
+                        .replace('http://', self.protocol + '://')
+                        .replace('{width}', str(self.scatterplot_width))
+                        .replace('{height}', str(self.scatterplot_height))
+                        .replace('{cellheight}', str(int(self.scatterplot_height * (6/12))))
+                        )
 
     def get_font_import(self):
         return '''<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap" rel="stylesheet">'''

@@ -1,9 +1,8 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from scattertext.ParsedCorpus import ParsedCorpus
 from scipy import stats
 from scipy.sparse import vstack
 
@@ -15,6 +14,9 @@ try:
     from future.utils import with_metaclass
 except:
     from six import with_metaclass
+
+if TYPE_CHECKING:
+    from scattertext.ParsedCorpus import ParsedCorpus
 
 
 def sparse_var(X):
@@ -33,18 +35,20 @@ class NeedToSetCategoriesException(Exception):
 
 
 class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
-    def __init__(self, corpus: ParsedCorpus, *args, **kwargs):
+    def __init__(self, corpus: "ParsedCorpus", *args, **kwargs):
         self.corpus_ = corpus
         self.category_ids_ = corpus._y
         self.tdf_ = None
-        self.term_ranker_ = self._get_default_ranker(corpus)
-        self.use_metadata_ = False
+        self.use_metadata_ = kwargs.get('non_text', False) \
+                             or kwargs.get('use_metadata', False) \
+                             or kwargs.get('use_non_text_features', False)
         self.category_name_is_set_ = False
         self._doc_sizes = None
         self._set_scorer_args(**kwargs)
+        self.term_ranker_ = self._get_default_ranker(corpus)
 
     def _get_default_ranker(self, corpus):
-        return AbsoluteFrequencyRanker(corpus)
+        return AbsoluteFrequencyRanker(corpus).set_non_text(non_text=self.use_metadata_)
 
     @abstractmethod
     def _set_scorer_args(self, **kwargs):
@@ -71,7 +75,7 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
 
     def use_metadata(self) -> 'CorpusBasedTermScorer':
         self.use_metadata_ = True
-        self.term_ranker_.use_non_text_features()
+        self.term_ranker_ = self.term_ranker_.use_non_text_features()
         return self
 
     def set_term_ranker(self, term_ranker) -> 'CorpusBasedTermScorer':
@@ -79,7 +83,8 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
             self.term_ranker_ = term_ranker(self.corpus_)
         else:
             self.term_ranker_ = term_ranker
-        assert isinstance(self.term_ranker_, TermRanker)
+        # print('trerm ranker type', type(self.term_ranker_)
+        # assert inherits_from(self.term_ranker_, TermRanker)
         if self.use_metadata_:
             self.term_ranker_.use_non_text_features()
         return self
@@ -98,31 +103,32 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
         Specify the category to score. Optionally, score against a specific set of categories.
         '''
 
-        tdf = self.term_ranker_.set_non_text(non_text=self.use_metadata_).get_ranks()
-        d = {'cat': tdf[str(category_name) + ' freq']}
+        tdf = self.term_ranker_.set_non_text(non_text=self.use_metadata_).get_ranks(label_append='')
+        d = {'cat': tdf[str(category_name)]}
         if not_category_names == []:
-            not_category_names = [str(c) + ' freq' for c in self.corpus_.get_categories()
+            not_category_names = [str(c) for c in self.corpus_.get_categories()
                                   if c != category_name]
         else:
-            not_category_names = [str(c) + ' freq' for c in not_category_names]
+            not_category_names = [str(c) for c in not_category_names]
         d['ncat'] = tdf[not_category_names].sum(axis=1)
         if neutral_category_names == []:
-            # neutral_category_names = [c + ' freq' for c in self.corpus.get_categories()
+            # neutral_category_names = [c for c in self.corpus.get_categories()
             #                          if c != category_name and c not in not_category_names]
             pass
         else:
-            neutral_category_names = [str(c) + ' freq' for c in neutral_category_names]
+            neutral_category_names = [str(c) for c in neutral_category_names]
         for i, c in enumerate(neutral_category_names):
             d['neut%s' % (i)] = tdf[c]
         self.tdf_ = pd.DataFrame(d)
         self.category_name = category_name
-        self.not_category_names = [c[:-5] for c in not_category_names]
-        self.neutral_category_names = [c[:-5] for c in neutral_category_names]
+        self.not_category_names = [c for c in not_category_names]
+        self.neutral_category_names = [c for c in neutral_category_names]
         self.category_name_is_set_ = True
         return self
 
     def _get_X(self):
-        return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.term_ranker_.get_term_doc_mat()
+        # return self.corpus_.get_metadata_doc_mat() if self.use_metadata_ else self.term_ranker_.get_term_doc_mat()
+        return self.term_ranker_.get_term_doc_mat()
 
     def get_t_statistics(self):
         '''
@@ -201,8 +207,11 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     def _get_terms(self):
         return self.corpus_.get_terms(use_metadata=self.use_metadata_)
 
+    def _get_num_terms(self):
+        return self.corpus_.get_num_terms(non_text=self.use_metadata_)
+
     def get_score_df(self, label_append=''):
-        return self.get_term_ranker().get_ranks().assign(
+        return self.get_term_ranker().get_ranks(label_append=label_append).assign(
             Metric=self.get_scores()
         ).sort_values(
             by='Metric', ascending=True

@@ -8,7 +8,8 @@ def get_tooltip_js_function(plot_df, tooltip_column_names, tooltip_columns):
     tooltip_content = ''
     tooltip_column_names = {} if tooltip_column_names is None else tooltip_column_names
     for col in tooltip_columns:
-        assert col in plot_df
+        if col not in plot_df:
+            raise Exception(f"Column {col} not in plot_df")
         formatting = ''
         if pd.api.types.is_float(plot_df[col].iloc[0]):
             formatting = '.toFixed(6)'
@@ -24,7 +25,8 @@ def get_custom_term_info_js_function(plot_df, term_description_column_names, ter
     custom_term_html = ''
     term_description_column_names = {} if term_description_column_names is None else term_description_column_names
     for col in term_description_columns:
-        assert col in plot_df
+        if col not in plot_df:
+            raise Exception(f"Column {col} not in plot_df")
         formatting = '.toFixed(6)' if pd.api.types.is_float(plot_df[col].iloc[0]) else ''
         custom_term_html += '+ "<b>%s:</b> " + d.etc["%s"]%s + "<br />"' % (
             html.escape(term_description_column_names.get(col, col)),

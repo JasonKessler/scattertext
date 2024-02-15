@@ -22,9 +22,11 @@ priors = (st.PriorFactory(corpus,
     st.produce_frequency_explorer(
         corpus,
         category='fresh',
+        category_name='fresh',
         not_categories=['rotten'],
         metadata=df['movie_name'],
         term_scorer=LogOddsRatioInformativeDirichletPrior(priors, 1),
+        horizontal_line_y_position=0,
     ).encode('utf-8'))
 )
 print(fn)

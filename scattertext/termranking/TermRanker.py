@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod
+from typing import TYPE_CHECKING
 
-from scattertext import TermDocMatrix
+if TYPE_CHECKING:
+	from scattertext.TermDocMatrix import TermDocMatrix
 
 
 class TermRanker:
 	__metaclass__ = ABCMeta
 
-	def __init__(self, term_doc_matrix: TermDocMatrix):
+	def __init__(self, term_doc_matrix: "TermDocMatrix"):
 		'''Initialize TermRanker
 
 		Parameters
@@ -17,7 +19,7 @@ class TermRanker:
 		self._corpus = term_doc_matrix
 		self._use_non_text_features = False
 
-	def set_non_text(self, non_text: bool = False):
+	def set_non_text(self, non_text: bool = True):
 		self._use_non_text_features = non_text
 		return self
 
@@ -45,6 +47,9 @@ class TermRanker:
 			return self._corpus._mX
 		else:
 			return self._corpus._X
+
+	def get_terms(self):
+		return self._corpus.get_terms(use_metadata=self._use_non_text_features)
 
 	def _get_freq_df(self, X, label_append=' freq'):
 		if self._use_non_text_features:

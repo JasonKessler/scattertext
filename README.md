@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.1.20
+# Scattertext 0.2.0
 
 A tool for finding distinguishing terms in corpora and displaying them in an
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -30,10 +30,18 @@ corpus = st.CorpusFromParsedDocuments(
 
 html = st.produce_scattertext_explorer(
     corpus,
-    category='democrat', category_name='Democratic', not_category_name='Republican',
-    minimum_term_frequency=0, pmi_threshold_coefficient=0,
-    width_in_pixels=1000, metadata=corpus.get_df()['speaker'],
-    transform=st.Scalers.dense_rank
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    minimum_term_frequency=0, 
+    pmi_threshold_coefficient=0,
+    width_in_pixels=1000, 
+    metadata=corpus.get_df()['speaker'],
+    transform=st.Scalers.dense_rank,
+    include_gradient=True,
+    left_gradient_term='More Republican',
+    middle_gradient_term='Metric: Dense Rank Difference',
+    right_gradient_term='More Democratic',
 )
 open('./demo_compact.html', 'w').write(html)
 ```
@@ -67,11 +75,13 @@ Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
     - [Using Scattertext as a text analysis library: finding characteristic terms and their associations](#using-scattertext-as-a-text-analysis-library-finding-characteristic-terms-and-their-associations)
     - [Visualizing term associations](#visualizing-term-associations)
     - [Visualizing phrase associations](#visualizing-phrase-associations)
+    - [Adding color gradients to explain scores](#adding-color-gradients-to-explain-scores)
     - [Visualizing Empath topics and categories](#visualizing-empath-topics-and-categories)
     - [Visualizing the Moral Foundations 2.0 Dictionary](#visualizing-the-moral-foundations-2.0-dictionary)
     - [Ordering Terms by Corpus Characteristicness](#ordering-terms-by-corpus-characteristicness)
     - [Document-Based Scatterplots](#document-based-scatterplots)
-    - [Using Cohen's d or Hedge's r to visualize effect size](#using-cohens-d-or-hedges-r-to-visualize-effect-size)
+    - [Using Cohen's d or Hedge's g to visualize effect size](#using-cohens-d-or-hedges-g-to-visualize-effect-size)
+    - [Using Cliff's Delta to visualize effect size](#using-cliffs-delta-to-visualize-effect-size)
     - [Using Bi-Normal Separation (BNS) to score terms](#using-bi-normal-separation-bns-to-score-terms)
     - [Using correlations to explain classifiers](#using-correlations-to-explain-classifiers)
     - [Using Custom Background Word Frequencies](#using-custom-background-word-frequencies)
@@ -683,6 +693,74 @@ html = produce_scattertext_explorer(corpus,
 
 [![Phrasemachine.html](https://jasonkessler.github.io/PhraseMachine.png)](https://jasonkessler.github.io/Phrasemachine.html)
 
+### Adding color gradients to explain scores
+
+In Scattertext, various metrics, including term associations, are often shown through two ways. The first 
+and most important, is the position in the chart. The second is the color of a point or text. In Scattertext 0.2.21, a 
+way of visualizing the semantics of these scores is introduced: the gradient as key.  
+
+The gradient, by default, follows the `d3_color_scale` parameter of `produce_scattertext_explorer` which is 
+`d3.interpolateRdYlBu` by default. 
+
+The following additional parameters to `produce_scattertext_explorer` (and similar functions) allow for the manipulation
+gradients.
+
+- `include_gradient: bool` (`False` by default) is a flag that triggers the appearance of a gradient.
+- `left_gradient_term: Optional[str]` indicates the text written on the far-left side of the gradient. It is written in `gradient_text_color` and is `category_name` by default.
+- `right_gradient_term: Optional[str]` indicates the text written on the far-left side of the gradient. It is written in `gradient_text_color` and is `not_category_name` by default.
+- `middle_gradient_term: Optional[str]` indicates the text written in the middle of the gradient. It is the opposite color of the center gradient color and is empty by default.
+- `gradient_text_color: Optional[str]` indicates the fixed color of the text written on the gradient. If None, it defaults to opposite color of the gradient.
+- `left_text_color: Optional[str]` overrides `gradient_text_color` for the left gradient term
+- `middle_text_color: Optional[str]` overrides `gradient_text_color` for the middle gradient term
+- `right_text_color: Optional[str]` overrides `gradient_text_color` for the right gradient term
+- `gradient_colors: Optional[List[str]]` list of hex colors, including '#', (e.g., `['#0000ff', '#980067', '#cc3300', '#32cd00']`) which describe the gradient. If given, these override `d3_color_scale`.
+
+A straightforward example is as follows. Term colors are defined as a mapping between a term name and a `#RRGGBB` color 
+as part of the `term_color` parameter, and the color gradient is defined in `gradient_colors`. THe 
+
+```python
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+df = st.SampleCorpora.ConventionData2012.get_data().assign(
+    parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
+)
+
+corpus = st.CorpusFromParsedDocuments(
+    df, category_col='party', parsed_col='parse'
+).build().get_unigram_corpus().compact(st.AssociationCompactor(2000))
+
+html = st.produce_scattertext_explorer(
+    corpus,
+    category='democrat',
+    category_name='Democratic',
+    not_category_name='Republican',
+    minimum_term_frequency=0,
+    pmi_threshold_coefficient=0,
+    width_in_pixels=1000,
+    metadata=corpus.get_df()['speaker'],
+    transform=st.Scalers.dense_rank,
+    include_gradient=True,
+    left_gradient_term="More Democratic",
+    right_gradient_term="More Republican",
+    middle_gradient_term='Metric: Dense Rank Difference',
+    gradient_text_color="white",
+    term_colors=dict(zip(
+        corpus.get_terms(),
+        [
+            mpl.colors.to_hex(x) for x in plt.get_cmap('brg')(
+                st.Scalers.scale_center_zero_abs(
+                    st.RankDifferenceScorer(corpus).set_categories('democrat').get_scores()).values
+            )
+        ]
+    )),
+    gradient_colors=[mpl.colors.to_hex(x) for x in plt.get_cmap('brg')(np.arange(1., 0., -0.01))],
+)
+```
+[![demo_gradient.html](https://jasonkessler.github.io/gradient.png)](https://jasonkessler.github.io/demo_gradient.html)
+
+
 ### Visualizing Empath topics and categories
 
 In order to visualize Empath (Fast et al., 2016) topics and categories instead of terms, we'll need to
@@ -773,121 +851,6 @@ Here's the resulting chart.
 
 [![demo_general_inquirer_frequency_plot.html](https://jasonkessler.github.io/general_inquirer2.png)](https://jasonkessler.github.io/demo_general_inquirer_frequency_plot.html)
 
-### Visualizing the UCREL Semantic Analysis System
-
-The UCREL Semantic Analysis System (or USAS) [(Piao et al., 2015)](http://www.lrec-conf.org/proceedings/lrec2016/pdf/257_Paper.pdf) uses a set of lexico syntactic patterns to assign 
-word-part-of-speech pairs and multi-word lexico-syntactic patterns to a hierarchy of semantic tags. Note that
-the use of this feature invokes the 
-["Attribution-NonCommercial-ShareAlike 4.0 International" (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-License. 
-
-474 semantic tags, arranged hierarchically, are tagged using the patterns. See 
-[the USAS Guide](https://ucrel.lancs.ac.uk/usas/usas_guide.pdf) for an overview of the tag schema.
-The categories are organized into four 
-tiers and are coded by an initial letter followed by three arabic numerals.  I refer to tier 0, referring to most
-general tags containing no arabic numeral tier numbers, 
-such as "A" ("General & Abstract Terms") or "B" ("The Body & the Individual"), to 3, the most specific tag, 
-containing three arabic numerals-- for example, "A1.5.2" ("Usefulness"). Note that tiers 2 and 3 include tags from 
-tiers 1 and 2 which do not contain any more specific categories. 
-
-By tier, the qualifying tag counts are:
-
-| Tier | Count |
-|------|------:|
-| 0    |   21  |
-| 1    |   199 |
-| 2    |   419 |
-| 3    |   474 |
-
-The USAS tagger produces an `OffsetCorpus`, which stores character offsets of USAS semantic tags so that, when a 
-tag is clicked in the Scattertext interface, the surface forms of each tag's patterns will appear in contexts.
-
-We plot tier 1 semantic tags on the political Convention corpus, with the x-axis representing
-the tag frequency dense rank and the y-axis the Hedge's r effect size.   
-
-Under the hood, the English USAS data is stored in 'scattertext/data/enusaspats.json.gz' as spaCy 
-EntityRuler patterns. The semantic tag ids are cross-referenced to the tag names present in 
-'scattertext/data/en_usas_subcategories.tsv.gz'. I have made some corrections to the patterns file (originally from 
-the [[Multilingual-USAS Github repo]](https://github.com/UCREL/Multilingual-USAS/blob/master/English/mwe-en.tsv)). 
-A spaCy model, which needs to include POS tagging, is passed to the `USASOffsetGetter`. Using a larger model will
-likely result in better performance and definitely take longer to execute.
-
-```python
-import scattertext as st
-import spacy
-
-nlp = spacy.blank('en')
-nlp.add_pipe('sentencizer')
-
-convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
-    Party=lambda df: df.party.apply(lambda x: {'democrat': 'Dem', 'republican': 'GOP'}[x]),
-    Parse=lambda df: df.text.progress_apply(nlp)
-)
-
-usas_offset_getter = st.USASOffsetGetter(
-    tier=1,
-    nlp=spacy.load('en_core_web_sm', disable=['ner'])
-)
-
-corpus = st.OffsetCorpusFactory(
-    convention_df,
-    category_col='Party',
-    parsed_col='Parse',
-    feat_and_offset_getter=usas_offset_getter
-).build(show_progress=True)
-
-score_df = st.CohensD(
-    corpus
-).use_metadata().set_categories(
-    category_name='Dem'
-).get_scosre_df(
-)
-    
-plot_df = score_df.rename(
-  columns={'hedges_r': 'HedgesR', 'hedges_r_p': 'HedgesRPval'}
-).assign(
-    Frequency=lambda df: df.count1 + df.count2,
-    X=lambda df: df.Frequency,
-    Y=lambda df: df.HedgesR,
-    Xpos=lambda df: st.Scalers.dense_rank(df.X),
-    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
-    ColorScore=lambda df: df.Ypos,
-)
-
-html = st.dataframe_scattertext(
-    corpus,
-    plot_df=plot_df,
-    category='Dem',
-    category_name='Democratic',
-    not_category_name='Republican',
-    width_in_pixels=1000,
-    suppress_text_column='Display',
-    metadata=lambda c: c.get_df()['speaker'],
-    use_non_text_features=True,
-    ignore_categories=False,
-    use_offsets=True,
-    unified_context=False,
-    color_score_column='ColorScore',
-    left_list_column='ColorScore',
-    y_label='Hedges R',
-    x_label='Frequency Ranks',
-    y_axis_labels=[f'More Dem: r={plot_df.HedgesR.max():.3f}', '0', f'More Rep: r={-plot_df.HedgesR.max():.3f}'],
-    tooltip_columns=['Frequency', 'HedgesR'],
-    term_description_columns=['Frequency', 'HedgesR', 'HedgesRPval'],
-    header_names={'upper': 'Top Democratic', 'lower': 'Top Republican'},
-    term_word_in_term_description='Semantic Tag',    
-    horizontal_line_y_position=0    
-)
-```
-
-[![demo_usas_level_1.html](https://jasonkessler.github.io/usas-level-1.png)](https://jasonkessler.github.io/demo_usas_level_1.html)
-Click the image for the interactive version, generated by the code above.
-
-Clicking on a USAS tag can show us which phrases are recognized as surface forms. This also serves as a way of
-debugging and improving patterns.
-
-[![demo_usas_level_1.html](https://jasonkessler.github.io/usas-level-1-details.png)](https://jasonkessler.github.io/demo_usas_level_1.html)
-
 ### Visualizing the Moral Foundations 2.0 Dictionary
 
 The  [[Moral Foundations Theory]](https://moralfoundations.org/) proposes six psychological constructs
@@ -926,20 +889,20 @@ term_scorer = cohens_d_scorer.set_categories('democrat', ['republican']).term_sc
 
 Which yields the following data frame:
 
-|                  |   cohens_d |   cohens_d_se |   cohens_d_z |   cohens_d_p |   hedges_r |   hedges_r_se |   hedges_r_z |   hedges_r_p |         m1 |         m2 |   count1 |   count2 |   docs1 |   docs2 |
-|:-----------------|-----------:|--------------:|-------------:|-------------:|-----------:|--------------:|-------------:|-------------:|-----------:|-----------:|---------:|---------:|--------:|--------:|
-| care.virtue      |  0.662891  |      0.149425 |     4.43629  |  4.57621e-06 |  0.660257  |      0.159049 |     4.15129  |  1.65302e-05 | 0.195049   | 0.12164    |      760 |      379 |     115 |      54 |
-| care.vice        |  0.24435   |      0.146025 |     1.67335  |  0.0471292   |  0.243379  |      0.152654 |     1.59432  |  0.0554325   | 0.0580005  | 0.0428358  |      244 |      121 |      80 |      41 |
-| fairness.virtue  |  0.176794  |      0.145767 |     1.21286  |  0.112592    |  0.176092  |      0.152164 |     1.15725  |  0.123586    | 0.0502469  | 0.0403369  |      225 |      107 |      71 |      39 |
-| fairness.vice    |  0.0707162 |      0.145528 |     0.485928 |  0.313509    |  0.0704352 |      0.151711 |     0.464273 |  0.321226    | 0.00718627 | 0.00573227 |       32 |       14 |      21 |      10 |
-| authority.virtue | -0.0187793 |      0.145486 |    -0.12908  |  0.551353    | -0.0187047 |      0.15163  |    -0.123357 |  0.549088    | 0.358192   | 0.361191   |     1281 |      788 |     122 |      66 |
-| authority.vice   | -0.0354164 |      0.145494 |    -0.243422 |  0.596161    | -0.0352757 |      0.151646 |    -0.232619 |  0.591971    | 0.00353465 | 0.00390602 |       20 |       14 |      14 |      10 |
-| sanctity.virtue  | -0.512145  |      0.147848 |    -3.46399  |  0.999734    | -0.51011   |      0.156098 |    -3.26788  |  0.999458    | 0.0587987  | 0.101677   |      265 |      309 |      74 |      48 |    
-| sanctity.vice    | -0.108011  |      0.145589 |    -0.74189  |  0.770923    | -0.107582  |      0.151826 |    -0.708585 |  0.760709    | 0.00845048 | 0.0109339  |       35 |       28 |      23 |      20 |
-| loyalty.virtue   | -0.413696  |      0.147031 |    -2.81367  |  0.997551    | -0.412052  |      0.154558 |    -2.666    |  0.996162    | 0.259296   | 0.309776   |     1056 |      717 |     119 |      66 |
-| loyalty.vice     | -0.0854683 |      0.145549 |    -0.587213 |  0.72147     | -0.0851287 |      0.151751 |    -0.560978 |  0.712594    | 0.00124518 | 0.00197022 |        5 |        5 |       5 |       4 |
+|                  |   cohens_d |   cohens_d_se |   cohens_d_z |   cohens_d_p |   hedges_g | hedges_g_se | hedges_g_z |  hedges_g_p |         m1 |         m2 |   count1 |   count2 |   docs1 |   docs2 |
+|:-----------------|-----------:|--------------:|-------------:|-------------:|-----------:|------------:|-----------:|------------:|-----------:|-----------:|---------:|---------:|--------:|--------:|
+| care.virtue      |  0.662891  |      0.149425 |     4.43629  |  4.57621e-06 |   0.660257 |    0.159049 |    4.15129 | 1.65302e-05 | 0.195049   | 0.12164    |      760 |      379 |     115 |      54 |
+| care.vice        |  0.24435   |      0.146025 |     1.67335  |  0.0471292   |   0.243379 |    0.152654 |    1.59432 |   0.0554325 | 0.0580005  | 0.0428358  |      244 |      121 |      80 |      41 |
+| fairness.virtue  |  0.176794  |      0.145767 |     1.21286  |  0.112592    |   0.176092 |    0.152164 |    1.15725 |    0.123586 | 0.0502469  | 0.0403369  |      225 |      107 |      71 |      39 |
+| fairness.vice    |  0.0707162 |      0.145528 |     0.485928 |  0.313509    |  0.0704352 |    0.151711 |   0.464273 |    0.321226 | 0.00718627 | 0.00573227 |       32 |       14 |      21 |      10 |
+| authority.virtue | -0.0187793 |      0.145486 |    -0.12908  |  0.551353    | -0.0187047 |     0.15163 |  -0.123357 |    0.549088 | 0.358192   | 0.361191   |     1281 |      788 |     122 |      66 |
+| authority.vice   | -0.0354164 |      0.145494 |    -0.243422 |  0.596161    | -0.0352757 |    0.151646 |  -0.232619 |    0.591971 | 0.00353465 | 0.00390602 |       20 |       14 |      14 |      10 |
+| sanctity.virtue  | -0.512145  |      0.147848 |    -3.46399  |  0.999734    |   -0.51011 |    0.156098 |   -3.26788 |    0.999458 | 0.0587987  | 0.101677   |      265 |      309 |      74 |      48 |    
+| sanctity.vice    | -0.108011  |      0.145589 |    -0.74189  |  0.770923    |  -0.107582 |    0.151826 |  -0.708585 |    0.760709 | 0.00845048 | 0.0109339  |       35 |       28 |      23 |      20 |
+| loyalty.virtue   | -0.413696  |      0.147031 |    -2.81367  |  0.997551    |  -0.412052 |    0.154558 |     -2.666 |    0.996162 | 0.259296   | 0.309776   |     1056 |      717 |     119 |      66 |
+| loyalty.vice     | -0.0854683 |      0.145549 |    -0.587213 |  0.72147     | -0.0851287 |    0.151751 |  -0.560978 |    0.712594 | 0.00124518 | 0.00197022 |        5 |        5 |       5 |       4 |
 
-This data frame gives us Cohen's d scores (and their standard errors and z-scores), Hedge's r scores (ditto),
+This data frame gives us Cohen's d scores (and their standard errors and z-scores), Hedge's $g$ scores (ditto),
 the mean document-length normalized topic usage per category (where the in-focus category is m1 [in this case Democrats]
 and the out-of-focus is m2), the raw number of words used in for each topic (count1 and count2), and the number of
 documents
@@ -1066,15 +1029,15 @@ html = st.produce_pca_explorer(corpus,
 Click for an interactive version
 [![demo_pca_documents.html](https://jasonkessler.github.io/doc_pca.png)](https://jasonkessler.github.io/demo_pca_documents.html)
 
-### Using Cohen's d or Hedge's r to visualize effect size.
+### Using Cohen's d or Hedge's g to visualize effect size.
 
-Cohen's d is a popular metric used to measure effect size. The definitions of Cohen's d and Hedge's r
+Cohen's d is a popular metric used to measure effect size. The definitions of Cohen's d and Hedge's $g$
 from (Shinichi and Cuthill 2017) are implemented in Scattertext.
 
 ```python
->> > convention_df = st.SampleCorpora.ConventionData2012.get_data()
->> > corpus = (st.CorpusFromPandas(convention_df,
-                                   ...                               category_col='party',
+>>> convention_df = st.SampleCorpora.ConventionData2012.get_data()
+>>> corpus = (st.CorpusFromPandas(convention_df,
+...                               category_col='party',
                ...text_col='text',
                ...nlp=st.whitespace_nlp_with_sentences)
 ....build()
@@ -1090,10 +1053,10 @@ cohens_d
 cohens_d_se
 cohens_d_z
 cohens_d_p
-hedges_r
-hedges_r_se
-hedges_r_z
-hedges_r_p
+hedges_g
+hedges_g_se
+hedges_g_z
+hedges_g_p
 m1
 m2
 obama
@@ -1151,12 +1114,12 @@ Our calculation of Cohen's d is not directly based on term counts. Rather, we di
 total number
 of terms in the document before calculating the statistics.  `m1` and `m2` are, respectively the mean portions of words
 in speeches made by Democrats and Republicans that were the term in question. The effect size (`cohens_d`) is the
-difference between these means divided by the pooled standard standard deviation.  `cohens_d_se` is the standard error
+difference between these means divided by the pooled standard deviation.  `cohens_d_se` is the standard error
 of the statistic, while `cohens_d_z` and `cohens_d_p` are the Z-scores and p-values indicating the statistical
-significance of the effect. Corresponding columns are present for Hedge's r, and unbiased version of Cohen's d.
+significance of the effect. Corresponding columns are present for Hedge's $g$ a version of Cohen's d adjusted for data set size.
 
 ```python
->> > st.produce_frequency_explorer(
+>>> st.produce_frequency_explorer(
     corpus,
     category='democrat',
     category_name='Democratic',
@@ -1169,6 +1132,93 @@ significance of the effect. Corresponding columns are present for Hedge's r, and
 
 Click for an interactive version.
 [![demo_cohens_d.html](https://jasonkessler.github.io/cohen_d.png)](https://jasonkessler.github.io/demo_cohens_d.html)
+
+### Using Cliff's Delta to visualize effect size
+
+Cliff's Delta (Cliff 1993) uses a non-parametric approach to computing effect size. In our setting, the term's frequency 
+percentage of each document in the focus set is compared with that of the background set. For each pair of documents,
+a score of 1 is given if the focus document's frequency percentage is larger than the background, 0 if identical, and -1 
+if different. Note that this assumes document lengths are similarly distributed across the focus and background corpora.
+
+See [https://real-statistics.com/non-parametric-tests/mann-whitney-test/cliffs-delta/] for the formulas used in `CliffsDelta`.
+
+Below is an example of how to use `CliffsDelta` to find and plot term scores: 
+
+```python
+nlp = spacy.blank('en')
+nlp.add_pipe('sentencizer')
+convention_df = st.SampleCorpora.ConventionData2012.get_data().assign(
+   party = lambda df: df.party.apply(
+       lambda x: {'democrat': 'Dem', 'republican': 'Rep'}[x]),
+   SpacyParse=lambda df: df.text.progress_apply(nlp)
+)
+corpus = st.CorpusFromParsedDocuments(convention_df, category_col='party', parsed_col='SpacyParse').build(
+).remove_terms_used_in_less_than_num_docs(10)
+st.CliffsDelta(corpus).set_categories('Dem').get_score_df().sort_values(by='Dem', ascending=False).iloc[:10]
+```
+
+| term            |   Metric |    Stddev |   Low-5.0% CI |   High-5.0% CI |   TermCount1 |   TermCount2 |   DocCount1 |   DocCount2 |
+|:----------------|---------:|----------:|--------------:|---------------:|-------------:|-------------:|------------:|------------:|
+| obama           | 0.597191 | 0.0266606 |     -1.35507  |      -1.03477  |          537 |          165 |         113 |          40 |
+| president obama | 0.565903 | 0.0314348 |     -2.37978  |      -1.74131  |          351 |           78 |         100 |          30 |
+| president       | 0.426337 | 0.0293418 |      1.22784  |       0.909226 |          740 |          301 |         113 |          53 |
+| middle          | 0.417591 | 0.0267365 |      1.10791  |       0.840932 |          164 |           27 |          68 |          12 |
+| class           | 0.415373 | 0.0280622 |      1.09032  |       0.815649 |          161 |           25 |          69 |          14 |
+| barack          | 0.406997 | 0.0281692 |      1.00765  |       0.750963 |          202 |           46 |          76 |          16 |
+| barack obama    | 0.402562 | 0.027512  |      0.965359 |       0.723403 |          164 |           45 |          76 |          16 |
+| that 's         | 0.384085 | 0.0227344 |      0.809747 |       0.634705 |          236 |           91 |          89 |          31 |
+| obama .         | 0.356245 | 0.0237453 |      0.664688 |       0.509631 |           70 |            5 |          49 |           4 |
+| for             | 0.35526  | 0.0364138 |      0.70142  |       0.46487  |         1020 |          542 |         119 |          62 |
+
+
+We can elegantly display the Cliff's delta scores using `dataframe_scattertext`, and describe the point coloring scheme
+using the `include_gradient=True` parameter. We set the `left_gradient_term`, `middle_gradient_term`, and `right_gradient_term`
+parameters to strings which will appear in their corresonding values. 
+
+```python
+plot_df = st.CliffsDelta(
+    corpus
+).set_categories(
+    category_name='Dem'
+).get_score_df().rename(columns={'Metric': 'CliffsDelta'}).assign(
+    Frequency=lambda df: df.TermCount1 + df.TermCount1,
+    X=lambda df: df.Frequency,
+    Y=lambda df: df.CliffsDelta,
+    Xpos=lambda df: st.Scalers.dense_rank(df.X),
+    Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
+    ColorScore=lambda df: df.Ypos,
+)
+
+html = st.dataframe_scattertext(
+    corpus,
+    plot_df=plot_df,
+    category='Dem', 
+    category_name='Dem',
+    not_category_name='Rep',
+    width_in_pixels=1000, 
+    ignore_categories=False,
+    metadata=lambda corpus: corpus.get_df()['speaker'],
+    color_score_column='ColorScore',
+    left_list_column='ColorScore',
+    show_characteristic=False,
+    y_label="Cliff's Delta",
+    x_label='Frequency Ranks',
+    y_axis_labels=[f'More Rep: delta={plot_df.CliffsDelta.max():.3f}',
+                   '',
+                   f'More Dem: delta={-plot_df.CliffsDelta.max():.3f}'],
+    tooltip_columns=['Frequency', 'CliffsDelta'],
+    term_description_columns=['CliffsDelta', 'Stddev', 'Low-95.0% CI', 'High-95.0% CI'],
+    header_names={'upper': 'Top Dem', 'lower': 'Top Reps'},
+    horizontal_line_y_position=0,
+    include_gradient=True,
+    left_gradient_term='More Republican',
+    right_gradient_term='More Democratic',
+    middle_gradient_term="Metric: Cliff's Delta",
+)
+```
+
+[![demo_cliffs_delta.html](https://jasonkessler.github.io/cliffsdelta.png)](https://jasonkessler.github.io/demo_cliffs_delta.html)
+
 
 ### Using Bi-Normal Separation (BNS) to score terms
 
@@ -2990,7 +3040,7 @@ Ensuring Pandas 1.0 compatibility fixing Issue #51 and scikit-learn stopwords im
 
 * Added `alternative_term_func` to `produce_scattertext_explorer` which allows you to inject a function that activates
   when a term is clicked.
-* Fixed Cohen's d calculation, and added `HedgesR`, and unbiased version of Cohen's d which is a subclass of `CohensD`.
+* Fixed Cohen's d calculation, and added `HedgesG`, and unbiased version of Cohen's d which is a subclass of `CohensD`.
 * Added the `frequency_transform` parameter to `produce_frequency_explorer`. This defaults to a log transform, but
   allows you to use any way your heart desires to order terms along the x-axis.
 
@@ -3427,4 +3477,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
 * Piao, S. S., Bianchi, F., Dayrell, C., D’egidio, A., & Rayson, P. 2015. Development of the multilingual semantic 
   annotation system. In Proceedings of the 2015 Conference of the North American Chapter of the Association for 
   Computational Linguistics: Human Language Technologies (pp. 1268-1274).
-* 
+* Cliff, N. (1993). Dominance statistics: Ordinal analyses to answer ordinal questions. Psychological Bulletin, 114(3), 494–509. https://doi.org/10.1037/0033-2909.114.3.494

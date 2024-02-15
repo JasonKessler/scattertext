@@ -3,14 +3,17 @@ import pandas as pd
 
 
 class Lowess(object):
-    def __init__(self, frac=2.0/3.0, it=10):
+    def __init__(self, frac=2. / 3., it=10):
         self.points = None
         self.frac = frac
         self.it = it
 
     def fit(self, xdata, ydata):
         import statsmodels.api as sm
-        self.model = sm.nonparametric.lowess(ydata, xdata.T[0], frac=self.frac, it=self.it)
+        try:
+            self.model = sm.nonparametric.lowess(ydata, xdata.T[0], frac=self.frac, it=self.it)
+        except ValueError:
+            self.model = sm.nonparametric.lowess(ydata, xdata.T, frac=self.frac, it=self.it)
         return self
 
     def predict(self, x):

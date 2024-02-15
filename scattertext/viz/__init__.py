@@ -3,3 +3,4 @@ from .BasicHTMLFromScatterplotStructure import BasicHTMLFromScatterplotStructure
 from scattertext.viz.PairPlotFromScattertextStructure import PairPlotFromScatterplotStructure
 from .VizDataAdapter import VizDataAdapter
 from .HTMLSemioticSquareViz import HTMLSemioticSquareViz
+from . import util

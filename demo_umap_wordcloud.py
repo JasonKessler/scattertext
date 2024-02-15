@@ -1,5 +1,4 @@
 import re
-from bisect import bisect_left
 
 import numpy as np
 import pandas as pd
@@ -37,25 +36,6 @@ model = st.Word2VecFromParsedCorpus(
 embeddings = np.array([model.wv[w] for w in stoplist_corpus.get_terms()]).T
 projection_raw = umap.UMAP(min_dist=0.5, metric='cosine').fit_transform(embeddings.T)
 
-
-def get_ternary_colors(scores: np.array,
-                       negative_color="#d72d00",
-                       zero_color="#bdbdbd",
-                       positive_color="#2a3e63") -> np.array:
-    colors = np.array([zero_color] * len(scores))
-    colors[scores < 0] = negative_color
-    colors[scores > 0] = positive_color
-    return list(colors)
-
-
-def scale_font_size(scores: np.array, min_size=9, max_size=20) -> np.array:
-    bin_boundaries = np.histogram_bin_edges(
-        np.log(scores), bins=max_size - min_size
-    )
-    return pd.Series(scores).apply(np.log).apply(
-        lambda x: bisect_left(bin_boundaries, x) + min_size).values
-
-
 plot_df = pd.DataFrame({
     'term': stoplist_corpus.get_terms(),
     'X': projection_raw.T[0],
@@ -68,8 +48,11 @@ plot_df = pd.DataFrame({
         stoplist_corpus,
         conf_level=0.8
     ).set_categories('Positive', ['Negative']).get_scores(),
-    TextColor=lambda df: get_ternary_colors(df.LRC.values),
-    TextSize=lambda df: scale_font_size(df.Frequency, min_size=9, max_size=15),
+    TextColor=lambda df: st.get_ternary_colors(df.LRC.values,
+                                               negative_color="#d72d00",
+                                               zero_color="#bdbdbd",
+                                               positive_color="#2a3e63"),
+    TextSize=lambda df: st.scale_font_size(df.Frequency, min_size=9, max_size=15),
     LabelOrder=lambda df: np.abs(df.LRC)
 )
 

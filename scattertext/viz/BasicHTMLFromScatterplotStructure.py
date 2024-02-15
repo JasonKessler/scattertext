@@ -1,8 +1,9 @@
 import pkgutil
 from typing import Tuple
 
+from scattertext import __version__
 from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, \
-    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME
+    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME, HELLO
 from scattertext.viz.ScatterplotStructure import InvalidProtocolException
 
 
@@ -117,7 +118,8 @@ class BasicHTMLFromScatterplotStructure(object):
                          if html_base is None
                          else self._format_html_base(html_base))
         html_content = (
-            html_template
+                HELLO +
+                html_template
                 .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)
                 .replace('<!-- INSERT SEARCH FORM -->',
                          PackedDataUtils.full_content_of_default_search_form(search_input_id), 1)

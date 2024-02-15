@@ -59,9 +59,9 @@ class CohensD(CorpusBasedTermScorer, CohensDCalculator):
         return "Cohen's d"
 
 
-class HedgesR(CohensD):
+class HedgesG(CohensD):
     def get_scores(self, *args):
-        return self.get_score_df()['hedges_r']
+        return self.get_score_df()['hedges_g']
 
     def get_name(self):
-        return "Hedge's r"
+        return "Hedge's g"

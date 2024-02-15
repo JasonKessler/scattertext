@@ -13,6 +13,7 @@ function merge(ranges) { //via https://stackoverflow.com/questions/26390938/merg
     return result;
 }
 
+
 buildViz = function (d3) {
     return function (widthInPixels = 1000,
                      heightInPixels = 600,
@@ -87,8 +88,21 @@ buildViz = function (d3) {
                      suppressCircles = true,
                      textSizeColumn = undefined,
                      categoryColors = null,
+                     documentWord = "document",
+                     documentWordPlural = "documents",
+                     categoryOrder = null,
+                     includeGradient = false,
+                     leftGradientTerm = null,
+                     middleGradientTerm = null,
+                     rightGradientTerm = null,
+                     gradientTextColor = null,
+                     gradientColors = null,
                      showChart = true,
     ) {
+
+
+
+
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
                 term = '_' + term.substr(1, term.length - 1);
@@ -785,10 +799,10 @@ buildViz = function (d3) {
                                         let spanStart = Math.max(0, offsetStart - snippetPadding);
                                         let spanEnd = Math.min(offsetEnd + snippetPadding, text.length);
                                         let snippet = text.substr(spanStart, spanEnd - spanStart);
-                                        console.log("Snippet")
+                                        /*console.log("Snippet")
                                         console.log(snippet)
                                         console.log("curOffsets")
-                                        console.log(curOffsets)
+                                        console.log(curOffsets)*/
                                         curOffsets.reverse().forEach(
                                             function (offset) {
                                                 let curOffsetStart = offset[0] - spanStart;
@@ -923,16 +937,67 @@ buildViz = function (d3) {
             allContexts.forEach(function (singleDoc) {
                numMatches[singleDoc.docLabel] = (numMatches[singleDoc.docLabel] || 0) + 1;
             });
+            console.log("categoryColors")
+            console.log(categoryColors)
+
+            console.log("categoryOrder")
+            console.log(categoryOrder)
+            console.log('!== null')
+            console.log(categoryOrder !== null)
+            console.log(['A'] !== null)
+            console.log('=== null')
+            console.log(categoryOrder === null)
+            console.log(['A'] === null)
+            console.log('== null')
+            console.log(categoryOrder == null)
+            console.log(['A'] == null)
+            console.log('!== undefined')
+            console.log(categoryOrder !== undefined)
+            console.log(['A'] !== undefined)
+            console.log('=== undefined')
+
+            console.log(categoryOrder === undefined)
+            console.log(['A'] === undefined)
+            console.log('== undefined')
+
+            console.log(categoryOrder == undefined)
+            console.log(['A'] == undefined)
+            console.log('-00--')
+            console.log(['A'] === null)
+            console.log(['A'] == null)
+            console.log(['A'] !== undefined)
+            console.log(['A'] === undefined)
+            console.log(['A'] == undefined)
+
+            function getCategoryLabelIndex(key) {
+                if (categoryOrder === null)
+                    return null
+                return categoryOrder.indexOf(fullData.docs.categories[key])
+            }
+
             var docLabelCountsSorted = Object.keys(docLabelCounts).map(key => ({
                "label": fullData.docs.categories[key],
+               "labelIndex": getCategoryLabelIndex(key),
                "labelNum": key,
                "matches": numMatches[key] || 0,
                "overall": docLabelCounts[key],
                'percent': (numMatches[key] || 0) * 100. / docLabelCounts[key]
                })
-            ).sort(function (a, b) {
-               return a['label'] < b['label'] ? -1 : a['label'] > b['label'] ? 1 : 0
-            }).map((v, idx) => ({...v, idx: idx}));
+            )
+
+            console.log("docLabelCountsSorted"); console.log(docLabelCountsSorted)
+            if(sortDocLabelsByName || categoryOrder !== null) {
+                console.log("SORTING BY LABELS OR CATEGORY ORDER")
+                docLabelCountsSorted = docLabelCountsSorted.sort(function (a, b) {
+                   if(categoryOrder !== null) {
+                        return a['labelIndex'] < b['labelIndex'] ? -1 : a['labelIndex'] > b['labelIndex'] ? 1 : 0
+                   }
+
+                   return a['label'] < b['label'] ? -1 : a['label'] > b['label'] ? 1 : 0
+                })
+            }
+
+            docLabelCountsSorted = docLabelCountsSorted.map((v, idx) => ({...v, idx: idx}));
 
             var chartData = d3.entries(docLabelCountsSorted);
 
@@ -959,7 +1024,7 @@ buildViz = function (d3) {
                 .attr("y", -40)
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("% documents");
+                .text("% " + documentWordPlural);
 
 
             basesvg.
@@ -1076,7 +1141,7 @@ buildViz = function (d3) {
                     .attr('class', 'topic_preview')
                     .attr('text-align', "center")
                     .html(
-                        "Matched " + numMatches + " out of " + numDocs + ' documents: '
+                        "Matched " + numMatches + " out of " + numDocs + ' ' + documentWordPlural + ': '
                         + parseFloat(100 * parseInt(numMatches) / parseInt(numDocs)).toFixed(4) + '%'
                     );
 
@@ -1155,7 +1220,7 @@ buildViz = function (d3) {
                 }
 
                 function getCategoryStatsHTML(counts) {
-                    return counts.matches + " document"
+                    return counts.matches + " " + documentWord
                         + (counts.matches == 1 ? "" : "s") + " out of " + counts.overall + ': '
                         + counts['percent'].toFixed(2) + '%';
                 }
@@ -1352,7 +1417,7 @@ buildViz = function (d3) {
                     desc += '<div class=text_subhead>' + Math.round(ndocs) + ' per 1,000 docs</div>';
                 }
                 if (count == 0) {
-                    desc += '<u>Not found in any ' + name + ' documents.</u>';
+                    desc += '<u>Not found in any ' + name + ' ' + documentWord + 's.</u>';
                 } else {
                     if (!isNaN(Math.round(ndocs))) {
                         desc += '<u>Some of the ' + count + ' mentions:</u>';
@@ -1538,8 +1603,13 @@ buildViz = function (d3) {
 
 
                 // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
-                function escapeRegExp(string) {
-                    return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\,\\\^\$\|\'#?]/g, "\\$&");
+                function escapeRegExp(orig_str) {
+
+                    console.log("ESCAPING " + orig_str)
+                    //var str = orig_str.replace(/ [\-\[\]\/\{\}\(\)\*\+\?\.\,\\\^\$\|\'#?]/g, "\\s*\\$&");
+                    var escaped = orig_str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\,\\\^\$\|\'#?]/g, "\\$&");
+                    console.log("ESCAPED " + escaped);
+                    return escaped;
                     //return string.replace(/[\?#.*+^${}()|[\]\\]'\%/g, '\\$&'); // $& means the whole matched string
                 }
 
@@ -2518,6 +2588,31 @@ buildViz = function (d3) {
 
             if (horizontal_line_y_position !== null) {
                 console.log("Height"); console.log(height); console.log(margin)
+                var loOy = null, hiOy = null, loY = null, hiY = null;
+                for (i in fullData.data) {
+                    var curOy = fullData.data[i].oy;
+                    if (curOy < horizontal_line_y_position && (curOy > loOy || loOy === null)) {
+                        loOy = curOy;
+                        loY = fullData.data[i].y
+                    }
+                    if (curOy > horizontal_line_y_position && (curOy < hiOy || hiOy === null)) {
+                        hiOy = curOy;
+                        hiY = fullData.data[i].y
+                    }
+                }
+                horizontal_line_y_position_translated = loY + (hiY - loY) / 2.
+                if (loY === null) {
+                    horizontal_line_y_position_translated = 0;
+                }
+                var horizontal = svg.append("g")
+                        .attr("transform", "translate(0, " + y(horizontal_line_y_position_translated) + ")")
+                        .append("line")
+                        .attr("x2", width)
+                        .style("stroke-dasharray", "5,5")
+                        .style("stroke", "#cccccc")
+                        .style("stroke-width", "1px")
+                        .moveToBack();
+                /*
                 var horizontal = svg.append("g")
                     .append("line")
                     .attr("x1", 0)
@@ -2527,7 +2622,7 @@ buildViz = function (d3) {
                     .style("stroke-dasharray", "5,5")
                     .style("stroke", "#cccccc")
                     .style("stroke-width", "1px")
-                    .moveToBack();
+                    .moveToBack();*/
             }
 
             function showWordList(word, termDataList, xOffset = null) {
@@ -2604,9 +2699,7 @@ buildViz = function (d3) {
             function showAssociatedWordList(data, word, header, isUpperPane, xOffset, length = topTermsLength) {
                 var sortedData = null;
                 var sortingAlgo = pickTermSortingAlgorithm(isUpperPane);
-                console.log("showAssociatedWordList");
                 console.log(header);
-                console.log("WORD");
                 console.log(word)
                 sortedData = data.filter(term => (term.display === undefined || term.display === true)).sort(sortingAlgo);
                 if (wordVecMaxPValue) {
@@ -2821,7 +2914,6 @@ buildViz = function (d3) {
             if (labelPriorityColumn !== undefined && labelPriorityColumn !== null) {
                 labelPriorityFunction = (a, b) => b.etc[labelPriorityColumn] - a.etc[labelPriorityColumn];
             }
-
             labeledPoints = performPartialLabeling(
                 data,
                 labeledPoints,
@@ -2986,8 +3078,10 @@ buildViz = function (d3) {
                 if (ignoreCategories) {
                     var wordCount = getCorpusWordCounts();
                     messages.push(
-                        '<b>Document count: </b>' + fullData.docs.texts.length.toLocaleString('en') +
-                        '; <b>word count: </b>'
+                        '<b>' + documentWord.charAt(0).toUpperCase()
+                        + documentWord.substr(1).toLowerCase() + ' count: </b>'
+                        + fullData.docs.texts.length.toLocaleString('en') +
+                        '; <b>' + termWord.charAt(0).toUpperCase() + termWord.substr(1).toLowerCase +' count: </b>'
                         + wordCount['sums'].reduce((a, b) => a + b, 0).toLocaleString('en')
                     )
                 } else if (unifiedContexts) {
@@ -2995,13 +3089,20 @@ buildViz = function (d3) {
                         if (docCounts[x] > 0) {
                             var message = '';
                             if (categoryColors !== null && categoryColors[x] !== undefined) {
-                                message += '<svg width="14" height="10">'
-                                +'<rect x="0" y="0" width="10" height="10" style="fill:'+categoryColors[x]+'" /></svg>'
-                            }
-                            message += '<b>' + x + '</b>: ' + 'document count: '
+                                message += '<td><svg width="14" height="10">'
+                                + '<rect x="0" y="0" width="10" height="10" style="fill:'
+                                + categoryColors[x]+'" /></svg><b>' + x
+                                + '</b></td><td>' + '# ' +  documentWordPlural.charAt(0).toUpperCase()
+                                + documentWordPlural.substr(1).toLowerCase() + ': '
                                 + Number(docCounts[x]).toLocaleString('en')
-                                + '; word count: '
-                                + Number(wordCounts[x]).toLocaleString('en')
+                                + '; # ' + termWord + 's: '
+                                + Number(wordCounts[x]).toLocaleString('en')+ '</td>'
+                            } else {
+                                message += '<b>' + x + '</b>: ' + documentWord + ' count: '
+                                    + Number(docCounts[x]).toLocaleString('en')
+                                    + '; '+ termWord +' count: '
+                                    + Number(wordCounts[x]).toLocaleString('en')
+                            }
                             messages.push(message);
                         }
                     });
@@ -3011,7 +3112,7 @@ buildViz = function (d3) {
                         fullData.info.neutral_category_name,
                         fullData.info.extra_category_name].forEach(function (x, i) {
                         if (docCounts[x] > 0) {
-                            messages.push('<b>' + x + '</b> document count: '
+                            messages.push('<b>' + x + '</b> ' + documentWord +' count: '
                                 + Number(docCounts[x]).toLocaleString('en')
                                 + '; word count: '
                                 + Number(wordCounts[x]).toLocaleString('en'));
@@ -3020,10 +3121,23 @@ buildViz = function (d3) {
                 }
 
                 if (showCorpusStats) {
-                    d3.select('#' + divName + '-' + 'corpus-stats')
-                        .style('width', width + margin.left + margin.right + 200)
-                        .append('div')
-                        .html(messages.join('<br />'));
+                    var corpusStatDivHtml = ''
+                    if (categoryColors !== null) {
+                        corpusStatDivHtml = '<table border=1 frame=hsides rules=rows cellspacing=1 cellpadding=1><tr>' + messages.join('</tr><tr>') + '</tr></table>'
+                    } else {
+                        corpusStatDivHtml = messages.join('<br />')
+                    }
+                    var corpusStatDiv = d3.select('#' + divName + '-' + 'corpus-stats')
+                    if (categoryColors !== null) {
+                        //
+                    } else {
+                        //d3.select('#scattertext').style('display', 'block')
+                        corpusStatDiv = corpusStatDiv
+                            .style('width', width + margin.left + margin.right + 200)
+                            .style('display', 'block')
+
+                    }
+                    corpusStatDiv = corpusStatDiv.append('div').html(corpusStatDivHtml);
                 }
             }
 
@@ -3587,6 +3701,112 @@ buildViz = function (d3) {
             this.populateCorpusStats();
         };
 
+        function addGradient() {
+
+            if (leftGradientTerm === null) {
+                leftGradientTerm = fullData.info.category_name
+            }
+
+            if (rightGradientTerm === null) {
+                rightGradientTerm = fullData.info.not_category_name
+            }
+
+
+            const steps = 100;
+            if(gradientColors === null) {
+                gradientColors = d3.range(0, (1 + 1 / steps), 1 / (steps - 1)).map(function(d) {
+                  return color(d)
+                });
+            }
+
+            const gradsvg = d3.select('#' + divName + '-title-div')
+              .append('svg')
+              .lower()
+              .attr('width', width + margin.left + margin.right - padding.left )
+              .attr('height', 20);
+
+            const grad = gradsvg.append('defs')
+              .append('linearGradient')
+              .attr('id', 'grad')
+              .attr('x1', '0%')
+              .attr('x2', '100%')
+              .attr('y1', '0%')
+              .attr('y2', '0%');
+
+            function invertHex(hex) { // Adapted from https://stackoverflow.com/questions/35969656/how-can-i-generate-the-opposite-color-according-to-current-color
+                if(hex.startsWith("rgb(")) {
+                    inverted = 'rgb(' + hex.substr(4, hex.length - 5).split(', ').map(
+                        x => 255 - Number.parseInt(x)).join(', ') + ')'
+                } else if (hex.startsWith('#')) {
+                    inverted = '#' + (Number(`0x1${hex.substr(1)}`) ^ 0xFFFFFF).toString(16).toLowerCase()
+                } else {
+                    inverted = (Number(`0x1${hex}`) ^ 0xFFFFFF).toString(16).toLowerCase()
+                }
+                return inverted;
+            }
+
+            grad.selectAll('stop')
+              .data(gradientColors)
+              .enter()
+              .append('stop')
+              .style('stop-color', function(d) { return d; })
+              .attr('offset', function(d,i){
+                return 100 * (i / (gradientColors.length - 1)) + '%';
+              })
+
+            gradsvg.append('rect')
+              .attr('x', padding.left)
+              .attr('y', 0)
+              .attr('width', width + margin.left + margin.right - padding.left) // width - padding.left
+              .attr('height', 20)
+              .style('fill', 'url(#grad)');
+
+            var leftTermColor = gradientTextColor;
+            if(leftTermColor === null) {
+                leftTermColor = invertHex(gradientColors[0]);
+            }
+
+            const leftGradText = gradsvg.append("text")
+                .attr("text-anchor", "start")
+                .attr("x", padding.left + 5)
+                .attr("y", 20 - 4)
+                .attr("fill", leftTermColor)
+                .attr("font-size", "13px")
+                .text(leftGradientTerm);
+
+            if (middleGradientTerm !== null) {
+
+                var middleTermColor = gradientTextColor;
+                if(middleTermColor === null) {
+                    middleTermColor = invertHex(gradientColors[Number.parseInt(gradientColors.length/2)])
+                }
+
+                gradsvg.append("text")
+                    .attr("text-anchor", "middle")
+                    .attr("x", padding.left + (width/2))
+                    .attr("y", 20 - 4)
+                    .attr("fill", middleTermColor)
+                    .attr("mix-blend-mode", "difference")
+                    .attr("font-size", "13px")
+                    .text(middleGradientTerm)
+            }
+
+            var rightTermColor = gradientTextColor;
+            if(rightTermColor === null) {
+                rightTermColor = invertHex(gradientColors[gradientColors.length - 1]);
+            }
+
+            gradsvg.append("text")
+                .attr("text-anchor", "end")
+                .attr("x", width + margin.left + margin.right - padding.left - 5)
+                .attr("y", 20 - 4)
+                .attr("fill", rightTermColor)
+                .attr("font-size", "13px")
+                .text(rightGradientTerm);
+
+        }
+        if(includeGradient)
+            addGradient();
         return plotInterface
     };
 }(d3);

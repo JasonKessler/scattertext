@@ -16,7 +16,7 @@ class SubwordSensitiveSentenceBoundedSplitter:
     def __init__(
             self,
             tokenizer: Callable,
-            max_segment_size: int = 510,
+            max_segment_size: int = 100,
     ):
         self.tokenizer = tokenizer
         self.max_segment_size = max_segment_size
@@ -32,21 +32,52 @@ class SubwordSensitiveSentenceBoundedSplitter:
             columns=['SubStart', 'SubEnd'],
         ).assign(
             InputId=subtokens['input_ids'],
-            SentenceId=lambda df: (sent_interval_index.get_indexer(df.SubStart)
-                                   + sent_interval_index.get_indexer(df.SubEnd)) / 2
+            StartSentenceId=lambda df: sent_interval_index.get_indexer(df.SubStart),
+            EndSentenceId=lambda df: sent_interval_index.get_indexer(df.SubEnd),
+            SentenceId=lambda df: np.where((df.StartSentenceId > 0) & (df.EndSentenceId > 0),
+                                           (df.EndSentenceId + df.StartSentenceId) / 2,
+                                           df[['StartSentenceId', 'EndSentenceId']].max(axis=1)),
+
         )[
             lambda df: (df.SubStart < df.SubEnd) & (df.SentenceId > -1)
         ].assign(
-            Count=lambda df: np.arange(len(df)) + 1
+            Count=lambda df: np.arange(len(df)) + 1,
         )
 
-        segment_df = self.__segments_from_subtoken_offsets(subtoken_offset_df)
+        subtoken_subsent_offset_df = pd.merge(
+            subtoken_offset_df,
+            pd.DataFrame({'SentStart': subtoken_offset_df.groupby('SentenceId').Count.min()}),
+            left_on='SentenceId',
+            right_index=True
+        ).assign(
+            SentCount=lambda df: df.Count - df.SentStart,
+            SubsentenceId=lambda df: df.SentCount // self.max_segment_size
+        )
 
-        sents = list(doc.sents)
-        for _, row in segment_df.iterrows():
-            start_i = sents[row.SentenceId[0]][0].i
-            end_i = sents[row.SentenceId[-1]][-1].i + 1
-            yield doc[start_i:end_i]
+        def limit_cum_sum_slow(x):
+            if limit_cum_sum.prev + x > self.max_segment_size:
+                limit_cum_sum.prev = x
+                limit_cum_sum.segment_num += 1
+                return limit_cum_sum.segment_num
+            limit_cum_sum.prev += x
+            return limit_cum_sum.segment_num
+
+        limit_cum_sum = np.vectorize(limit_cum_sum_slow, otypes=[np.int32])
+        limit_cum_sum.prev = 0
+        limit_cum_sum.segment_num = 0
+
+        for _, segment_df in subtoken_subsent_offset_df.groupby(
+                ['SentenceId', 'SubsentenceId']
+        ).apply(lambda gdf: pd.Series({
+            'Length': len(gdf),
+            'Start': gdf.SubStart.min(),
+            'End': gdf.SubEnd.max(),
+        })).assign(
+            Supersegment=lambda df: limit_cum_sum(df.Length.values)
+        ).reset_index().groupby('Supersegment'):
+            if segment_df.Length.sum() > self.max_segment_size:
+                import pdb; pdb.set_trace()
+            yield doc.char_span(segment_df.Start.min(), segment_df.End.max(), alignment_mode='expand')
 
     def __segments_from_subtoken_offsets(self, subtoken_offset_df: pd.DataFrame) -> pd.DataFrame:
         return subtoken_offset_df[
@@ -70,6 +101,7 @@ class SubwordSensitiveSentenceBoundedSplitter:
         current_segment = 0
         tokens_in_segment = 0
         sentence_segments = []
+
         for sentence_id, row in sentence_df.iterrows():
             if inside_segment:
                 tokens_in_segment += row.Length
@@ -85,9 +117,9 @@ class SubwordSensitiveSentenceBoundedSplitter:
                 if tokens_in_segment + potential_additional_tokens <= self.max_segment_size:
                     tokens_in_segment += potential_additional_tokens
                 else:
-                    tokens_in_segment = 0
+                    tokens_in_segment = potential_additional_tokens
                     current_segment += 1
                     inside_segment = False
             else:
                 sentence_segments.append(current_segment if inside_segment else -1)
-        return sentence_segments
+        return pd.DataFrame(sentence_segments)

@@ -86,3 +86,9 @@ class IndexStore(object):
 		'''
 		return self._i2val
 
+	def rename(self, old_to_new_vals: List[Tuple[str, str]]):
+		for old_val, new_val in old_to_new_vals:
+			cur_i = self._val2i[old_val]
+			del self._val2i[old_val]
+			self._val2i[new_val] = cur_i
+			self._i2val[cur_i] = new_val

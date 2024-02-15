@@ -1,4 +1,8 @@
+import numpy as np
+
 import scattertext as st
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 df = st.SampleCorpora.ConventionData2012.get_data().assign(
     parse=lambda df: df.text.apply(st.whitespace_nlp_with_sentences)
@@ -18,13 +22,21 @@ html = st.produce_scattertext_explorer(
     width_in_pixels=1000,
     metadata=corpus.get_df()['speaker'],
     transform=st.Scalers.dense_rank,
-    max_overlapping=3,
     include_gradient=True,
-    left_gradient_term='More Republican',
-    right_gradient_term='More Democratic',
+    left_gradient_term="More Democratic",
+    right_gradient_term="More Republican",
     middle_gradient_term='Metric: Dense Rank Difference',
-    d3_scale_chromatic_url='scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js',
-    d3_url='scattertext/data/viz/scripts/d3.min.js'
+    gradient_text_color="white",
+    term_colors=dict(zip(
+        corpus.get_terms(),
+        [
+            mpl.colors.to_hex(x) for x in plt.get_cmap('brg')(
+                st.Scalers.scale_center_zero_abs(
+                    st.RankDifferenceScorer(corpus).set_categories('democrat').get_scores()).values
+            )
+        ]
+    )),
+    gradient_colors=[mpl.colors.to_hex(x) for x in plt.get_cmap('brg')(np.arange(1., 0., -0.01))],
 )
-open('./demo_compact.html', 'w').write(html)
-print('open ./demo_compact.html in Chrome')
+open('./demo_gradient.html', 'w').write(html)
+print('open ./demo_gradient.html in Chrome')

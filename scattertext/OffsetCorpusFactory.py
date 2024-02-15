@@ -38,7 +38,7 @@ class OffsetCorpusFactory(object):
         self._term_offsets = {}
         self._metadata_offsets = {}
 
-    def build(self, show_progress=False):
+    def build(self, show_progress:bool=False) -> OffsetCorpus:
         '''Constructs the term doc matrix.
 
         Returns

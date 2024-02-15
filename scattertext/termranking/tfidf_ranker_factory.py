@@ -30,7 +30,7 @@ def tfidf_ranker_factory(
                     in enumerate(self._corpus.get_categories())
                 }
             )
-            rank_df['term'] = self._corpus.get_terms()
+            rank_df['term'] = self.get_terms()
             return rank_df.set_index('term')
 
     return tfidf_ranker

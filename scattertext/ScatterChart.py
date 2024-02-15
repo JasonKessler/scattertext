@@ -5,11 +5,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 from scattertext.PValGetter import get_p_vals
-from scattertext.Scalers import percentile_min, percentile_alphabetical
+from scattertext.Scalers import percentile_alphabetical
 from scattertext.ScatterChartData import ScatterChartData
 from scattertext.TermDocMatrixFilter import filter_bigrams_by_pmis, \
     filter_out_unigrams_that_only_occur_in_one_bigram
-from scattertext.termscoring import ScaledFScore
 from scattertext.termscoring.RankDifference import RankDifference
 from scattertext.termscoring.CornerScore import CornerScore
 

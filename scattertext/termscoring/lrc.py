@@ -52,6 +52,17 @@ class LRC(CorpusBasedTermScorer):
 
         return pd.Series(scores, index=self._get_terms())
 
+    def get_score_df(self, *args) -> pd.DataFrame:
+        n1, n2, f1, f2 = self._get_ns_and_fs(args)
+
+        return lrc_df(f1=f1,
+                      f2=f2,
+                      n1=n1,
+                      n2=n2,
+                      conf_level=self.conf_level_,
+                      correct=self.correct_,
+                      alternative=self.alternative_)
+
     def get_name(self):
         return 'LRC'
 
@@ -63,6 +74,22 @@ def lrc(f1: np.array,
         conf_level: float = 0.95,
         correct: bool = True,
         alternative: str = 'two sided') -> np.array:
+    return lrc_df(f1=f1,
+                  f2=f2,
+                  n1=n1,
+                  n2=n2,
+                  conf_level=conf_level,
+                  correct=correct,
+                  alternative=alternative).Score.values
+
+
+def lrc_df(f1: np.array,
+           f2: np.array,
+           n1: Union[int, np.array],
+           n2: Union[int, np.array],
+           conf_level: float = 0.95,
+           correct: bool = True,
+           alternative: str = 'two sided') -> np.array:
     assert len(f1) == len(f2)
     assert np.all(f1 + f2 >= 1)
     score_df = lrc_score_df(f1=f1,
@@ -72,7 +99,7 @@ def lrc(f1: np.array,
                             conf_level=conf_level,
                             correct=correct,
                             alternative=alternative)
-    return score_df.Score.values
+    return score_df
 
 
 def lrc_score_df(f1: np.array,
@@ -82,7 +109,13 @@ def lrc_score_df(f1: np.array,
                  conf_level: float = 0.95,
                  correct: bool = True,
                  alternative: str = 'two sided') -> pd.DataFrame:
-    return binom_confint(k=f1, n=f1 + f2, conf_level=conf_level, correct=correct, alternative=alternative).assign(
+    return binom_confint(
+        k=f1,
+        n=f1 + f2,
+        conf_level=conf_level,
+        correct=correct,
+        alternative=alternative
+    ).assign(
         P1=f1 / n1,
         P2=f2 / n2,
         Score=lambda df: np.where(

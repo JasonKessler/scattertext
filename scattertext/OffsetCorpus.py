@@ -1,4 +1,7 @@
 from copy import copy
+from typing import List, Tuple, Self, Dict
+
+from scattertext.TermDocMatrixWithoutCategories import MetadataReplacementRetentionPolicy
 from scattertext.ParsedCorpus import ParsedCorpus
 
 
@@ -85,6 +88,48 @@ class OffsetCorpus(ParsedCorpus):
         if new_metadata_idx_store is not None:
             metadata_offsets = {k: metadata_offsets[k] for k in new_metadata_idx_store.values()}
         return metadata_offsets, term_offsets
+
+    def rename_metadata(
+            self,
+            old_to_new_vals: List[Tuple[str, str]],
+            policy: MetadataReplacementRetentionPolicy = MetadataReplacementRetentionPolicy.KEEP_ONLY_NEW
+    ) -> Self:
+        new_mX, new_metadata_idx_store = self._remap_metadata(old_to_new_vals, policy=policy)
+        new_metadata_offsets = self._remap_offsets(old_to_new_vals, policy)
+
+        return self._make_new_term_doc_matrix(
+            new_X=self._X,
+            new_mX=new_mX,
+            new_y=self._y,
+            new_term_idx_store=self._term_idx_store,
+            new_category_idx_store=self._category_idx_store,
+            new_metadata_idx_store=new_metadata_idx_store,
+            new_y_mask=self._y == self._y,
+            new_metadata_offsets=new_metadata_offsets
+        )
+
+    def _remap_offsets(
+            self,
+            old_to_new_vals: List[Tuple[str, str]],
+            policy: MetadataReplacementRetentionPolicy = MetadataReplacementRetentionPolicy.KEEP_ONLY_NEW
+    ) -> Dict[str, Dict[int, List[Tuple[int, int]]]]:
+        old_to_new_df = self._get_old_to_new_metadata_mapping_df(old_to_new_vals)
+        keep_vals = self._get_metadata_mapped_values_to_keep(old_to_new_df)
+        new_metadata_offsets = {}
+        for new_val, new_df in old_to_new_df.groupby('New'):
+            new_count_offsets = {}
+            for old in new_df.Old.values:
+                old_offsets = self._metadata_offsets.get(old, [])
+                for doc_id, offsets in old_offsets.items():
+                    new_count_offsets.setdefault(doc_id, []).extend(offsets)
+            new_metadata_offsets[new_val] = new_count_offsets
+            if policy.value == MetadataReplacementRetentionPolicy.KEEP_UNMODIFIED.value:
+                for keep_val in keep_vals:
+                    new_metadata_offsets[keep_val] = self._metadata_offsets[keep_val]
+            elif policy.value == MetadataReplacementRetentionPolicy.KEEP_ALL.value:
+                for val in self.get_metadata():
+                    new_metadata_offsets[val] = self._metadata_offsets[val]
+        return new_metadata_offsets
 
     def use_categories_as_metadata_and_replace_terms(self):
         '''

@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ class Coordinates:
         self.y = y
 
 
-def scale_jointly(x, y):
+def scale_jointly(x: List[float], y: List[float]) -> Coordinates:
     x, y = np.array(x), np.array(y)
     global_max, global_min = max(x.max(), y.max()), min(x.min(), y.min())
     x_scaled = np.zeros(len(x), dtype=float)
@@ -27,6 +27,15 @@ def scale_jointly(x, y):
     y_scaled[y < 0] = -(y[y < 0] / global_min)
     y_scaled[y > 0] = (y[y > 0] / global_max)
     return Coordinates((x_scaled + 1) / 2, (y_scaled + 1) / 2)
+
+
+def scale_jointly_positive(x: List[float], y: List[float]) -> Coordinates:
+    x, y = np.array(x), np.array(y)
+    global_max, global_min = max(x.max(), y.max()), min(x.min(), y.min())
+    x_scaled = (x - global_min) / (global_max - global_min)
+    y_scaled = (y - global_min) / (global_max - global_min)
+
+    return Coordinates(x=x_scaled, y=y_scaled)
 
 
 def rotate_degrees(x, y, degrees):
@@ -185,9 +194,12 @@ def percentile(vec, terms=None, other_vec=None):
     return scale_0_to_1(vec_ss)
 
 
-def dense_rank(vec, terms=None, other_vec=None):
-    vec_ss = rankdata(vec, method='dense') * (1. / len(vec))
-    return scale_0_to_1(vec_ss)
+def dense_rank(vec: np.array, terms=None, other_vec=None) -> np.array:
+    ranks = rankdata(vec, method='dense') - 1
+    if ranks.max() == 0:
+        return np.ones(len(vec)) * 0.5
+    return ranks / ranks.max()
+
 
 def get_scaler_name(scaler: Callable) -> str:
     if scaler == dense_rank:
@@ -244,7 +256,10 @@ def stretch_neg1_to_1(vec):
 
 
 def scale_0_to_1(vec_ss):
-    vec_ss = (vec_ss - vec_ss.min()) * 1. / (vec_ss.max() - vec_ss.min())
+    if vec_ss.min() == vec_ss.max():
+        return np.ones(len(vec_ss))
+    my_vec_ss = np.nan_to_num(vec_ss, nan=0.)
+    vec_ss = (my_vec_ss - vec_ss.min()) * 1. / (my_vec_ss.max() - my_vec_ss.min())
     return vec_ss
 
 

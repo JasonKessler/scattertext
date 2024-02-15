@@ -41,7 +41,7 @@ class TestCSRMatrixFactory(TestCase):
 			np.array([[4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3.1]]),
 			mat.todense())
 
-		mat = mat_factory.get_csr_matrix(dtype=np.bool)
+		mat = mat_factory.get_csr_matrix(dtype=bool)
 		self.assertEqual(type(mat), csr_matrix)
 		np.testing.assert_array_almost_equal(
 			np.array([[1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1]]),

@@ -1,9 +1,11 @@
-from typing import Optional, Callable, List
+from typing import Optional, Callable, List, Union
 
 import numpy as np
 import pandas as pd
+from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
+
 from scattertext.termranking import AbsoluteFrequencyRanker
-from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse import csc_matrix, csr_matrix, vstack, hstack
 from sklearn.preprocessing import StandardScaler
 
 from scattertext.smoothing.lowess import Lowess
@@ -14,21 +16,30 @@ from scattertext.TermDocMatrix import TermDocMatrix
 class Dispersion(object):
     def __init__(
             self,
-            corpus=None,
-            term_doc_mat=None,
+            corpus: Optional[TermDocMatrixWithoutCategories] = None,
+            term_doc_mat: Optional[np.matrix] = None,
             non_text=False,
-            use_categories=False,
+            use_categories_as_documents=False,
             tqdm=None,
             regressor=None,
-            term_ranker: Optional[TermRanker]=None,
+            term_ranker: Optional[TermRanker] = None,
+            vocabulary: Optional[List[str]] = None,
+            add_smoothing_part: bool = False
     ):
         """
+        corpus, Optional ]TermDocMatrix type-object; if not present, pass an argument to the `term_doc_mat` parameter
+        term_doc_mat, Optional[np.matrix]; use this term doc matrix
+        non_text bool, default False; use metadata features
+        use_categories_as_document, bool, default False; use categories in lieu of documents
+        add_smoothing_part: add a part containing one of every terms
+
         From https://www.researchgate.net/publication/332120488_Analyzing_dispersion
         Stefan Th. Gries. Analyzing dispersion. April 2019. Practical handbook of corpus linguistics. Springer.
 
         Parts are considered documents, unless use_categories is True. Then categories are treated as parts.
 
         Term ranker is acttive is use_categories is True
+
         """
 
         '''
@@ -45,19 +56,31 @@ class Dispersion(object):
         (4) f = 15 (the overall frequency of a in the corpus)
         (5) v = (1, 2, 3, 4, 5) (the frequencies of a in each corpus part 1-n)
         (6) p = (1/9, 2/10, 3/10, 4/10, 5 /11) (the percentages a makes up of each corpus part 1-n)
+        
+        Adapted from Burch: y is percentage of tokens which are a terms in a part   
         '''
         self.corpus = None
         self.use_metadata = non_text
         if corpus is None and term_doc_mat is None:
             raise Exception("Required non-None argument for corpus or term_doc_mat.")
-        X = self.__get_X(corpus, non_text, term_doc_mat, term_ranker, use_categories)
+        self.absent_vocab = []
+        X = self.__get_X(corpus, non_text, term_doc_mat, term_ranker    , use_categories_as_documents)
+        if corpus:
+            if vocabulary is not None:
+                self.absent_vocab = [v for v in vocabulary if v not in set(corpus.get_terms(use_metadata=non_text))]
+            if self.absent_vocab:
+                X = hstack([X, np.zeros((X.shape[0], len(self.absent_vocab)))])
+
+        if add_smoothing_part:
+            X = vstack([X, np.ones((1, X.shape[1]))])
+
         part_sizes = X.sum(axis=1)
         self.l = X.sum().sum()
         self.n = X.shape[0]
         self.f = X.sum(axis=0)
-        self.v = X
-        self.p = X.multiply(csc_matrix(1. / X.sum(axis=1)))
-        self.s = part_sizes / self.l
+        self.term_part_counts = X  # v in Griess
+        self.p_term_part = X.multiply(csc_matrix(1. / X.sum(axis=1)))
+        self.prob_part = part_sizes / self.l  # s in gries
         self.tqdm = tqdm
         self.regressor = Lowess() if regressor is None else regressor
 
@@ -72,9 +95,10 @@ class Dispersion(object):
 
                 term_ranker = term_ranker(term_doc_matrix=corpus).set_non_text(non_text=non_text)
                 return csr_matrix(term_ranker.get_ranks('').values.T)
-                #return term_ranker.get_ranks('').values
+                # return term_ranker.get_ranks('').values
             else:
-                return corpus.get_term_doc_mat(non_text=non_text)
+                X = corpus.get_term_doc_mat(non_text=non_text)
+                return X
                 # if non_text:
                 # if use_categories is False:
                 # X = corpus.get_metadata_doc_mat()
@@ -86,14 +110,15 @@ class Dispersion(object):
                 # else:
                 # X = csr_matrix(corpus.get_term_freq_df().values.T)
         raise Exception()
+
     def dispersion_range(self):
         """
-        range: number of parts containing a = 5
+        range: number of parts containing a
         """
-        return (self.v > 0).sum(axis=0).A1
+        return (self.term_part_counts > 0).sum(axis=0).A1
 
     def sd_population(self):
-        return np.sqrt(StandardScaler(with_mean=False).fit(self.v).var_)
+        return np.sqrt(StandardScaler(with_mean=False).fit(self.term_part_counts).var_)
 
     def vc(self):
         """
@@ -102,7 +127,7 @@ class Dispersion(object):
         coefficient (vc, see (9)); the normalization consists of dividing sdpopulation by the mean frequency
         of the element in the corpus parts f/n:
         """
-        ss = StandardScaler(with_mean=False).fit(self.v)
+        ss = StandardScaler(with_mean=False).fit(self.term_part_counts)
         return np.sqrt(ss.var_) / ss.mean_
 
     def jullands_d(self):
@@ -116,7 +141,7 @@ class Dispersion(object):
         part is made up by the element in question, i.e. 1/9, 2/10, 3/10, 4/10, 5/11, see (6) above), which is what
         corrects for differently large corpus parts:
         """
-        ss = StandardScaler(with_mean=False).fit(self.p)
+        ss = StandardScaler(with_mean=False).fit(self.p_term_part)
         return 1 - (np.sqrt(ss.var_) / ss.mean_) / np.sqrt(self.n - 1)
 
     def rosengrens(self):
@@ -129,7 +154,7 @@ class Dispersion(object):
         one takes the square root, and those are summed up, that sum is squared, and divided
         by the overall frequency of the element in question in the corpus (f)'''
 
-        vs = self.v.multiply(self.s)
+        vs = self.term_part_counts.multiply(self.prob_part)
         return np.power(np.sqrt(vs).sum(axis=0).A1, 2) * 1. / self.get_frequency()
 
     def dp(self):
@@ -147,11 +172,11 @@ class Dispersion(object):
         of those and multiplies by 0.5; the normalization then consists of dividing this values
         by the theoretically maximum value of DP given the number of corpus parts (in a
         way reminiscent of (11)'''
-        return np.sum(np.abs(self.v.multiply(1. / self.get_frequency()) - self.s),
+        return np.sum(np.abs(self.term_part_counts.multiply(1. / self.get_frequency()) - self.prob_part),
                       axis=0).A1 / 2
 
     def dp_norm(self):
-        return self.dp() / (1 - self.s.min())
+        return self.dp() / (1 - self.prob_part.min())
 
     def kl_divergence(self):
         '''
@@ -163,8 +188,8 @@ class Dispersion(object):
         all the occurrences of a across all corpus parts, i.e. v/f) is from another (e.g., the
         corpus part sizes s); the KL-divergence is computed as shown in (14) (with log2s of 167
         0 defined as 0):'''
-        vf = self.v.multiply(1. / self.f)
-        vfs = vf.multiply(1. / self.s)
+        vf = self.term_part_counts.multiply(1. / self.f)
+        vfs = vf.multiply(1. / self.prob_part)
         vfs.data = np.log(vfs.data) / np.log(2)
         return np.sum(vf.multiply(vfs), axis=0).A1
 
@@ -183,17 +208,17 @@ class Dispersion(object):
 
         constant = 1. / (n * (n - 1) / 2)
 
-        it = range(self.v.shape[1])
+        ym = self.get_pct_of_term_in_part()
+
+        it = range(self.term_part_counts.shape[1])
         if self.tqdm is not None:
             it = self.tqdm(it)
 
         da = []
         for word_i in it:
-            v_word_id = self.v.T[word_i]
-            if type(v_word_id) != np.ndarray:
-                y = v_word_id.todense().A1
-            else:
-                y = v_word_id
+            y = ym.T[word_i]
+            if type(y) != np.ndarray:
+                y = y.todense().A1
             yt = np.tile(y, (n, 1))
             pairs_sum = np.sum(np.abs(yt - yt.T)) / 2
             da_score = 1 - pairs_sum * constant / (2 * y.mean())
@@ -203,7 +228,16 @@ class Dispersion(object):
         da_vec[da_vec < 0] = 0  # correct for floating point issues
         return da_vec
 
-    def get_df(self, terms=None, include_da=False):
+    def get_pct_of_term_in_part(self) -> csr_matrix:
+        # return burch's y
+        # see https://stackoverflow.com/questions/49254111/row-division-in-scipy-sparse-matrix
+        C = self.term_part_counts
+        D = self.term_part_counts.sum(axis=1).A1
+        r, c = C.nonzero()
+        rD_sp = csr_matrix(((1.0 / D)[r], (r, c)), shape=(C.shape))
+        return C.multiply(rD_sp)
+
+    def get_df(self, terms=None, include_da=False, no_freq_metrics: Optional[List] = None):
         if terms is None and self.corpus is not None:
             terms = self.get_names()
 
@@ -222,19 +256,32 @@ class Dispersion(object):
         if include_da:
             df_content['DA'] = self.da()
         if terms is None:
-            df = pd.DataFrame(df_content)
+            dispersion_df = pd.DataFrame(df_content)
         else:
-            df = pd.DataFrame(df_content, index=terms)
-        return df
+            dispersion_df = pd.DataFrame(df_content, index=terms)
+
+        if no_freq_metrics is not None:
+            for metric in no_freq_metrics:
+                dispersion_df = pd.merge(
+                    dispersion_df,
+                    dispersion_df.groupby('Frequency').apply(
+                        lambda gdf: pd.Series({'Low': gdf[metric].min(), "Sup": gdf[metric].max()})
+                    ),
+                    left_on='Frequency',
+                    right_index=True
+                ).assign(**{
+                    metric + '-nofreq': lambda df: ((df[metric] - df.Low) / (df.Sup - df.Low)).fillna(0.5)
+                })
+        return dispersion_df[lambda df: [c for c in df if c not in ['Low', 'Sups']]]
 
     def get_names(self):
-        return self.corpus.get_metadata() if self.use_metadata else self.corpus.get_terms()
+        return self.corpus.get_terms(use_metadata=self.use_metadata) + self.absent_vocab
 
     def get_adjusted_metric(self, metric=None, freq=None):
         '''
         Returns the difference between DA and the Lowess estimate of DP from frequency
 
-        :param metiric: Optional[np.array], metric to analyze, defaults to DP
+        :param metric: Optional[np.array], metric to analyze, defaults to DP
 
         :param freq: Optional[np.array], Word frequencies
         :return: np.array, frequency-adjusted metric
@@ -251,11 +298,14 @@ class Dispersion(object):
         freq_est_metric = self.__fit_predict(freq, metric)
         return observed - freq_est_metric
 
-    def get_adjusted_metric_df(self, metric=None, freq=None):
+    def get_adjusted_metric_df(
+            self,
+            metric: Optional[Union[str, np.array]] = None,
+            freq: Optional[np.array] = None):
         '''
         Returns the difference between the metric and the Lowess estimate of metric from frequency
 
-        :param metiric: Optional[np.array], metric to analyze, defaults to DP
+        :param metric: Optional[np.array], metric to analyze, defaults to DP
 
         :param freq: Optional[np.array], Word frequencies
         :return: np.array, frequency-adjusted metric
@@ -278,9 +328,11 @@ class Dispersion(object):
             'Residual': adjusted_metric
         }, index=self.get_names())
 
-    def __fit_predict(self, freq: np.array, metric: np.array) -> np.array:
-        regressor = self.regressor.fit(freq.reshape(-1, 1), metric)
-        pred = regressor.predict(freq.reshape(-1, 1))
+    def __fit_predict(self, freq: np.array, metric: np.array, regressor: Optional[object] = None) -> np.array:
+        if regressor is None:
+            regressor = self.regressor
+        fit_regressor = self.regressor.fit(freq.reshape(-1, 1), metric)
+        pred = fit_regressor.predict(freq.reshape(-1, 1))
         freq_est_metric = pred.T[0]
         return freq_est_metric
 
@@ -294,14 +346,18 @@ def get_category_dispersion(
         corpus: TermDocMatrix,
         metric: str,
         corpus_to_parts: Optional[Callable[['TermDocMatrix'], List]] = None,
+        include_residual: bool = False,
+        include_residual_regressor: Optional[object] = None,
         non_text: bool = False
 ) -> pd.DataFrame:
     """
 
     :param corpus:  TermDocMatrix to process
-    :param metric: a metric present in Dispersion.get_df. May be DA.
+    :param metric: a metric present in Dispersion.get_df. May be "DA".
     :param corpus_to_parts: Optional function which takes a TermDocMatrix and returns a list of parts of each doc. None indicates each doc is a separate part.
     :param non_text: Use non text features. False by default
+    :param include_residual: Include the residual
+    :param include_residual_regressor: Use a regressor for the residual computation
     :return: Dataframe giving category-specific features
     """
     data = {}
@@ -309,11 +365,19 @@ def get_category_dispersion(
         category_corpus = corpus.remove_categories([c for c in corpus.get_categories() if c != category])
         if corpus_to_parts is not None:
             category_corpus = category_corpus.recategorize(corpus_to_parts)
-        dispersion_df = Dispersion(
+        dispersion = Dispersion(
             category_corpus,
             non_text=non_text,
-            use_categories=corpus_to_parts is not None,
-        ).get_df(include_da=metric == 'DA')
+            use_categories_as_documents=corpus_to_parts is not None,
+            vocabulary=corpus.get_terms(use_metadata=non_text), # this may be correct !!!
+            add_smoothing_part=True
+        )
+
+        dispersion_df = dispersion.get_df(include_da=metric == 'DA')
         data[category + '_Frequency'] = dispersion_df.Frequency
         data[category + '_' + metric] = dispersion_df[metric]
-    return pd.DataFrame(data).fillna(0)
+        if include_residual:
+            residual_df = dispersion.get_adjusted_metric_df(metric=metric)
+            data[f'{category}_{metric}_Residual'] = residual_df['Residual']
+            data[f'{category}_{metric}_Estimate'] = residual_df['Estimate']
+    return pd.DataFrame(data)

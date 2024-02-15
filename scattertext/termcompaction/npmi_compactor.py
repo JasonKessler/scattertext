@@ -1,11 +1,12 @@
+from typing import Optional, Callable, List
+
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-from scattertext.termranking.TermRanker import TermRanker
-
 tqdm.pandas()
 
+from scattertext.termranking.TermRanker import TermRanker
 from scattertext.termranking.AbsoluteFrequencyRanker import AbsoluteFrequencyRanker
 
 
@@ -15,7 +16,9 @@ class NPMICompactor(object):
             term_ranker: type = AbsoluteFrequencyRanker,
             minimum_term_count: int = 2,
             number_terms_per_length: int = 2000,
-            show_progress: bool = True,
+            token_split_function: Optional[Callable[[str], List[str]]] = None,
+            token_join_function: Optional[Callable[[List[str]], str]] = None,
+            show_progress: bool = True
     ):
         '''
 
@@ -28,14 +31,21 @@ class NPMICompactor(object):
         number_terms_per_length : int
             Select X top PMI terms per ngram length
             Default 2000
+        token_split_function: Optional[Callable[[str], List[str]]] = None
+            Splits a term into ngrams, default lambda x: x.split()
+        token_join_function: Optional[Callable[[List[str]], str]] = None
+            Joins a sequence of tokens int a string, opposite of split function, default lambda x: x.join(' ')
         show_progress : bool
             Shows TQDM for PMI filtering
+
 
         '''
         self.term_ranker = term_ranker
         self.minimum_term_count = minimum_term_count
         self.number_terms_per_length = number_terms_per_length
         self.show_progress = show_progress
+        self.token_split_function = (lambda x: x.split()) if token_split_function is None else token_split_function
+        self.token_join_function = (lambda x: ' '.join(x)) if token_join_function is None else token_join_function
 
     def compact(self, term_doc_matrix, non_text=False):
         '''
@@ -66,7 +76,7 @@ class NPMICompactor(object):
         return term_doc_matrix.remove_terms(
             terms_to_remove, non_text
         ).remove_infrequent_words(
-            self.minimum_term_count-1, term_ranker=self.term_ranker, non_text=non_text
+            self.minimum_term_count - 1, term_ranker=self.term_ranker, non_text=non_text
         )
 
     def get_pmi_df(self, term_doc_matrix, non_text: bool = False):
@@ -100,11 +110,12 @@ class NPMICompactor(object):
         }).groupby('Len').sum()['Freq'])
 
         backoff = freqs.mean()
+
         def prob(ngram):
             if len(ngram) == 0:
                 return 1
 
-            joined_ngram = ' '.join(ngram)
+            joined_ngram = self.token_join_function(ngram)
             if joined_ngram in freqs:
                 return freqs.loc[joined_ngram] / (wc[len(ngram)] - len(ngram) + 1)
 
@@ -121,10 +132,11 @@ class NPMICompactor(object):
         ).rename(
             columns={'term': 'Term'}
         ).assign(
-            Len=lambda df: df.Term.apply(lambda x: len(x.split())),
+            Len=lambda df: df.Term.apply(lambda x: len(self.token_split_function(x))),
         )[lambda df: df.Len > 1].assign(
-            WholeProb=lambda df: apply(df.Term)(lambda x: prob(x.split())),
-            UniProb=lambda df: apply(df.Term)(lambda x: np.exp(sum(np.log(prob([tok])) for tok in x.split()))),
+            WholeProb=lambda df: apply(df.Term)(lambda x: prob(self.token_split_function(x))),
+            UniProb=lambda df: apply(df.Term)(
+                lambda x: np.exp(sum(np.log(prob([tok])) for tok in self.token_split_function(x)))),
             PMI=lambda df: np.log(df.WholeProb) - np.log(df.UniProb),
             NPMI=lambda df: -df.PMI / np.log(df.WholeProb)
         )

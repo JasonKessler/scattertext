@@ -15,7 +15,7 @@ class TestRelativeEntropy(TestCase):
 	def test_get_scores(self):
 		result = RelativeEntropy(self.corpus).set_categories('hamlet').get_scores()
 		self.assertEquals(type(result), pd.Series)
-		np.testing.assert_array_equal(pd.np.array(result.index), self.corpus.get_terms())
+		np.testing.assert_array_equal(np.array(result.index), self.corpus.get_terms())
 
 	def test_get_name(self):
 		self.assertEquals(RelativeEntropy(self.corpus).set_categories('hamlet').get_name(), 'Frankhauser Relative Entropy')

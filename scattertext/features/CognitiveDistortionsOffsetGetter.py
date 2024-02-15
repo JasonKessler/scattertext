@@ -4,7 +4,7 @@ Johan Bollen, Marijn ten Thij, Fritz Breithaupt, Alexander T. J. Barron, Lauren 
 Marten Scheffer. Historical language records reveal a surge of cognitive distortions in recent decades.
 Proceedings of the National Academy of Sciences Jul 2021, 118 (30) e2102061118; DOI: 10.1073/pnas.210206111
 '''
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
 
@@ -116,10 +116,10 @@ class LexiconFeatAndOffsetGetter(FeatAndOffsetGetter):
             for topic, term_sequences in lexicons.items()
         })
 
-    def get_term_offsets(self, doc):
+    def get_term_offsets(self, doc) -> List[Tuple[str, List[Tuple[int, int]]]]:
         return []
 
-    def get_metadata_offsets(self, doc):
+    def get_metadata_offsets(self, doc) -> List[Tuple[str, List[Tuple[int, int]]]]:
         text = str(doc)
         offset_tokens = {}
         for topic, start_index, end_index in self.keyword_processor.extract_keywords(text, span_info=True):

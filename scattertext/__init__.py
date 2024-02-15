@@ -1,4 +1,5 @@
-version = [0, 1, 20]
+import logging
+version = [0, 2, 0]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -29,7 +30,7 @@ from scattertext.CategoryColorAssigner import CategoryColorAssigner
 from scattertext.representations.EmbeddingsResolver import EmbeddingsResolver
 from scattertext.termcompaction.AssociationCompactor import AssociationCompactor, TermCategoryRanker, \
     AssociationCompactorByRank, JSDCompactor
-from scattertext.termscoring.CohensD import CohensD, HedgesR
+from scattertext.termscoring.CohensD import CohensD, HedgesG
 from scattertext.termscoring.MannWhitneyU import MannWhitneyU
 from scattertext.diachronic.BubbleDiachronicVisualization import BubbleDiachronicVisualization
 from scattertext.diachronic.DiachronicTermMiner import DiachronicTermMiner
@@ -140,7 +141,6 @@ from scattertext.categorytable.category_table_maker import CategoryTableMaker
 from scattertext.features.CognitiveDistortionsOffsetGetter import LexiconFeatAndOffsetGetter, \
     COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS
 from scattertext.termscoring.LogOddsRatio import LogOddsRatio, LogOddsRatioScorer
-from scattertext.features.usas_offset_getter import USASOffsetGetter
 from scattertext.termscoring.RankDifferenceScorer import RankDifferenceScorer
 from scattertext.categorygrouping.characteristic_grouper import CharacteristicGrouper
 from scattertext.termscoring.Productivity import ProductivityScorer, whole_corpus_productivity_scores
@@ -160,7 +160,8 @@ from scattertext.all_category_scorers.gmean_l2_freq_associator import AllCategor
 from scattertext.all_category_scorers.all_category_scorer import AllCategoryScorer
 from scattertext.categorygrouping.rank_embedder import RankEmbedder
 from scattertext.termcompaction.ngram_percentage_compactor import NgramPercentageCompactor
-from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
+from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories, \
+    MetadataReplacementRetentionPolicy
 from scattertext.termranking.TermRanker import TermRanker
 from scattertext.continuous.trend_plot import TrendPlotSettings, DispersionPlotSettings, CorrelationPlotSettings, \
     TimePlotSettings, TimePlotPositioner
@@ -176,6 +177,12 @@ from scattertext.termscoring.g2 import G2
 from scattertext.contextual_embeddings.doc_splitter import SubwordSensitiveSentenceBoundedSplitter
 from scattertext.contextual_embeddings.corpus_runing_stats_factory import CorpusRunningStatsFactory
 from scattertext.categorytable.multi_category_association_scorer import MultiCategoryAssociationScorer
+from scattertext.termranking.dispersion_ranker import dispersion_ranker_factory
+from scattertext.termranking.tfidf_ranker_factory import tfidf_ranker_factory
+from scattertext.viz.util import scale_font_size, get_ternary_colors
+from scattertext.features.roget_offset_getter import RogetOffsetGetter
+from scattertext.termscoring.cliffsdelta import CliffsDelta
+
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -184,136 +191,145 @@ def cognitive_distortions_offset_getter_factory():
     return LexiconFeatAndOffsetGetter(COGNITIVE_DISTORTIONS_LEXICON, COGNITIVE_DISTORTIONS_DEFINITIONS)
 
 
-def produce_scattertext_explorer(corpus,
-                                 category,
-                                 category_name=None,
-                                 not_category_name=None,
-                                 protocol='https',
-                                 pmi_threshold_coefficient=DEFAULT_MINIMUM_TERM_FREQUENCY,
-                                 minimum_term_frequency=DEFAULT_PMI_THRESHOLD_COEFFICIENT,
-                                 minimum_not_category_term_frequency=0,
-                                 max_terms=None,
-                                 filter_unigrams=False,
-                                 height_in_pixels=None,
-                                 width_in_pixels=None,
-                                 max_snippets=None,
-                                 max_docs_per_category=None,
-                                 metadata=None,
-                                 scores=None,
-                                 x_coords=None,
-                                 y_coords=None,
-                                 original_x=None,
-                                 original_y=None,
-                                 rescale_x=None,
-                                 rescale_y=None,
-                                 singleScoreMode=False,
-                                 sort_by_dist=False,
-                                 reverse_sort_scores_for_not_category=True,
-                                 use_full_doc=False,
-                                 transform=percentile_alphabetical,
-                                 jitter=0,
-                                 gray_zero_scores=False,
-                                 term_ranker=None,
-                                 asian_mode=False,
-                                 match_full_line=False,
-                                 use_non_text_features=False,
-                                 show_top_terms=True,
-                                 show_characteristic=None,
-                                 word_vec_use_p_vals=False,
-                                 max_p_val=0.1,
-                                 p_value_colors=False,
-                                 term_significance=None,
-                                 save_svg_button=False,
-                                 x_label=None,
-                                 y_label=None,
-                                 d3_url=None,
-                                 d3_scale_chromatic_url=None,
-                                 pmi_filter_thresold=None,
-                                 alternative_text_field=None,
-                                 terms_to_include=None,
-                                 semiotic_square=None,
-                                 num_terms_semiotic_square=None,
-                                 not_categories=None,
-                                 neutral_categories=[],
-                                 extra_categories=[],
-                                 show_neutral=False,
-                                 neutral_category_name=None,
-                                 get_tooltip_content=None,
-                                 x_axis_values=None,
-                                 y_axis_values=None,
-                                 x_axis_values_format=None,
-                                 y_axis_values_format=None,
-                                 color_func=None,
-                                 term_scorer=None,
-                                 term_scorer_kwargs=None,
-                                 show_axes=True,
-                                 show_axes_and_cross_hairs=False,
-                                 show_diagonal=False,
-                                 use_global_scale=False,
-                                 horizontal_line_y_position=None,
-                                 vertical_line_x_position=None,
-                                 show_cross_axes=True,
-                                 show_extra=False,
-                                 extra_category_name=None,
-                                 censor_points=True,
-                                 center_label_over_points=False,
-                                 x_axis_labels=None,
-                                 y_axis_labels=None,
-                                 topic_model_term_lists=None,
-                                 topic_model_preview_size=10,
-                                 metadata_descriptions=None,
-                                 vertical_lines=None,
-                                 characteristic_scorer=None,
-                                 term_colors=None,
-                                 unified_context=False,
-                                 show_category_headings=True,
-                                 highlight_selected_category=False,
-                                 include_term_category_counts=False,
-                                 div_name=None,
-                                 alternative_term_func=None,
-                                 term_metadata=None,
-                                 term_metadata_df=None,
-                                 max_overlapping=-1,
-                                 include_all_contexts=False,
-                                 show_corpus_stats=True,
-                                 sort_doc_labels_by_name=False,
-                                 enable_term_category_description=True,
-                                 always_jump=True,
-                                 get_custom_term_html=None,
-                                 header_names=None,
-                                 header_sorting_algos=None,
-                                 ignore_categories=False,
-                                 d3_color_scale=None,
-                                 background_labels=None,
-                                 tooltip_columns=None,
-                                 tooltip_column_names=None,
-                                 term_description_columns=None,
-                                 term_description_column_names=None,
-                                 term_word_in_term_description='Term',
-                                 color_column=None,
-                                 color_score_column=None,
-                                 label_priority_column=None,
-                                 text_color_column=None,
-                                 text_size_column=None,
-                                 suppress_text_column=None,
-                                 background_color=None,
-                                 left_list_column=None,
-                                 censor_point_column=None,
-                                 right_order_column=None,
-                                 line_coordinates=None,
-                                 subword_encoding=None,
-                                 top_terms_length=14,
-                                 top_terms_left_buffer=0,
-                                 dont_filter=False,
-                                 use_offsets=False,
-                                 get_column_header_html=None,
-                                 show_term_etc=True,
-                                 sort_contexts_by_meta=False,
-                                 show_chart=False,
-                                 return_data=False,
-                                 suppress_circles=False,
-                                 category_colors=None,
-                                 return_scatterplot_structure=False):
+def produce_scattertext_explorer(corpus: object,
+                                 category: object,
+                                 category_name: object = None,
+                                 not_category_name: object = None,
+                                 protocol: object = 'https',
+                                 pmi_threshold_coefficient: object = DEFAULT_MINIMUM_TERM_FREQUENCY,
+                                 minimum_term_frequency: object = DEFAULT_PMI_THRESHOLD_COEFFICIENT,
+                                 minimum_not_category_term_frequency: object = 0,
+                                 max_terms: object = None,
+                                 filter_unigrams: object = False,
+                                 height_in_pixels: object = None,
+                                 width_in_pixels: object = None,
+                                 max_snippets: object = None,
+                                 max_docs_per_category: object = None,
+                                 metadata: object = None,
+                                 scores: object = None,
+                                 x_coords: object = None,
+                                 y_coords: object = None,
+                                 original_x: object = None,
+                                 original_y: object = None,
+                                 rescale_x: object = None,
+                                 rescale_y: object = None,
+                                 singleScoreMode: object = False,
+                                 sort_by_dist: object = False,
+                                 reverse_sort_scores_for_not_category: object = True,
+                                 use_full_doc: object = False,
+                                 transform: object = percentile_alphabetical,
+                                 jitter: object = 0,
+                                 gray_zero_scores: object = False,
+                                 term_ranker: object = None,
+                                 asian_mode: object = False,
+                                 match_full_line: object = False,
+                                 use_non_text_features: object = False,
+                                 show_top_terms: object = True,
+                                 show_characteristic: object = None,
+                                 word_vec_use_p_vals: object = False,
+                                 max_p_val: object = 0.1,
+                                 p_value_colors: object = False,
+                                 term_significance: object = None,
+                                 save_svg_button: object = False,
+                                 x_label: object = None,
+                                 y_label: object = None,
+                                 d3_url: object = None,
+                                 d3_scale_chromatic_url: object = None,
+                                 pmi_filter_thresold: object = None,
+                                 alternative_text_field: object = None,
+                                 terms_to_include: object = None,
+                                 semiotic_square: object = None,
+                                 num_terms_semiotic_square: object = None,
+                                 not_categories: object = None,
+                                 neutral_categories: object = [],
+                                 extra_categories: object = [],
+                                 show_neutral: object = False,
+                                 neutral_category_name: object = None,
+                                 get_tooltip_content: object = None,
+                                 x_axis_values: object = None,
+                                 y_axis_values: object = None,
+                                 x_axis_values_format: object = None,
+                                 y_axis_values_format: object = None,
+                                 color_func: object = None,
+                                 term_scorer: object = None,
+                                 term_scorer_kwargs: object = None,
+                                 show_axes: object = True,
+                                 show_axes_and_cross_hairs: object = False,
+                                 show_diagonal: object = False,
+                                 use_global_scale: object = False,
+                                 horizontal_line_y_position: object = None,
+                                 vertical_line_x_position: object = None,
+                                 show_cross_axes: object = True,
+                                 show_extra: object = False,
+                                 extra_category_name: object = None,
+                                 censor_points: object = True,
+                                 center_label_over_points: object = False,
+                                 x_axis_labels: object = None,
+                                 y_axis_labels: object = None,
+                                 topic_model_term_lists: object = None,
+                                 topic_model_preview_size: object = 10,
+                                 metadata_descriptions: object = None,
+                                 vertical_lines: object = None,
+                                 characteristic_scorer: object = None,
+                                 term_colors: object = None,
+                                 unified_context: object = False,
+                                 show_category_headings: object = True,
+                                 highlight_selected_category: object = False,
+                                 include_term_category_counts: object = False,
+                                 div_name: object = None,
+                                 alternative_term_func: object = None,
+                                 term_metadata: object = None,
+                                 term_metadata_df: object = None,
+                                 max_overlapping: object = -1,
+                                 include_all_contexts: object = False,
+                                 show_corpus_stats: object = True,
+                                 sort_doc_labels_by_name: object = False,
+                                 enable_term_category_description: object = True,
+                                 always_jump: object = True,
+                                 get_custom_term_html: object = None,
+                                 header_names: object = None,
+                                 header_sorting_algos: object = None,
+                                 ignore_categories: object = False,
+                                 d3_color_scale: object = None,
+                                 background_labels: object = None,
+                                 tooltip_columns: object = None,
+                                 tooltip_column_names: object = None,
+                                 term_description_columns: object = None,
+                                 term_description_column_names: object = None,
+                                 term_word_in_term_description: object = 'Term',
+                                 color_column: object = None,
+                                 color_score_column: object = None,
+                                 label_priority_column: object = None,
+                                 text_color_column: object = None,
+                                 text_size_column: object = None,
+                                 suppress_text_column: object = None,
+                                 background_color: object = None,
+                                 left_list_column: object = None,
+                                 censor_point_column: object = None,
+                                 right_order_column: object = None,
+                                 line_coordinates: object = None,
+                                 subword_encoding: object = None,
+                                 top_terms_length: object = 14,
+                                 top_terms_left_buffer: object = 0,
+                                 dont_filter: object = False,
+                                 use_offsets: object = False,
+                                 get_column_header_html: object = None,
+                                 show_term_etc: object = True,
+                                 sort_contexts_by_meta: object = False,
+                                 show_chart: object = False,
+                                 return_data: object = False,
+                                 suppress_circles: object = False,
+                                 category_colors: object = None,
+                                 document_word: object = "document",
+                                 document_word_plural: object = None,
+                                 category_order: object = None,
+                                 include_gradient: bool = False,
+                                 left_gradient_term: Optional[str] = None,
+                                 middle_gradient_term: Optional[str] = None,
+                                 right_gradient_term: Optional[str] = None,
+                                 gradient_text_color: Optional[str] = None,
+                                 gradient_colors: Optional[List[str]] = None,
+                                 return_scatterplot_structure: object = False) -> object:
     '''Returns html code of visualization.
 
     Parameters
@@ -598,10 +614,27 @@ def produce_scattertext_explorer(corpus,
     return_data : bool default False
         Return a dict containing the output of `ScatterChartExplosrer.to_dict` instead of
         an html.
-    return_scatterplot_structure : bool, default False
-        return ScatterplotStructure instead of html
     category_colors : dict, optional defaut None
         Dictionary matching category names to colors
+    document_word : str, default "document"
+    document_word_plural : Optional[str], default "document"
+    category_order : Optional[list[str]], default None
+        Order of categories in line chart
+    include_gradient : bool, False
+        Include gradient at the top of the chart
+    left_gradient_term : Optional[str], None by default
+        Text of left gradient label. category_name by default
+    middle_gradient_term : Optional[str], None by default
+        Text of middle grad label. If None, not shown.
+    right_gradient_term: Optional[str], None by default
+        Text of right gradient label, not_category_name by default
+    gradient_text_color: str, white by default
+        Color of text in gradient
+    gradient_colors: Optional[List[str]], None by default, follows d3_color_scale
+        Colors of gradient, as a list of hex values (e.g, ['#0000ff', '#fe0100', '#00ff00'])
+    return_scatterplot_structure : bool, default False
+        return ScatterplotStructure instead of html
+
     Returns
     -------
     str
@@ -638,18 +671,19 @@ def produce_scattertext_explorer(corpus,
     if use_non_text_features:
         pmi_threshold_coefficient = 0
 
-    scatter_chart_explorer = ScatterChartExplorer(corpus,
-                                                  minimum_term_frequency=minimum_term_frequency,
-                                                  minimum_not_category_term_frequency=minimum_not_category_term_frequency,
-                                                  pmi_threshold_coefficient=pmi_threshold_coefficient,
-                                                  filter_unigrams=filter_unigrams,
-                                                  jitter=jitter,
-                                                  max_terms=max_terms,
-                                                  term_ranker=term_ranker,
-                                                  use_non_text_features=use_non_text_features,
-                                                  term_significance=term_significance,
-                                                  terms_to_include=terms_to_include,
-                                                  dont_filter=dont_filter, )
+    scatter_chart_explorer = ScatterChartExplorer(
+        corpus,
+        minimum_term_frequency=minimum_term_frequency,
+        minimum_not_category_term_frequency=minimum_not_category_term_frequency,
+        pmi_threshold_coefficient=pmi_threshold_coefficient,
+        filter_unigrams=filter_unigrams,
+        jitter=jitter,
+        max_terms=max_terms,
+        term_ranker=term_ranker,
+        use_non_text_features=use_non_text_features,
+        term_significance=term_significance,
+        terms_to_include=terms_to_include,
+        dont_filter=dont_filter)
     if ((x_coords is None and y_coords is not None)
             or (y_coords is None and x_coords is not None)):
         raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -666,7 +700,8 @@ def produce_scattertext_explorer(corpus,
         scatter_chart_explorer.inject_metadata_descriptions(metadata_descriptions)
     if term_colors is not None:
         scatter_chart_explorer.inject_term_colors(term_colors)
-
+        if color_func is None:
+            color_func = "(function(d) {return modelInfo.term_colors[d.term]})"
     if term_metadata_df is not None and term_metadata is not None:
         raise Exception("Both term_metadata_df and term_metadata cannot be values which are not None.")
     if term_metadata_df is not None:
@@ -693,7 +728,7 @@ def produce_scattertext_explorer(corpus,
         extra_categories=extra_categories,
         background_scorer=characteristic_scorer,
         include_term_category_counts=include_term_category_counts,
-        use_offsets=use_offsets,
+        use_offsets=use_offsets
     )
 
     if line_coordinates is not None:
@@ -820,6 +855,15 @@ def produce_scattertext_explorer(corpus,
         sort_contexts_by_meta=sort_contexts_by_meta,
         suppress_circles=suppress_circles,
         category_colors=category_colors,
+        document_word=document_word,
+        document_word_plural=document_word_plural,
+        category_order=category_order,
+        include_gradient=include_gradient,
+        left_gradient_term=left_gradient_term,
+        middle_gradient_term=middle_gradient_term,
+        right_gradient_term=right_gradient_term,
+        gradient_text_color=gradient_text_color,
+        gradient_colors=gradient_colors,
         show_chart=show_chart
     )
 
@@ -1698,8 +1742,8 @@ def produce_pca_explorer(corpus,
         y_label=y_label,
         x_label=x_label,
         show_axes=show_axes,
-        horizontal_line_y_position=kwargs.get('horizontal_line_y_position', 0),
-        vertical_line_x_position=kwargs.get('vertical_line_x_position', 0),
+        horizontal_line_y_position=kwargs.get('horizontal_line_y_position', None),
+        vertical_line_x_position=kwargs.get('vertical_line_x_position', None),
         **kwargs
     )
     return html
@@ -2069,11 +2113,15 @@ def dataframe_scattertext(
     if 'Ypos' not in plot_df:
         plot_df['Ypos'] = Scalers.scale(plot_df['Y'])
 
-    plot_df = plot_df.reindex(
-        corpus.get_terms(
-            use_metadata=kwargs.get('use_non_text_features', False)
-        )
-    )
+    use_metadata = kwargs.get('use_non_text_features', False)
+    excess_terms = list(set(corpus.get_terms(use_metadata=use_metadata)) - set(plot_df.index))
+    if excess_terms:
+        print(f"There are {'metadata' if use_metadata else 'terms'} in the corpus which "
+                     f"are not in the index of plot_df. These will not be available in the visualization."
+                     f" These are: {excess_terms}.s")
+        corpus = corpus.remove_terms(terms=excess_terms, non_text=True)
+
+    plot_df = plot_df.reindex(corpus.get_terms(use_metadata=use_metadata))
 
     assert len(plot_df) > 0
 
@@ -2191,9 +2239,11 @@ def produce_scattertext_table(
 
     if trend_plot_settings is None:
         trend_plot_settings = DispersionPlotSettings(
-            metric='DA'
+            metric='DA',
+            category_order=category_order
         )
-        trend_plot_settings.set_category_order(category_order=category_order)
+    # if isinstance(trend_plot_settings, TimePlotSettings):
+    # trend_plot_settings = trend_plot_settings.set_category_order(category_order=category_order)
 
     scatterplot_structure = get_trend_scatterplot_structure(
         corpus=corpus,
@@ -2204,6 +2254,7 @@ def produce_scattertext_table(
         plot_height=plot_height,
         show_chart=show_chart,
         show_category_headings=show_category_headings,
+        category_order=heading_category_order,
         kwargs=kwargs,
     )
 
@@ -2225,6 +2276,7 @@ def get_trend_scatterplot_structure(
         plot_width: int = 600,
         show_chart: bool = True,
         show_category_headings: bool = False,
+        category_order: Optional[List[str]] = None,
         kwargs: Optional[Dict] = None,
 ):
     if kwargs is None:
@@ -2234,7 +2286,7 @@ def get_trend_scatterplot_structure(
     if isinstance(trend_plot_settings, DispersionPlotSettings):
         dispersion = Dispersion(
             corpus,
-            use_categories=True,
+            use_categories_as_documents=True,
             non_text=non_text,
             regressor=trend_plot_settings.regressor,
             term_ranker=trend_plot_settings.term_ranker
@@ -2323,6 +2375,7 @@ def get_trend_scatterplot_structure(
     kwargs.setdefault('top_terms_left_buffer', 10)
     kwargs.setdefault('ignore_categories', False)
     kwargs.setdefault('unified_context', True)
+    kwargs['category_order'] = category_order
     if d3_url_struct is None:
         d3_url_struct = D3URLs()
     scatterplot_structure = dataframe_scattertext(

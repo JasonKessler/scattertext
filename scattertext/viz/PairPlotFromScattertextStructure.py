@@ -1,4 +1,4 @@
-from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME, PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME
+from scattertext.Common import PAIR_PLOT_HTML_VIZ_FILE_NAME, PAIR_PLOT_WITHOUT_HALO_HTML_VIZ_FILE_NAME, HELLO
 from scattertext.categoryprojector.CategoryProjection import CategoryProjection, CategoryProjectionBase
 from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs, ExternalJSUtilts, PackedDataUtils, \
     cell_height_and_cell_height_short_from_height
@@ -82,7 +82,7 @@ class PairPlotFromScatterplotStructure(object):
         ])
         autocomplete_css = PackedDataUtils.full_content_of_default_autocomplete_css()
         html_template = self._get_html_template()
-        html_content = (
+        html_content = HELLO + (
             html_template
                 .replace('/***AUTOCOMPLETE CSS***/', autocomplete_css, 1)
                 .replace('<!-- INSERT SCRIPT -->', javascript_to_insert, 1)

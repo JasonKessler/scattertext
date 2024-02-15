@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 import json
 
 from scattertext.Common import DEFAULT_DIV_ID, DEFAULT_D3_AXIS_VALUE_FORMAT
@@ -84,6 +86,15 @@ class ScatterplotStructure(object):
             suppress_circles=False,
             text_size_column=None,
             category_colors=None,
+            document_word="document",
+            document_word_plural=None,
+            category_order=None,
+            include_gradient: bool = False,
+            left_gradient_term: Optional[str] = None,
+            middle_gradient_term: Optional[str] = None,
+            right_gradient_term: Optional[str] = None,
+            gradient_text_color: Optional[str] = None,
+            gradient_colors: Optional[List[str]] = None,
             show_chart=False
     ):
         '''
@@ -255,6 +266,19 @@ class ScatterplotStructure(object):
             Font size of point column name. None of not exists
         category_colors : optional[dict], default None
             Dict mapping cateogry to #xxxxxx color
+        document_word : str, default "document"
+        document_word_plural : optional[str], default None -> document word + 's'
+        category_order : optional[list[str]]
+            order categories should be shown
+        include_gradient : bool, False
+            Include gradient at the top of the chart
+        left_gradient_term : Optional[str], None by default
+            Text of left gradient label. category_name by default
+        middle_gradient_term : Optional[str], None by default
+            Text of middle grad label. If None, not shown.
+        right_gradient_term: Optional[str], None by default
+            Text of right gradient label, not_category_name by default
+        gradient_text_color: Optional[str], None by default
         show_chart : bool, default False
             Show line graph
         '''
@@ -332,7 +356,16 @@ class ScatterplotStructure(object):
         self._suppress_circles = suppress_circles
         self._text_size_column = text_size_column
         self._category_colors = category_colors
+        self._document_word = document_word
+        self._document_word_plural = document_word_plural if document_word_plural is not None else document_word + 's'
+        self._category_order = category_order
         self._show_chart = show_chart
+        self._include_gradient = include_gradient
+        self._left_gradient_term = left_gradient_term
+        self._middle_gradient_term = middle_gradient_term
+        self._right_gradient_term = right_gradient_term
+        self._gradient_colors = gradient_colors
+        self._gradient_text_color = gradient_text_color
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x, default='undefined'):
@@ -449,6 +482,15 @@ class ScatterplotStructure(object):
             js_bool(self._suppress_circles),
             js_default_string(self._text_size_column),
             json_or_null(self._category_colors),
+            js_default_string(self._document_word),
+            js_default_string(self._document_word_plural),
+            json_or_null(self._category_order),
+            js_bool(self._include_gradient),
+            json_or_null(self._left_gradient_term),
+            json_or_null(self._middle_gradient_term),
+            json_or_null(self._right_gradient_term),
+            json_or_null(self._gradient_text_color),
+            json_or_null(self._gradient_colors),
             js_bool(self._show_chart)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'

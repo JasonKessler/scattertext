@@ -75,3 +75,23 @@ class TestIndexStore(TestCase):
 
 		del_idxstore2 = del_idxstore.batch_delete_vals([])
 		self.assertEqual(list(del_idxstore.items()), list(del_idxstore2.items()))
+
+
+	def test_rename(self):
+		index_store = IndexStore()
+		self.assertEqual(index_store.getidx('a'), 0)
+		self.assertEqual(index_store.getidx('b'), 1)
+		self.assertEqual(index_store.getidx('c'), 2)
+		self.assertEqual(index_store.getidx('d'), 3)
+		self.assertEqual(index_store.getidx('e'), 4)
+		self.assertEqual(index_store.getidx('f'), 5)
+		index_store.rename([('a', 'A'), ('f', 'F'), ('b', 'B')])
+		self.assertFalse('a' in index_store)
+		self.assertFalse('b' in index_store)
+		self.assertFalse('f' in index_store)
+		self.assertEqual(index_store.getidx('A'), 0)
+		self.assertEqual(index_store.getidx('B'), 1)
+		self.assertEqual(index_store.getidx('c'), 2)
+		self.assertEqual(index_store.getidx('d'), 3)
+		self.assertEqual(index_store.getidx('e'), 4)
+		self.assertEqual(index_store.getidx('F'), 5)

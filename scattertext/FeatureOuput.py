@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 import numpy as np
 
 
@@ -7,7 +9,7 @@ class FeatureLister(object):
 		self.idx_store = idx_store
 		self.num_docs = num_docs
 
-	def output(self):
+	def output(self) -> List[Dict[str, str]]:
 		# () -> list
 		toret = [{} for i in range(self.num_docs)]
 		X = self.X.tocoo()

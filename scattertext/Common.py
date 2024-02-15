@@ -1,4 +1,5 @@
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from scattertext import __version__
 
 # Constants for scaled f-score
 DEFAULT_BETA = 2
@@ -66,3 +67,5 @@ NEW_TABLEAU_10 = ['5778a4', 'e49444', 'd1615d', '85b6b2', '6a9f58',
 
 OLD_TABLEAU_10 = ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467bd',
                   '8c564b', 'e377c2', '7f7f7f', 'bcbd22', '17becf']
+
+HELLO = f'<!-- Made with Scattertext v.{__version__}. For more information on how to make plots like this, please visit http://www.github.com/JasonKessler/scattertext -->\n'

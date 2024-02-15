@@ -17,7 +17,7 @@ plot_df = st.CohensD(corpus).use_metadata().set_categories(
 ).assign(
     Frequency = lambda df: df.count1+df.count2,
     X=lambda df: df.Frequency,
-    Y=lambda df: df.hedges_r,
+    Y=lambda df: df.hedges_g,
     Xpos=lambda df: st.Scalers.dense_rank(df.X),
     Ypos=lambda df: st.Scalers.scale_center_zero_abs(df.Y),
     SuppressDisplay=False,
@@ -41,7 +41,7 @@ html = st.dataframe_scattertext(
     unified_context=False,
     color_score_column='ColorScore',
     left_list_column='ColorScore',
-    y_label='Hedges R',
+    y_label="Hedge's G",
     x_label='Frequency Ranks',
     header_names={'upper': 'Top Democratic', 'lower': 'Top Republican'},
 )

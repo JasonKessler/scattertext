@@ -49,7 +49,7 @@ class CategoryColorAssigner(object):
         term_color = pd.Series(self.category_colors[self.term_cat].values, index=self.term_cat.index)
 
         def get_hex_color(color):
-            return ''.join([part if len(part) == 2 else '0' + part
-                            for part in [hex(part)[2:] for part in color]])
+            return '#' + ''.join([part if len(part) == 2 else '0' + part
+                                  for part in [hex(part)[2:] for part in color]])
 
         return term_color.apply(get_hex_color).to_dict()

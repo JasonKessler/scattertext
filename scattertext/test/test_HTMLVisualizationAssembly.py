@@ -21,7 +21,8 @@ class TestHTMLVisualizationAssembly(TestCase):
                   '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"',
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
-                  'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'undefined', 'null', 'false']
+                  'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'undefined', 'null',
+                  '"document"', '"documents"', 'null', 'false', 'null', 'null', 'null', 'null', 'null', 'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -595,7 +596,6 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({71: '"TextSize"'}))
 
-
     def test_category_colors(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data,
@@ -603,9 +603,71 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({72: '{"Democratic": "0000FF", "Republican": "FF0000"}'}))
 
+    def test_document_word(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       document_word='paragraph')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({73: '"paragraph"', 74: '"paragraphs"'}))
+
+    def test_document_word_plural(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       document_word_plural='multiple paragraphs')
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({74: '"multiple paragraphs"'}))
+
+    def test_category_order(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual((ScatterplotStructure(visualization_data, category_order=['Dem', 'Rep'])
+                          .call_build_visualization_in_javascript()),
+                         self.get_params({75: '["Dem", "Rep"]'}))
+
+    def test_include_gradient(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       include_gradient=True)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({76: 'true'}))
+
+    def test_left_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       left_gradient_term="Left Gradient")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({77: '"Left Gradient"'}))
+
+    def test_middle_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       middle_gradient_term="Middle Gradient")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({78: '"Middle Gradient"'}))
+
+    def test_right_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       right_gradient_term="Right Gradient")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({79: '"Right Gradient"'}))
+
+    def test_gradient_text_color(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       gradient_text_color="black")
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({80: '"black"'}))
+
+    def test_gradient_colors(self):
+        visualization_data = self.make_adapter()
+        params = (ScatterplotStructure(visualization_data,
+                                       gradient_colors=['#0000ff', '#fe0100', '#00ff00'])
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({81: '["#0000ff", "#fe0100", "#00ff00"]'}))
+
     def test_show_chart(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data,
                                        show_chart=True)
                   .call_build_visualization_in_javascript())
-        self.assertEqual(params, self.get_params({73: 'true'}))
+        self.assertEqual(params, self.get_params({82: 'true'}))

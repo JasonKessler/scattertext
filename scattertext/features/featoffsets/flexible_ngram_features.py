@@ -1,6 +1,8 @@
 from typing import List, Tuple, Union, Optional, Callable, Dict
 from collections import deque
 
+import spacy.tokens
+
 from scattertext.features.FeatsFromSpacyDoc import FeatsFromSpacyDoc
 
 from scattertext.features.featoffsets.feat_and_offset_getter import FeatAndOffsetGetter
@@ -18,11 +20,18 @@ def sequence_window(seq, n=2):
 
 
 class FlexibleNGramFeaturesBase:
-    def __init__(self, exclude_ngram_filter=None, ngram_sizes=None, text_from_token=None, validate_token=None):
-        self.ngram_sizes = [1, 2, 3] if ngram_sizes is None else ngram_sizes
+    def __init__(self,
+                 exclude_ngram_filter: Optional[Callable[[str], bool]] = None,
+                 ngram_sizes: Optional[List[int]] = None,
+                 text_from_token: Optional[Callable[[str], str]] = None,
+                 validate_token: Optional[Callable[[spacy.tokens.Token], bool]] = None,
+                 whitespace_substitute: Optional[Callable[[str], str]] = None):
         self.exclude_ngram_filter = (lambda x: False) if exclude_ngram_filter is None else exclude_ngram_filter
+        self.ngram_sizes = [1, 2, 3] if ngram_sizes is None else ngram_sizes
         self.text_from_token = (lambda tok: tok.lower_) if text_from_token is None else text_from_token
-        self.validate_token = (lambda tok: tok.tag_ != '_SP') if validate_token is None else validate_token
+        self.validate_token = (lambda tok: tok.tag_ != '_SP' and tok.orth_.strip() != '') \
+            if validate_token is None else validate_token
+        self.whitespace_substitute = ' ' if whitespace_substitute is None else whitespace_substitute
 
     def _doc_to_feature_representation(self, doc) -> Dict:
         offset_tokens = {}
@@ -36,7 +45,7 @@ class FlexibleNGramFeaturesBase:
         return offset_tokens
 
     def _add_ngram_to_token_stats(self, ngram, offset_tokens):
-        toktext = ' '.join(self.text_from_token(tok) for tok in ngram)
+        toktext = self.whitespace_substitute.join(self.text_from_token(tok) for tok in ngram)
         token_stats = offset_tokens.setdefault(toktext, [0, []])
         token_stats[0] += 1
         start = ngram[0].idx
@@ -73,7 +82,7 @@ class FlexibleNGrams(FeatsFromSpacyDoc, FlexibleNGramFeaturesBase):
             ngram_sizes: Optional[List[int]] = None,
             exclude_ngram_filter: Optional[Callable] = None,
             text_from_token: Optional[Callable] = None,
-            validate_token: Optional[Callable] = lambda x: x.orth_.strip() != ''
+            validate_token: Optional[Callable] = None
     ):
         FeatsFromSpacyDoc.__init__(self)
         FlexibleNGramFeaturesBase.__init__(self, exclude_ngram_filter, ngram_sizes, text_from_token, validate_token)
@@ -82,7 +91,7 @@ class FlexibleNGrams(FeatsFromSpacyDoc, FlexibleNGramFeaturesBase):
         return self._doc_to_feature_representation(doc)
 
     def _add_ngram_to_token_stats(self, ngram, offset_tokens):
-        #toktext = ' '.join(x[2] for x in ngram)
+        # toktext = ' '.join(x[2] for x in ngram)
         toktext = ' '.join(self.text_from_token(tok) for tok in ngram)
         offset_tokens.setdefault(toktext, 0)
         offset_tokens[toktext] += 1

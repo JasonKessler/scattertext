@@ -119,6 +119,12 @@ class ParsedCorpus(ParsedDataFrameCorpus):
     def get_document_lengths_in_tokens(self):
         return self.get_parsed_docs().apply(len).values
 
+    def get_document_lengths_in_tokens_and_categories(self):
+        return pd.DataFrame({
+            'Length': self.get_parsed_docs().apply(len).values,
+            'Category': self.get_category_names_by_row()
+        })
+
     def term_group_freq_df(self, group_col):
         # type: (str) -> pd.DataFrame
         '''

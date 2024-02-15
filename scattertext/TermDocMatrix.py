@@ -1,6 +1,5 @@
-import warnings
 from copy import copy
-from typing import Union, List, Callable, Optional
+from typing import Union, List, Callable, Optional, Tuple, Self
 
 import numpy as np
 import pandas as pd
@@ -16,7 +15,8 @@ from sklearn.linear_model import RidgeClassifierCV, LassoCV
 
 from scattertext.CSRMatrixTools import delete_columns, CSRMatrixFactory
 from scattertext.Common import DEFAULT_BETA, DEFAULT_SCALER_ALGO
-from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
+from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories, \
+    MetadataReplacementRetentionPolicy
 from scattertext.indexstore import IndexStore, IndexStoreFromList
 from scattertext.termscoring.CornerScore import CornerScore
 
@@ -80,7 +80,8 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
             d[category + ' freq'] = self._X[self._y == i].sum(axis=0).A1
         return pd.DataFrame(d).set_index('term')
 
-    def get_all_category_frequencies(self, non_text: bool = False, term_ranker: Optional[TermRanker] = None) -> pd.Series:
+    def get_all_category_frequencies(self, non_text: bool = False,
+                                     term_ranker: Optional[TermRanker] = None) -> pd.Series:
         if term_ranker is None:
             term_ranker = AbsoluteFrequencyRanker(term_doc_matrix=self).set_non_text(non_text=non_text)
         return term_ranker.get_ranks().sum(axis=1)
@@ -312,10 +313,13 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         if self.metadata_in_use():
             meta_idx_to_delete = np.nonzero(new_mX.sum(axis=0).A1 == 0)[0]
             new_metadata_idx_store = self._metadata_idx_store.batch_delete_idx(meta_idx_to_delete)
+            new_mX = delete_columns(new_mX, meta_idx_to_delete)
 
-        term_idx_to_delete = np.nonzero(new_X.sum(axis=0).A1 == 0)[0]
-        new_term_idx_store = self._term_idx_store.batch_delete_idx(term_idx_to_delete)
-        new_X = delete_columns(new_X, term_idx_to_delete)
+        new_term_idx_store = self._term_idx_store
+        if self.get_num_terms() > 0:
+            term_idx_to_delete = np.nonzero(new_X.sum(axis=0).A1 == 0)[0]
+            new_term_idx_store = new_term_idx_store.batch_delete_idx(term_idx_to_delete)
+            new_X = delete_columns(new_X, term_idx_to_delete)
 
         term_doc_mat_to_ret = self._make_new_term_doc_matrix(new_X,
                                                              new_mX,
@@ -935,3 +939,18 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         term_mask = (self.get_freq_df(use_metadata=use_metadata).values > 0).sum(axis=1) < threshold
         term_indices_to_remove = np.where(term_mask)[0]
         return self.remove_terms_by_indices(term_indices_to_remove, use_metadata)
+
+    def rename_metadata(
+            self,
+            old_to_new_vals: List[Tuple[str, str]],
+            policy: MetadataReplacementRetentionPolicy = MetadataReplacementRetentionPolicy.KEEP_ONLY_NEW
+    ) -> Self:
+        new_mX, new_metadata_idx_store = self._remap_metadata(old_to_new_vals)
+        return self._make_new_term_doc_matrix(
+            new_X=self._X,
+            new_mX=new_mX,
+            new_y=self._y,
+            new_term_idx_store=self._term_idx_store,
+            new_category_idx_store=self._category_idx_store,
+            new_metadata_idx_store=new_metadata_idx_store,
+            new_y_mask=self._y == self._y)

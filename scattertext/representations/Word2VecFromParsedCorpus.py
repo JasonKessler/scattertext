@@ -179,6 +179,8 @@ class Word2VecFromParsedCorpus(Word2VecDefault):
         self.model.build_vocab(CorpusAdapterForGensim.get_sentences(self.corpus))
 
 
+
+
 class Word2VecFromParsedCorpusBigrams(Word2VecFromParsedCorpus):
     def _scan_and_build_vocab(self):
         from gensim.models import Phrases

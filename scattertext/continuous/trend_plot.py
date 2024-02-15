@@ -183,7 +183,7 @@ class TimePlotPositioner:
         dispersion = Dispersion(
             corpus=self.corpus,
             non_text=self.non_text,
-            use_categories=True,
+            use_categories_as_documents=True,
         )
         if self.use_residual:
             dispersion_df = dispersion.get_adjusted_metric_df(metric=self.dispersion_metric)

@@ -142,7 +142,11 @@ class CorpusRunningStatsFactory:
         str_segment = str(segment)
         inputs = self.tokenizer(str_segment, return_tensors="pt", return_offsets_mapping=True)
         subtoken_offsets = inputs['offset_mapping'].cpu().detach().numpy()[0][1:-1]
-        embeddings = self.__inputs_to_embeddings(inputs=inputs)
+        try:
+            embeddings = self.__inputs_to_embeddings(inputs=inputs)
+        except Exception as e:
+            import pdb; pdb.set_trace()
+            raise e
         if adjust_offsets:
             subtoken_offsets_whitespace_stripped = []
             for (s, e) in subtoken_offsets:
@@ -184,17 +188,22 @@ class CorpusRunningStatsFactory:
         subtoken_start = np.searchsorted(subtoken_offsets[0], kw_start)
         subtoken_end = np.searchsorted(subtoken_offsets[1], kw_end, side='right')
         if subtoken_start == subtoken_end:
-            print([f'|{t}|' for t in segment])
-            print(kw_start, kw_end)
-            print('part', str(segment)[kw_start - seg_start:kw_end - seg_start])
-            print('term', term)
-            print('subtoken start end', subtoken_start, subtoken_end)
-            print(seg_start)
-            print(subtoken_offsets)
-            for s, e in subtoken_offsets.T:
-                print(s, e, str(segment)[s - seg_start:e - seg_start])
-            import pdb;
-            pdb.set_trace()
+            if subtoken_start > 0: # if the term somehow is inside another token, we just take that token's embedding
+                subtoken_start -= 1
+            elif subtoken_end < subtoken_offsets.shape[1] - 1: # no idea if this can happen, but to be on the safe side
+                subtoken_end += 1
+            else:
+                print([f'|{t}|' for t in segment])
+                print(kw_start, kw_end)
+                print('part', str(segment)[kw_start - seg_start:kw_end - seg_start])
+                print('term', term)
+                print('subtoken start end', subtoken_start, subtoken_end)
+                print(seg_start)
+                print(subtoken_offsets)
+                for s, e in subtoken_offsets.T:
+                    print(s, e, str(segment)[s - seg_start:e - seg_start])
+                import pdb;
+                pdb.set_trace()
         kw_embedding = embeddings[subtoken_start:subtoken_end].mean(axis=0)
 
         if not np.isnan(kw_embedding).any():

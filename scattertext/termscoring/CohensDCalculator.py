@@ -21,19 +21,19 @@ class CohensDCalculator(object):
         cohens_d_se = np.sqrt(((n - 1.) / (n - 3)) * (4. / n) * (1 + np.square(cohens_d) / 8.))
         cohens_d_z = cohens_d / cohens_d_se
         cohens_d_p = norm.sf(cohens_d_z)
-        hedges_r = cohens_d * (1 - 3. / ((4. * (n - 2)) - 1))
-        hedges_r_se = np.sqrt(n / (n1 * n2) + np.square(hedges_r) / (n - 2.))
-        hedges_r_z = hedges_r / hedges_r_se
-        hedges_r_p = norm.sf(hedges_r_z)
+        hedges_g = cohens_d * (1 - 3. / ((4. * (n - 2)) - 1))
+        hedges_g_se = np.sqrt(n / (n1 * n2) + np.square(hedges_g) / (n - 2.))
+        hedges_g_z = hedges_g / hedges_g_se
+        hedges_g_p = norm.sf(hedges_g_z)
         score_df = pd.DataFrame({
             'cohens_d': cohens_d,
             'cohens_d_se': cohens_d_se,
             'cohens_d_z': cohens_d_z,
             'cohens_d_p': cohens_d_p,
-            'hedges_r': hedges_r,
-            'hedges_r_se': hedges_r_se,
-            'hedges_r_z': hedges_r_z,
-            'hedges_r_p': hedges_r_p,
+            'hedges_g': hedges_g,
+            'hedges_g_se': hedges_g_se,
+            'hedges_g_z': hedges_g_z,
+            'hedges_g_p': hedges_g_p,
             'm1': m1,
             'm2': m2,
             'count1': orig_cat_X.sum(axis=0).A1.astype(int),
@@ -48,8 +48,8 @@ class CohensDCalculator(object):
                 method=correction_method
             )[1]
             '''
-            score_df['hedges_r_p_corr'] = 0.5
-            for method in ['cohens_d', 'hedges_r']:
+            score_df['hedges_g_p_corr'] = 0.5
+            for method in ['cohens_d', 'hedges_g']:
                 score_df[method + '_p_corr'] = 0.5
                 import pdb; pdb.set_trace()
                 pvals = score_df.loc[(score_df['m1'] != 0) | (score_df['m2'] != 0), method + '_p']

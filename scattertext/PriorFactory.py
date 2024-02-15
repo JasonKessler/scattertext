@@ -66,7 +66,7 @@ class PriorFactory(object):
 
 	def _get_relevant_term_freq(self):
 		return pd.DataFrame({
-			'corpus': self.term_ranker.get_ranks()
+			'corpus': self.term_ranker.get_ranks(label_append=' freq')
 			[[str(c) + ' freq' for c in self.relevant_categories]]
 				.sum(axis=1)
 		})
@@ -108,7 +108,7 @@ class PriorFactory(object):
 		-------
 		PriorFactory
 		'''
-		term_df = self.term_ranker.get_ranks()
+		term_df = self.term_ranker.get_ranks(label_append=' freq')
 		self.priors += term_df[[str(c) + ' freq' for c in self._get_neutral_categories()]].sum(axis=1)
 		return self
 
