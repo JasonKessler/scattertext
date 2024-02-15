@@ -10,15 +10,15 @@ setup(name='scattertext',
       python_requires='>=3.11',
       packages=find_packages(),
       install_requires=[
-          'numpy',
-          'scipy',
-          'scikit-learn',
-          'pandas>=2.0,0',
-          'statsmodels',
-          'flashtext',
+          'numpy>=1.2.6',
+          'scipy>=1.12.0',
+          'scikit-learn>=1.4',
+          'pandas>=2.0.0',
+          'statsmodels>=0.14.1',
+          'flashtext>=2.7',
           'gensim>=4.0.0',
           'spacy>=3.2',
-          'tqdm'
+          'tqdm>=4.0'
           # 'pytextrank'
           # 'jieba',
           # 'tinysegmenter',

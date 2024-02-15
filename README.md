@@ -111,7 +111,7 @@ Link to paper: [arxiv.org/abs/1703.00565](https://arxiv.org/abs/1703.00565)
 
 ## Installation
 
-Install Python 3.4 or higher and run:
+Install Python 3.11 or higher and run:
 
 `$ pip install scattertext`
 
