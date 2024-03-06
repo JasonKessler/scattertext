@@ -384,6 +384,14 @@ class ScatterplotStructure(object):
         def json_or_null(x):
             return 'null' if x is None else json.dumps(x)
 
+        def json_or_null_or_str(x):
+            if x is None:
+                return 'null'
+            try:
+                return json.dumps(x)
+            except TypeError:
+                return str(x)
+
         def js_bool(x):
             return 'true' if x else 'false'
 
@@ -407,7 +415,6 @@ class ScatterplotStructure(object):
                 first = False
             to_ret += '}'
             return to_ret
-
         arguments = [
             js_default_value(self._width_in_pixels),
             js_default_value(self._height_in_pixels),
@@ -484,7 +491,7 @@ class ScatterplotStructure(object):
             json_or_null(self._category_colors),
             js_default_string(self._document_word),
             js_default_string(self._document_word_plural),
-            json_or_null(self._category_order),
+            json_or_null_or_str(self._category_order),
             js_bool(self._include_gradient),
             json_or_null(self._left_gradient_term),
             json_or_null(self._middle_gradient_term),

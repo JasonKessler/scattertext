@@ -19,7 +19,7 @@ class CliffsDelta(CorpusBasedTermScorer):
     https://real-statistics.com/non-parametric-tests/mann-whitney-test/cliffs-delta/ used as a resource
     """
 
-    def _set_scorer_args(self, alpha: float = 0.05):
+    def _set_scorer_args(self, alpha: float = 0.05, *args, **kwargs):
         self.alpha = alpha
 
     def get_scores(self, *args) -> pd.Series:
@@ -66,13 +66,14 @@ class CliffsDelta(CorpusBasedTermScorer):
             hi = (delta - delta ** 3 + zcrit * sd * np.sqrt(1 - 2 * delta ** 2 + delta ** 4 + (zcrit * delta) ** 2)) / (
                     1 - delta ** 2 - (zcrit * delta) ** 2
             )
-            data.append({
+            datum = {
                 'term': term,
                 'Metric': delta,
                 'Stddev': sd,
                 f'Low-{(1-self.alpha) * 100}% CI': lo,
                 f'High-{(1-self.alpha) * 100}% CI': hi,
-            })
+            }
+            data.append(datum)
         return pd.DataFrame(data).set_index('term').assign(
             TermCount1=cat_X.sum(axis=0).A1,
             TermCount2=ncat_X.sum(axis=0).A1,

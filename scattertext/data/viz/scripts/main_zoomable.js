@@ -122,7 +122,6 @@ buildViz = function (d3) {
             x.i = i
         });
 
-        // Set the ranges
         var x = d3.scaleLinear().range([0, width]).nice();
         var y = d3.scaleLinear().range([height, 0]).nice();
 
@@ -187,6 +186,8 @@ buildViz = function (d3) {
                     });
             })
         }
+
+
 
         var yAxis = null;
         var xAxis = null;
@@ -273,6 +274,8 @@ buildViz = function (d3) {
                 .tickFormat(function (d, i) {
                     return xAxisLabels[i];
                 });
+
+
         } else {
             xAxis = d3.axisBottom(x).ticks(3).tickFormat(axisLabelerFactory('x'));
         }
@@ -323,6 +326,146 @@ buildViz = function (d3) {
             .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
 
+
+
+        // start zoom code (from https://jsfiddle.net/qrpr0wre/)
+        /*
+        function styleGrid() {
+            var axisStyle = {
+                "fill": "none",
+                "stroke": "rgba(0, 0, 0, 0.1)",
+                "shape-rendering": "crispEdges"
+            };
+            console.log("in style grid")
+            svg.selectAll(".x.axis path").style(axisStyle);
+            svg.selectAll(".x.axis line").style(axisStyle);
+            svg.selectAll(".y.axis path").style(axisStyle);
+            svg.selectAll(".y.axis line").style(axisStyle);
+        }
+
+        function zoom() {
+            console.log('in zoom')
+            svg.select(".x.axis").call(xAxis);
+            svg.select(".y.axis").call(yAxis);
+            console.log('calling style grid')
+
+            styleGrid();
+
+            svg.selectAll(".dot")
+                .attr("transform", transform);
+
+            objects.datum(fullData.data)
+                .call(labels);
+        }
+
+        function transform(d) {
+            return "translate(" + x(d.x) + "," + y(d.y) + ")";
+        }
+
+        console.log('calling style grid first')
+        //styleGrid();
+
+        var objects = svg.append("svg")
+            .classed("objects", true)
+            .attr("width", width)
+            .attr("height", height);
+
+        objects.append("svg:line")
+            .classed("axisLine hAxisLine", true)
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", width)
+            .attr("y2", 0)
+            .attr("transform", "translate(0," + height + ")");
+
+        objects.append("svg:line")
+            .classed("axisLine vAxisLine", true)
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", 0)
+            .attr("y2", height);
+
+        svg.selectAll(".axisLine").style({
+            "fill": "none",
+            "shape-rendering": "crispEdges",
+            "stroke": "rgba(0, 0, 0, 0.5)",
+            "stroke-width": "2px"
+        });
+
+        objects.selectAll(".dot")
+            .data(fullData.data)
+            .enter().append("circle")
+            .classed("dot", true)
+            .attr("r", 3.5)
+            .attr("transform", transform)
+            .style({"fill": "steelblue", "fill-opacity": ".8"});
+
+        var labelPadding = 3;
+
+        var label = fc.layoutTextLabel()
+            .padding(labelPadding)
+            .value(function (d) {
+                return d.label;
+            });
+
+        var strategyCache = function (strategy) {
+          var cachedLayout;
+
+          var cache = function(layout) {
+            if (!returnCachedLayout) {
+              cachedLayout = strategy(layout);
+              // determine the offset applied by the layout
+              for (var i = 0; i< layout.length; i++) {
+                cachedLayout[i].dx = layout[i].x - cachedLayout[i].x;
+                cachedLayout[i].dy = layout[i].y - cachedLayout[i].y;
+              }
+            } else {
+              // update the location of each label, including the offset
+              for (var i = 0; i< layout.length; i++) {
+                cachedLayout[i].x = layout[i].x - cachedLayout[i].dx;
+                cachedLayout[i].y = layout[i].y - cachedLayout[i].dy;
+              }
+            }
+            return cachedLayout;
+          };
+          return cache;
+        };
+
+        // construct a strategy that uses the "greedy" algorithm for layout, wrapped
+        // by a strategy that removes overlapping rectangles.
+        var strategy = strategyCache(fc.layout.strategy.removeOverlaps(fc.layout.strategy.greedy()));
+
+        // create the layout that positions the labels
+        var labels = fc.layout.label(strategy)
+            .size(function () {
+                // measure the label and add the required padding
+                var textSize = d3.select(this)
+                    .select("text")
+                    .node()
+                    .getBBox();
+                return [textSize.width + labelPadding * 2, textSize.height + labelPadding * 2];
+            })
+            .position(function (d) {
+                return [x(d.x), y(d.y)]; //[x(d.dims[xDim]), y(d.dims[yDim])];
+            })
+            .component(label);
+
+        objects.datum(data)
+            .call(labels);
+
+        var labelStyle = {
+            "fill": "transparent",
+            "stroke-width": "0",
+            "fill-opacity": "0.8"
+        };
+
+        d3.selectAll(".label rect").style(labelStyle);
+        d3.selectAll(".label circle").style(labelStyle);
+
+        console.log('calling style grid last')
+        //styleGrid();
+        */
+        // End Zoom code
 
         origSVGLeft = svg.node().getBoundingClientRect().left;
         origSVGTop = svg.node().getBoundingClientRect().top;

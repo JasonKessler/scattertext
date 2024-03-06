@@ -36,8 +36,7 @@ html = st.produce_scattertext_explorer(
     metadata=corpus.get_df()['speaker'],
     use_offsets=True,
     use_non_text_features=True,
-    show_diagonal=False,
-)
+    )
 open('./demo_stylistic_features.html', 'w').write(html)
 print('open ./demo_stylistic_features.html in Chrome')
 

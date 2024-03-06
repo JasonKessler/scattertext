@@ -3,7 +3,7 @@ from typing import Tuple
 
 from scattertext import __version__
 from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, \
-    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME, HELLO
+    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME, HELLO, DEFAULt_D3FC_URL
 from scattertext.viz.ScatterplotStructure import InvalidProtocolException
 
 
@@ -16,9 +16,10 @@ class ExternalJSUtilts:
 
 
 class D3URLs:
-    def __init__(self, d3_url=None, d3_scale_chromatic_url=None):
+    def __init__(self, d3_url=None, d3_scale_chromatic_url=None, d3fc_url=None):
         self.d3_url = d3_url
         self.d3_scale_chromatic_url = d3_scale_chromatic_url
+        self.d3fc_url = d3fc_url
 
     def get_d3_url(self):
         return DEFAULT_D3_URL if self.d3_url is None else self.d3_url
@@ -26,6 +27,8 @@ class D3URLs:
     def get_d3_scale_chromatic_url(self):
         return DEFAULT_D3_SCALE_CHROMATIC if self.d3_scale_chromatic_url is None else self.d3_scale_chromatic_url
 
+    def get_d3fc_url(self):
+        return DEFAULt_D3FC_URL if self.d3fc_url is None else self.d3fc_url
 
 class PackedDataUtils:
     @staticmethod
@@ -44,7 +47,7 @@ class PackedDataUtils:
     def full_content_of_javascript_files():
         return PackedDataUtils._load_script_file_names([
             'rectangle-holder.js',  # 'range-tree.js',
-            'main.js',
+            'main_zoomable.js', # main.js
             'autocomplete_definition.js'
         ])
 
@@ -124,6 +127,7 @@ class BasicHTMLFromScatterplotStructure(object):
                 .replace('<!-- INSERT SEARCH FORM -->',
                          PackedDataUtils.full_content_of_default_search_form(search_input_id), 1)
                 .replace('<!--D3URL-->', d3_url_struct.get_d3_url(), 1)
+                .replace('<!--D3FCURL-->', d3_url_struct.get_d3fc_url(), 1)
                 .replace('<!--D3SCALECHROMATIC-->', d3_url_struct.get_d3_scale_chromatic_url())
             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
         )
