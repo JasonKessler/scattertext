@@ -105,7 +105,7 @@ class NPMICompactor(object):
     def _get_pmi_df(self, freqs: pd.Series) -> pd.DataFrame:
         # ngram_lens = np.array([len(x.split()) for x in freqs.index])
         wc = dict(pd.DataFrame({
-            'Len': [len(x.split()) for x in freqs.index],
+            'Len': [len(self.token_split_function(x)) for x in freqs.index],
             'Freq': freqs
         }).groupby('Len').sum()['Freq'])
 

@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from scattertext.Common import HALO_COLORS
+from scattertext.semioticsquare.halo_utils import add_radial_parts_and_mag_to_term_coordinates
 from scattertext.termranking import AbsoluteFrequencyRanker
 from scattertext.termscoring.RankDifference import RankDifference
 
@@ -11,6 +13,17 @@ class EmptyNeutralCategoriesError(Exception): pass
 '''
 !!! Need to properly segregate interfaces
 '''
+
+SEMIOTIC_SQUARE_TO_PART = {
+    'b': 'top_left',
+    'a': 'top_right',
+    'a_and_b': 'top',
+    'b_and_not_a': 'left',
+    'a_and_not_b': 'right',
+    'not_b': 'bottom_right',
+    'not_a': 'bottom_left',
+    'not_a_and_not_b': 'bottom',
+}
 
 
 class SemioticSquareBase(object):
@@ -59,7 +72,8 @@ class SemioticSquare(SemioticSquareBase):
                  neutral_categories,
                  labels=None,
                  term_ranker=AbsoluteFrequencyRanker,
-                 scorer=None):
+                 scorer=None,
+                 non_text=False):
         '''
         Parameters
         ----------
@@ -78,6 +92,8 @@ class SemioticSquare(SemioticSquareBase):
             Class for returning a term-frequency convention_df
         scorer : termscoring class, optional
             Term scoring class for lexicon mining. Default: `scattertext.termscoring.ScaledFScore`
+        non_text : bool, default False
+            Use metadata/non-text
         '''
         assert category_a in term_doc_matrix.get_categories()
         assert category_b in term_doc_matrix.get_categories()
@@ -88,11 +104,12 @@ class SemioticSquare(SemioticSquareBase):
         self.category_a_ = category_a
         self.category_b_ = category_b
         self.neutral_categories_ = neutral_categories
+        self.non_text = non_text
         self._build_square(term_doc_matrix, term_ranker, labels, scorer)
 
     def _build_square(self, term_doc_matrix, term_ranker, labels, scorer):
         self.term_doc_matrix_ = term_doc_matrix
-        self.term_ranker = term_ranker(term_doc_matrix)
+        self.term_ranker = term_ranker(term_doc_matrix).set_non_text(non_text=self.non_text)
         self.scorer = RankDifference() \
             if scorer is None else scorer
         self.axes = self._build_axes(scorer)
@@ -149,12 +166,16 @@ class SemioticSquare(SemioticSquareBase):
         if scorer is None:
             scorer = self.scorer
         tdf = self._get_term_doc_count_df()
+        default_score = self.scorer.get_default_score()
         counts = tdf.sum(axis=1)
         tdf['x'] = self._get_x_axis(scorer, tdf)
-        tdf['x'][np.isnan(tdf['x'])] = self.scorer.get_default_score()
+        tdf.loc[np.isnan(tdf['x']), 'x'] = default_score
         tdf['y'] = self._get_y_axis(scorer, tdf)
-        tdf['y'][np.isnan(tdf['y'])] = self.scorer.get_default_score()
+        tdf.loc[np.isnan(tdf['y']), 'y'] = default_score
         tdf['counts'] = counts
+        if default_score == 0.5:
+            tdf['x'] = 2 * tdf['x'] - 1
+            tdf['y'] = 2 * tdf['y'] - 1
         return tdf[['x', 'y', 'counts']]
 
     def _get_x_axis(self, scorer, tdf):
@@ -177,37 +198,16 @@ class SemioticSquare(SemioticSquareBase):
         return [self.category_a_, self.category_b_] + self.neutral_categories_
 
     def _build_lexicons(self):
-        self.lexicons = {}
-        ax = self.axes
-        x_max = ax['x'].max()
-        y_max = ax['y'].max()
-        x_min = ax['x'].min()
-        y_min = ax['y'].min()
-        x_baseline = self._get_x_baseline()
-        y_baseline = self._get_y_baseline()
-
-        def dist(candidates, x_bound, y_bound):
-            return ((x_bound - candidates['x']) ** 2 + (y_bound - candidates['y']) ** 2).sort_values()
-
-        self.lexicons['a'] = dist(ax[(ax['x'] > x_baseline) & (ax['y'] > y_baseline)], x_max, y_max)
-        self.lexicons['not_a'] = dist(ax[(ax['x'] < x_baseline) & (ax['y'] < y_baseline)], x_min, y_min)
-
-        self.lexicons['b'] = dist(ax[(ax['x'] < x_baseline) & (ax['y'] > y_baseline)], x_min, y_max)
-        self.lexicons['not_b'] = dist(ax[(ax['x'] > x_baseline) & (ax['y'] < y_baseline)], x_max, y_min)
-
-        self.lexicons['a_and_b'] = dist(ax[(ax['y'] > y_baseline)], x_baseline, y_max)
-        self.lexicons['not_a_and_not_b'] = dist(ax[(ax['y'] < y_baseline)], x_baseline, y_min)
-
-        self.lexicons['a_and_not_b'] = dist(ax[(ax['x'] > x_baseline)], x_max, y_baseline)
-
-        self.lexicons['b_and_not_a'] = dist(ax[(ax['x'] < x_baseline)], x_min, y_baseline)
-
+        axes_parts_df = add_radial_parts_and_mag_to_term_coordinates(term_coordinates_df=self.axes)
+        self.axes['color'] = axes_parts_df.Part.apply(
+            lambda x: HALO_COLORS.get(
+                # can't figure out why this is needed, so don't change it until you do
+                x.replace('left', 'RIGHT').replace('right', 'left').replace('RIGHT', 'right')
+            )
+        )
+        self.lexicons = {
+            semiotic_square_label: axes_parts_df[lambda df: df.Part == part].sort_values(by='Mag', ascending=False)
+            for semiotic_square_label, part
+            in SEMIOTIC_SQUARE_TO_PART.items()
+        }
         return self.lexicons
-
-    def _get_y_baseline(self):
-        return self.scorer.get_default_score()
-
-    def _get_x_baseline(self):
-        return self.scorer.get_default_score()
-
-

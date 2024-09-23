@@ -171,12 +171,19 @@ class CorpusBasedTermScorer(with_metaclass(ABCMeta, object)):
     def _get_cat_and_ncat(self, X):
         if self.category_name_is_set_ is False:
             raise NeedToSetCategoriesException()
+        try:
+            if X.format == 'coo':
+                X = X.tocsr()
+        except:
+            pass
+
         cat_X = X[self._get_cat_x_row_mask(), :]
         ncat_X = X[self._get_ncat_x_row_mask(), :]
         if self.neutral_category_names:
             neut_X = X[self._get_neut_row_mask(), :]
             cat_X = vstack([cat_X, neut_X])
             ncat_X = vstack([ncat_X, neut_X])
+
         return cat_X, ncat_X
 
     def _get_neut_row_mask(self):

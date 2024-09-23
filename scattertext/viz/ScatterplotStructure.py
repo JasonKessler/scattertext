@@ -95,6 +95,7 @@ class ScatterplotStructure(object):
             right_gradient_term: Optional[str] = None,
             gradient_text_color: Optional[str] = None,
             gradient_colors: Optional[List[str]] = None,
+            category_term_score_scaler: Optional[str] = None,
             show_chart=False
     ):
         '''
@@ -279,6 +280,8 @@ class ScatterplotStructure(object):
         right_gradient_term: Optional[str], None by default
             Text of right gradient label, not_category_name by default
         gradient_text_color: Optional[str], None by default
+        category_term_score_scaler: Optional[str], None by default
+            Javascript function which scales a set of categories scores to between 0 and 1
         show_chart : bool, default False
             Show line graph
         '''
@@ -366,6 +369,7 @@ class ScatterplotStructure(object):
         self._right_gradient_term = right_gradient_term
         self._gradient_colors = gradient_colors
         self._gradient_text_color = gradient_text_color
+        self._category_term_score_scaler = category_term_score_scaler
 
     def call_build_visualization_in_javascript(self):
         def js_default_value(x, default='undefined'):
@@ -498,6 +502,7 @@ class ScatterplotStructure(object):
             json_or_null(self._right_gradient_term),
             json_or_null(self._gradient_text_color),
             json_or_null(self._gradient_colors),
+            js_default_value_to_null(self._category_term_score_scaler),
             js_bool(self._show_chart)
         ]
         return 'buildViz(' + ',\n'.join(arguments) + ');\n'

@@ -1,4 +1,5 @@
 import abc
+from typing import Callable, List
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -6,7 +7,6 @@ from tqdm.auto import tqdm
 from scattertext.TermDocMatrixWithoutCategories import TermDocMatrixWithoutCategories
 from scattertext.features.featoffsets.flexible_ngram_features import sequence_window
 from scattertext.termranking import AbsoluteFrequencyRanker
-
 
 class BaseTermCompactor(abc.ABC):
     @abc.abstractmethod
@@ -31,7 +31,9 @@ class NgramPercentageCompactor(BaseTermCompactor):
             term_ranker: type = AbsoluteFrequencyRanker,
             minimum_term_count: int = 0,
             usage_portion: float = 0.7,
-            verbose: bool = False
+            token_split_function: Callable[[str], List[str]] = lambda x: x.split(),
+            token_join_function: Callable[[List[str]], str] = ' '.join,
+            verbose: bool = False,
     ):
         '''
 
@@ -44,6 +46,12 @@ class NgramPercentageCompactor(BaseTermCompactor):
         usage_portion : float
             Portion of times term is used in a containing n-gram for it to be eliminated
             Default 0.8
+        token_split_function : Callable[[str], List[str]]
+            Function to split string into parts,
+            Default lambda x: x.split()
+        token_join_function : Callable[[List[str]], str]
+            Function to join parsts into a string
+            Default lambda x: ' '.join(x)
         verbose : bool
             Show progress bar
         '''
@@ -51,6 +59,8 @@ class NgramPercentageCompactor(BaseTermCompactor):
         self.minimum_term_count = minimum_term_count
         self.usage_portion = usage_portion
         self.verbose = verbose
+        self.token_split_function = token_split_function
+        self.token_join_function = token_join_function
 
     def compact(self, term_doc_matrix, non_text=False):
         elim_df = self.get_elimination_df(term_doc_matrix, non_text)
@@ -69,26 +79,26 @@ class NgramPercentageCompactor(BaseTermCompactor):
         })[
             lambda df: df.Count >= self.minimum_term_count
         ]
-        max_subgramsize = max(len(tok.split()) for tok in freq_df.index) - 1
+        max_subgramsize = max(len(self.token_split_function(tok)) for tok in freq_df.index) - 1
         eliminations = []
         eliminators = []
         it = freq_df.iterrows()
         if self.verbose:
             it = tqdm(freq_df.iterrows(), total=len(freq_df))
         for row_i, row in it:
-            toks = row.name.split()
+            toks = self.token_split_function(row.name)
             gram_len = len(toks)
             if gram_len > 1:
                 subgrams = []
                 for i in range(min(max_subgramsize, gram_len - 1), 0, -1):
                     for subtoks in sequence_window(toks, i):
-                        subgrams.append(' '.join(subtoks))
+                        subgrams.append(self.token_join_function(subtoks))
                 found_subgrams = freq_df.index.intersection(subgrams)
+
                 to_elim = list(freq_df.loc[
                                    found_subgrams
                                ][lambda df: row.Count > df.Count * self.usage_portion].index)
                 if to_elim:
-                    #print(to_elim)
                     eliminations += to_elim
                     eliminators += [row.name] * len(to_elim)
         return pd.DataFrame({'Eliminations': eliminations, 'Eliminators': eliminators})

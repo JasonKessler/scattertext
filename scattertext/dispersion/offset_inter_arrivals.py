@@ -16,7 +16,7 @@ def offset_corpus_to_concatenated_inter_arrivals(
         domains_to_preserve: Optional[List[str]] = None,
         join_text: str = '\n',
         verbose: bool = False,
-        nlp: Optional[spacy.language.Language] = None
+        nlp: Optional[spacy.Language] = None
 ) -> Dict[str, List[int]]:
     if not isinstance(corpus, OffsetCorpus):
         raise Exception(f"The corpus argument was of type {type(corpus)}. "

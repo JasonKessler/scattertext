@@ -1,9 +1,9 @@
 import pkgutil
-from typing import Tuple
+from typing import Tuple, Optional
 
 from scattertext import __version__
 from scattertext.Common import DEFAULT_D3_URL, DEFAULT_D3_SCALE_CHROMATIC, \
-    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME, HELLO, DEFAULt_D3FC_URL
+    DEFAULT_HTML_VIZ_FILE_NAME, AUTOCOMPLETE_CSS_FILE_NAME, SEARCH_FORM_FILE_NAME, HELLO, DEFAULt_D3FC_URL, HALO_COLORS
 from scattertext.viz.ScatterplotStructure import InvalidProtocolException
 
 
@@ -47,7 +47,7 @@ class PackedDataUtils:
     def full_content_of_javascript_files():
         return PackedDataUtils._load_script_file_names([
             'rectangle-holder.js',  # 'range-tree.js',
-            'main_zoomable.js', # main.js
+            'main.js',
             'autocomplete_definition.js'
         ])
 
@@ -86,7 +86,8 @@ class BasicHTMLFromScatterplotStructure(object):
                 d3_url=None,
                 d3_scale_chromatic_url=None,
                 html_base=None,
-                search_input_id='searchInput'):
+                search_input_id='searchInput',
+                halo_colors: Optional[dict] = None):
         '''
         Parameters
         ----------
@@ -104,11 +105,14 @@ class BasicHTMLFromScatterplotStructure(object):
             None by default.  HTML of semiotic square to be inserted above plot.
         search_input_id : str
             Id of search input. Default is 'searchInput'.
+        halo_colors : Optional[Dict[str, str]]
+            If None, defaults to HALO_COLORS. Maps halo position to background color
         Returns
         -------
         str, the html file representation
 
         '''
+        halo_colors = HALO_COLORS if halo_colors is None else halo_colors
         d3_url_struct = D3URLs(d3_url, d3_scale_chromatic_url)
         ExternalJSUtilts.ensure_valid_protocol(protocol)
         javascript_to_insert = '\n'.join([
@@ -119,7 +123,7 @@ class BasicHTMLFromScatterplotStructure(object):
         ])
         html_template = (PackedDataUtils.full_content_of_default_html_template()
                          if html_base is None
-                         else self._format_html_base(html_base))
+                         else self._format_html_base(html_base, halo_colors))
         html_content = (
                 HELLO +
                 html_template
@@ -127,7 +131,7 @@ class BasicHTMLFromScatterplotStructure(object):
                 .replace('<!-- INSERT SEARCH FORM -->',
                          PackedDataUtils.full_content_of_default_search_form(search_input_id), 1)
                 .replace('<!--D3URL-->', d3_url_struct.get_d3_url(), 1)
-                .replace('<!--D3FCURL-->', d3_url_struct.get_d3fc_url(), 1)
+                #.replace('<!--D3FCURL-->', d3_url_struct.get_d3fc_url(), 1)
                 .replace('<!--D3SCALECHROMATIC-->', d3_url_struct.get_d3_scale_chromatic_url())
             # .replace('<!-- INSERT D3 -->', self._get_packaged_file_content('d3.min.js'), 1)
         )
@@ -151,13 +155,16 @@ class BasicHTMLFromScatterplotStructure(object):
 
         return html_content
 
-    def _format_html_base(self, html_base):
+    def _format_html_base(self, html_base, halo_colors):
         height = self.scatterplot_structure._height_in_pixels
         cellheight, cellheightshort = cell_height_and_cell_height_short_from_height(height)
-        return (html_base.replace('{width}', str(self.scatterplot_structure._width_in_pixels))
+        html = (html_base.replace('{width}', str(self.scatterplot_structure._width_in_pixels))
                 .replace('{height}', str(height))
                 .replace('{cellheight}', str(cellheight))
                 .replace('{cellheightshort}', str(cellheightshort)))
+        for position, color in halo_colors.items():
+            html = html.replace('{' + f'{position}_halo_color' + '}', color)
+        return html
 
 
 def cell_height_and_cell_height_short_from_height(height: int) -> Tuple[int, int]:

@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Self, List, Union
 
 import numpy as np
 import pandas as pd
@@ -83,6 +84,7 @@ class ScatterChart:
         self.metadata_descriptions = None
         self.term_colors = None
         self.hidden_terms = None
+        self.category_scores = None
         self.verbose = verbose
 
     def inject_metadata_term_lists(self, term_dict):
@@ -104,6 +106,22 @@ class ScatterChart:
 
         self.metadata_term_lists = term_dict
         return self
+
+    def inject_category_scores(self, category_scores: Union[np.array, List[List[float]]]) -> Self:
+        if type(category_scores) == np.array:
+            category_scores = category_scores.tolist()
+        if not len(category_scores) == self.term_doc_matrix.get_num_categories():
+            raise Exception("Number of rows in category scores must be the number of categories in corpus")
+        if not all(
+            len(scores) == self.term_doc_matrix.get_num_terms(non_text=self.scatterchartdata.use_non_text_features)
+            for scores in category_scores
+        ):
+            raise Exception("Number of columns in category scores must be the number of terms or metadata in corpus")
+
+        self.category_scores = category_scores
+        return self
+
+
 
     def inject_metadata_descriptions(self, term_dict):
         '''
@@ -396,6 +414,9 @@ class ScatterChart:
 
         if use_offsets:
             j['offsets'] = self.term_doc_matrix.get_offsets()
+
+        if self.category_scores is not None:
+            j['category_scores'] = self.category_scores
 
         return j
 

@@ -74,6 +74,9 @@ class TermDocMatrix(TermDocMatrixWithoutCategories):
         '''
         return self._category_idx_store.values()
 
+    def get_num_categories(self) -> int:
+        return len(self._category_idx_store)
+
     def old_get_term_freq_df(self):
         d = {'term': self._term_idx_store._i2val}
         for i, category in self._category_idx_store.items():

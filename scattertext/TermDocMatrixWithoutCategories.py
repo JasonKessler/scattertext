@@ -20,10 +20,12 @@ from scattertext.termscoring import ScaledFScore
 from scattertext.indexstore.IndexStore import IndexStore
 from scattertext.termranking.TermRanker import TermRanker
 
+
 class MetadataReplacementRetentionPolicy(Enum):
     KEEP_ONLY_NEW = 1
     KEEP_UNMODIFIED = 2
     KEEP_ALL = 3
+
 
 class TermDocMatrixWithoutCategories(object):
     def __init__(self,
@@ -31,7 +33,7 @@ class TermDocMatrixWithoutCategories(object):
                  mX: csr_matrix,
                  term_idx_store: IndexStore,
                  metadata_idx_store: IndexStore,
-                 unigram_frequency_path: str=None):
+                 unigram_frequency_path: str = None):
         '''
 
         Parameters
@@ -257,6 +259,17 @@ class TermDocMatrixWithoutCategories(object):
 
         return self.remove_terms(list(tdf[tdf <= minimum_term_count].index), non_text=non_text)
 
+    def remove_infrequent_terms(
+            self,
+            minimum_term_count: int,
+            term_ranker: Type[TermRanker] = AbsoluteFrequencyRanker,
+            non_text: bool = False) -> Self:
+        # Aliasing remove_infrequent_words to have more consistent terminology (no pun intended)
+        return self.remove_infrequent_words(
+                minimum_term_count = minimum_term_count,
+                term_ranker = term_ranker,
+                non_text = non_text)
+
     def remove_word_by_document_pct(
             self,
             min_document_pct: float = 0.,
@@ -274,9 +287,12 @@ class TermDocMatrixWithoutCategories(object):
         tdm = self.get_term_doc_mat(non_text=non_text) > 0
         tdmpct = (tdm.sum(axis=0) / tdm.shape[0]).A1
         mask = (tdmpct >= min_document_pct) & (tdmpct <= max_document_pct)
-        return self.remove_terms(np.array(self.get_terms())[mask])
+        return self.whitelist_terms(
+            np.array(self.get_terms(use_metadata=non_text))[mask],
+            non_text=non_text
+        )
 
-    def remove_entity_tags(self) -> Self:
+    def remove_entity_tags(self, non_text: bool = False) -> Self:
         '''
         Returns
         -------
@@ -284,10 +300,11 @@ class TermDocMatrixWithoutCategories(object):
          that aren't spaCy entity tags.
 
         Note: Used if entity types are censored using FeatsFromSpacyDoc(tag_types_to_censor=...).
+        :param non_text: bool, use metadata?
         '''
-        terms_to_remove = [term for term in self._term_idx_store._i2val
+        terms_to_remove = [term for term in self.get_terms(use_metadata=non_text)
                            if any([word in SPACY_ENTITY_TAGS for word in term.split()])]
-        return self.remove_terms(terms_to_remove)
+        return self.remove_terms(terms_to_remove, non_text=non_text)
 
     def remove_terms(self, terms: List[str],
                      ignore_absences: bool = False, non_text: bool = False) -> Self:
@@ -708,7 +725,7 @@ class TermDocMatrixWithoutCategories(object):
         if policy.value == MetadataReplacementRetentionPolicy.KEEP_UNMODIFIED.value:
             keep_mX = self._mX[:, self._metadata_idx_store.getidxstrictbatch(keep_vals)]
             new_mX = scipy.sparse.hstack([keep_mX, new_val_mX], format='csr', dtype=self._mX.dtype)
-        else: #elif policy.value == MetadataReplacementRetentionPolicy.KEEP_ONLY_NEW.value:
+        else:  # elif policy.value == MetadataReplacementRetentionPolicy.KEEP_ONLY_NEW.value:
             new_mX = scipy.sparse.csr_matrix(new_val_mX, dtype=self._mX.dtype)
 
         return new_mX, new_metadata_idx_store

@@ -56,7 +56,8 @@ class GraphStructure(object):
         return '\n'.join([
             PackedDataUtils.full_content_of_javascript_files(),
             self.scatterplot_structure._visualization_data.to_javascript(),
-            self.scatterplot_structure.get_js_to_call_build_scatterplot(),
+            #self.scatterplot_structure.get_js_to_call_build_scatterplot(),
+            self.scatterplot_structure.get_js_to_call_build_scatterplot_with_a_function('termPlotInterface'),
             PackedDataUtils.javascript_post_build_viz('termSearch', 'plotInterface'),
             self.graph_renderer.get_javascript()
         ])

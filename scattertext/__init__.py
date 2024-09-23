@@ -1,5 +1,4 @@
-import logging
-version = [0, 2, 1]
+version = [0, 2, 2]
 __version__ = '.'.join([str(e) for e in version])
 
 import re
@@ -175,14 +174,14 @@ from scattertext.termscoring.simplemaths import SimpleMaths
 from scattertext.termscoring.lrc import LRC
 from scattertext.termscoring.g2 import G2
 from scattertext.contextual_embeddings.doc_splitter import SubwordSensitiveSentenceBoundedSplitter
-from scattertext.contextual_embeddings.corpus_runing_stats_factory import CorpusRunningStatsFactory
+from scattertext.contextual_embeddings.corpus_runing_stats_factory import CorpusRunningStatsFactory, \
+    last_hidden_state_embeddings, middle_hidden_state_embeddings
 from scattertext.categorytable.multi_category_association_scorer import MultiCategoryAssociationScorer
 from scattertext.termranking.dispersion_ranker import dispersion_ranker_factory
 from scattertext.termranking.tfidf_ranker_factory import tfidf_ranker_factory
 from scattertext.viz.util import scale_font_size, get_ternary_colors
 from scattertext.features.roget_offset_getter import RogetOffsetGetter
 from scattertext.termscoring.cliffsdelta import CliffsDelta
-
 
 PhraseFeatsFromTopicModel = FeatsFromTopicModel  # Ensure backwards compatibility
 
@@ -329,6 +328,8 @@ def produce_scattertext_explorer(corpus: object,
                                  right_gradient_term: Optional[str] = None,
                                  gradient_text_color: Optional[str] = None,
                                  gradient_colors: Optional[List[str]] = None,
+                                 category_term_scores: Optional[list[List[float]]] = None,
+                                 category_term_score_scaler: Optional[str] = None,
                                  return_scatterplot_structure: object = False) -> object:
     '''Returns html code of visualization.
 
@@ -632,6 +633,10 @@ def produce_scattertext_explorer(corpus: object,
         Color of text in gradient
     gradient_colors: Optional[List[str]], None by default, follows d3_color_scale
         Colors of gradient, as a list of hex values (e.g, ['#0000ff', '#fe0100', '#00ff00'])
+    category_term_scores: Optional[List[List[float]], None by default
+        score[category, term] for table visualization
+    category_term_score_scaler: Optional[str], None by default
+        Javascript function which scales a set of categories scores to between 0 and 1
     return_scatterplot_structure : bool, default False
         return ScatterplotStructure instead of html
 
@@ -683,7 +688,8 @@ def produce_scattertext_explorer(corpus: object,
         use_non_text_features=use_non_text_features,
         term_significance=term_significance,
         terms_to_include=terms_to_include,
-        dont_filter=dont_filter)
+        dont_filter=dont_filter
+    )
     if ((x_coords is None and y_coords is not None)
             or (y_coords is None and x_coords is not None)):
         raise Exception("Both x_coords and y_coords need to be passed or both left blank")
@@ -712,6 +718,10 @@ def produce_scattertext_explorer(corpus: object,
     if semiotic_square:
         html_base = get_semiotic_square_html(num_terms_semiotic_square,
                                              semiotic_square)
+
+    if category_term_scores is not None:
+        scatter_chart_explorer.inject_category_scores(category_scores=category_term_scores)
+
     scatter_chart_data = scatter_chart_explorer.to_dict(
         category=category,
         category_name=category_name,
@@ -864,6 +874,7 @@ def produce_scattertext_explorer(corpus: object,
         right_gradient_term=right_gradient_term,
         gradient_text_color=gradient_text_color,
         gradient_colors=gradient_colors,
+        category_term_score_scaler=category_term_score_scaler,
         show_chart=show_chart
     )
 
@@ -1288,7 +1299,7 @@ def produce_frequency_explorer(corpus,
 produce_fightin_words_explorer = produce_frequency_explorer
 
 
-def produce_semiotic_square_explorer(semiotic_square,
+def produce_semiotic_square_explorer(semiotic_square: SemioticSquare,
                                      x_label,
                                      y_label,
                                      category_name=None,
@@ -1379,7 +1390,9 @@ def produce_semiotic_square_explorer(semiotic_square,
                                         get_tooltip_content=get_tooltip_content,
                                         x_axis_values=x_axis_values,
                                         y_axis_values=y_axis_values,
-                                        color_func=color_func,
+                                        term_colors=axes['color'].to_dict(),
+                                        text_color_column='color',
+                                        term_metadata_df=axes,
                                         show_axes=False,
                                         **kwargs)
 
@@ -1462,10 +1475,15 @@ def produce_four_square_explorer(four_square,
     if get_tooltip_content is None:
         get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
                               % (x_label, y_label)
+
+    '''
+    # Commenting due to label color change in semiotic square viewer
     if color_func is None:
         # this desaturates
         # color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
         color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+    '''
+
     '''
     my_scaler = scale_neg_1_to_1_with_zero_mean_abs_max
     if foveate:
@@ -1502,6 +1520,9 @@ def produce_four_square_explorer(four_square,
         x_axis_values=x_axis_values,
         y_axis_values=y_axis_values,
         color_func=color_func,
+        term_colors=axes['color'].to_dict(),
+        text_color_column='color',
+        term_metadata_df=axes,
         show_axes=False,
         **kwargs)
 
@@ -1558,10 +1579,15 @@ def produce_four_square_axes_explorer(four_square_axes,
     if get_tooltip_content is None:
         get_tooltip_content = '''(function(d) {return d.term + "<br/>%s: " + Math.round(d.ox*1000)/1000+"<br/>%s: " + Math.round(d.oy*1000)/1000})''' \
                               % (x_label, y_label)
+
+    # Commenting due to change in label/point color of semiotic square
+    '''
     if color_func is None:
         # this desaturates
         # color_func = '(function(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y; return c;})'
         color_func = '(function(d) {return d3.interpolateRdYlBu(d.x)})'
+    '''
+
     axes = four_square_axes.get_axes()
 
     if 'scores' not in kwargs:
@@ -1599,6 +1625,9 @@ def produce_four_square_axes_explorer(four_square_axes,
         x_axis_values=x_axis_values,
         y_axis_values=y_axis_values,
         color_func=color_func,
+        term_colors=axes['color'].to_dict(),
+        text_color_column='color',
+        term_metadata_df=axes,
         show_axes=False,
         **kwargs
     )
@@ -2117,8 +2146,8 @@ def dataframe_scattertext(
     excess_terms = list(set(corpus.get_terms(use_metadata=use_metadata)) - set(plot_df.index))
     if excess_terms:
         print(f"There are {'metadata' if use_metadata else 'terms'} in the corpus which "
-                     f"are not in the index of plot_df. These will not be available in the visualization."
-                     f" These are: {excess_terms}.s")
+              f"are not in the index of plot_df. These will not be available in the visualization."
+              f" These are: {excess_terms}.s")
         corpus = corpus.remove_terms(terms=excess_terms, non_text=True)
 
     plot_df = plot_df.reindex(corpus.get_terms(use_metadata=use_metadata))
@@ -2185,6 +2214,9 @@ def produce_scattertext_table(
         trend_plot_settings: Optional[TrendPlotSettings] = None,
         show_chart: bool = True,
         show_category_headings: bool = False,
+        header_clickable: bool = False,
+        category_term_scores: Optional[np.array] = None,
+        category_term_freqs: Optional[np.array] = None,
         **kwargs
 ):
     '''
@@ -2204,6 +2236,9 @@ def produce_scattertext_table(
     trend_plot_settings: Optional[TrendPlotSettings] = None, default dispersion
     show_chart: bool = True, default, show line chart of ordered categories
     show_category_headings: bool = False, show list of category headings
+    header_clickable: bool = False, allow clicking on header to show category scores
+    term_category_scores: Optional[np.array]
+    term_category_freqs: Optional[np.array]
     '''
 
     alternative_term_func = '''(function(termDict) {
@@ -2213,7 +2248,7 @@ def produce_scattertext_table(
        return true;
     })'''
 
-    if 'use_non_text_features' in kwargs:
+    if 'use_non_text_features' in kwargs or 'non_text' in kwargs or 'use_metadata' in kwargs:
         non_text = kwargs['use_non_text_features']
 
     heading_corpus = corpus
@@ -2234,8 +2269,14 @@ def produce_scattertext_table(
         num_rows=num_rows,
         non_text=non_text,
         category_order=heading_category_order,
-        all_category_scorer_factory=all_category_scorer
+        all_category_scorer_factory=all_category_scorer,
+        header_clickable=header_clickable,
+        term_category_scores=category_term_scores,
+        term_category_freqs=category_term_freqs
     )
+
+    if header_clickable:
+        kwargs['include_term_category_counts'] = True
 
     if trend_plot_settings is None:
         trend_plot_settings = DispersionPlotSettings(

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from scattertext.Scalers import stretch_neg1_to_1
+from scattertext.semioticsquare.halo_utils import term_coordinates_to_halo
 
 
 class CategoryProjectionBase(ABC):
@@ -64,7 +65,8 @@ class CategoryProjectionBase(ABC):
             try:
                 return self.projection.T.loc[self.y_dim]
             except:
-                import pdb; pdb.set_trace()
+                import pdb;
+                pdb.set_trace()
                 raise e
 
     def get_axes_labels(self, num_terms=5):
@@ -74,18 +76,11 @@ class CategoryProjectionBase(ABC):
                 'top': list(df.sort_values(by='y', ascending=False).index[:num_terms]),
                 'bottom': list(df.sort_values(by='y', ascending=True).index[:num_terms])}
 
-    def get_nearest_terms(self, num_terms=5):
-        df = self.get_term_projection().apply(stretch_neg1_to_1)
-        return {
-            'top_right': ((df.x - 1) ** 2 + (df.y - 1) ** 2).sort_values().index[:num_terms].values,
-            'top': (df.x ** 2 + (df.y - 1) ** 2).sort_values().index[:num_terms].values,
-            'top_left': ((df.x + 1) ** 2 + (df.y - 1) ** 2).sort_values().index[:num_terms].values,
-            'right': ((df.x - 1) ** 2 + df.y ** 2).sort_values().index[:num_terms].values,
-            'left': ((df.x + 1) ** 2 + df.y ** 2).sort_values().index[:num_terms].values,
-            'bottom_right': ((df.x - 1) ** 2 + (df.y + 1) ** 2).sort_values().index[:num_terms].values,
-            'bottom': (df.x ** 2 + (df.y + 1) ** 2).sort_values().index[:num_terms].values,
-            'bottom_left': ((df.x + 1) ** 2 + (df.y + 1) ** 2).sort_values().index[:num_terms].values,
-        }
+    def get_nearest_terms(self, num_terms: int = 5) -> dict:
+        return term_coordinates_to_halo(
+            term_coordinates_df=self.get_term_projection(),
+            num_terms=num_terms
+        )
 
     def get_term_projection(self):
         if self.term_projection is None:

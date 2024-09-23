@@ -237,6 +237,42 @@ class Dispersion(object):
         rD_sp = csr_matrix(((1.0 / D)[r], (r, c)), shape=(C.shape))
         return C.multiply(rD_sp)
 
+
+    def dissemination(self) -> np.array:
+        '''
+        Returns the dissemination metric D_w from Altmann et al. 2011
+
+        Altmann EG, Pierrehumbert JB, Motter AE (2011) Niche as a Determinant of Word Fate in Online
+        Groups. PLoS ONE 6(5): e19009. https://doi.org/10.1371/journal.pone.0019009.
+        '''
+        U_w, Utilde_iw = self.__dissemination_components()
+
+        # Ratio of number of users using word and expected number of users using word
+        return (U_w / Utilde_iw.sum(axis=0).A1).A1
+
+    def delta_dissemination(self) -> np.array:
+        '''
+        Returns a novel variation of dissemination metric D_w from Altmann et al. 2011
+        where the expected dissemination is subtracted from the observed. This is more
+        suited for plotting.
+        '''
+        U_w, Utilde_iw = self.__dissemination_components()
+
+        return (U_w - Utilde_iw.sum(axis=0).A1).A1
+
+    def __dissemination_components(self):
+        N_w = self.term_part_counts.sum(axis=0)
+        U_w = (self.term_part_counts > 0).astype(int).sum(axis=0)
+        # "Number of words contributed by user i." This appears to be the total number of tokens used by user i.
+        m_i = self.term_part_counts.sum(axis=1)
+        # total words used
+        NA = self.term_part_counts.sum()
+        # Word probability
+        f_w = N_w / NA
+        # Expected uses of word w by user i
+        Utilde_iw = 1 - np.exp(-1 * (m_i * f_w))
+        return U_w, Utilde_iw
+
     def get_df(self, terms=None, include_da=False, no_freq_metrics: Optional[List] = None):
         if terms is None and self.corpus is not None:
             terms = self.get_names()
@@ -252,6 +288,8 @@ class Dispersion(object):
             'DP': self.dp(),
             'DP norm': self.dp_norm(),
             'KL-divergence': self.kl_divergence(),
+            "Dissemination": self.dissemination(),
+            "DeltaDissemination": self.delta_dissemination()
         }
         if include_da:
             df_content['DA'] = self.da()

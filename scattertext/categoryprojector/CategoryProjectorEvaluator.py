@@ -57,8 +57,8 @@ class EmbeddingsProjectorEvaluator(CategoryProjectionEvaluator):
     def __init__(self, get_vector):
         self.get_vector = get_vector
         #import spacy
-        #assert issubclass(type(nlp), spacy.language.Language)
         #self.nlp = nlp
+        #assert issubclass(type(nlp), spacy.Language)
         #self.vector_func = lambda: nlp(x)[0].vector
 
     def evaluate(self, category_projection):

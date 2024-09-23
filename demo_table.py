@@ -1,5 +1,7 @@
 import re
 
+from scattertext.viz.BasicHTMLFromScatterplotStructure import D3URLs
+
 import scattertext as st
 import spacy
 
@@ -57,13 +59,18 @@ corpus = st.OffsetCorpusFactory(
 html = st.produce_scattertext_table(
     corpus=corpus,
     category_order=list(sorted(corpus.get_categories())),
-    all_category_scorer=st.AllCategoryTermScorer(corpus, term_scorer=st.LogLikelihoodRatio),
+    all_category_scorer=lambda c: st.AllCategoryTermScorer(c, term_scorer=st.LogLikelihoodRatio),
     metadata = lambda c: c.get_df()['Date'].astype(str),
     ignore_categories=False,
     plot_width=1000,
     sort_doc_labels_by_name=True,
     use_offsets=True,
     non_text=True,
+    header_clickable=True,
+    d3_url_struct=D3URLs(
+        d3_url='./scattertext/data/viz/scripts/d3.min.js',
+        d3_scale_chromatic_url='./scattertext/data/viz/scripts/d3-scale-chromatic.v1.min.js'
+    )
 )
 
 fn = 'demo_table.html'

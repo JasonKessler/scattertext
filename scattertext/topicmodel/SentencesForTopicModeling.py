@@ -14,48 +14,77 @@ class SentencesForTopicModeling(object):
 	Creates a topic model from a set of key terms based on sentence level co-occurrence.
 	'''
 
-	def __init__(self, corpus):
+	def __init__(self, corpus, use_offsets=False):
 		'''
 
 		Parameters
 		----------
 		corpus
+		use_offsets
+
 		'''
 		assert isinstance(corpus, ParsedCorpus)
 		self.corpus = corpus
-		self.termidxstore = corpus._term_idx_store
-		matfact = CSRMatrixFactory()
-		self.doclabs = []
-		self.sentlabs = []
-		self.sentdocs = []
-		senti = 0
-		for doci, doc in enumerate(corpus.get_parsed_docs()):
-			for sent in doc.sents:
-				validsent = False
-				for t in sent:
-					try:
-						termi = self.termidxstore.getidxstrict(t.lower_)
-					except:
-						continue
-					if validsent is False:
-						senti += 1
-						self.sentlabs.append(corpus._y[doci])
-						self.sentdocs.append(doci)
-						validsent = True
-					matfact[senti, termi] = 1
-		self.sentX = matfact.get_csr_matrix().astype(bool)
+		self.use_offsets = use_offsets
+
+		if not use_offsets:
+			self.termidxstore = corpus._term_idx_store
+			matfact = CSRMatrixFactory()
+			self.doclabs = []
+			self.sentlabs = []
+			self.sentdocs = []
+			senti = 0
+			for doci, doc in enumerate(corpus.get_parsed_docs()):
+				for sent in doc.sents:
+					validsent = False
+					for t in sent:
+						try:
+							termi = self.termidxstore.getidxstrict(t.lower_)
+						except:
+							continue
+						if validsent is False:
+							senti += 1
+							self.sentlabs.append(corpus._y[doci])
+							self.sentdocs.append(doci)
+							validsent = True
+						matfact[senti, termi] = 1
+			self.sentX = matfact.get_csr_matrix().astype(bool)
+		else:
+			self.termidxstore = corpus._metadata_idx_store
+			doc_sent_offsets = [
+				pd.IntervalIndex.from_breaks([sent[0].idx for sent in doc.sents] + [len(str(doc))], closed='left')
+				for doc_i, doc
+				in enumerate(corpus.get_parsed_docs())
+			]
+
+			doc_sent_count = []
+			tally = 0
+			for doc_offsets in doc_sent_offsets:
+				doc_sent_count.append(tally)
+				tally += len(doc_offsets)
+
+			matfact = CSRMatrixFactory()
+			for term, term_offsets in corpus.get_offsets().items():
+				term_index = corpus.get_metadata_index(term)
+				for doc_i, offsets in term_offsets.items():
+					for offset in offsets:
+						doc_sent_i = doc_sent_offsets[doc_i].get_loc(offset[0]) + doc_sent_count[doc_i]
+						matfact[doc_sent_i, term_index] = 1
+
+			self.sentX = matfact.get_csr_matrix()
 
 	def get_sentence_word_mat(self):
 		return self.sentX.astype(np.double).tocoo()
 
 	def get_topic_weights_df(self, pipe=None) -> pd.DataFrame:
 		pipe = self._fit_model(pipe)
-		return pd.DataFrame(pipe._final_estimator.components_.T, index=self.corpus.get_terms())
+		return pd.DataFrame(pipe._final_estimator.components_.T,
+							index=self.corpus.get_terms(use_metadata=self.use_offsets))
 
 	def get_topics_from_model(
 			self,
 			pipe=None,
-			num_terms_per_topic=10):
+			num_terms_per_topic=10) -> dict:
 		'''
 
 		Parameters

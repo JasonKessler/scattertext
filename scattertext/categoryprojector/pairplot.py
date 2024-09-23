@@ -91,19 +91,20 @@ def produce_pairplot(corpus,
                      default_to_term_comparison=True,
                      category_x_label='',
                      category_y_label='',
-                     category_tooltip_func = '(function(d) {return d.term})',
-                     term_tooltip_func = '(function(d) {return d.term})',
+                     category_tooltip_func='(function(d) {return d.term})',
+                     term_tooltip_func='(function(d) {return d.term})',
                      category_show_axes_and_cross_hairs=False,
                      highlight_selected_category=True,
                      term_x_label=None,  # used if default_to_term_comparison
                      term_y_label=None,  # used if default_to_term_comparison
                      wordfish_style=False,
                      category_metadata_df=None,
+                     return_structure=False,
                      **kwargs):
-
     if category_projection is None:
         if use_metadata:
-            category_projection = category_projector.use_metadata().project_with_metadata(corpus, x_dim=x_dim, y_dim=y_dim)
+            category_projection = category_projector.use_metadata().project_with_metadata(corpus, x_dim=x_dim,
+                                                                                          y_dim=y_dim)
         else:
             category_projection = category_projector.project(corpus, x_dim=x_dim, y_dim=y_dim)
 
@@ -115,14 +116,14 @@ def produce_pairplot(corpus,
     if category_metadata_df is not None:
         if type(category_metadata_df) != pd.DataFrame:
             category_metadata_df = category_metadata_df(corpus)
-        category_scatter_chart_explorer = category_scatter_chart_explorer\
+        category_scatter_chart_explorer = category_scatter_chart_explorer \
             .inject_term_metadata_df(category_metadata_df)
     category_scatter_chart_data = category_scatter_chart_explorer.to_dict(
         category=initial_category,
         max_docs_per_category=0,
     )
 
-    #initial_category_idx = corpus.get_categories().index(initial_category)
+    # initial_category_idx = corpus.get_categories().index(initial_category)
     term_plot_change_func = _get_term_plot_change_js_func(wordfish_style, category_focused, initial_category)
 
     category_scatterplot_structure = ScatterplotStructure(
@@ -147,7 +148,7 @@ def produce_pairplot(corpus,
         show_cross_axes=True,
         div_name='cat-plot',
         alternative_term_func=term_plot_change_func,
-        highlight_selected_category=highlight_selected_category
+        highlight_selected_category=highlight_selected_category,
     )
     compacted_corpus = AssociationCompactor(
         terms_to_show,
@@ -256,7 +257,7 @@ def produce_pairplot(corpus,
         unified_context=not wordfish_style,
         highlight_selected_category=highlight_selected_category,
     )
-    return PairPlotFromScatterplotStructure(
+    pair_plot_structure = PairPlotFromScatterplotStructure(
         category_scatterplot_structure,
         term_scatterplot_structure,
         category_projection,
@@ -268,7 +269,11 @@ def produce_pairplot(corpus,
         x_dim=x_dim,
         y_dim=y_dim,
         protocol=protocol
-    ).to_html()
+    )
+    if return_structure:
+        return pair_plot_structure
+
+    return pair_plot_structure.to_html()
 
 
 def _get_category_scatter_chart_explorer(category_projection, scaler, term_ranker, verbose):
@@ -302,6 +307,6 @@ def _get_term_plot_change_js_func(wordfish_style, category_focused, initial_cate
         return '''(function (termInfo) {termPlotInterface.yAxisLogCounts(termInfo); return false;})'''
     if category_focused:
         return '(function (termInfo) {termPlotInterface.drawCategoryAssociation("%s", termInfo.term); return false;})' \
-               % (initial_category.replace('"', '\\"'))
-    #return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'
+            % (initial_category.replace('"', '\\"'))
+    # return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.i); return false;})'
     return '(function (termInfo) {termPlotInterface.drawCategoryAssociation(termInfo.term); return false;})'

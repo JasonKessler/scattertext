@@ -1,7 +1,6 @@
 import dataclasses
 from typing import Iterable, Optional, Callable, Union
 
-import flashtext
 import numpy as np
 import spacy
 import pandas as pd
@@ -30,6 +29,28 @@ except:
         pass
 
 
+def last_hidden_state_embeddings(model, inputs) -> np.array:
+    full_output = model(
+        input_ids=inputs['input_ids'],
+        token_type_ids=inputs['token_type_ids'],
+        attention_mask=inputs['attention_mask'],
+    )
+    outputs = full_output.last_hidden_state.detach().numpy()
+    return outputs[0][1:-1]
+
+
+def middle_hidden_state_embeddings(model, inputs) -> np.array:
+    full_output = model(
+        input_ids=inputs['input_ids'],
+        token_type_ids=inputs['token_type_ids'],
+        attention_mask=inputs['attention_mask'],
+        output_hidden_states=True
+    )
+    hidden_outputs = full_output.hidden_states;
+    outputs = hidden_outputs[len(hidden_outputs) // 2].detach().numpy()
+    return outputs[0][1:-1]
+
+
 class CorpusRunningStatsFactory:
     def __init__(
             self,
@@ -39,7 +60,8 @@ class CorpusRunningStatsFactory:
             feats_from_spacy_doc: Optional[FeatsFromSpacyDoc] = None,
             doc_segmenter: Optional[Callable[[spacy.tokens.doc.Doc], Iterable[spacy.tokens.span.Span]]] = None,
             token_normalizer: Optional[Callable[[spacy.tokens.Token], str]] = None,
-            use_all_tokens_for_category_embeddings: bool = True
+            use_all_tokens_for_category_embeddings: bool = True,
+            weights_to_embeddings: Callable = last_hidden_state_embeddings
     ):
         """
 
@@ -60,10 +82,10 @@ class CorpusRunningStatsFactory:
             raise Exception("Since the corpus object is not an offset corpus, feats_from_spacy_doc needs to be passed.")
         self.doc_segmenter = doc_sentence_splitter if doc_segmenter is None else doc_segmenter
         self.token_normalizer = lambda x: x.lower_ if token_normalizer is None else token_normalizer
+        self.weights_to_embeddings = weights_to_embeddings
         self.use_all_tokens_for_category_embeddings = use_all_tokens_for_category_embeddings
 
     def build(self, verbose: bool = True) -> CorpusRunningStats:
-        self.__initialize_keyword_processor()
         running_stats = self.initialize_running_stats()
         offset_df = self.__build_offset_df()
 
@@ -99,9 +121,6 @@ class CorpusRunningStatsFactory:
         doc_offset_df = self.__query_for_doc_offset_df(offset_df, doc_idx)
         if len(doc_offset_df):
             for segment in self.doc_segmenter(doc):
-                # keywords = self.term_keyword_processor.extract_keywords(str(segment), span_info=True)
-                # if keywords:
-
                 seg_start = segment[0].idx
                 seg_end = seg_start + len(str(segment))
                 try:
@@ -112,7 +131,8 @@ class CorpusRunningStatsFactory:
                     print(seg_start, seg_end)
                     print((doc_offset_df.Start >= seg_start) & (doc_offset_df.End <= seg_end))
                     mask = (doc_offset_df.Start >= seg_start) & (doc_offset_df.End <= seg_end)
-                    import pdb; pdb.set_trace()
+                    import pdb;
+                    pdb.set_trace()
 
                 embeddings = None
                 if len(annots):
@@ -138,14 +158,15 @@ class CorpusRunningStatsFactory:
                         embeddings, _ = self.__embed_segment(segment, seg_start, adjust_offsets=False)
                     running_stats.add_embeddings_to_category(embeddings=embeddings, cat=cat)
 
-    def __embed_segment(self, segment, seg_start, adjust_offsets = True):
+    def __embed_segment(self, segment, seg_start, adjust_offsets=True):
         str_segment = str(segment)
         inputs = self.tokenizer(str_segment, return_tensors="pt", return_offsets_mapping=True)
         subtoken_offsets = inputs['offset_mapping'].cpu().detach().numpy()[0][1:-1]
         try:
             embeddings = self.__inputs_to_embeddings(inputs=inputs)
         except Exception as e:
-            import pdb; pdb.set_trace()
+            import pdb;
+            pdb.set_trace()
             raise e
         if adjust_offsets:
             subtoken_offsets_whitespace_stripped = []
@@ -188,9 +209,9 @@ class CorpusRunningStatsFactory:
         subtoken_start = np.searchsorted(subtoken_offsets[0], kw_start)
         subtoken_end = np.searchsorted(subtoken_offsets[1], kw_end, side='right')
         if subtoken_start == subtoken_end:
-            if subtoken_start > 0: # if the term somehow is inside another token, we just take that token's embedding
+            if subtoken_start > 0:  # if the term somehow is inside another token, we just take that token's embedding
                 subtoken_start -= 1
-            elif subtoken_end < subtoken_offsets.shape[1] - 1: # no idea if this can happen, but to be on the safe side
+            elif subtoken_end < subtoken_offsets.shape[1] - 1:  # no idea if this can happen, but to be on the safe side
                 subtoken_end += 1
             else:
                 print([f'|{t}|' for t in segment])
@@ -211,13 +232,7 @@ class CorpusRunningStatsFactory:
                               add_to_category_embeddings=add_to_category_embeddings)
 
     def __inputs_to_embeddings(self, inputs):
-        outputs = self.model(
-            input_ids=inputs['input_ids'],
-            token_type_ids=inputs['token_type_ids'],
-            attention_mask=inputs['attention_mask']
-        ).last_hidden_state.detach().numpy()
-        embeddings = outputs[0][1:-1]
-        return embeddings
+        return self.weights_to_embeddings(model=self.model, inputs=inputs)
 
     def __iter_docs_and_cats(self, verbose: bool):
         it = self.corpus.get_df()[
@@ -236,11 +251,6 @@ class CorpusRunningStatsFactory:
             embedding_width=None  # self.model.config_class().hidden_size
         )
         return running_stats
-
-    def __initialize_keyword_processor(self):
-        self.term_keyword_processor = flashtext.KeywordProcessor(case_sensitive=False)
-        for term in self.corpus.get_terms():
-            self.term_keyword_processor.add_keyword(keyword=term)
 
     def _get_segment_token_embeddings(self, segment: spacy.tokens.span.Span) -> np.array:
         inputs = self.tokenizer(str(segment), return_tensors="pt")

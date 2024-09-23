@@ -150,6 +150,7 @@ class ScatterChartExplorer(ScatterChart):
         # This should be sped up
         term2idx = pd.Series(np.arange(len(terms)), index=terms)
         for category_i, category in enumerate(self.term_doc_matrix.get_categories()):
+            category = str(category)
             term_ser = term_doc_freq[category]
             doc_ser = term_doc_counts[category]
             term_ser = term_ser[term_ser.values > 0]

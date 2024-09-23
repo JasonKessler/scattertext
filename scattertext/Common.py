@@ -70,4 +70,14 @@ NEW_TABLEAU_10 = ['5778a4', 'e49444', 'd1615d', '85b6b2', '6a9f58',
 OLD_TABLEAU_10 = ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467bd',
                   '8c564b', 'e377c2', '7f7f7f', 'bcbd22', '17becf']
 
-HELLO = f'<!-- Made with Scattertext v.{__version__}. For more information on how to make plots like this, please visit http://www.github.com/JasonKessler/scattertext -->\n'
+HELLO = f'''<!-- Made with Scattertext v.{__version__}. 
+
+Please cite as:
+
+Jason S. Kessler. Scattertext: a Browser-Based Tool for Visualizing how Corpora Differ. ACL System Demonstrations. Vancouver, BC. 2017. 
+
+For more information on how to make plots like this, please visit http://www.github.com/JasonKessler/scattertext -->
+'''
+
+HALO_COLORS = {'top_left': '#0c71ff', 'left': '#ca2800', 'bottom_left': '#920069', 'top': '#000096',
+               'bottom': '#004508', 'top_right': '#288a71', 'right': '#610892', 'bottom_right': '#c21cca'}

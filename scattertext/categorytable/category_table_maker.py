@@ -1,10 +1,13 @@
 import json
-import types
 from _bisect import bisect_left
 from typing import Optional, Union, Callable
 
 import numpy as np
 import pandas as pd
+
+from scattertext import dense_rank
+from scattertext.termranking.TermRanker import TermRanker
+
 from scattertext.TermDocMatrix import TermDocMatrix
 
 from scattertext.all_category_scorers.gmean_l2_freq_associator import AllCategoryScorerGMeanL2
@@ -22,19 +25,29 @@ class CategoryTableMaker(GraphRenderer):
             category_order=None,
             all_category_scorer_factory: Optional[Callable[[TermDocMatrix], AllCategoryScorer]] = None,
             min_font_size=7,
-            max_font_size=20
+            max_font_size=20,
+            term_category_scores: Optional[np.array] = None,
+            term_category_freqs: Optional[np.array] = None,
+            header_clickable: bool = False
     ):
         self.num_rows = num_rows
         self.corpus = corpus
         self.use_metadata = non_text
+        self.term_category_scores_ = term_category_scores
+        self.term_category_freqs_ = term_category_freqs
         self.all_category_scorer_ = self._get_all_category_scorer(all_category_scorer_factory, corpus, non_text)
         self.rank_df = self._get_term_category_associations()
+        # import pdb; pdb.set_trace()
         self.category_order_ = [str(x) for x in (sorted(self.corpus.get_categories())
                                                  if category_order is None else category_order)]
         self.min_font_size = min_font_size
         self.max_font_size = max_font_size
+        self.header_clickable_ = header_clickable
 
-    def _get_all_category_scorer(self, all_category_scorer_factory, corpus, use_metadata) -> AllCategoryScorer:
+    def _get_all_category_scorer(self, all_category_scorer_factory, corpus, use_metadata) -> Optional[
+        AllCategoryScorer]:
+        if self.term_category_freqs_ is not None and self.term_category_scores_ is not None:
+            return None
         if all_category_scorer_factory is None:
             all_category_scorer_factory = lambda corpus: AllCategoryScorerGMeanL2(
                 corpus=corpus,
@@ -42,10 +55,46 @@ class CategoryTableMaker(GraphRenderer):
             )
         return all_category_scorer_factory(corpus).set_non_text(non_text=use_metadata)
 
+    def _get_term_category_associations(self) -> pd.DataFrame:
+        if self.all_category_scorer_ is None:
+            terms = []
+            cats = []
+            ranks = []
+            scores = []
+            freqs = []
+            single_terms = self.corpus.get_terms(self.use_metadata)
+            for cat_i, cat in enumerate(self.corpus.get_categories()):
+                cats += [str(cat)] * self.corpus.get_num_terms(self.use_metadata)
+                terms += single_terms
+                scores.append(self.term_category_scores_[cat_i])
+                freqs.append(self.term_category_freqs_[cat_i])
+                # ranks.append(np.argsort(-self.term_category_scores_[cat_i]))
+                ranks.append(np.argsort(-self.term_category_scores_[cat_i]))
+
+            return pd.DataFrame({
+                'Term': terms,
+                'Category': cats,
+                'Frequency': np.hstack(np.array(freqs).T),
+                'Score': np.hstack(np.array(scores).T),
+                'Rank': np.hstack(np.array(ranks).T)
+            })
+        term_category_association = self.all_category_scorer_.get_rank_freq_df()
+        return term_category_association
+
     def get_graph(self):
         table = '<div class="timelinecontainer"><table class="timelinetable">'
-        table += '<tr><th>' + '</th><th>'.join(self.category_order_) + '</th></tr>'
+        category_headers = '</th><th>'.join(self.category_order_)
+        if self.header_clickable_:
+            category_headers = f'</th><th>'.join([
+                '<span class="catnamehead" style="hover {background:#ff0000;}"' +
+                ' onclick="termPlotInterface.drawCategoryScores(\'' +
+                cat.replace('"', '\\"').replace("'", "\\'")
+                + '\')">' + cat + '</span>'
+                for cat in self.category_order_
+            ])
+        table += '<tr><th>' + category_headers + '</th></tr>'
         display_df = self.__get_display_df()
+        print(display_df.Rank.max())
 
         cat_df = self.__get_cat_df(display_df)
 
@@ -200,6 +249,3 @@ class CategoryTableMaker(GraphRenderer):
         
         function getCatNumToCat() { return ''' + json.dumps(cat_dict) + '''}'''
         return js
-
-    def _get_term_category_associations(self) -> pd.DataFrame:
-        return self.all_category_scorer_.get_rank_freq_df()

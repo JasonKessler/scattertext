@@ -15,6 +15,7 @@ html = st.produce_scattertext_explorer(
     term_scorer=st.RankDifference(),
     transform=st.Scalers.dense_rank
 )
+
 file_name = 'demo_dense_rank_difference.html'
 open(file_name, 'wb').write(html.encode('utf-8'))
 print('Open ./%s in Chrome.' % (file_name))

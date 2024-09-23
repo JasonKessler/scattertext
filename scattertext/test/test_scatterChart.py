@@ -2,7 +2,6 @@ import sys
 from unittest import TestCase
 
 import numpy as np
-import pandas as pd
 
 from scattertext import LogOddsRatioUninformativeDirichletPrior, scale
 from scattertext import ScatterChart
@@ -84,11 +83,9 @@ class TestScatterChart(TestCase):
         corpus = get_test_corpus()
         sc = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0)
         d1 = sc.to_dict('hamlet')
-        sc = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0, score_transform=lambda x:x)
+        sc = ScatterChart(term_doc_matrix=corpus, minimum_term_frequency=0, score_transform=lambda x: x)
         d2 = sc.to_dict('hamlet')
         assert sum([datum['s'] for datum in d1['data']]) != sum([datum['s'] for datum in d2['data']])
-
-
 
     def test_multi_categories(self):
         corpus = get_test_corpus()

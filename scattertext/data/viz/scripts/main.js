@@ -97,11 +97,9 @@ buildViz = function (d3) {
                      rightGradientTerm = null,
                      gradientTextColor = null,
                      gradientColors = null,
+                     categoryTermScoreScaler = null,
                      showChart = true,
     ) {
-
-
-
 
         function formatTermForDisplay(term) {
             if (subwordEncoding === 'RoBERTa' && (term.charCodeAt(0) === 288 || term.charCodeAt(0) === 289))
@@ -1407,7 +1405,7 @@ buildViz = function (d3) {
 
 
 
-            function getFrequencyDescription(name, count25k, count, ndocs) {
+            function getFrequencyDescription(name, count25k, count, ndocs, docCount) {
                 var desc = name;
                 if (!enableTermCategoryDescription) {
                     return desc + ':';
@@ -1420,9 +1418,10 @@ buildViz = function (d3) {
                     desc += '<u>Not found in any ' + name + ' ' + documentWord + 's.</u>';
                 } else {
                     if (!isNaN(Math.round(ndocs))) {
-                        desc += '<u>Some of the ' + count + ' mentions:</u>';
+                        desc += ('<u>The ' + count + ' mentions in ' + docCount
+                            + ' available ' + documentWordPlural + ':</u>');
                     } else {
-                        desc += count + ' mentions';
+                        desc += count + ' mentions' ;
                     }
                 }
                 /*
@@ -1449,13 +1448,15 @@ buildViz = function (d3) {
                         cat_name,
                         info.cat25k,
                         info.cat,
-                        termInfo.contexts[0].length * 1000 / numCatDocs
+                        termInfo.contexts[0].length * 1000 / numCatDocs,
+                        termInfo.contexts[0].length
                     )
                     nCatHeader = getFrequencyDescription(
                         ncat_name,
                         info.ncat25k,
                         info.ncat,
-                        termInfo.contexts[1].length * 1000 / numNCatDocs
+                        termInfo.contexts[1].length * 1000 / numNCatDocs,
+                        termInfo.contexts[1].length
                     )
 
                 } else {
@@ -1494,7 +1495,8 @@ buildViz = function (d3) {
                             fullData.info.neutral_category_name,
                             info.neut25k,
                             info.neut,
-                            termInfo.contexts[2].length * 1000 / numDocs
+                            termInfo.contexts[2].length * 1000 / numDocs,
+                            termInfo.contexts[2].length
                         )
                     } else {
                         neutHeader = getColumnHeaderHTML(2, termInfo, fullData);
@@ -1529,7 +1531,8 @@ buildViz = function (d3) {
                                 fullData.info.extra_category_name,
                                 info.extra25k,
                                 info.extra,
-                                termInfo.contexts[3].length * 1000 / numDocs
+                                termInfo.contexts[3].length * 1000 / numDocs,
+                                termInfo.contexts[3].length
                             )
                         } else {
                             extraHeader = getColumnHeaderHTML(3, termInfo, fullData);
@@ -1903,7 +1906,7 @@ buildViz = function (d3) {
 
         function showToolTipForTerm(data, mysvg, searchTerm, searchTermInfo, showObscured = true) {
             //var searchTermInfo = termDict[searchTerm];
-            console.log("showing tool tip")
+            console.log("showing tool tip for " + searchTerm)
             console.log(searchTerm)
             console.log(searchTermInfo)
             if (searchTermInfo === undefined) {
@@ -2036,8 +2039,6 @@ buildViz = function (d3) {
             data.forEach(function (d, i) {
                 d.ci = i
             });
-
-            //console.log('XXXXX'); console.log(data)
 
 
             function getFilter(data) {
@@ -2494,13 +2495,13 @@ buildViz = function (d3) {
                 }
                 registerFigureBBox(myYAxis, true);
                 registerFigureBBox(myXAxis, true);
-
                 function getLabelText(axis) {
                     if (axis == 'y') {
                         if (yLabelText == null)
                             return modelInfo['category_name'] + " Frequency";
-                        else
-                            return yLabelText;
+                        else {
+                            return yLabelText//.replace("'", "\\'");
+                        }
                     } else {
                         if (xLabelText == null)
                             return modelInfo['not_category_name'] + " Frequency";
@@ -3077,11 +3078,11 @@ buildViz = function (d3) {
                 var messages = [];
                 if (ignoreCategories) {
                     var wordCount = getCorpusWordCounts();
+                    var docWordToShow = documentWord.charAt(0).toUpperCase() + documentWord.substr(1).toLowerCase()
                     messages.push(
-                        '<b>' + documentWord.charAt(0).toUpperCase()
-                        + documentWord.substr(1).toLowerCase() + ' count: </b>'
+                        '<b>' + docWordToShow + ' count: </b>'
                         + fullData.docs.texts.length.toLocaleString('en') +
-                        '; <b>' + termWord.charAt(0).toUpperCase() + termWord.substr(1).toLowerCase +' count: </b>'
+                        '; <b>' + termWord.charAt(0).toUpperCase() + termWord.substr(1).toLowerCase() + ' count: </b>'
                         + wordCount['sums'].reduce((a, b) => a + b, 0).toLocaleString('en')
                     )
                 } else if (unifiedContexts) {
@@ -3321,6 +3322,143 @@ buildViz = function (d3) {
                 plotInterface.termDict[term.replace("'", "\\'")]
             )
         };
+
+        plotInterface.drawCategoryScores = function (category, x, y, xAxisLabel, yAxisLabel) {
+            console.log("+++++++ Entering drawCategoryScores")
+            console.log(this.fullData)
+            console.log("Category: " + category)
+            var categoryNum = this.fullData.info.categories.flatMap(x=>x.toString()).indexOf(category);
+            console.log("Category Num: "); console.log(categoryNum)
+
+            var categoryScores = this.fullData.category_scores[categoryNum];
+            console.log("categoryScores:"); console.log(categoryScores)
+
+            var scaledCategoryScores = categoryScores;
+            if(categoryTermScoreScaler !== undefined && categoryTermScoreScaler !== null) {
+                console.log("categoryScoresr"); console.log(categoryTermScoreScaler)
+                scaledCategoryScores = categoryTermScoreScaler(categoryScores)
+            }
+            var denseRanks = getDenseRanks(this.fullData, categoryNum)
+            console.log("Have dense ranks")
+            console.log(denseRanks)
+            var xf = this.x;
+            var yf = this.y;
+            var fgFreqSum = denseRanks.fgFreqs.reduce((a, b) => a + b, 0)
+            var bgFreqSum = denseRanks.bgFreqs.reduce((a, b) => a + b, 0)
+
+
+            this.fullData.data = this.fullData.data.map(function (term, i) {
+                //term.ci = i;
+                term.s = scaledCategoryScores[term.i];
+                term.os = categoryScores[term.i];
+                term.cat = denseRanks.fgFreqs[term.i];
+                term.ncat = denseRanks.bgFreqs[term.i];
+                term.cat25k = parseInt(denseRanks.fgFreqs[term.i] * 25000 / fgFreqSum);
+                term.ncat25k = parseInt(denseRanks.bgFreqs[term.i] * 25000 / bgFreqSum);
+                term.ox = denseRanks.fg[term.i];
+                term.oy = scaledCategoryScores[term.i];
+                term.x = xf(denseRanks.fg[term.i]) // logTermCounts[term.i];
+                term.y = yf(scaledCategoryScores[term.i]) // scores[term.i];
+                term.display = true;
+                return term;
+            })
+
+            this.rerender(//denseRanks.bg,
+                fullData.data.map(x => x.ox), //ox
+                //denseRanks.fg,
+                fullData.data.map(x => x.oy), //oy,
+                d => d3.interpolateRdYlBu(d.s));
+            if (this.yLabel !== undefined) {
+                this.yLabel.remove()
+            }
+            if (this.xLabel !== undefined) {
+                this.xLabel.remove()
+            }
+            var leftName = this.fullData.info.categories[categoryNum];
+            var bottomName = "Not " + this.fullData.info.categories[categoryNum];
+            if (otherCategoryNum !== null) {
+                bottomName = this.fullData.info.categories[otherCategoryNum];
+            }
+
+
+            this.yLabel = this.drawYLabel(this.svg, category_name + " Hedge's g")
+            this.xLabel = this.drawXLabel(this.svg, this.fullData.info.categories[categoryNum] + ' Frequency Rank')
+            if (this.topTermsPane !== undefined) {
+                this.topTermsPane.catHeader.remove()
+                this.topTermsPane.notCatHeader.remove()
+                this.topTermsPane.wordListData.wordObjList.map(x => x.remove())
+                this.topTermsPane.notWordListData.wordObjList.map(x => x.remove())
+            }
+            this.showWordList = payload.showWordList;
+
+
+            this.showAssociatedWordList = function (
+                data,
+                word,
+                header,
+                isUpperPane,
+                xOffset = this.topTermsPane.startingOffset,
+                length = 14
+            ) {
+                var sortedData = null;
+                if (!isUpperPane) {
+                    sortedData = data.map(x => x).sort((a, b) => categoryScores[a.i] - categoryScores[b.i])
+                } else {
+                    sortedData = data.map(x => x).sort((a, b) => categoryScores[b.i] - categoryScores[a.i])
+                }
+                console.log('sortedData');
+                console.log(isUpperPane);
+                console.log(sortedData.slice(0, length))
+                console.log(payload)
+                console.log(word)
+                return payload.showWordList(word, sortedData.slice(0, length), xOffset);
+            }
+            if (this.topTermsPane !== undefined)
+                this.topTermsPane = payload.showTopTermsPane(
+                    this.data,
+                    this.topTermsPane.registerFigureBBox,
+                    this.showAssociatedWordList,
+                    "Top " + leftName,
+                    "Top " + bottomName,
+                    this.topTermsPane.startingOffset
+                )
+
+            fullData.info.category_name = leftName;
+            fullData.info.not_category_name = bottomName;
+            fullData.info.category_internal_name = this.fullData.info.categories[categoryNum];
+            if (otherCategoryNum === null) {
+                fullData.info.not_category_internal_names = this.fullData.info.categories
+                    .filter(x => x !== this.fullData.info.categories[categoryNum]);
+            } else {
+                fullData.info.not_category_internal_names = this.fullData.info.categories
+                    .filter(x => x === this.fullData.info.categories[otherCategoryNum]);
+
+                fullData.info.neutral_category_internal_names = this.fullData.info.categories
+                    .filter(x => (x !== this.fullData.info.categories[categoryNum]
+                        && x !== this.fullData.info.categories[otherCategoryNum]));
+                fullData.info.neutral_category_name = "All Others";
+
+            }
+            console.log("fullData.info.not_category_internal_names");
+            console.log(fullData.info.not_category_internal_names);
+            ['snippets', 'snippetsalt', 'termstats',
+                'overlapped-terms-clicked', 'categoryinfo',
+                'cathead', 'cat', 'corpus-stats', 'notcathead',
+                'notcat', 'neuthead', 'neut'
+            ].forEach(function (divSubName) {
+                var mydiv = '#' + divName + '-' + divSubName;
+                console.log("Clearing");
+                console.log(mydiv);
+                d3.select(mydiv).selectAll("*").remove();
+                d3.select(mydiv).html("");
+
+            });
+            this.populateCorpusStats();
+
+            console.log(fullData)
+        };
+
+
 
         plotInterface.drawCategoryAssociation = function (category, otherCategory = null) {
             console.log("+++++++ Entering drawCategoryAssociation")

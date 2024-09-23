@@ -52,7 +52,8 @@ def lss_terms(embeddings,
     seed_norm = np.matrix(np.linalg.norm(seed_mat, axis=1))
     term_norm = np.matrix(np.linalg.norm(embeddings, axis=1))
 
-    cosine_mat = (((seed_mat * embeddings.T).T/seed_norm)/term_norm.T)
+    cosine_mat = (((seed_mat.dot(embeddings.T)).T / seed_norm) / term_norm.T)
+    #cosine_mat = (((seed_mat * embeddings.T).T/seed_norm)/term_norm.T)
 
     return pd.Series((cosine_mat * np.matrix(seed_values).T).A1, index=terms)
 

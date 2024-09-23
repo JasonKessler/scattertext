@@ -22,7 +22,8 @@ class TestHTMLVisualizationAssembly(TestCase):
                   'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null',
                   'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined',
                   'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'undefined', 'null',
-                  '"document"', '"documents"', 'null', 'false', 'null', 'null', 'null', 'null', 'null', 'false']
+                  '"document"', '"documents"', 'null', 'false', 'null', 'null', 'null', 'null', 'null', 'null',
+                  'false']
         for i, val in param_dict.items():
             params[i] = val
         return 'buildViz(' + ',\n'.join(params) + ');\n'
@@ -665,9 +666,17 @@ class TestHTMLVisualizationAssembly(TestCase):
                   .call_build_visualization_in_javascript())
         self.assertEqual(params, self.get_params({81: '["#0000ff", "#fe0100", "#00ff00"]'}))
 
+    def test_category_term_score_scaler(self):
+        visualization_data = self.make_adapter()
+        cat_term_scaler = '(scores => (maxScore=>scores.flatMap(score=>-0.5*(1 + score/maxScore)))(Math.max(...scores.flatMap(Math.abs))))'
+        params = (ScatterplotStructure(visualization_data,
+                                       category_term_score_scaler=cat_term_scaler)
+                  .call_build_visualization_in_javascript())
+        self.assertEqual(params, self.get_params({82: cat_term_scaler}))
+
     def test_show_chart(self):
         visualization_data = self.make_adapter()
         params = (ScatterplotStructure(visualization_data,
                                        show_chart=True)
                   .call_build_visualization_in_javascript())
-        self.assertEqual(params, self.get_params({82: 'true'}))
+        self.assertEqual(params, self.get_params({83: 'true'}))

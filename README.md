@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.2.1
+# Scattertext 0.2.2
 
 A tool for finding distinguishing terms in corpora and displaying them in an
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -221,13 +221,13 @@ dispersion_df.head(3)
 Which returns
 
 ```
-       Frequency  Range         SD        VC  Juilland's D  Rosengren's S        DP   DP norm  KL-divergence
-thank        363    134   3.108113  1.618274      0.707416       0.694898  0.391548  0.391560       0.748808
-you         1630    177  12.383708  1.435902      0.888596       0.898805  0.233627  0.233635       0.263337
-so           549    155   3.523380  1.212967      0.774299       0.822244  0.283151  0.283160       0.411750
-```
+       Frequency  Range         SD        VC  Juilland's D  Rosengren's S        DP   DP norm  KL-divergence  Dissemination
+thank        363    134   3.108113  1.618274      0.707416       0.694898  0.391548  0.391560       0.748808       0.972954
+you         1630    177  12.383708  1.435902      0.888596       0.898805  0.233627  0.233635       0.263337       0.963905
+so           549    155   3.523380  1.212967      0.774299       0.822244  0.283151  0.283160       0.411750       0.986423```
 
-These are discussed in detail in [Gries 2021](http://www.stgries.info/research/ToApp_STG_Dispersion_PHCL.pdf).
+These are discussed in detail in [Gries 2021](http://www.stgries.info/research/ToApp_STG_Dispersion_PHCL.pdf). 
+Dissementation is presented in Altmann et al. (2011).
 
 We'll use Rosengren's S to find the dispersion of each term. It's which a metric designed for corpus parts
 (convention speeches in our case) of varying length. Where n is the number of documents in the corpus, s_i is the
@@ -318,7 +318,7 @@ dispersion_df = dispersion_df.assign(
 ```
 
 Now we are ready to plot our colored dispersion chart. We assign the ColorScore column name to the `color_score_column`
-paramter in `dataframe_scattertext`.
+parameter in `dataframe_scattertext`.
 
 Additionally, We'd like to populate the two term lists on the
 left with terms that have high and low residual values, indicating terms which have the most dispersion relative to
@@ -344,6 +344,7 @@ html = st.dataframe_scattertext(
 
 Which yields (click for an interactive version):
 [![dispersion-residual.html](https://jasonkessler.github.io/dispersion-residual.png)](https://jasonkessler.github.io/dispersion-residual.html)
+
 
 ## Tutorial
 
@@ -2577,6 +2578,9 @@ is the Z-score how associated a term is with the neutral set of documents relati
 opposed set. A point's red-blue color indicate the term's opposed-association, while
 the more desaturated a term is, the more it is associated with the neutral set of documents.
 
+Update to version 2.2: terms are colored by their nearest semiotic categories across the eight
+corresponding radial sectors.
+
 ```python
 import scattertext as st
 
@@ -2610,7 +2614,9 @@ html = st.produce_semiotic_square_explorer(semiotic_square,
 
 [![semiotic square](https://jasonkessler.github.io/semiotic_square_plot.png)](https://jasonkessler.github.io/demo_semiotic.html)
 
-There are a number of other types of semiotic square construction functions.
+There are a number of other types of semiotic square construction functions. Again, please 
+see https://nbviewer.org/github/JasonKessler/PuPPyTalk/blob/master/notebooks/Explore-Headlines.ipynb for 
+an overview of these.
 
 ### Visualizing Topic Models
 
@@ -3478,3 +3484,4 @@ In order for the visualization to work, set the `asian_mode` flag to `True` in
   annotation system. In Proceedings of the 2015 Conference of the North American Chapter of the Association for 
   Computational Linguistics: Human Language Technologies (pp. 1268-1274).
 * Cliff, N. (1993). Dominance statistics: Ordinal analyses to answer ordinal questions. Psychological Bulletin, 114(3), 494–509. https://doi.org/10.1037/0033-2909.114.3.494
+* Altmann EG, Pierrehumbert JB, Motter AE (2011) Niche as a Determinant of Word Fate in Online Groups. PLoS ONE 6(5): e19009. https://doi.org/10.1371/journal.pone.0019009.

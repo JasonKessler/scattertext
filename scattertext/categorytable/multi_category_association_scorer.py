@@ -13,14 +13,7 @@ from scattertext.termranking.TermRanker import TermRanker
 
 class MultiCategoryAssociationScorer(MultiCategoryAssociationBase):
     def get_category_association(self, ranker: Union[TermRanker, Type] = None, scorer=None, verbose=False):
-        if scorer is None:
-            scorer = RankDifference()
-        if ranker is None:
-            ranker = AbsoluteFrequencyRanker(self.corpus)
-        if inherits_from(ranker, 'TermRanker'):
-            ranker = ranker(self.corpus)
-        if self.use_metadata:
-            ranker = ranker.use_non_text_features()
+        ranker, scorer = self._resolve_ranker_and_scorer(ranker, scorer)
         data = []
         it = self.corpus.get_categories()
         if verbose:
@@ -32,6 +25,26 @@ class MultiCategoryAssociationScorer(MultiCategoryAssociationBase):
 
         return pd.DataFrame(data)
 
+    def get_category_association_and_freqs(self, ranker: Union[TermRanker, Type] = None, scorer=None, verbose=False):
+        ranker, scorer = self._resolve_ranker_and_scorer(ranker, scorer)
+        data = []
+        it = self.corpus.get_categories()
+        if verbose:
+            it = tqdm(it)
+        term_freq_df = ranker.get_ranks('')
+        for cat in it:
+            scores = self.__get_scores(cat=cat, scorer=scorer, ranker=ranker)
+            freqs = term_freq_df[str(cat)]
+            for term_rank, (term, score) in enumerate(scores.sort_values(ascending=False).items()):
+                data.append({'Category': cat,
+                             'Term': term,
+                             'Freq': freqs.loc[term],
+                             'Rank': term_rank,
+                             'Score': score})
+
+        return pd.DataFrame(data)
+
+
     def __get_scores(self, cat, scorer, ranker) -> pd.Series:
         if inherits_from(type(scorer), 'CorpusBasedTermScorer'):
             if self.use_metadata:
@@ -41,6 +54,10 @@ class MultiCategoryAssociationScorer(MultiCategoryAssociationBase):
                 scorer = scorer.set_term_ranker(term_ranker=ranker)
             return scorer.get_scores()
         term_freq_df = ranker.get_ranks('')
-        cat_freq = term_freq_df[cat]
+        try:
+            cat_freq = term_freq_df[cat]
+        except KeyError:
+            cat_freq = term_freq_df[str(cat)]
+
         global_freq = term_freq_df.sum(axis=1)
         return scorer.get_scores(cat_freq, global_freq - cat_freq)

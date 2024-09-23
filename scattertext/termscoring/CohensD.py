@@ -45,7 +45,11 @@ class CohensD(CorpusBasedTermScorer, CohensDCalculator):
         # Modification: when calculating variance, an empty document is added to each set
         X = self._get_X().astype(np.float64)
         X_doc_len_norm = X / X.sum(axis=1)
-        X_doc_len_norm[np.isnan(X_doc_len_norm)] = 0
+        try:
+            X_doc_len_norm[np.isnan(X_doc_len_norm)] = 0
+        except: # likely a coo sparse matrix
+            X_doc_len_norm.data = np.nan_to_num(X_doc_len_norm.data, nan=0)
+            X_doc_len_norm = X_doc_len_norm.tocsr()
         cat_X, ncat_X = self._get_cat_and_ncat(X_doc_len_norm)
         orig_cat_X, orig_ncat_X = self._get_cat_and_ncat(X)
         score_df = (self

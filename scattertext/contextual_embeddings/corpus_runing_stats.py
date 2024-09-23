@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import numpy as np
 
@@ -54,3 +54,8 @@ class CorpusRunningStats:
 
     def get_term_stats(self, cat: str) -> Optional[RunningStatsArray]:
         return self.term_stats.get(cat, None)
+
+    def available_term_embeddings_from_corpus(self, corpus: 'TermDocMatrix') -> Tuple[List[str], np.array]:
+        terms = [term for term in corpus.get_metadata() if term in self.term_stats]
+        embeddings = np.array([self.term_stats[term].mean() for term in terms])
+        return terms, embeddings

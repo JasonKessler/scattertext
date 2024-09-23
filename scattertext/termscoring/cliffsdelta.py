@@ -1,9 +1,8 @@
-import pdb
-
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from scipy.special import ndtri
+from scipy.stats import norm
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
@@ -17,10 +16,17 @@ class CliffsDelta(CorpusBasedTermScorer):
     Psychological Bulletin, 114(3), 494–509.
 
     https://real-statistics.com/non-parametric-tests/mann-whitney-test/cliffs-delta/ used as a resource
+
+    For p-value calculation, the following were used:
+    Neuhäuser, M., Lösch, C., & Jöckel, K.-H. (2007). The Chen–Luo test in case of heteroscedasticity.
+    As cited by
+    https://stats.stackexchange.com/questions/360496/how-do-you-interpret-the-cliffs-delta-95-confidence-interval-2%E2%88%92tailed-grap
+
     """
 
     def _set_scorer_args(self, alpha: float = 0.05, *args, **kwargs):
         self.alpha = alpha
+        self.verbose = kwargs.get('verbose', False)
 
     def get_scores(self, *args) -> pd.Series:
         '''
@@ -36,14 +42,26 @@ class CliffsDelta(CorpusBasedTermScorer):
 
     def get_score_df(self, label_append=''):
         cat_X, ncat_X = self._get_cat_and_ncat(self._get_X())
-        catXnorm = cat_X / cat_X.sum(axis=1)
+        catXnorm = (cat_X / cat_X.sum(axis=1))
         ncatXnorm = ncat_X / ncat_X.sum(axis=1)
+        try:
+            if catXnorm.format == 'coo':
+                catXnorm = catXnorm.tocsr()
+                ncatXnorm = ncatXnorm.tocsr()
+
+        except:
+            pass
+
         m = catXnorm.shape[0]
         n = ncatXnorm.shape[0]
         data = []
-        for i, term in tqdm(enumerate(self._get_terms()), total=len(self._get_terms())):
-            cati = np.repeat(catXnorm[:, i], n, axis=1).ravel().A1
-            ncati = np.repeat(ncatXnorm[:, i], m, axis=1).T.ravel().A1
+        iter = enumerate(self._get_terms())
+        if self.verbose:
+            iter = tqdm(iter, total=len(self._get_terms()))
+        for i, term in iter:
+            cati = np.repeat(catXnorm[:, i].todense(), n, axis=1).ravel().A1
+            ncati = np.repeat(ncatXnorm[:, i].todense(), m, axis=1).T.ravel().A1
+
             deltai = np.zeros(n * m)
             deltai[cati > ncati] = 1
             deltai[cati < ncati] = -1
@@ -66,6 +84,7 @@ class CliffsDelta(CorpusBasedTermScorer):
             hi = (delta - delta ** 3 + zcrit * sd * np.sqrt(1 - 2 * delta ** 2 + delta ** 4 + (zcrit * delta) ** 2)) / (
                     1 - delta ** 2 - (zcrit * delta) ** 2
             )
+
             datum = {
                 'term': term,
                 'Metric': delta,

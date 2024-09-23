@@ -26,10 +26,17 @@ class CSRMatrixFactory:
 
 		>>> mat_fact = CSRMatrixFactory()
 		>>> mat_fact[3,1] = 1
+		>>> mat_fact[3,1] = 1
+		>>> mat_fact.get_csr_matrix().todense()
+		matrix([[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 2]], dtype=int32)
+
 
 		Returns
 		-------
-		Noone
+		None
 		'''
 		row, col = row_col
 		self.rows.append(row)

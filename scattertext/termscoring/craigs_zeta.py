@@ -4,6 +4,7 @@ from scattertext.termranking import OncePerDocFrequencyRanker
 
 from scattertext.termscoring.CorpusBasedTermScorer import CorpusBasedTermScorer
 
+
 class CraigsZetaScorer(CorpusBasedTermScorer):
     """
     Zeta function from:
@@ -51,17 +52,16 @@ class CraigsZetaScorer(CorpusBasedTermScorer):
         cat_X, ncat_X = self._get_cat_and_ncat(X)
         score = self._get_zeta_score(cat_X, ncat_X)
         return pd.DataFrame({
-            'Term': self.corpus_.get_terms(),
+            'Term': self.corpus_.get_terms(use_metadata=self.use_metadata_),
             'Base': cat_X.sum(axis=0).A1,
             'Counter': ncat_X.sum(axis=0).A1,
             'Score': score
         }).set_index('Term')
 
     def _get_zeta_score(self, cat_X, ncat_X):
-        in_target_cat = cat_X.sum(axis=0)/cat_X.shape[1]
-        not_in_non_target_cat = (ncat_X.shape[1] - ncat_X.sum(axis=0))/ncat_X.shape[1]
+        in_target_cat = cat_X.sum(axis=0) / cat_X.shape[1]
+        not_in_non_target_cat = (ncat_X.shape[1] - ncat_X.sum(axis=0)) / ncat_X.shape[1]
         return (in_target_cat + not_in_non_target_cat).A1
 
     def get_name(self):
         return "Craig's Zeta"
-

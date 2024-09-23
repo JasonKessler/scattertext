@@ -227,6 +227,7 @@ input:focus {
   background-color: rgb(250, 248, 193);
   font-size: 16;
 }
+
 .extra{
   background-color: rgb(250, 248, 193);
   font-size: 16;
@@ -294,6 +295,39 @@ input:focus {
 .right {
   text-align: left;
 }
+
+.top-left-halo {
+    color: {top_left_halo_color};
+}
+
+.left-halo {
+    color: {left_halo_color};
+}
+
+.bottom-left-halo {
+    color: {bottom_left_halo_color};
+}
+
+.top-right-halo {
+    color: {top_right_halo_color};
+}
+
+.right-halo {
+    color: {right_halo_color};
+}
+
+.bottom-right-halo {
+    color: {bottom_right_halo_color};
+}
+
+.top-halo {
+    color: {top_halo_color};
+}
+
+.bottom-halo {
+    color: {bottom_halo_color};
+}
+
 <!-- AUTOCOMPLETE CSS -->
 </style>
 <script src="<!--D3URL-->" charset="utf-8"></script>
@@ -305,14 +339,14 @@ input:focus {
 
 <table style="table-layout: auto;">
   <tr>
-    <td rowspan="2" class="topcell left"><b class="pos">{a_label}</b>
-      <div class="pos" style="width: 200px;">{a}</div>
+    <td rowspan="2" class="topcell left"><b class="top-left-halo">{a_label}</b>
+      <div class="top-left-halo" style="width: 200px;">{a}</div>
     </td>
     <td style="text-align: center; vertical-align: bottom;">
-      <span class="neut" style="text-align: center;  width: 200px"><b>{a_and_b_label}</b><br/>{a_and_b}</span>
+      <span class="top-halo" style="text-align: center;  width: 200px"><b>{a_and_b_label}</b><br/>{a_and_b}</span>
     </td>
-    <td rowspan="2" class="topcell right"><b class="neg">{b_label}</b>
-      <div class="neg" style="width: 200px;">{b}</div>
+    <td rowspan="2" class="topcell right"><b class="top-right-halo">{b_label}</b>
+      <div class="top-right-halo" style="width: 200px;">{b}</div>
     </td>
   </tr>
   <tr>
@@ -321,26 +355,26 @@ input:focus {
     </td>
   </tr>
   <tr>
-    <td class="midcell left"><b class="pos">{a_and_not_b_label}</b>
-      <div class="pos" style="width: 200px;">{a_and_not_b}</div>
+    <td class="midcell left"><b class="left-halo">{a_and_not_b_label}</b>
+      <div class="Left-halo" style="width: 200px;">{a_and_not_b}</div>
     </td>
-    <td class="midcell right"><b class="neg">{b_and_not_a_label}</b>
-      <div class="neg" style="width: 200px;">{b_and_not_a}</div>
+    <td class="midcell right"><b class="right-halo">{b_and_not_a_label}</b>
+      <div class="right-halo" style="width: 200px;">{b_and_not_a}</div>
     </td>
   </tr>
   <tr>
     <td rowspan="2" class="lowercell left">
-      <b class="pos">{not_b_label}</b>
-      <div class="pos" style="width: 200px">{not_b}</div>
+      <b class="bottom-left-halo">{not_b_label}</b>
+      <div class="bottom-left-halo" style="width: 200px">{not_b}</div>
     </td>
     <td rowspan="2" class="lowercell right">
-      <b class="neg">{not_a_label}</b>
-      <div style="width: 200px" class="neg">{not_a}</div>
+      <b class="bottom-right-halo">{not_a_label}</b>
+      <div class="bottom-right-halo" style="width: 200px">{not_a}</div>
     </td>
   </tr>
   <tr>
-    <td style="text-align: center; vertical-align: top;"><b class="neut">{not_a_and_not_b_label}</b><br/>
-      <span class="neut" style="text-align: center;  width: 200px">{not_a_and_not_b}</span>
+    <td style="text-align: center; vertical-align: top;"><b class="bottom-halo">{not_a_and_not_b_label}</b><br/>
+      <span style="text-align: center; width: 200px" class="bottom-halo">{not_a_and_not_b}</span>
     </td>
   </tr>
 </table>
