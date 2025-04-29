@@ -17,6 +17,7 @@ def pyplot_from_scattertext_structure(
     linecolor,
     draw_all,
     nbr_candidates,
+    num_top_terms: int = 10
 ):
     """
     Parameters
@@ -40,6 +41,8 @@ def pyplot_from_scattertext_structure(
         Overrides label from scatterplot_structure
     dpi : int
         Pyplot figure resolution
+    num_top_terms : int
+        Overrides scatterplot_structure.top_terms_length, default is 10
 
     Returns
     -------
@@ -54,6 +57,12 @@ def pyplot_from_scattertext_structure(
         raise Exception("Ensure that the packages textalloc==0.0.3 and matplotlib>=3.6.0 have been installed.")
 
     # Extract the data
+    if scatterplot_structure._top_terms_length != 14:
+        print(
+            'Warning: set the number of top terms to using the `num_top_terms` parameter to this function. '
+            + 'The number of characteristic terms will be scaled accordingly.'
+        )
+    scatterplot_structure.top_terms_length = num_top_terms
     if sample > 0:
         subset = random.sample(
             scatterplot_structure._visualization_data.word_dict["data"], sample
@@ -70,11 +79,6 @@ def pyplot_from_scattertext_structure(
     info = scatterplot_structure._visualization_data.word_dict["info"]
     n_docs = len(scatterplot_structure._visualization_data.word_dict["docs"]["texts"])
     n_words = df.shape[0]
-
-    if scatterplot_structure._show_characteristic:
-        characteristic_terms = list(
-            df.sort_values("bg", axis=0, ascending=False).iloc[:23].term
-        )
 
     if df.s.isna().sum() > 0:
         colors = "k"
@@ -143,14 +147,16 @@ def pyplot_from_scattertext_structure(
         ax_plot.set_ylabel(info["category_name"])
     else:
         pass
-    ax_plot.locator_params(axis="y", nbins=3)
-    ax_plot.locator_params(axis="x", nbins=3)
+    #ax_plot.locator_params(axis="x", nbins=3)
+    #ax_plot.locator_params(axis="y", nbins=3)
     try:
         if scatterplot_structure._x_axis_labels is not None:
+            ax_plot.locator_params(axis="x", nbins=len(scatterplot_structure._x_axis_labels))
             ax_plot.set_xticks(
                 ax_plot.get_xticks()[1:-1], scatterplot_structure._x_axis_labels, size=7
             )
         else:
+            ax_plot.locator_params(axis="x", nbins=3)
             ax_plot.set_xticks(
                 ax_plot.get_xticks()[1:-1], ["Low", "Medium", "High"], size=7
             )
@@ -158,6 +164,8 @@ def pyplot_from_scattertext_structure(
         pass
     try:
         if scatterplot_structure._y_axis_labels is not None:
+            ax_plot.locator_params(axis="y", nbins=len(scatterplot_structure._y_axis_labels))
+
             ax_plot.set_yticks(
                 ax_plot.get_yticks()[1:-1],
                 scatterplot_structure._y_axis_labels,
@@ -165,6 +173,7 @@ def pyplot_from_scattertext_structure(
                 rotation=90,
             )
         else:
+            scatterplot_structure._y_axis_labels
             ax_plot.set_yticks(
                 ax_plot.get_yticks()[1:-1],
                 ["Low", "Medium", "High"],
@@ -185,8 +194,10 @@ def pyplot_from_scattertext_structure(
 
     # Categories
     alignment = {"horizontalalignment": "left", "verticalalignment": "top"}
+    total_top_terms = scatterplot_structure.top_terms_length * 2 + 2
     if not scatterplot_structure._ignore_categories:
-        yp = [i / 22 for i in range(22)]
+        #yp = [i / 22 for i in range(22)]
+        yp = [i / total_top_terms for i in range(total_top_terms)]
         yp.reverse()
         ax_cat.text(
             0.0,
@@ -200,14 +211,14 @@ def pyplot_from_scattertext_structure(
             ax_cat.text(0.0, yp[i + 1], term, size="small", **alignment)
         ax_cat.text(
             0.0,
-            yp[11],
+            yp[scatterplot_structure.top_terms_length + 1],
             "Top " + info["not_category_name"],
             weight="bold",
             size="medium",
             **alignment,
         )
         for i, term in enumerate(info["not_category_terms"]):
-            axs[1].text(0.0, yp[i + 12], term, size="small", **alignment)
+            axs[1].text(0.0, yp[i + scatterplot_structure + 2], term, size="small", **alignment)
         ax_cat.spines.right.set_visible(False)
         ax_cat.spines.top.set_visible(False)
         ax_cat.spines.bottom.set_visible(False)
@@ -217,10 +228,13 @@ def pyplot_from_scattertext_structure(
 
     # Characteristics
     if scatterplot_structure._show_characteristic:
-        yp = [i / 24 for i in range(24)]
+        yp = [i / total_top_terms + 2 for i in range(total_top_terms + 2)]
         yp.reverse()
         ax_char.text(
             0.0, yp[0], "Characteristic", weight="bold", size="medium", **alignment
+        )
+        characteristic_terms = list(
+            df.sort_values("bg", axis=0, ascending=False).iloc[:total_top_terms + 1].term
         )
         for i, term in enumerate(characteristic_terms):
             ax_char.text(0.0, yp[i + 1], term, size="small", **alignment)

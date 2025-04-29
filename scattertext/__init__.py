@@ -1,4 +1,4 @@
-version = [0, 2, 2]
+version = [0, 2, 3]
 __version__ = '.'.join([str(e) for e in version])
 
 import re

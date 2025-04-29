@@ -3,7 +3,7 @@
 [![Gitter Chat](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/scattertext/Lobby)
 [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?style=social&label=Follow)](https://twitter.com/jasonkessler)
 
-# Scattertext 0.2.2
+# Scattertext 0.2.3
 
 A tool for finding distinguishing terms in corpora and displaying them in an
 interactive HTML scatter plot. Points corresponding to terms are selectively labeled
@@ -360,7 +360,7 @@ one containing the text to be analyzed, and another containing the category. In 
 the columns are text and party, respectively.
 
 The example below processes the CSV file, and the resulting HTML visualization into cli_demo.html.
-
+ff
 Note, the parameter `--minimum_term_frequency=8` omit terms that occur less than 8
 times, and `--regex_parser` indicates a simple regular expression parser should
 be used in place of spaCy. The flag `--one_use_per_doc` indicates that term frequency
